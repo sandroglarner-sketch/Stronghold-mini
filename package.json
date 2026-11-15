@@ -1,0 +1,10 @@
+{
+  "name": "stronghold-mini",
+  "version": "1.0.0",
+  "description": "Stronghold Mini: Echtzeit-Strategiespiel mit Online-PvP",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED",
+  "private": true
+}
