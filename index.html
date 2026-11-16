@@ -1,15 +1,37 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name="description" content="Stronghold Mini – kleines Echtzeitstrategie-Spiel im Browser, auch online gegen andere Spieler."><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Stronghold Mini</title>
-<meta name="description" content="Stronghold Mini: kleines Echtzeit-Strategiespiel gegen den Computer oder online gegen andere Spieler.">
-<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-</head>
-<body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
+
+SPIEL: "Stronghold Mini" – Einzeldatei-HTML, Top-Down-Echtzeitstrategie, Canvas 1100x500, 22x10 Kacheln (T=50, Seitenverhältnis 2,2:1; vorher 20x10).
+Besitzer: Sandro (Deutsch, Handy/Android, Zürich). Online: https://stronghold-mini.onrender.com (Adresse ggf. anpassen), GitHub-Konto sandroglarner-sketch, Repo "Stronghold-mini".
+
+STANDARDREGELN DES BESITZERS
+- Antworten kurz auf Deutsch, getroffene Annahmen nennen. E-Mail des Nutzers privat halten.
+- Bots/Computer-Einheiten verhalten sich exakt wie Spielereinheiten.
+- Kein Gold-Maximum mehr (GOLD_MAX = Infinity, seit 16.11.2026). Sandbox: Spieler 9999, Bot 160 Startgold. Auszahlung alle 5 s (10 Gold), Startgold 10.
+- Veröffentlichungs-Labels (Artifact) max. 60 Zeichen.
+- Tutorial: nur grüne Pfeile, keine Sprache, fünf "Verstanden"-Boxen (Ziel, Bauern, 2 Turm-Erklärungen parallel zum Mauerbau des Gegners ohne Verlangsamung mit grün umrandeten eigenen Türmen, Rammbock), über dem grünen Pfeil steht die noch zu kaufende Anzahl, 12 Bauern, nie Extra-Gold, 20 % Tempo wenn Gold reicht, nach deinen 2 Bogenschützen baut der Gegner Mauer 1, dann Mauer 2 (mit Arbeitern) und besetzt die Türme (vor dem Ritterangriff), seine Turmbesatzung zählt bei noFoe nicht, eigene Mauer nicht reparieren (nur im Tutorial).
+- Der Besitzer will weiter nur chatten; ich pflege alles (Artifact + diese Notizen) selbst.
+
+SPIELREGELN: Burg 40 HP, König 20 HP sitzt unverwundbar in der Burg und schießt; fällt die Burg, steigt er mit Schwert hinab; Sieg = König tot. Mauern: Abstand 3 Kacheln zur Burg, Stufen 40/80/120 …, Türme ab Stufe 2. König schießt 4,5 Kacheln weit. Bauern: 1,8 Kacheln Abstand (ca. 32 Plätze gesamt); liegt sein Platz (tx,ty) auf einer Mauer oder einem Turm, steht er WIRKLICH am nächsten freien Rand (farmerStand, Breite je Mauerstufe wie gezeichnet; vor fertiger gegnerischer Mauer am Außenrand) – zählt für Treffer und Online-Abgleich; für den Bauernabstand zählt nur tx,ty. Fernkämpfer besetzen Turmplätze. Lang drücken auf Einheitenknopf = Stats-Karte. Gedränge: Rammbock hat mass 6 (andere 1) und schiebt Einheiten im Weg zur Seite. Knopf-Reihenfolge (BUY_TYPES): Bauer, Speer, Bogen, Reiter, Tunnelgräber, Ritter, Magier, Mauer, Rammbock, Schild, Katapult, Baliste = Tasten 1–9, 0, Q, E. Vollbild (html.phone, Knopf «Vollbild»): Feld maximal, 12 Knöpfe in einer Reihe unten, Gold-HUD oben links, oben rechts Pause/Aufgeben (#fsBar, spiegeln pauseBtn/giveBtn) und ✕ (verlässt Vollbild, pausiert offline). Startet nie automatisch im Vollbild.
+
+TECHNIK PvP (Lockstep)
+- STEP=0.05 s, PVP_DELAY=7 Ticks (350 ms Puffer; vorher 4 = ruckelte). Jeder Client sendet {k:'t',t:T+D,c:[Befehle],ht,h}; beide führen Befehle Team 0 dann Team 1 aus, dann update(STEP). Fehlt ein Paket, warten beide. 20 s Stillstand = Gegner gibt auf. Hash alle 20 Ticks (pvpHash) -> "Synchronisationsfehler".
+- Deterministisch: simRand=mulberry32(seed), Mathe über hyp/dsin/dcos/datan/datan2/dasin (kein Math.hypot/random in der Simulation!). Neue Spiellogik muss deterministisch bleiben.
+- ME (0/1) ordnet UI/Gold/Mauer zu; Gast sieht sich rot rechts. Kein Pause online. Rendern interpoliert (pvpRender).
+- Verbindungsaufbau versucht bis 20x neu (Server-Aufwachen, Gratis-Render schläft nach 15 min).
+
+SERVER (Ordner stronghold-mini/ auf GitHub: server.js, package.json, index.html)
+- Node ohne Abhängigkeiten, eigenes WebSocket, Warteschlange + Paarung, leitet nur 't'-Nachrichten weiter, /healthz. Der Server schaltet beim Ausliefern die ONLINE-Konstante im Skript von false auf true (Online-Knopf nur auf gehosteter Seite). WICHTIG: den Platzhalter-Text dafür nie in Kommentaren wiederholen, der Server ersetzt nur das erste Vorkommen.
+- Render Gratis (Frankfurt), Build "npm install", Start "node server.js". Update = nur index.html bei GitHub ersetzen (Render baut automatisch neu, ca. 1-2 min, Laufende Partien brechen ab).
+- index.html entsteht aus dieser Datei: Wrapper mit doctype/meta/description und [hidden]{display:none!important} (Skript sim/build_site.py in Claudes Arbeitsumgebung; bei Verlust neu schreiben).
+
+OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom Domain mit TLS), Google Search Console, Namens-/Markenhinweis "Stronghold" (Firefly Studios), evtl. PWA/App, automatischer Puffer je nach Verbindung.
+-->
 <style>
-  /* Layout: breite Spalte. Oben Gold und Auszahlung, in der Mitte das Spielfeld (2:1), darunter die drei Produktionsknöpfe. */
+  /* Layout: breite Spalte. Oben Gold und Auszahlung, in der Mitte das Spielfeld (2,2:1), darunter die drei Produktionsknöpfe. */
   :root {
     --bg: #e9edef;
     --panel: #f8fafb;
@@ -167,7 +189,7 @@
     display: block;
     width: 100%;
     max-width: 100%;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 22 / 10;
     border-radius: 10px;
     border: 1px solid var(--line);
     background: var(--grass-a);
@@ -224,6 +246,12 @@
     content: ''; position: absolute; left: 50%; top: -30px; width: 0; height: 0; margin-left: -14px;
     border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 22px solid #1fae4b;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45)); animation: tutbounce 0.7s ease-in-out infinite; pointer-events: none; z-index: 5;
+  }
+  .unit.tuthint::before { /* wie viele noch gekauft werden sollen, über dem Pfeil */
+    content: attr(data-need); position: absolute; left: 50%; top: -58px; width: 44px; margin-left: -22px; text-align: center;
+    font-family: var(--display); font-weight: 700; font-size: 1.35rem; line-height: 1; color: #1fae4b;
+    -webkit-text-stroke: 3px #ffffff; paint-order: stroke fill; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    animation: tutbounce 0.7s ease-in-out infinite; pointer-events: none; z-index: 5;
   }
   @keyframes tutbounce { 50% { transform: translateY(8px); } }
   .unit { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
@@ -315,11 +343,14 @@
   .top { display: contents; }
   .rotate { display: none; }
 
-  /* Handymodus: Querformat, alles auf einem Bildschirm ohne Scrollen */
-  html.phone { --uw: clamp(116px, 21vw, 176px); --topH: 34px; --pad: max(8px, env(safe-area-inset-left, 0px)); --padr: max(8px, env(safe-area-inset-right, 0px)); }
+  /* Vollbild (Handy quer): Spielfeld so gross wie möglich, Einheitenknöpfe in einer Reihe darunter,
+     Gold und Auszahlung klein oben links auf dem Spielfeld, oben rechts ein Knopf zum Verlassen (dort sind Pause, Aufgeben usw.) */
+  .fsbar { display: none; }
+  html.phone { --pad: max(4px, env(safe-area-inset-left, 0px)); --padr: max(4px, env(safe-area-inset-right, 0px));
+    --uh: clamp(40px, 13dvh, 60px); --cw: min(calc(100vw - var(--pad) - var(--padr)), calc(2.2 * (100dvh - var(--uh) - 9px))); }
   html.phone, html.phone body { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
   html.phone body {
-    padding-block: 4px 6px;
+    padding-block: 2px 2px;
     padding-left: var(--pad);
     padding-right: var(--padr);
     touch-action: manipulation;
@@ -328,48 +359,52 @@
     -webkit-touch-callout: none;
   }
   html.phone .wrap {
+    position: relative;
     max-width: none;
     height: 100%;
     margin: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--uw);
-    grid-template-rows: var(--topH) minmax(0, 1fr);
-    gap: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
-  html.phone h1, html.phone .rules, html.phone .logrow { display: none; }
-  html.phone .top { display: flex; align-items: center; gap: 10px; grid-column: 1 / -1; min-width: 0; }
+  html.phone h1, html.phone .rules, html.phone .logrow, html.phone .btns { display: none; }
+  html.phone .top {
+    position: absolute; z-index: 5; top: 4px; left: calc((100% - var(--cw)) / 2 + 5px);
+    display: flex; align-items: center; gap: 8px; padding: 2px 8px; border-radius: 8px; pointer-events: none;
+    background: color-mix(in srgb, var(--panel) 72%, transparent);
+  }
   html.phone header { flex: 0 0 auto; flex-wrap: nowrap; }
-  html.phone .gold-row { gap: 12px; }
-  html.phone .stat { flex-direction: row; align-items: center; gap: 5px; }
+  html.phone .gold-row { gap: 10px; }
+  html.phone .stat { flex-direction: row; align-items: center; gap: 4px; }
   html.phone .stat .label { font-size: 0; gap: 0; }
-  html.phone .stat .dot { width: 11px; height: 11px; }
-  html.phone .stat .value { font-size: 1.2rem; }
-  html.phone .pay { flex: 1; min-width: 0; gap: 8px; }
-  html.phone .pay .txt { font-size: 0.75rem; }
-  html.phone .meter { min-width: 24px; }
-  html.phone .btns { gap: 4px; flex: 0 0 auto; }
-  html.phone .btns .ghost { padding: 5px 9px; font-size: 0.75rem; white-space: nowrap; }
-  html.phone .stage { grid-column: 1; grid-row: 2; align-self: start; justify-self: start; width: fit-content; max-width: 100%; }
-  html.phone canvas#field {
-    width: min(calc(100vw - var(--uw) - 6px - var(--pad) - var(--padr)), calc(2 * (100dvh - var(--topH) - 18px)));
-    height: auto;
+  html.phone .stat .dot { width: 9px; height: 9px; }
+  html.phone .stat .value { font-size: 1rem; }
+  html.phone .pay { gap: 6px; }
+  html.phone .pay .txt { font-size: 0.7rem; }
+  html.phone .meter { width: 48px; flex: 0 0 48px; height: 6px; }
+  html.phone .stage { flex: 0 0 auto; width: var(--cw); }
+  html.phone canvas#field { width: var(--cw); height: auto; }
+  html.phone .fsbar { display: flex; gap: 4px; position: absolute; z-index: 6; top: 4px; right: 4px; }
+  html.phone .fsbar button {
+    height: 32px; min-width: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line);
+    font-size: 0.8rem; line-height: 1; white-space: nowrap; color: var(--fg);
+    background: color-mix(in srgb, var(--panel) 80%, transparent);
   }
+  html.phone .fsbar #fsExit { padding: 0; font-size: 1.05rem; }
+  html.phone .fsbar button:disabled { opacity: 0.45; }
+  html.phone .fsbar button.armed { border-color: var(--foe); color: var(--foe); }
+  html.phone .tut { right: auto; left: 50%; transform: translateX(-50%); top: 44px; }
   html.phone .units {
-    grid-column: 2;
-    grid-row: 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: minmax(0, 1fr);
-    gap: 5px;
-    align-self: stretch;
-    max-height: calc(100dvh - var(--topH) - 18px);
+    width: 100%;
+    height: var(--uh);
+    flex: 0 0 var(--uh);
+    display: flex;
+    gap: 4px;
   }
-  html.phone .unit { max-width: none; min-height: 0; padding: 3px 2px; justify-content: center; }
-  html.phone .unit canvas {
-    width: auto;
-    max-width: 100%;
-    height: clamp(18px, calc((100dvh - var(--topH) - 18px - 20px) / 6 - 24px), 44px);
-  }
+  html.phone .unit { max-width: none; min-height: 0; height: 100%; padding: 2px 1px; justify-content: center; }
+  html.phone .unit canvas { width: auto; max-width: 100%; height: calc(var(--uh) - 19px); }
+  html.phone .unit .cost { font-size: 0.8rem; line-height: 1.1; }
   html.phone .overlay { gap: 5px; padding: 8px; overflow: auto; justify-content: safe center; }
   html.phone .overlay h2 { font-size: 1.1rem; }
   html.phone .overlay p { font-size: 0.78rem; line-height: 1.3; }
@@ -429,7 +464,7 @@
     <span class="txt" id="payText">+10 Gold in 5 s</span>
     <span class="btns">
       <button class="ghost" id="soundBtn" type="button" aria-pressed="true">Ton an</button>
-      <button class="ghost" id="phoneBtn" type="button" aria-pressed="false" title="Layout für das Handy im Querformat">Handymodus</button>
+      <button class="ghost" id="phoneBtn" type="button" aria-pressed="false" title="Vollbild: Spielfeld so gross wie möglich (Handy quer halten)">Vollbild</button>
       <button class="ghost" id="pauseBtn" type="button">Pause</button>
       <button class="ghost" id="giveBtn" type="button" disabled>Aufgeben</button>
     </span>
@@ -437,6 +472,7 @@
   </div>
 
   <div class="stage" id="stage">
+    <div class="fsbar" id="fsBar"><button id="fsPause" type="button">Pause</button><button id="fsGive" type="button" disabled>Aufgeben</button><button id="fsExit" type="button" aria-label="Vollbild verlassen" title="Vollbild verlassen">✕</button></div>
     <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
     <div class="overlay" id="overlay">
       <h2 id="ovTitle">Besiege den gegnerischen König</h2>
@@ -453,7 +489,7 @@
         <button class="primary" id="ovBtn" type="button">Spiel starten</button>
         <button class="ghost" id="pvpBtn" type="button" hidden title="Spiele online gegen einen anderen Spieler">Online (PvP)</button>
         <button class="ghost" id="tutBtn" type="button" title="Lerne jede Einheit an einem Trainingsgegner kennen">Tutorial</button>
-        <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 300 Gold (dem Maximum), der Gegner mit 100">Sandbox</button>
+        <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 9999 Gold, der Gegner mit 160">Sandbox</button>
       </div>
     </div>
     <div class="tut" id="tutPanel" hidden><button class="ghost" id="tutEnd" type="button">Tutorial beenden</button></div>
@@ -463,7 +499,7 @@
   <div class="statcard" id="statCard" hidden></div>
   <div class="units" id="units"></div>
 
-  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (höchstens 300 Gold auf einmal). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und beschießt jede Sekunde mit dem Bogen den nächsten Gegner innerhalb der gestrichelten Linie (Reichweite 5, Angriff 2). Fällt die Burg, kämpft er mit dem Zweihänder (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und von anderen Bauern entfernt. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), erhöht er jede Auszahlung um 1 Gold, solange er lebt. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Tasten 1 bis 9, 0, Q und E bauen Einheiten, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 4 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 150 Gold mit einem Rammbock an, nach 3 Sekunden kommen 4 Speerkämpfer, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden noch einmal 4 Speerkämpfer. Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 5 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 4 Sekunden 3 Ritter, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden 4 Speerkämpfer (was er sich dann leisten kann). Der «Feldherr» ist wie der Kleine Prinz, aber: 7 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 1 Sekunde 1 Katapult, nach 2 Sekunden 1 Rammbock, nach 4 und 5 Sekunden je 3 Bogenschützen, nach 6 und 8 Sekunden je 5 Speerkämpfer. Der «Baron» ist wie der Feldherr, aber: 6 Bauern; Mauer bis zur 4. Stufe, deren Türme er mit je 3 Bogenschützen besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 3 Sekunden 2 Speerkämpfer, nach 4 und 5 Sekunden je 2 Ritter, nach 6 Sekunden 6 Bogenschützen, nach 7 Sekunden 4 Speerkämpfer. Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3,5 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht; sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam und hält viel aus. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 10 Leben. Das Katapult (Q) schießt alle 3 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,2 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Handymodus: Das Handy quer halten, dann passt alles auf einen Bildschirm. Die Töne lassen sich mit „Ton an“ ausschalten.</p>
+  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und beschießt jede Sekunde mit dem Bogen den nächsten Gegner innerhalb der gestrichelten Linie (Reichweite 4,5, Angriff 2). Fällt die Burg, kämpft er mit dem Zweihänder (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), erhöht er jede Auszahlung um 1 Gold, solange er lebt. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Tasten 1 bis 9, 0, Q und E bauen Einheiten, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 150 Gold mit einem Rammbock an, nach 3 Sekunden kommen 4 Speerkämpfer, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden noch einmal 4 Speerkämpfer. Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 4 Sekunden 3 Ritter, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden 4 Speerkämpfer (was er sich dann leisten kann). Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 1 Sekunde 1 Katapult, nach 2 Sekunden 1 Rammbock, nach 4 und 5 Sekunden je 3 Bogenschützen, nach 6 und 8 Sekunden je 5 Speerkämpfer. Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 4. Stufe, deren Türme er mit je 3 Bogenschützen besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 3 Sekunden 2 Speerkämpfer, nach 4 und 5 Sekunden je 2 Ritter, nach 6 Sekunden 6 Bogenschützen, nach 7 Sekunden 4 Speerkämpfer. Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht; sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 2 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,3 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
 
   <div class="logrow">
     <button class="ghost" id="logBtn" type="button" title="Kopiert den Ablauf der letzten Partie (deine Käufe und die des Gegners), damit der Bot daraus lernen kann">Spielprotokoll kopieren</button>
@@ -481,13 +517,13 @@
     GOLD_AMOUNT: 10,
     START_GOLD: 10,
     UNIT_HEAL: { delay: 10, rate: 1 }, // jede Einheit heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
-    GOLD_MAX: 300, SANDBOX_GOLD: 300, // GOLD_MAX = mehr Gold kann niemand haben (alle Modi)
-     SANDBOX_FOE_GOLD: 100, // Sandbox-Knopf im Menü: du startest mit so viel Gold, der Gegner mit so viel
+    GOLD_MAX: Infinity, SANDBOX_GOLD: 9999, // GOLD_MAX = mehr Gold kann niemand haben (alle Modi; Infinity = keine Obergrenze)
+     SANDBOX_FOE_GOLD: 160, // Sandbox-Knopf im Menü: du startest mit so viel Gold, der Gegner mit so viel
     BASE_HP: 40,
-    FARMER_RADIUS: 2, // so nah dürfen sich zwei Bauern nicht niederlassen
+    FARMER_RADIUS: 1.8, // so nah dürfen sich zwei Bauern nicht niederlassen
     FARMER_EDGE: 2,   // so nah am Spielfeldrand darf sich kein Bauer niederlassen
     BASE_ATK: 2,
-    BASE_RANGE: 5,
+    BASE_RANGE: 4.5,
     BASE_CD: 1,
     BASE_DELAY: 0.5, // Flugzeit des Kasernenpfeils in Sekunden
     // Computergegner: bekommt wie du 10 Gold pro Auszahlung (ohne Bauernbonus). 
@@ -504,28 +540,28 @@
     // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (deine Einheiten abzüglich seiner Turmbesatzung) plus so vielen Einheiten mehr als du hast,
     // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
     BOTS: {
-      bauern: { farmers: 4, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
+      bauern: { farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
                 wallGold: 60, wallUnits: 0, repairAt: 0, wallClear: true,
                 attackGold: 150, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 3, buy: [['spear', 4]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Kleiner Prinz»: wie der Bandit, aber 5 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
-      prinz: { farmers: 5, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
+      // «Kleiner Prinz»: wie der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
+      prinz: { farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 3, wallClear: true,
                attackGold: 180, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 3]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }],
                defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Feldherr»: wie der Kleine Prinz, aber 6 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
+      // «Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
-      feldherr: { farmers: 7, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
+      feldherr: { farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 2, wallClear: true,
                attackGold: 210, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 1, buy: [['catapult', 1]] }, { after: 2, buy: [['ram', 1]] }, { after: 4, buy: [['archer', 3]] }, { after: 5, buy: [['archer', 3]] }, { after: 6, buy: [['spear', 5]] }, { after: 8, buy: [['spear', 5]] }],
                defPlus: 1, defPool: ['archer', 'spear', 'rider'], defMage: 99, noOutput: 10 },
-      // «Baron»: wie der Feldherr, aber 6 Bauern, Mauer bis Stufe 4 (die Türme besetzt er wie alle Gegner komplett, also mit je 3 Bogenschützen),
+      // «Baron»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 4 (die Türme besetzt er wie alle Gegner komplett, also mit je 3 Bogenschützen),
       // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
       // verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern, greift bei 230 Gold an
-      baron: { farmers: 6, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
+      baron: { farmers: 9, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
                huntLater: [{ after: 3, buy: [['archer', 2]] }, { after: 4, buy: [['spear', 2]] }],
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 4, wallClear: true,
                attackGold: 230, lockSecs: 15,
@@ -541,18 +577,18 @@
       spear: { name: 'Speersoldat',   cost: 5,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { name: 'Bogenschütze',  cost: 12, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { name: 'Reiter',        cost: 15, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
-      mage:   { name: 'Magier',        cost: 22, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '5', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
+      mage:   { name: 'Magier',        cost: 25, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
       knight: { name: 'Ritter',        cost: 20, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
       // Die Grabspur bleibt trail Sekunden sichtbar. Danach ist er eine normale Einheit mit Marschtempo speed.
-      digger: { name: 'Tunnelgräber', cost: 10, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.30, key: '7', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
+      digger: { name: 'Tunnelgräber', cost: 10, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.30, key: '5', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
       // ram = greift nur Mauern und Kasernen an, keine Einheiten
-      ram: { name: 'Rammbock', cost: 35, hp: 20, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true },
+      ram: { name: 'Rammbock', cost: 35, hp: 20, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
       // wall = Mauer: im Abstand dist Kacheln um die eigene Kaserne herum gebogen, workers Arbeiter, die mit rate Leben pro Sekunde bis zu add Leben bringen
       // rate Leben pro Sekunde bauen (jeder). Erst wenn sie einmal fertig ist, blockiert sie gegnerische Einheiten.
       wall: { name: 'Mauer',     cost: 20, hp: 0, atk: 0, range: 0, speed: 0, cd: 1, r: 0.3, key: '8',
-              wall: { dist: 3.5, thick: 0.5, workers: 4, rate: 3, add: 10, cap: 200, heal: 0.6, fade: 1, tower: { from: 2, takeDist: 4, // takeDist = so nah (in Kacheln) an der Kaserne muss eine Einheit sein, damit sie einen freien Turmplatz nimmt
+              wall: { dist: 3, thick: 0.5, workers: 4, rate: 3, add: 10, cap: 200, heal: 0.6, fade: 1, tower: { from: 2, takeDist: 4, // takeDist = so nah (in Kacheln) an der Kaserne muss eine Einheit sein, damit sie einen freien Turmplatz nimmt
               taken: 0.25, // Einheiten in einem Turm erleiden von Fernkämpfern (auch von der Kaserne) nur diesen Anteil des Schadens
               // Türme ab Mauer 2: links und rechts (f = Stelle auf der Mauer, 0 oben bis 1 unten) je ein Turm; k = sq (Viereck) oder rd (Rund), w/h bzw. r = Grösse in Kacheln,
               // out = Abstand vor der Mauer; slots = Plätze (types = erlaubte Einheitentypen, dx/dy = Versatz in Kacheln)
@@ -571,22 +607,22 @@
                   { k: 'rd', f: 0.75, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste'], dx: -0.4, dy: 0.3 }] }] }
               } }, stages: [40, 80, 120, 160, 200], bars: [40, 40, 80, 120, 160, 200] } }, // rate = Leben pro Sekunde je Arbeiter, add = Leben, die jeder Arbeiter insgesamt bringt, cap = höchstes Leben der Mauer; stages = ab so viel Leben erscheint die nächste der 5 Optiken (davor nur ein Gerüst), bars = Maximum der Lebensleiste je Stufe (Gerüst, Optik 1 bis 5) = Leben, ab denen die Optik erscheint; heal = Leben pro Sekunde, die eine Mauer unter dem Höchstwert ihrer Optik von selbst heilt (erst ab der ersten Optik)
       // shield = Belagerungsschild: greift nur Mauern und Kasernen an (wie der Rammbock), richtet aber keinen Schaden an
-      shield: { name: 'Belagerungsschild', cost: 25, hp: 10, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
+      shield: { name: 'Belagerungsschild', cost: 25, hp: 12, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
       // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
       // fire = Katapult: Feuerbälle mit Flächenschaden (splash), ignoriert Mauern (nichts blockiert Ziel oder Schuss), schießt nur alle cd Sekunden
-      catapult: { name: 'Katapult', cost: 40, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 3, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
+      catapult: { name: 'Katapult', cost: 50, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 2, r: 0.34, key: 'q', delay: 1, splash: 1.3, fire: true, minRange: 2 },
       // baliste = Kriegsmaschine: ein schwerer Bolzen auf ein Ziel, trifft nach delay Sekunden, wird von Mauern aufgehalten wie ein Pfeil; passt wie das Katapult auf den großen Turm
-      baliste: { name: 'Baliste', cost: 30, hp: 4, atk: 12, range: 4, speed: 0.6, cd: 3, r: 0.34, key: 'e', delay: 0.5, minRange: 1 },
+      baliste: { name: 'Baliste', cost: 40, hp: 4, atk: 10, range: 4, speed: 0.6, cd: 2, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
     }
   };
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste'];
-  var BUY_TYPES = TYPES.filter(function (t) { return !CONFIG.units[t].hidden; }); // das gibt es als Knopf
+  var BUY_TYPES = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'wall', 'ram', 'shield', 'catapult', 'baliste']; // Knöpfe in dieser Reihenfolge (Tasten 1–9, 0, Q, E von links nach rechts)
   var WALL = CONFIG.units.wall.wall, WALL_TH = WALL.thick;
 
-  var W = 20, H = 10, T = 50; // Feld in Kacheln, T = Pixel pro Kachel
+  var W = 22, H = 10, T = 50; // Feld in Kacheln, T = Pixel pro Kachel
   var $ = function (id) { return document.getElementById(id); };
   var canvas = $('field'), ctx = canvas.getContext('2d');
   canvas.width = W * T;
@@ -695,18 +731,18 @@
     }
     // Teich
     c.fillStyle = P['water'];
-    c.beginPath(); c.ellipse(10 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.fill();
     c.strokeStyle = P['water-hi'];
     c.lineWidth = 3;
-    c.beginPath(); c.ellipse(10 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
-    c.beginPath(); c.ellipse(9.6 * T, 1.3 * T, 0.7 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.ellipse((W / 2 - 0.4) * T, 1.3 * T, 0.7 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
     // Bäume an den Rändern, die Wege bleiben frei
     var tries = 0, placed = 0;
     while (placed < 24 && tries < 200) {
       tries++;
       var tx = rnd() * W;
       var ty = rnd() < 0.5 ? 0.35 + rnd() * 2.2 : 7.5 + rnd() * 2.2;
-      var dx = (tx - 10) / 2.3, dy = (ty - 1.45) / 1.2;
+      var dx = (tx - W / 2) / 2.3, dy = (ty - 1.45) / 1.2;
       if (dx * dx + dy * dy < 1) continue;
       var tr = (0.32 + rnd() * 0.2) * T;
       c.fillStyle = P.shade;
@@ -719,7 +755,7 @@
     }
     // Steine
     for (i = 0; i < 9; i++) {
-      var sx = (3.5 + rnd() * 13) * T;
+      var sx = (3.5 + rnd() * (W - 7)) * T;
       var sy = (rnd() < 0.5 ? 0.3 + rnd() * 2.4 : 7.4 + rnd() * 2.3) * T;
       c.fillStyle = P.stone;
       c.strokeStyle = P['stone-dark'];
@@ -901,6 +937,72 @@
       }
     }
     return best;
+  }
+  // Liegt der Standplatz (tx, ty) eines Bauern auf einer Mauer oder einem Turm (eigener oder gegnerischer, auch Gerüst), stellt er sich
+  // an den nächsten freien Rand (steht er vor einer fertigen gegnerischen Mauer, an deren Außenrand). Das ist seine echte Position (Treffer, Online-Abgleich);
+  // für den Abstand zu anderen Bauern zählt weiter nur der ursprüngliche Platz (tx, ty).
+  function farmerStand(u) {
+    var fr = CONFIG.units.farmer.r * 0.9, tx = u.tx, ty = u.ty, obs = [], wi, k, ti;
+    // Hindernisse sammeln: Mauerband (so breit wie gezeichnet, Mauer 5 ist breiter) und Türme (Viereck oder Rund)
+    for (wi = 0; wi < 2; wi++) {
+      var w = walls[wi];
+      if (!w) continue;
+      var st = w.stage || 0, half = WALL_TH / 2 + [0, 1.5, 2, 2, 2, 6][st] / T;
+      obs.push({ k: 'w', w: w, b: bases[wi], in: WALL.dist - half - fr, out: WALL.dist + half + fr, outOnly: wi !== u.team && w.built && wallOut(w, u.x, u.y) });
+      if (st >= WALL.tower.from) {
+        var tl = WALL.tower.levels[st].list;
+        for (ti = 0; ti < tl.length; ti++) {
+          var tw = tl[ti], c = wallPoint(wi, tw.f, WALL.dist + tw.out), an = towerAng(wi, tw.f);
+          var pad = (st >= 5 ? 6 : 2) / T + fr; // Rahmen bzw. Zinnen
+          if (tw.k === 'rd') obs.push({ k: 'rd', x: c.x, y: c.y, r: tw.r + pad });
+          else obs.push({ k: 'sq', x: c.x, y: c.y, ca: dcos(an), sa: dsin(an), hw: tw.w / 2 + pad, hh: tw.h / 2 + pad });
+        }
+      }
+    }
+    function inside(o, x, y) {
+      if (o.k === 'w') { var d0 = wallD(o.w.team, x, y); return o.outOnly ? d0 < o.out : d0 > o.in && d0 < o.out; }
+      if (o.k === 'rd') return hyp(x - o.x, y - o.y) < o.r - 1e-6;
+      var dx = x - o.x, dy = y - o.y, lx = dx * o.ca + dy * o.sa, ly = -dx * o.sa + dy * o.ca;
+      return Math.abs(lx) < o.hw - 1e-6 && Math.abs(ly) < o.hh - 1e-6;
+    }
+    function free(x, y) { for (var q = 0; q < obs.length; q++) if (inside(obs[q], x, y)) return false; return true; }
+    // Kandidaten: von (x, y) aus die nächsten Punkte am Rand des Hindernisses o
+    function exits(o, x, y) {
+      var e = 0.01, res = [];
+      if (o.k === 'w') {
+        var px = clamp(x, o.b.x1, o.b.x2), py = clamp(y, o.b.y1, o.b.y2), dd = hyp(x - px, y - py);
+        if (dd < 1e-6) return res;
+        if (!o.outOnly) res.push({ x: px + (x - px) / dd * (o.in - e), y: py + (y - py) / dd * (o.in - e) });
+        res.push({ x: px + (x - px) / dd * (o.out + e), y: py + (y - py) / dd * (o.out + e) });
+      } else if (o.k === 'rd') {
+        var rx = x - o.x, ry = y - o.y, rl = hyp(rx, ry);
+        if (rl < 1e-6) { rx = 1; ry = 0; rl = 1; }
+        res.push({ x: o.x + rx / rl * (o.r + e), y: o.y + ry / rl * (o.r + e) });
+      } else {
+        var dx = x - o.x, dy = y - o.y, lx = dx * o.ca + dy * o.sa, ly = -dx * o.sa + dy * o.ca;
+        [[o.hw + e, ly], [-o.hw - e, ly], [lx, o.hh + e], [lx, -o.hh - e]].forEach(function (p) {
+          res.push({ x: o.x + p[0] * o.ca - p[1] * o.sa, y: o.y + p[0] * o.sa + p[1] * o.ca });
+        });
+      }
+      return res;
+    }
+    if (free(tx, ty)) return { x: tx, y: ty };
+    // bis zu drei Schritte vom Platz weg zum nächsten freien Randpunkt (Mauer und Turm können sich überlappen)
+    var front = [{ x: tx, y: ty }], best = null, bd = 1e9;
+    for (var depth = 0; depth < 3 && !best; depth++) {
+      var next = [];
+      for (k = 0; k < front.length; k++) for (var q = 0; q < obs.length; q++) {
+        if (!inside(obs[q], front[k].x, front[k].y)) continue;
+        var ex = exits(obs[q], front[k].x, front[k].y);
+        for (var m = 0; m < ex.length; m++) {
+          var p = { x: clamp(ex[m].x, 0.3, W - 0.3), y: clamp(ex[m].y, 0.3, H - 0.3) }, pd = hyp(p.x - tx, p.y - ty);
+          if (free(p.x, p.y)) { if (pd < bd) { bd = pd; best = p; } }
+          else next.push(p);
+        }
+      }
+      front = next;
+    }
+    return best || { x: tx, y: ty };
   }
   function pickSpot(u) {
     var spot = findSpot(u.team, u);
@@ -1482,7 +1584,7 @@
             if (u.retry <= 0) { u.retry = 1; pickSpot(u); }
           }
           var gx, gy, gd, stopAt;
-          if (u.tx !== null) { gx = u.tx; gy = u.ty; stopAt = 0.03; }
+          if (u.tx !== null) { var fsp = farmerStand(u); gx = fsp.x; gy = fsp.y; stopAt = 0.03; }
           else { var fbp = nearestOnRect(u, bases[1 - u.team]); gx = fbp.x; gy = fbp.y; stopAt = 0.9; }
           var fdx = gx - u.x, fdy = gy - u.y, fd = hyp(fdx, fdy);
           if (fd > stopAt) {
@@ -1491,10 +1593,17 @@
             u.y += fdy / fd * fs;
             if (Math.abs(fdx) > 0.2) u.face = fdx > 0 ? 1 : -1;
           }
-          if (u.tx !== null && hyp(u.tx - u.x, u.ty - u.y) <= 0.03) {
-            u.x = u.tx; u.y = u.ty;
+          if (u.tx !== null && hyp(gx - u.x, gy - u.y) <= 0.03) {
+            u.x = gx; u.y = gy;
             u.settled = true;
             effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.35 });
+          }
+        } else { // steht schon: entsteht oder verschwindet eine Mauer an seinem Platz, geht er an ihren Rand bzw. zurück
+          var fst2 = farmerStand(u), fdx2 = fst2.x - u.x, fdy2 = fst2.y - u.y, fd2 = hyp(fdx2, fdy2);
+          if (fd2 > 1e-6) {
+            var fs2 = Math.min(spd * dt, fd2);
+            u.x += fdx2 / fd2 * fs2; u.y += fdy2 / fd2 * fs2;
+            if (Math.abs(fdx2) > 0.2) u.face = fdx2 > 0 ? 1 : -1;
           }
         }
         continue;
@@ -1605,10 +1714,11 @@
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy);
         if (dist < 0.55) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
-          var push = (0.55 - dist) * 0.5 * k;
+          var push = (0.55 - dist) * k; // zusammen, verteilt nach Masse: der Rammbock drückt sich durch, die anderen weichen aus
+          var ma = CONFIG.units[a.type].mass || 1, mb = CONFIG.units[b.type].mass || 1, pa = push * mb / (ma + mb), pb = push * ma / (ma + mb);
           var nx = dx / dist, ny = dy / dist;
-          a.x -= nx * push; a.y -= ny * push;
-          b.x += nx * push; b.y += ny * push;
+          a.x -= nx * pa; a.y -= ny * pa;
+          b.x += nx * pb; b.y += ny * pb;
         }
       }
     }
@@ -2303,6 +2413,15 @@
     drawBase(bases[1]);
     if (walls[0]) drawWall(walls[0]);
     if (walls[1]) drawWall(walls[1]);
+    if (tut.on && tut.hl && walls[0] && walls[0].stage >= WALL.tower.from) { // Tutorial: eigene Türme grün umranden
+      var hlv = WALL.tower.levels[walls[0].stage].list, hk = 0.5 + 0.5 * Math.sin(performance.now() / 180);
+      ctx.save(); ctx.strokeStyle = '#1fae4b'; ctx.lineWidth = 4 + 2 * hk; ctx.setLineDash([]);
+      for (var hi = 0; hi < hlv.length; hi++) {
+        var htw = hlv[hi], hp = wallPoint(0, htw.f, WALL.dist + htw.out), hr = (htw.k === 'rd' ? htw.r : Math.max(htw.w, htw.h) / 2) + 0.3 + 0.06 * hk;
+        ctx.beginPath(); ctx.arc(hp.x * T, hp.y * T, hr * T, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
     drawTrench();
     var order = units.slice().sort(function (a, b) { return a.y - b.y; });
     for (var i = 0; i < order.length; i++) {
@@ -2346,7 +2465,7 @@
     // Auf dem Knopf stehen nur Bild und Kosten, die Werte erscheinen als Tooltip
     var info = d.name + ': ' + d.cost + ' Gold, Leben ' + d.hp + ', Angriff ' + d.atk + ', Reichweite ' + d.range +
       ', Marschtempo ' + d.speed.toFixed(1) +
-      (d.bonus ? ', Gold-Bonus +' + d.bonus : '') + (d.ram ? (d.atk ? ', greift nur Mauern und Kasernen an' : ', greift nur Mauern und Kasernen an, richtet aber keinen Schaden an') : '') +
+      (d.bonus ? ', Gold-Bonus +' + d.bonus : '') + (d.ram && d.atk ? ', greift nur Mauern und Kasernen an' : '') + (type === 'shield' ? ', Fernkampfschaden ist um 75% reduziert' : '') +
       (d.splash ? ', Fläche Radius ' + d.splash + (d.slow ? ', bremst auf ' + Math.round(d.slow.factor * 100) + ' % für ' + d.slow.secs + ' s' : '') : '') +
       (d.delay && !d.fire ? ', schießt alle ' + d.cd + ' s, Bolzen trifft nach ' + d.delay + ' s' : '') + (d.minRange ? ', kann Ziele näher als ' + d.minRange + (d.minRange === 1 ? ' Kachel' : ' Kacheln') + ' nicht angreifen' : '') + (d.fire ? ', schießt Feuerbälle alle ' + d.cd + ' s, ignoriert Mauern' : '') +
       ' (Taste ' + d.key.toUpperCase() + ')';
@@ -2400,7 +2519,9 @@
     BUY_TYPES.forEach(function (t) {
       var lk = tut.on && tut.avail.indexOf(t) < 0;
       btns[t].classList.toggle('locked', lk);
-      btns[t].classList.toggle('tuthint', tutArrow(t));
+      var th = tutArrow(t);
+      btns[t].classList.toggle('tuthint', th);
+      if (th) { var tn = String(TUT[tut.i].need[t] - (tut.bought[t] || 0)); if (btns[t].getAttribute('data-need') !== tn) btns[t].setAttribute('data-need', tn); }
     });
     if (giveBtn.disabled === canGive) giveBtn.disabled = !canGive;
     if (gm !== ui.gm) {
@@ -2451,7 +2572,7 @@
     if (tut.on) {
       tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
       tutBox('');
-      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast jede Einheit angewendet und den König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Spiel starten');
+      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Spiel starten');
       if (w === 0) jingle('win'); else jingle('lose');
       return;
     }
@@ -2527,41 +2648,50 @@
   // ---------- Tutorial ----------
   // Geführte Partie gegen einen Trainingsgegner mit König und Burg. Er tut nur das, was das Tutorial verlangt.
   // Grüne Pfeile zeigen, welchen Knopf man drücken soll. Das Gold läuft ganz normal (es gibt nie extra Gold).
-  // Sobald das Gold für den Kaufschritt reicht (oder ein Hinweisfeld offen ist), läuft das Spiel nur noch mit 10 % Tempo.
-  var TUT_SLOW = 0.1;
+  // Sobald das Gold für den Kaufschritt reicht (oder ein Hinweisfeld offen ist), läuft das Spiel nur noch mit 20 % Tempo.
+  var TUT_SLOW = 0.2;
   function eb(type, n) { for (var k = 0; k < n; k++) { gold[1] += CONFIG.units[type].cost; buy(1, type); } }
   function noWorkers(team) { return !units.some(function (u) { return u.team === team && u.type === 'worker' && u.hp > 0; }); }
   function wallDone(team, hp) { var w = walls[team]; return !!(w && w.hp >= hp && noWorkers(team)); }
-  function noFoe() { return !units.some(function (u) { return u.team === 1 && u.type !== 'king' && u.hp > 0; }); }
+  function noFoe() { return !units.some(function (u) { return u.team === 1 && u.type !== 'king' && !u.tower && u.hp > 0; }); } // Besatzung der gegnerischen Türme zählt nicht
   function towerCount(team) { return units.filter(function (u) { return u.team === team && u.tower && u.hp > 0; }).length; }
-  function knightNearWall() { return units.some(function (u) { return u.team === 1 && u.type === 'knight' && u.hp > 0 && wallD(0, u.x, u.y) <= WALL.dist + 2; }); }
+  // keine Kampfeinheit mehr auf dem Feld, auf beiden Seiten (Könige, Bauern, Arbeiter und Turmbesatzungen zählen nicht)
+  function noFighters() { return !units.some(function (u) { var d = CONFIG.units[u.type]; return u.hp > 0 && !u.tower && !d.king && !d.passive && !d.worker; }); }
+  function knightNearWall() { return units.some(function (u) { return u.team === 1 && u.type === 'knight' && u.hp > 0 && wallD(0, u.x, u.y) <= WALL.dist + 3; }); } // höchstens 3 Kacheln vor deiner Mauer
   function farmersSettled() { return units.filter(function (u) { return u.team === 0 && u.type === 'farmer' && u.settled && u.hp > 0; }).length; }
   var TUT = [
     { mode: 'info', avail: [], box: 'Ziel des Spiels ist es, den gegnerischen König zu besiegen.' },
     { mode: 'buy', avail: ['spear'], need: { spear: 4 } },
-    { mode: 'run', avail: [], check: function () { return tut.st > 1 && !units.some(function (u) { return u.team === 0 && u.type !== 'king' && u.hp > 0; }); } },
-    { mode: 'buy', avail: ['farmer'], need: { farmer: 10 }, box: 'Bauern erhöhen deine Einnahmen.' },
-    { mode: 'run', avail: [], check: function () { return farmersSettled() >= 10; } },
-    { mode: 'run', avail: [], start: function () { eb('archer', 2); }, check: function () { return countFarmers(0) < 10; } },
+    { mode: 'run', avail: [], check: function () { // erst 1 s nachdem alle eigenen Einheiten (ausser dem König) gefallen sind
+      if (units.some(function (u) { return u.team === 0 && u.type !== 'king' && u.hp > 0; })) { tut.qt = tut.st; return false; }
+      return tut.st - tut.qt >= 1; } },
+    { mode: 'buy', avail: ['farmer'], need: { farmer: 12 }, box: 'Bauern erhöhen deine Einnahmen.' },
+    { mode: 'run', avail: [], check: function () { return farmersSettled() >= 12; } },
+    { mode: 'run', avail: [], start: function () { eb('archer', 2); }, check: function () { return countFarmers(0) < 12; } },
     { mode: 'buy', avail: ['rider'], need: { rider: 1 } },
-    { mode: 'run', avail: [], check: function () { return tut.st > 0.5 && noFoe(); } },
+    { mode: 'run', avail: [], check: function () { return tut.st > 0.5 && !units.some(function (u) { return u.team === 0 && u.type === 'rider' && u.hp > 0; }); } }, // fertig, sobald der Reiter gefallen ist
     { mode: 'buy', avail: ['wall'], need: { wall: 1 } },
     { mode: 'run', avail: [], check: function () { return wallDone(0, 40); } },
     { mode: 'buy', avail: ['wall'], need: { wall: 1 } },
     { mode: 'run', avail: [], check: function () { return wallDone(0, 80); } },
     { mode: 'buy', avail: ['archer'], need: { archer: 2 } },
-    { mode: 'run', avail: [], check: function () { return towerCount(0) >= 2; } },
+    { mode: 'run', avail: [], // der Gegner baut Mauer 1, danach Mauer 2, und besetzt dann ihre Türme mit 2 Bogenschützen
+      // gleichzeitig (ohne Verlangsamung): 2 s nach Beginn ein Erklärfenster, 1 s nach dem Schliessen ein zweites; solange sind deine Türme grün umrandet
+      notes: [{ after: 2, hl: true, box: 'Fernkampfeinheiten besetzen zuerst die Türme und sind dort geschützter.' },
+              { after: 1, hl: true, box: 'Mit dem Ausbau der Mauer werden die Türme mächtiger. Auf den grössten Türmen können sogar Kriegsmaschinen positioniert werden.' }],
+      script: [{ do: function () { eb('wall', 1); } },
+               { until: function () { return wallDone(1, 40); }, do: function () { eb('wall', 1); } },
+               { until: function () { var w = walls[1]; return wallDone(1, 80) && !!(w.sl && w.tlv); }, do: function () { eb('archer', 2); } }],
+      check: function () { return towerCount(1) >= 2; } },
     { mode: 'run', avail: [], start: function () { eb('knight', 1); },
       script: [{ after: 5, do: function () { eb('spear', 4); } }, { after: 1, do: function () { eb('archer', 2); } }],
       check: function () { return knightNearWall(); } },
     { mode: 'buy', avail: ['archer'], need: { archer: 2 } },
-    { mode: 'run', avail: [], check: function () { return noFoe(); } },
-    { mode: 'run', avail: [], // der Gegner steht sofort mit Mauer 2 da (so stören übrig gebliebene Einheiten den Bau nicht) und besetzt die Türme
-      start: function () { walls[1] = { team: 1, hp: 80, built: true, hit: 0, lastHit: -99, stage: 2, peak: 80 }; },
-      script: [{ until: function () { var w = walls[1]; return !!(w && w.sl && w.tlv); }, do: function () { eb('archer', 2); } }],
-      check: function () { return towerCount(1) >= 2; } },
-    { mode: 'buy', avail: ['ram', 'knight'], need: { ram: 1, knight: 4 } },
-    { mode: 'run', avail: [], check: function () { return tut.st >= 5; } },
+    { mode: 'run', avail: [], check: function () { return noFighters(); } },
+    { mode: 'buy', avail: ['ram'], need: { ram: 1 }, box: 'Mit dem Rammbock reissen wir die gegnerische Mauer ein.' },
+    { mode: 'run', avail: [], check: function () { return tut.st >= 1; } },
+    { mode: 'buy', avail: ['knight'], need: { knight: 4 } },
+    { mode: 'run', avail: [], check: function () { return tut.st >= 4; } },
     { mode: 'buy', avail: ['archer'], need: { archer: 4 } },
     { mode: 'run', avail: [], check: function () { return false; } }
   ];
@@ -2569,32 +2699,39 @@
   function tutNeed(s) { var ok = true; for (var t in s.need) if ((tut.bought[t] || 0) < s.need[t]) ok = false; return ok; }
   function tutCost(s) { var c = 0; for (var t in s.need) c += Math.max(0, s.need[t] - (tut.bought[t] || 0)) * CONFIG.units[t].cost; return c; }
   function tutArrow(t) { var s = TUT[tut.i]; return tut.on && s.mode === 'buy' && s.need[t] !== undefined && (tut.bought[t] || 0) < s.need[t]; }
-  // Tempo des Spiels: bei offenem Hinweisfeld oder wenn das Gold für den Kaufschritt reicht nur 10 %
+  // Tempo des Spiels: bei offenem Hinweisfeld oder wenn das Gold für den Kaufschritt reicht nur 20 %
   function tutScale() {
     if (!tut.on) return 1;
     var s = TUT[tut.i];
-    if (tut.boxOpen || (s.mode === 'buy' && gold[0] >= tutCost(s))) return TUT_SLOW;
+    if ((tut.boxOpen && !tut.noSlow) || (s.mode === 'buy' && gold[0] >= tutCost(s))) return TUT_SLOW; // Erklärfenster aus notes verlangsamen nicht
     return 1;
   }
-  function tutBox(text) {
+  function tutBox(text, noSlow) {
     tut.boxOpen = !!text;
+    tut.noSlow = !!(text && noSlow);
+    if (!text && !(tut.notes && tut.notes.length)) tut.hl = false; // grüne Turm-Umrandung endet mit dem letzten Erklärfenster
     tutBoxEl.hidden = !text;
     if (text) $('tutBoxText').textContent = text;
   }
   function tutEnter(n) {
     var s = TUT[n];
-    tut.i = n; tut.bought = {}; tut.script = (s.script || []).slice(); tut.si = 0; tut.rt = 0; tut.st = 0;
+    tut.i = n; tut.bought = {}; tut.script = (s.script || []).slice(); tut.si = 0; tut.rt = 0; tut.st = 0; tut.qt = 0;
     tut.avail = s.avail || [];
     ui.gm = ui.gf = -1;
     if (s.start) s.start();
-    tutBox(s.box || '');
+    if (s.notes) { tut.notes = s.notes.slice(); tut.nt = 0; }
+    if (s.box || !(tut.boxOpen && tut.noSlow)) tutBox(s.box || ''); // ein offenes Erklärfenster aus notes bleibt beim Schrittwechsel offen
   }
   function tutNextStep() { if (tut.i < TUT.length - 1) tutEnter(tut.i + 1); }
-  function tutGo() { tut.on = true; start(true); tutEnter(0); }
+  function tutGo() { tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
   // gdt = Spielzeit dieses Bildes
   function tutTick(gdt) {
     if (!tut.on) return;
     gold[1] = 0; // der Trainingsgegner kauft nur auf Befehl des Tutorials
+    if (tut.notes && tut.notes.length && !tut.boxOpen) { // Erklärfenster, die parallel zu den Schritten erscheinen
+      tut.nt += gdt;
+      if (tut.nt >= tut.notes[0].after) { var nn = tut.notes.shift(); tut.nt = 0; tut.hl = !!nn.hl; tutBox(nn.box, true); }
+    }
     var s = TUT[tut.i];
     if (s.mode === 'buy') { if (tutNeed(s)) tutNextStep(); return; }
     if (s.mode === 'info') { if (!tut.boxOpen) tutNextStep(); return; }
@@ -2618,7 +2755,7 @@
   // Beide Browser rechnen dieselbe Partie (gleicher Startwert, feste Schrittlänge) und tauschen nur Kaufbefehle aus.
   // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
   // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
-  var STEP = 0.05, PVP_DELAY = 4, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
+  var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
   if (ONLINE) $('pvpBtn').hidden = false;
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
@@ -2626,13 +2763,24 @@
   function pvpOpen(onOpen) {
     var ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
     pvp.ws = ws;
-    ws.onopen = onOpen;
+    var opened = false;
+    ws.onopen = function () { opened = true; onOpen(); };
     ws.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } pvpMsg(m); };
-    ws.onclose = function () { if (pvp.ws === ws) { pvp.ws = null; pvpLost(); } };
+    ws.onclose = function () {
+      if (pvp.ws !== ws) return;
+      pvp.ws = null;
+      // Der Gratis-Server schläft nach Pause ein und braucht bis zu ~1 Minute zum Aufwachen: beim Suchen mehrmals neu versuchen.
+      if (!opened && pvp.searching && (pvp.tries = (pvp.tries || 0) + 1) <= 20) {
+        ovText.textContent = 'Server wird geweckt … (kann bis zu einer Minute dauern)';
+        setTimeout(function () { if (pvp.searching && !pvp.ws) pvpOpen(onOpen); }, 3000);
+        return;
+      }
+      pvpLost();
+    };
   }
   function pvpSearch() {
     if (!ONLINE || pvp.on || pvp.searching) return;
-    pvp.searching = true; pvp.ended = false;
+    pvp.searching = true; pvp.ended = false; pvp.tries = 0;
     showOverlay('Suche Gegner …', 'Verbinde mit dem Server …', 'Abbrechen', false);
     pvpOpen(function () { ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); });
   }
@@ -2779,9 +2927,9 @@
     knight: 'Hält am meisten aus.',
     digger: 'Gräbt sich unsichtbar zu einem gegnerischen Fernkämpfer (nicht auf Türmen, nie näher als 6 Kacheln an der Burg).',
     ram: 'Greift nur Mauern und Burgen an.',
-    shield: 'Greift nicht an, nimmt aber nur 25 % des Fernkampfschadens. Schützt Rammböcke.',
-    catapult: 'Feuerball mit Flächenschaden (Radius 1,2). Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
-    baliste: 'Mächtiger Bolzen, trifft nach 0,5 s. Kann Ziele unter 1 Kachel nicht treffen. Setzt sich in Türme der Stufe 5.',
+    shield: 'Fernkampfschaden ist um 75% reduziert',
+    catapult: 'Feuerball mit Flächenschaden (Radius 1,3). Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
+    baliste: 'Mächtiger Bolzen, trifft nach 0,5 s. Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
     wall: 'Vier Arbeiter bauen sie in Stufen (40, 80 … Leben). Ab Mauer 2 mit Türmen. Ist die Burg gefallen, baut der Knopf die Burg neu.'
   };
   var statCard = $('statCard'), lpTimer = 0, lpFired = false, lpX = 0, lpY = 0;
@@ -2861,14 +3009,14 @@
     new MutationObserver(themeChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   } catch (err) {}
 
-  // ---------- Handymodus ----------
-  // Querformat: Spielfeld links, Einheitenknöpfe in zwei Spalten rechts, oben eine schmale Leiste. 
+  // ---------- Vollbild (früher Handymodus) ----------
+  // Querformat: Spielfeld so gross wie möglich, Einheitenknöpfe in einer Reihe darunter, Gold oben links, oben rechts ✕ zum Verlassen.
+  // Wer das Vollbild verlässt (✕ oder Zurück-Geste), sieht wieder Pause, Aufgeben usw.; ein Offline-Spiel wird dabei pausiert.
   var phoneBtn = $('phoneBtn');
   function setPhone(on, goFull) {
     document.documentElement.classList.toggle('phone', on);
-    phoneBtn.textContent = on ? 'Normal' : 'Handymodus';
+    phoneBtn.textContent = on ? 'Normal' : 'Vollbild';
     phoneBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    try { localStorage.setItem('kasernenkrieg-phone', on ? '1' : '0'); } catch (err) {}
     try {
       if (goFull && on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
       else if (goFull && !on && document.fullscreenElement) document.exitFullscreen().catch(function () {});
@@ -2879,7 +3027,31 @@
     setPhone(!document.documentElement.classList.contains('phone'), true);
     if (e.detail > 0) phoneBtn.blur();
   });
-  try { if (localStorage.getItem('kasernenkrieg-phone') === '1') setPhone(true, false); } catch (err) {}
+  $('fsExit').addEventListener('click', function () {
+    if (state === 'playing' && !pvp.on) setPaused(true);
+    setPhone(false, true);
+  });
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement && document.documentElement.classList.contains('phone')) { // Zurück-Geste beendet das Vollbild
+      if (state === 'playing' && !pvp.on) setPaused(true);
+      setPhone(false, false);
+    }
+  });
+  // Pause und Aufgeben auch im Vollbild (oben rechts): sie lösen die normalen Knöpfe aus und zeigen deren Zustand
+  var fsPause = $('fsPause'), fsGive = $('fsGive');
+  fsPause.addEventListener('click', function () { pauseBtn.click(); fsPause.blur(); });
+  fsGive.addEventListener('click', function () { giveBtn.click(); fsGive.blur(); });
+  function syncFsBar() {
+    if (fsPause.textContent !== pauseBtn.textContent) fsPause.textContent = pauseBtn.textContent;
+    if (fsPause.hidden !== pauseBtn.hidden) fsPause.hidden = pauseBtn.hidden;
+    var pOff = !(state === 'playing' || state === 'paused');
+    if (fsPause.disabled !== pOff) fsPause.disabled = pOff;
+    if (fsGive.textContent !== giveBtn.textContent) fsGive.textContent = giveBtn.textContent;
+    if (fsGive.disabled !== giveBtn.disabled) fsGive.disabled = giveBtn.disabled;
+    fsGive.classList.toggle('armed', giveBtn.classList.contains('armed'));
+  }
+  // Beim Laden immer im normalen Modus starten (echtes Vollbild geht nur nach einem Tippen); alter gespeicherter Handymodus wird gelöscht
+  try { localStorage.removeItem('kasernenkrieg-phone'); } catch (err) {}
 
   // ---------- Start ----------
   readPalette();
@@ -2899,12 +3071,11 @@
     }
     else if (state === 'over') updateEffects(dt);
     if (pvp.on && state === 'playing') pvpRender(); else render();
-    syncUi();
+    syncUi(); syncFsBar();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 })();
 </script>
 
-</body>
-</html>
+</body></html>
