@@ -20,10 +20,12 @@ STANDARDREGELN DES BESITZERS
 - Bots/Computer-Einheiten verhalten sich exakt wie Spielereinheiten.
 - Kein Gold-Maximum mehr (GOLD_MAX = Infinity, seit 16.11.2026). Sandbox: Spieler 9999, Bot 160 Startgold. Auszahlung alle 5 s (10 Gold), Startgold 10.
 - Veröffentlichungs-Labels (Artifact) max. 60 Zeichen.
-- Tutorial: nur grüne Pfeile, keine Sprache, fünf "Verstanden"-Boxen (Ziel, Bauern, 2 Turm-Erklärungen parallel zum Mauerbau des Gegners ohne Verlangsamung mit grün umrandeten eigenen Türmen, Rammbock), über dem grünen Pfeil steht die noch zu kaufende Anzahl, 12 Bauern, nie Extra-Gold, 20 % Tempo wenn Gold reicht, nach deinen 2 Bogenschützen baut der Gegner Mauer 1, dann Mauer 2 (mit Arbeitern) und besetzt die Türme (vor dem Ritterangriff), seine Turmbesatzung zählt bei noFoe nicht, eigene Mauer nicht reparieren (nur im Tutorial).
+- Tutorial: nur grüne Pfeile, keine Sprache, gesperrte Knöpfe sehen aus wie «zu wenig Gold», Rammbock-Schritt 5 s nachdem alle Gegner des 2. Angriffs tot sind (Turmbesatzung zählt nicht), «Tutorial beenden» im Vollbild in der obersten Reihe links neben Pause, fünf "Verstanden"-Boxen (Ziel, Bauern, 2 Turm-Erklärungen parallel zum Mauerbau des Gegners ohne Verlangsamung mit grün umrandeten eigenen Türmen, Rammbock), über dem grünen Pfeil steht die noch zu kaufende Anzahl, 12 Bauern, nie Extra-Gold, 20 % Tempo wenn Gold reicht, nach deinen 2 Bogenschützen baut der Gegner Mauer 1, dann Mauer 2 (mit Arbeitern) und besetzt die Türme (vor dem Ritterangriff), seine Turmbesatzung zählt bei noFoe nicht, eigene Mauer nicht reparieren (nur im Tutorial).
 - Der Besitzer will weiter nur chatten; ich pflege alles (Artifact + diese Notizen) selbst.
 
-SPIELREGELN: Burg 40 HP, König 20 HP sitzt unverwundbar in der Burg und schießt; fällt die Burg, steigt er mit Schwert hinab; Sieg = König tot. Mauern: Abstand 3 Kacheln zur Burg, Stufen 40/80/120 …, Türme ab Stufe 2. König schießt 4,5 Kacheln weit. Bauern: 1,8 Kacheln Abstand (ca. 32 Plätze gesamt); liegt sein Platz (tx,ty) auf einer Mauer oder einem Turm, steht er WIRKLICH am nächsten freien Rand (farmerStand, Breite je Mauerstufe wie gezeichnet; vor fertiger gegnerischer Mauer am Außenrand) – zählt für Treffer und Online-Abgleich; für den Bauernabstand zählt nur tx,ty. Fernkämpfer besetzen Turmplätze. Lang drücken auf Einheitenknopf = Stats-Karte. Gedränge: Rammbock hat mass 6 (andere 1) und schiebt Einheiten im Weg zur Seite. Knopf-Reihenfolge (BUY_TYPES): Bauer, Speer, Bogen, Reiter, Tunnelgräber, Ritter, Magier, Mauer, Rammbock, Schild, Katapult, Baliste = Tasten 1–9, 0, Q, E. Vollbild (html.phone, Knopf «Vollbild»): Feld maximal, 12 Knöpfe in einer Reihe unten, Gold-HUD oben links, oben rechts Pause/Aufgeben (#fsBar, spiegeln pauseBtn/giveBtn) und ✕ (verlässt Vollbild, pausiert offline). Startet nie automatisch im Vollbild.
+ANGRIFFSWELLEN der Bots: CONFIG.BOTS (attackGold, attack); Änderungen über die Eingabemaske im Chat (siehe Projekt-Anweisungen). Stand 16.11. 20:36: Bandit ab 130 (Welle 157), Kleiner Prinz ab 180 (202), Feldherr ab 210 (267), Baron ab 230 (262).
+
+SPIELREGELN: Burg 40 HP, König 20 HP sitzt unverwundbar in der Burg und schießt; fällt die Burg, steigt er mit Schwert hinab; Sieg = König tot. Mauern: Abstand 3 Kacheln zur Burg, Stufen 40/80/120 …, Türme ab Stufe 2. König schießt 4,5 Kacheln weit. Bauern: 1,8 Kacheln Abstand (ca. 32 Plätze gesamt); liegt sein Platz (tx,ty) auf einer Mauer oder einem Turm, steht er WIRKLICH am nächsten freien Rand (farmerStand, Breite je Mauerstufe wie gezeichnet; vor fertiger gegnerischer Mauer am Außenrand) – zählt für Treffer und Online-Abgleich; für den Bauernabstand zählt nur tx,ty. Fernkämpfer besetzen Turmplätze. Lang drücken auf Einheitenknopf = Stats-Karte. Gedränge: Rammbock hat mass 6 (andere 1) und schiebt Einheiten im Weg zur Seite. Knopf-Reihenfolge (BUY_TYPES): Bauer, Speer, Bogen, Reiter, Tunnelgräber, Ritter, Magier, Mauer, Rammbock, Schild, Katapult, Baliste = Tasten 1–9, 0, Q, E. Einheitenknöpfe liegen halbdurchsichtig am unteren Rand des Spielfelds (#units in .stage) und ragen zur Hälfte darunter hinaus (translateY(50%)). Vollbild (html.phone, Knopf «Vollbild»): Feld so gross wie der ganze Bildschirm, Knöpfe unten im Feld, Gold-HUD oben links, oben rechts Pause/Aufgeben (#fsBar, spiegeln pauseBtn/giveBtn) und ✕ (verlässt Vollbild, pausiert offline). Startet nie automatisch im Vollbild.
 
 TECHNIK PvP (Lockstep)
 - STEP=0.05 s, PVP_DELAY=7 Ticks (350 ms Puffer; vorher 4 = ruckelte). Jeder Client sendet {k:'t',t:T+D,c:[Befehle],ht,h}; beide führen Befehle Team 0 dann Team 1 aus, dann update(STEP). Fehlt ein Paket, warten beide. 20 s Stillstand = Gegner gibt auf. Hash alle 20 Ticks (pvpHash) -> "Synchronisationsfehler".
@@ -252,7 +254,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   .tutbox p { margin: 0; font-family: var(--display); font-size: 1.1rem; line-height: 1.3; text-wrap: balance; }
   .tutbox .primary { margin-top: 0; }
   .tut button { padding: 3px 12px; font-size: 0.8rem; background: color-mix(in srgb, var(--panel) 90%, transparent); }
-  .unit.locked { filter: grayscale(1); opacity: 0.35; }
+  .unit.locked { filter: none; } /* gesperrt (Tutorial) sieht genau aus wie «zu wenig Gold», siehe .units .unit.poor */
   .unit.tuthint { position: relative; overflow: visible; }
   .unit.tuthint::after {
     content: ''; position: absolute; left: 50%; top: -30px; width: 0; height: 0; margin-left: -14px;
@@ -293,7 +295,14 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   select:focus-visible { outline: 2px solid var(--me); outline-offset: 2px; }
 
   /* Sieben kleine Knöpfe (Bild und Kosten) immer in einer Reihe, auch auf dem Handy */
-  .units { display: flex; justify-content: center; gap: 6px; }
+  /* Einheitenknöpfe liegen unten im Spielfeld (in der Landschaft), halbdurchsichtig */
+  /* Knöpfe ragen zur Hälfte unter dem Spielfeld heraus, damit sie weniger vom Feld verdecken */
+  .stage { margin-bottom: 34px; }
+  .units { position: absolute; left: 6px; right: 6px; bottom: 0; transform: translateY(50%); z-index: 2; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+  .units .unit { pointer-events: auto; background: color-mix(in srgb, var(--panel) 90%, transparent); max-width: 72px; }
+  .units .unit.poor, .units .unit.locked { opacity: 1; background: color-mix(in srgb, var(--panel) 62%, transparent); }
+  .units .unit.poor canvas, .units .unit.poor .cost, .units .unit.locked canvas, .units .unit.locked .cost { opacity: 0.55; }
+  .units .unit canvas { max-width: 40px; }
   .unit {
     flex: 1 1 0;
     min-width: 0;
@@ -359,7 +368,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
      Gold und Auszahlung klein oben links auf dem Spielfeld, oben rechts ein Knopf zum Verlassen (dort sind Pause, Aufgeben usw.) */
   .fsbar { display: none; }
   html.phone { --pad: max(4px, env(safe-area-inset-left, 0px)); --padr: max(4px, env(safe-area-inset-right, 0px));
-    --uh: clamp(40px, 13dvh, 60px); --cw: min(calc(100vw - var(--pad) - var(--padr)), calc(2.2 * (100dvh - var(--uh) - 9px))); }
+    --uh: clamp(38px, 12dvh, 56px); --cw: min(calc(100vw - var(--pad) - var(--padr)), calc(2.2 * (100dvh - var(--uh) / 2 - 6px))); }
   html.phone, html.phone body { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
   html.phone body {
     padding-block: 2px 2px;
@@ -406,14 +415,9 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   html.phone .fsbar #fsExit { padding: 0; font-size: 1.05rem; }
   html.phone .fsbar button:disabled { opacity: 0.45; }
   html.phone .fsbar button.armed { border-color: var(--foe); color: var(--foe); }
-  html.phone .tut { right: auto; left: 50%; transform: translateX(-50%); top: 44px; }
-  html.phone .units {
-    width: 100%;
-    height: var(--uh);
-    flex: 0 0 var(--uh);
-    display: flex;
-    gap: 4px;
-  }
+  html.phone .tut { display: none; } /* im Vollbild steht «Tutorial beenden» in der obersten Reihe links neben Pause (#fsTut) */
+  html.phone .stage { margin-bottom: 0; }
+  html.phone .units { left: 4px; right: 4px; bottom: 0; height: var(--uh); gap: 4px; }
   html.phone .unit { max-width: none; min-height: 0; height: 100%; padding: 2px 1px; justify-content: center; }
   html.phone .unit canvas { width: auto; max-width: 100%; height: calc(var(--uh) - 19px); }
   html.phone .unit .cost { font-size: 0.8rem; line-height: 1.1; }
@@ -449,8 +453,15 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
     .ovrow select { flex: 1 1 0; min-width: 0; font-size: 0.8rem; padding: 6px 4px; }
     .ovrow .primary { width: 100%; padding: 8px 12px; }
   }
+  @media (max-width: 520px) {
+    .stage { margin-bottom: 22px; }
+    .units { left: 3px; right: 3px; gap: 2px; }
+    .units .unit { padding: 2px 1px; border-radius: 7px; }
+    .units .unit canvas { max-width: 24px; }
+    .units .unit .cost { font-size: 0.72rem; }
+  }
   @media (max-width: 420px) {
-    .units { gap: 4px; }
+    .units { gap: 2px; }
     .unit .cost { font-size: 0.88rem; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -484,8 +495,9 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   </div>
 
   <div class="stage" id="stage">
-    <div class="fsbar" id="fsBar"><button id="fsPause" type="button">Pause</button><button id="fsGive" type="button" disabled>Aufgeben</button><button id="fsExit" type="button" aria-label="Vollbild verlassen" title="Vollbild verlassen">✕</button></div>
+    <div class="fsbar" id="fsBar"><button id="fsTut" type="button" hidden>Tutorial beenden</button><button id="fsPause" type="button">Pause</button><button id="fsGive" type="button" disabled>Aufgeben</button><button id="fsExit" type="button" aria-label="Vollbild verlassen" title="Vollbild verlassen">✕</button></div>
     <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
+    <div class="units" id="units"></div>
     <div class="overlay" id="overlay">
       <h2 id="ovTitle">Besiege den gegnerischen König</h2>
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
@@ -509,9 +521,8 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   </div>
 
   <div class="statcard" id="statCard" hidden></div>
-  <div class="units" id="units"></div>
 
-  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und beschießt jede Sekunde mit dem Bogen den nächsten Gegner innerhalb der gestrichelten Linie (Reichweite 4,5, Angriff 2). Fällt die Burg, kämpft er mit dem Zweihänder (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), erhöht er jede Auszahlung um 1 Gold, solange er lebt. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Tasten 1 bis 9, 0, Q und E bauen Einheiten, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 150 Gold mit einem Rammbock an, nach 3 Sekunden kommen 4 Speerkämpfer, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden noch einmal 4 Speerkämpfer. Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 4 Sekunden 3 Ritter, nach 5 Sekunden 4 Bogenschützen und nach 6 Sekunden 4 Speerkämpfer (was er sich dann leisten kann). Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 1 Sekunde 1 Katapult, nach 2 Sekunden 1 Rammbock, nach 4 und 5 Sekunden je 3 Bogenschützen, nach 6 und 8 Sekunden je 5 Speerkämpfer. Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 4. Stufe, deren Türme er mit je 3 Bogenschützen besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 2 Sekunden 1 Rammbock, nach 3 Sekunden 2 Speerkämpfer, nach 4 und 5 Sekunden je 2 Ritter, nach 6 Sekunden 6 Bogenschützen, nach 7 Sekunden 4 Speerkämpfer. Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht; sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 2 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,3 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
+  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und beschießt jede Sekunde mit dem Bogen den nächsten Gegner innerhalb der gestrichelten Linie (Reichweite 4,5, Angriff 2). Fällt die Burg, kämpft er mit dem Zweihänder (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), erhöht er jede Auszahlung um 1 Gold, solange er lebt. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Tasten 1 bis 9, 0, Q und E bauen Einheiten, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 130 Gold an: sofort 1 Rammbock, nach 4 Sekunden 2 Speerkämpfer, nach 6 Sekunden 4 Speerkämpfer, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 4 Speerkämpfer (zusammen 157 Gold). Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 6 Speerkämpfer (zusammen 202 Gold); was er sich dann leisten kann. Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Katapult und 1 Rammbock, nach 7 Sekunden 6 Bogenschützen, nach 9 Sekunden 5 Speerkämpfer und nach 13 Sekunden 4 Reiter (zusammen 267 Gold). Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 4. Stufe, deren Türme er mit je 3 Bogenschützen besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 5 Sekunden 2 Speerkämpfer, nach 6 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 8 Speerkämpfer (zusammen 262 Gold). Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht; sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 2 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,2 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
 
   <div class="logrow">
     <button class="ghost" id="logBtn" type="button" title="Kopiert den Ablauf der letzten Partie (deine Käufe und die des Gegners), damit der Bot daraus lernen kann">Spielprotokoll kopieren</button>
@@ -554,21 +565,21 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
     BOTS: {
       bauern: { farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
                 wallGold: 60, wallUnits: 0, repairAt: 0, wallClear: true,
-                attackGold: 150, lockSecs: 15,
-                attack: [{ after: 0, buy: [['ram', 1]] }, { after: 3, buy: [['spear', 4]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }],
+                attackGold: 130, lockSecs: 15,
+                attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
       // «Kleiner Prinz»: wie der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
       prinz: { farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 3, wallClear: true,
                attackGold: 180, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 3]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }],
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
                defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
       // «Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
       feldherr: { farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 2, wallClear: true,
                attackGold: 210, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 1, buy: [['catapult', 1]] }, { after: 2, buy: [['ram', 1]] }, { after: 4, buy: [['archer', 3]] }, { after: 5, buy: [['archer', 3]] }, { after: 6, buy: [['spear', 5]] }, { after: 8, buy: [['spear', 5]] }],
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['catapult', 1], ['ram', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 13, buy: [['rider', 4]] }],
                defPlus: 1, defPool: ['archer', 'spear', 'rider'], defMage: 99, noOutput: 10 },
       // «Baron»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 4 (die Türme besetzt er wie alle Gegner komplett, also mit je 3 Bogenschützen),
       // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
@@ -577,7 +588,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
                huntLater: [{ after: 3, buy: [['archer', 2]] }, { after: 4, buy: [['spear', 2]] }],
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 4, wallClear: true,
                attackGold: 230, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['ram', 1]] }, { after: 3, buy: [['spear', 2]] }, { after: 4, buy: [['knight', 2]] }, { after: 5, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 6]] }, { after: 7, buy: [['spear', 4]] }],
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 5, buy: [['spear', 2]] }, { after: 6, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 8]] }],
                defPlus: 1, defPool: ['knight', 'archer', 'spear', 'digger'], defMage: 99, noOutput: 10,
                defDiggerVsCatapult: 2 } // hat der Gegner ein Katapult auf dem Feld (nicht auf dem Turm), sind mindestens so viele Tunnelgräber in der Verteidigung
     },
@@ -622,7 +633,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
       shield: { name: 'Belagerungsschild', cost: 25, hp: 12, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
       // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
       // fire = Katapult: Feuerbälle mit Flächenschaden (splash), ignoriert Mauern (nichts blockiert Ziel oder Schuss), schießt nur alle cd Sekunden
-      catapult: { name: 'Katapult', cost: 50, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 2, r: 0.34, key: 'q', delay: 1, splash: 1.3, fire: true, minRange: 2 },
+      catapult: { name: 'Katapult', cost: 50, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 2, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
       // baliste = Kriegsmaschine: ein schwerer Bolzen auf ein Ziel, trifft nach delay Sekunden, wird von Mauern aufgehalten wie ein Pfeil; passt wie das Katapult auf den großen Turm
       baliste: { name: 'Baliste', cost: 40, hp: 4, atk: 10, range: 4, speed: 0.6, cd: 2, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
@@ -2699,7 +2710,9 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
       script: [{ after: 5, do: function () { eb('spear', 4); } }, { after: 1, do: function () { eb('archer', 2); } }],
       check: function () { return knightNearWall(); } },
     { mode: 'buy', avail: ['archer'], need: { archer: 2 } },
-    { mode: 'run', avail: [], check: function () { return noFighters(); } },
+    { mode: 'run', avail: [], check: function () { // 5 s nachdem der Angriff vorbei ist (alle Gegner auf dem Feld tot; seine Turmbesatzung zählt nicht)
+      if (!noFoe()) { tut.qt = tut.st; return false; }
+      return tut.st - tut.qt >= 5; } },
     { mode: 'buy', avail: ['ram'], need: { ram: 1 }, box: 'Mit dem Rammbock reissen wir die gegnerische Mauer ein.' },
     { mode: 'run', avail: [], check: function () { return tut.st >= 1; } },
     { mode: 'buy', avail: ['knight'], need: { knight: 4 } },
@@ -2953,7 +2966,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
     digger: 'Gräbt sich unsichtbar zu einem gegnerischen Fernkämpfer (nicht auf Türmen, nie näher als 6 Kacheln an der Burg).',
     ram: 'Greift nur Mauern und Burgen an.',
     shield: 'Fernkampfschaden ist um 75% reduziert',
-    catapult: 'Feuerball mit Flächenschaden (Radius 1,3). Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
+    catapult: 'Feuerball mit Flächenschaden (Radius 1,2). Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
     baliste: 'Mächtiger Bolzen, trifft nach 0,5 s. Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
     wall: 'Vier Arbeiter bauen sie in Stufen (40, 80 … Leben). Ab Mauer 2 mit Türmen. Ist die Burg gefallen, baut der Knopf die Burg neu.'
   };
@@ -3066,6 +3079,8 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   var fsPause = $('fsPause'), fsGive = $('fsGive');
   fsPause.addEventListener('click', function () { pauseBtn.click(); fsPause.blur(); });
   fsGive.addEventListener('click', function () { giveBtn.click(); fsGive.blur(); });
+  var fsTut = $('fsTut');
+  fsTut.addEventListener('click', function () { $('tutEnd').click(); });
   function syncFsBar() {
     if (fsPause.textContent !== pauseBtn.textContent) fsPause.textContent = pauseBtn.textContent;
     if (fsPause.hidden !== pauseBtn.hidden) fsPause.hidden = pauseBtn.hidden;
@@ -3074,6 +3089,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
     if (fsGive.textContent !== giveBtn.textContent) fsGive.textContent = giveBtn.textContent;
     if (fsGive.disabled !== giveBtn.disabled) fsGive.disabled = giveBtn.disabled;
     fsGive.classList.toggle('armed', giveBtn.classList.contains('armed'));
+    if (fsTut.hidden !== tutPanelEl.hidden) fsTut.hidden = tutPanelEl.hidden;
   }
   // Beim Laden immer im normalen Modus starten (echtes Vollbild geht nur nach einem Tippen); alter gespeicherter Handymodus wird gelöscht
   try { localStorage.removeItem('kasernenkrieg-phone'); } catch (err) {}
