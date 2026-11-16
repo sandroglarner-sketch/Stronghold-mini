@@ -29,12 +29,16 @@ TECHNIK PvP (Lockstep)
 - STEP=0.05 s, PVP_DELAY=7 Ticks (350 ms Puffer; vorher 4 = ruckelte). Jeder Client sendet {k:'t',t:T+D,c:[Befehle],ht,h}; beide führen Befehle Team 0 dann Team 1 aus, dann update(STEP). Fehlt ein Paket, warten beide. 20 s Stillstand = Gegner gibt auf. Hash alle 20 Ticks (pvpHash) -> "Synchronisationsfehler".
 - Deterministisch: simRand=mulberry32(seed), Mathe über hyp/dsin/dcos/datan/datan2/dasin (kein Math.hypot/random in der Simulation!). Neue Spiellogik muss deterministisch bleiben.
 - ME (0/1) ordnet UI/Gold/Mauer zu; Gast sieht sich rot rechts. Kein Pause online. Rendern interpoliert (pvpRender).
+- Anwesenheit: Auf der Online-Seite verbindet sich jeder Besucher beim Laden per WebSocket (presenceOpen), ohne Warteschlange; der Server zählt alle Verbindungen als «online» (Anzeige im PvP-Knopf und bei der Suche). Die Suche nutzt dieselbe Verbindung; nach einer Partie wird neu verbunden. Hält den Gratis-Server wach, solange jemand auf der Seite ist.
+- Regeltext (.rules) ist per CSS ausgeblendet, bleibt aber im Code.
 - Verbindungsaufbau versucht bis 20x neu (Server-Aufwachen, Gratis-Render schläft nach 15 min).
 
 SERVER (Ordner stronghold-mini/ auf GitHub: server.js, package.json, index.html)
 - Node ohne Abhängigkeiten, eigenes WebSocket, Warteschlange + Paarung, leitet nur 't'-Nachrichten weiter, /healthz. Der Server schaltet beim Ausliefern die ONLINE-Konstante im Skript von false auf true (Online-Knopf nur auf gehosteter Seite). WICHTIG: den Platzhalter-Text dafür nie in Kommentaren wiederholen, der Server ersetzt nur das erste Vorkommen.
 - Render Gratis (Frankfurt), Build "npm install", Start "node server.js". Update = nur index.html bei GitHub ersetzen (Render baut automatisch neu, ca. 1-2 min, Laufende Partien brechen ab).
 - index.html entsteht aus dieser Datei: Wrapper mit doctype/meta/description und [hidden]{display:none!important} (Skript sim/build_site.py in Claudes Arbeitsumgebung; bei Verlust neu schreiben).
+
+STATISTIK (seit 16.11.2026): GoatCounter-Konto mit Code "sandro" (Auswertung privat, nur mit Login des Besitzers). Das Skript <script data-goatcounter=...> und eine Datenschutzzeile werden NUR beim Bauen der Online-Datei index.html eingefügt, nicht im Artifact. Gebaut wird immer aus dem aktuellen Artifact-Stand (andere Chats ändern ihn laufend; zuerst Artifact lesen, nie eine alte Arbeitskopie nehmen).
 
 OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom Domain mit TLS), Google Search Console, Namens-/Markenhinweis "Stronghold" (Firefly Studios), evtl. PWA/App, automatischer Puffer je nach Verbindung.
 -->
@@ -333,7 +337,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
     background: var(--gold-fill);
   }
 
-  .rules { margin: 0; color: var(--muted); font-size: 0.82rem; text-align: center; text-wrap: balance; }
+  .rules { display: none; margin: 0; color: var(--muted); font-size: 0.82rem; text-align: center; text-wrap: balance; } /* Regeltext bleibt im Code, ist aber nicht mehr sichtbar */
   .logrow { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .logrow textarea {
     width: 100%;
@@ -2764,7 +2768,7 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
   // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
   var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
-  if (ONLINE) $('pvpBtn').hidden = false;
+  if (ONLINE) { $('pvpBtn').hidden = false; presenceOpen(); }
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
   function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
@@ -2784,17 +2788,27 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
         return;
       }
       pvpLost();
+      if (!pvp.on && !pvp.searching) setTimeout(presenceOpen, 5000); // Anwesenheit wieder aufbauen
     };
   }
+  // Anwesenheit: Auf der Online-Seite ist jeder Besucher mit dem Server verbunden (auch ohne PvP), damit «Spieler online» alle zählt.
+  // Dieselbe Verbindung dient dann auch der Gegnersuche (keine doppelte Zählung). Bricht sie ab, wird sie nach 5 s neu aufgebaut.
+  function presenceOpen() {
+    if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
+    pvpOpen(function () {});
+  }
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); }
   function pvpSearch() {
     if (!ONLINE || pvp.on || pvp.searching) return;
     pvp.searching = true; pvp.ended = false; pvp.tries = 0;
     showOverlay('Suche Gegner …', 'Verbinde mit dem Server …', 'Abbrechen', false);
-    pvpOpen(function () { ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); });
+    if (pvp.ws && pvp.ws.readyState === 1) pvpQueue(); // schon verbunden (Anwesenheit): direkt in die Warteschlange
+    else { pvpClose(); pvpOpen(pvpQueue); }
   }
-  function pvpCancel() { pvpSend({ k: 'cancel' }); pvpClose(); pvp.searching = false; showMenu(); }
+  function pvpCancel() { pvpSend({ k: 'cancel' }); pvp.searching = false; showMenu(); } // Verbindung bleibt für die Anwesenheit offen
   function pvpLeave() {
-    pvpClose();
+    pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
+    setTimeout(presenceOpen, 300);
     pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random;
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
@@ -2806,7 +2820,10 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   }
   function pvpMsg(m) {
     if (!m) return;
-    if (m.k === 'info') { if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online; }
+    if (m.k === 'info') {
+      if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
+    }
     else if (m.k === 'match') startPvp(m.me === 1 ? 1 : 0, m.seed | 0);
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
@@ -3085,7 +3102,6 @@ OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom
   requestAnimationFrame(frame);
 })();
 </script>
-
 
 <p style="margin:0 auto;padding:6px 16px 14px;max-width:1000px;text-align:center;font:12px system-ui,sans-serif;color:#6b7a7e">Datenschutz: Diese Seite zählt anonym Seitenaufrufe (GoatCounter, ohne Cookies und ohne Werbeprofile).</p>
 </body>
