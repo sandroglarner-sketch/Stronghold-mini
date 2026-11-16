@@ -1,0 +1,3124 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stronghold Mini</title>
+<meta name="description" content="Stronghold Mini: kleines Echtzeit-Strategiespiel gegen den Computer oder online gegen andere Spieler.">
+<script data-goatcounter="https://sandro.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!--
+PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
+
+SPIEL: "Stronghold Mini" – Einzeldatei-HTML, Top-Down-Echtzeitstrategie, Canvas 1100x500, 22x10 Kacheln (T=50, Seitenverhältnis 2,2:1; vorher 20x10).
+Besitzer: Sandro (Deutsch, Handy/Android, Zürich). Online: https://stronghold-mini.onrender.com (Adresse ggf. anpassen), GitHub-Konto sandroglarner-sketch, Repo "Stronghold-mini".
+
+STANDARDREGELN DES BESITZERS
+- Antworten kurz auf Deutsch, getroffene Annahmen nennen. E-Mail des Nutzers privat halten.
+- Bots/Computer-Einheiten verhalten sich exakt wie Spielereinheiten.
+- Kein Gold-Maximum mehr (GOLD_MAX = Infinity, seit 16.11.2026). Sandbox: Spieler 9999, Bot 160 Startgold. Auszahlung alle 5 s (10 Gold), Startgold 10.
+- Veröffentlichungs-Labels (Artifact) max. 60 Zeichen.
+- Tutorial: nur grüne Pfeile, keine Sprache, gesperrte Knöpfe sehen aus wie «zu wenig Gold», Rammbock-Schritt 5 s nachdem alle Gegner des 2. Angriffs tot sind (Turmbesatzung zählt nicht), «Tutorial beenden» im Vollbild in der obersten Reihe links neben Pause, fünf "Verstanden"-Boxen (Ziel, Bauern, 2 Turm-Erklärungen parallel zum Mauerbau des Gegners ohne Verlangsamung mit grün umrandeten eigenen Türmen, Rammbock), über dem grünen Pfeil steht die noch zu kaufende Anzahl, 12 Bauern, nie Extra-Gold, 20 % Tempo wenn Gold reicht, nach deinen 2 Bogenschützen baut der Gegner Mauer 1, dann Mauer 2 (mit Arbeitern) und besetzt die Türme (vor dem Ritterangriff), seine Turmbesatzung zählt bei noFoe nicht, eigene Mauer nicht reparieren (nur im Tutorial).
+- Der Besitzer will weiter nur chatten; ich pflege alles (Artifact + diese Notizen) selbst.
+
+ANGRIFFSWELLEN der Bots: CONFIG.BOTS (attackGold, attack); Änderungen über die Eingabemaske im Chat (siehe Projekt-Anweisungen). Stand 16.11. 20:36: Bandit ab 130 (Welle 157), Kleiner Prinz ab 180 (202), Feldherr ab 210 (267), Baron ab 230 (262).
+
+SPIELREGELN: Burg 40 HP, König 20 HP sitzt unverwundbar in der Burg und schießt; fällt die Burg, steigt er mit Schwert hinab; Sieg = König tot. Mauern: Abstand 3 Kacheln zur Burg, Stufen 40/80/120 …, Türme ab Stufe 2. König schießt 4,5 Kacheln weit. Bauern: 1,8 Kacheln Abstand (ca. 32 Plätze gesamt); liegt sein Platz (tx,ty) auf einer Mauer oder einem Turm, steht er WIRKLICH am nächsten freien Rand (farmerStand, Breite je Mauerstufe wie gezeichnet; vor fertiger gegnerischer Mauer am Außenrand) – zählt für Treffer und Online-Abgleich; für den Bauernabstand zählt nur tx,ty. Fernkämpfer besetzen Turmplätze. Lang drücken auf Einheitenknopf = Stats-Karte. Gedränge: Rammbock hat mass 6 (andere 1) und schiebt Einheiten im Weg zur Seite. Knopf-Reihenfolge (BUY_TYPES): Bauer, Speer, Bogen, Reiter, Tunnelgräber, Ritter, Magier, Mauer, Rammbock, Schild, Katapult, Baliste = Tasten 1–9, 0, Q, E. Einheitenknöpfe liegen halbdurchsichtig am unteren Rand des Spielfelds (#units in .stage) und ragen zur Hälfte darunter hinaus (translateY(50%)). Vollbild (html.phone, Knopf «Vollbild»): Feld so gross wie der ganze Bildschirm, Knöpfe unten im Feld, Gold-HUD oben links, oben rechts Pause/Aufgeben (#fsBar, spiegeln pauseBtn/giveBtn) und ✕ (verlässt Vollbild, pausiert offline). Startet nie automatisch im Vollbild.
+
+TECHNIK PvP (Lockstep)
+- STEP=0.05 s, PVP_DELAY=7 Ticks (350 ms Puffer; vorher 4 = ruckelte). Jeder Client sendet {k:'t',t:T+D,c:[Befehle],ht,h}; beide führen Befehle Team 0 dann Team 1 aus, dann update(STEP). Fehlt ein Paket, warten beide. 20 s Stillstand = Gegner gibt auf. Hash alle 20 Ticks (pvpHash) -> "Synchronisationsfehler".
+- Deterministisch: simRand=mulberry32(seed), Mathe über hyp/dsin/dcos/datan/datan2/dasin (kein Math.hypot/random in der Simulation!). Neue Spiellogik muss deterministisch bleiben.
+- ME (0/1) ordnet UI/Gold/Mauer zu; Gast sieht sich rot rechts. Kein Pause online. Rendern interpoliert (pvpRender).
+- Anwesenheit: Auf der Online-Seite verbindet sich jeder Besucher beim Laden per WebSocket (presenceOpen), ohne Warteschlange; der Server zählt alle Verbindungen als «online» (Anzeige im PvP-Knopf und bei der Suche). Die Suche nutzt dieselbe Verbindung; nach einer Partie wird neu verbunden. Hält den Gratis-Server wach, solange jemand auf der Seite ist.
+- Regeltext (.rules) ist per CSS ausgeblendet, bleibt aber im Code.
+- Verbindungsaufbau versucht bis 20x neu (Server-Aufwachen, Gratis-Render schläft nach 15 min).
+
+SERVER (Ordner stronghold-mini/ auf GitHub: server.js, package.json, index.html)
+- Node ohne Abhängigkeiten, eigenes WebSocket, Warteschlange + Paarung, leitet nur 't'-Nachrichten weiter, /healthz. Der Server schaltet beim Ausliefern die ONLINE-Konstante im Skript von false auf true (Online-Knopf nur auf gehosteter Seite). WICHTIG: den Platzhalter-Text dafür nie in Kommentaren wiederholen, der Server ersetzt nur das erste Vorkommen.
+- Render Gratis (Frankfurt), Build "npm install", Start "node server.js". Update = nur index.html bei GitHub ersetzen (Render baut automatisch neu, ca. 1-2 min, Laufende Partien brechen ab).
+- index.html entsteht aus dieser Datei: Wrapper mit doctype/meta/description und [hidden]{display:none!important} (Skript sim/build_site.py in Claudes Arbeitsumgebung; bei Verlust neu schreiben).
+
+STATISTIK (seit 16.11.2026): GoatCounter-Konto mit Code "sandro" (Auswertung privat, nur mit Login des Besitzers). Das Skript <script data-goatcounter=...> und eine Datenschutzzeile werden NUR beim Bauen der Online-Datei index.html eingefügt, nicht im Artifact. Gebaut wird immer aus dem aktuellen Artifact-Stand (andere Chats ändern ihn laufend; zuerst Artifact lesen, nie eine alte Arbeitskopie nehmen).
+
+OFFEN / IDEEN: eigene Domain stronghold-mini.com (~10-12 USD/Jahr, Render Custom Domain mit TLS), Google Search Console, Namens-/Markenhinweis "Stronghold" (Firefly Studios), evtl. PWA/App, automatischer Puffer je nach Verbindung.
+-->
+<style>
+  /* Layout: breite Spalte. Oben Gold und Auszahlung, in der Mitte das Spielfeld (2,2:1), darunter die drei Produktionsknöpfe. */
+  :root {
+    --bg: #e9edef;
+    --panel: #f8fafb;
+    --fg: #172023;
+    --muted: #566568;
+    --line: #ccd6d9;
+    --me: #2a64b8;
+    --foe: #c23a2e;
+    --gold: #9a6f00;
+    --gold-fill: #e3ad22;
+    --grass-a: #8ab565;
+    --grass-b: #80ad5c;
+    --tuft: #6a9648;
+    --dirt: #cdb58a;
+    --dirt-edge: #b99d6f;
+    --tree: #3e7c3b;
+    --tree-hi: #559a4d;
+    --water: #6aa9cc;
+    --water-hi: #8cc3df;
+    --stone: #9aa3a6;
+    --stone-dark: #6e787b;
+    --wood: #8a6538;
+    --steel: #e3eaec;
+    --shade: rgba(0, 0, 0, 0.18);
+    --accent-fg: #ffffff;
+    --display: "Space Grotesk", system-ui, sans-serif;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1416;
+      --panel: #172124;
+      --fg: #e4edef;
+      --muted: #8fa1a5;
+      --line: #2b383c;
+      --me: #6ba7f2;
+      --foe: #ff7d6c;
+      --gold: #f2c14a;
+      --gold-fill: #f2c14a;
+      --grass-a: #33502f;
+      --grass-b: #2e4a2b;
+      --tuft: #24401f;
+      --dirt: #5d5238;
+      --dirt-edge: #4c432d;
+      --tree: #21452a;
+      --tree-hi: #2d5c36;
+      --water: #255070;
+      --water-hi: #336a8f;
+      --stone: #6a7477;
+      --stone-dark: #4a5356;
+      --wood: #a07b4a;
+      --steel: #cfd9db;
+      --shade: rgba(0, 0, 0, 0.35);
+      --accent-fg: #0b1412;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1416;
+    --panel: #172124;
+    --fg: #e4edef;
+    --muted: #8fa1a5;
+    --line: #2b383c;
+    --me: #6ba7f2;
+    --foe: #ff7d6c;
+    --gold: #f2c14a;
+    --gold-fill: #f2c14a;
+    --grass-a: #33502f;
+    --grass-b: #2e4a2b;
+    --tuft: #24401f;
+    --dirt: #5d5238;
+    --dirt-edge: #4c432d;
+    --tree: #21452a;
+    --tree-hi: #2d5c36;
+    --water: #255070;
+    --water-hi: #336a8f;
+    --stone: #6a7477;
+    --stone-dark: #4a5356;
+    --wood: #a07b4a;
+    --steel: #cfd9db;
+    --shade: rgba(0, 0, 0, 0.35);
+    --accent-fg: #0b1412;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    padding-block: 18px 28px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .gold-row { display: flex; gap: 22px; }
+  .stat { display: flex; flex-direction: column; align-items: flex-end; }
+  .stat .label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat .value {
+    font-family: var(--display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .dot.me { background: var(--me); }
+  .dot.foe { background: var(--foe); }
+  html.guest .dot.me { background: var(--foe); }
+  html.guest .dot.foe { background: var(--me); }
+
+  .pay { display: flex; align-items: center; gap: 12px; }
+  .btns { display: flex; gap: 6px; }
+  .btns .ghost:disabled { opacity: 0.45; cursor: default; }
+  .btns .ghost.armed { border-color: var(--foe); color: var(--foe); }
+  .meter { flex: 1; min-width: 0; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--gold-fill); }
+  .pay .txt {
+    font-size: 0.85rem;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stage { position: relative; }
+  canvas#field {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 22 / 10;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--grass-a);
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    text-align: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+  }
+  .overlay h2 { font-family: var(--display); font-size: 1.5rem; line-height: 1.15; margin: 0; text-wrap: balance; }
+  .overlay p { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 44ch; }
+
+  button { font: inherit; color: var(--fg); cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--me); outline-offset: 2px; }
+  .primary {
+    background: var(--me);
+    color: var(--accent-fg);
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .ghost {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+  }
+
+  .tut { position: absolute; right: 8px; top: 8px; z-index: 3; }
+  .tut[hidden] { display: none; }
+  .tutbox {
+    position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%); z-index: 4; width: min(420px, calc(100% - 24px)); box-sizing: border-box;
+    display: grid; gap: 10px; justify-items: center; text-align: center; padding: 14px 18px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .tutbox[hidden] { display: none; }
+  .tutbox p { margin: 0; font-family: var(--display); font-size: 1.1rem; line-height: 1.3; text-wrap: balance; }
+  .tutbox .primary { margin-top: 0; }
+  .tut button { padding: 3px 12px; font-size: 0.8rem; background: color-mix(in srgb, var(--panel) 90%, transparent); }
+  .unit.locked { filter: none; } /* gesperrt (Tutorial) sieht genau aus wie «zu wenig Gold», siehe .units .unit.poor */
+  .unit.tuthint { position: relative; overflow: visible; }
+  .unit.tuthint::after {
+    content: ''; position: absolute; left: 50%; top: -30px; width: 0; height: 0; margin-left: -14px;
+    border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 22px solid #1fae4b;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45)); animation: tutbounce 0.7s ease-in-out infinite; pointer-events: none; z-index: 5;
+  }
+  .unit.tuthint::before { /* wie viele noch gekauft werden sollen, über dem Pfeil */
+    content: attr(data-need); position: absolute; left: 50%; top: -58px; width: 44px; margin-left: -22px; text-align: center;
+    font-family: var(--display); font-weight: 700; font-size: 1.35rem; line-height: 1; color: #1fae4b;
+    -webkit-text-stroke: 3px #ffffff; paint-order: stroke fill; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    animation: tutbounce 0.7s ease-in-out infinite; pointer-events: none; z-index: 5;
+  }
+  @keyframes tutbounce { 50% { transform: translateY(8px); } }
+  .unit { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+  .statcard {
+    position: fixed; z-index: 20; width: min(250px, calc(100vw - 16px)); box-sizing: border-box; pointer-events: none;
+    padding: 9px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.28); font-size: 0.82rem; line-height: 1.3;
+  }
+  .statcard[hidden] { display: none; }
+  .statcard b { display: block; font-family: var(--display); font-size: 0.98rem; margin-bottom: 4px; }
+  .statcard dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; }
+  .statcard dt { color: var(--muted); }
+  .statcard dd { margin: 0; text-align: right; font-weight: 600; }
+  .statcard .spec { margin: 6px 0 0; padding-top: 5px; border-top: 1px solid var(--line); color: var(--fg); }
+  .ovrow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 4px; }
+  .ovrow .primary { margin-top: 0; }
+  .choice { display: contents; }
+  select {
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--fg);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 10px;
+  }
+  select:focus-visible { outline: 2px solid var(--me); outline-offset: 2px; }
+
+  /* Sieben kleine Knöpfe (Bild und Kosten) immer in einer Reihe, auch auf dem Handy */
+  /* Einheitenknöpfe liegen unten im Spielfeld (in der Landschaft), halbdurchsichtig */
+  /* Knöpfe ragen zur Hälfte unter dem Spielfeld heraus, damit sie weniger vom Feld verdecken */
+  .stage { margin-bottom: 34px; }
+  .units { position: absolute; left: 6px; right: 6px; bottom: 0; transform: translateY(50%); z-index: 2; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+  .units .unit { pointer-events: auto; background: color-mix(in srgb, var(--panel) 90%, transparent); max-width: 72px; }
+  .units .unit.poor, .units .unit.locked { opacity: 1; background: color-mix(in srgb, var(--panel) 62%, transparent); }
+  .units .unit.poor canvas, .units .unit.poor .cost, .units .unit.locked canvas, .units .unit.locked .cost { opacity: 0.55; }
+  .units .unit canvas { max-width: 40px; }
+  .unit {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 84px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 5px 2px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .unit:active { transform: translateY(1px); background: var(--bg); }
+  .unit.poor { opacity: 0.5; }
+  .unit.nope { border-color: var(--foe); }
+  .unit canvas { display: block; width: 100%; max-width: 52px; height: auto; aspect-ratio: 1; pointer-events: none; }
+  .unit .cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .unit .cost::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold-fill);
+  }
+
+  .rules { display: none; margin: 0; color: var(--muted); font-size: 0.82rem; text-align: center; text-wrap: balance; } /* Regeltext bleibt im Code, ist aber nicht mehr sichtbar */
+  .logrow { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .logrow textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: 0.75rem/1.4 ui-monospace, Menlo, Consolas, monospace;
+    color: var(--fg);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    resize: vertical;
+  }
+
+
+  .top { display: contents; }
+  .rotate { display: none; }
+
+  /* Vollbild (Handy quer): Spielfeld so gross wie möglich, Einheitenknöpfe in einer Reihe darunter,
+     Gold und Auszahlung klein oben links auf dem Spielfeld, oben rechts ein Knopf zum Verlassen (dort sind Pause, Aufgeben usw.) */
+  .fsbar { display: none; }
+  html.phone { --pad: max(4px, env(safe-area-inset-left, 0px)); --padr: max(4px, env(safe-area-inset-right, 0px));
+    --uh: clamp(38px, 12dvh, 56px); --cw: min(calc(100vw - var(--pad) - var(--padr)), calc(2.2 * (100dvh - var(--uh) / 2 - 6px))); }
+  html.phone, html.phone body { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+  html.phone body {
+    padding-block: 2px 2px;
+    padding-left: var(--pad);
+    padding-right: var(--padr);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  html.phone .wrap {
+    position: relative;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  html.phone h1, html.phone .rules, html.phone .logrow, html.phone .btns { display: none; }
+  html.phone .top {
+    position: absolute; z-index: 5; top: 4px; left: calc((100% - var(--cw)) / 2 + 5px);
+    display: flex; align-items: center; gap: 8px; padding: 2px 8px; border-radius: 8px; pointer-events: none;
+    background: color-mix(in srgb, var(--panel) 72%, transparent);
+  }
+  html.phone header { flex: 0 0 auto; flex-wrap: nowrap; }
+  html.phone .gold-row { gap: 10px; }
+  html.phone .stat { flex-direction: row; align-items: center; gap: 4px; }
+  html.phone .stat .label { font-size: 0; gap: 0; }
+  html.phone .stat .dot { width: 9px; height: 9px; }
+  html.phone .stat .value { font-size: 1rem; }
+  html.phone .pay { gap: 6px; }
+  html.phone .pay .txt { font-size: 0.7rem; }
+  html.phone .meter { width: 48px; flex: 0 0 48px; height: 6px; }
+  html.phone .stage { flex: 0 0 auto; width: var(--cw); }
+  html.phone canvas#field { width: var(--cw); height: auto; }
+  html.phone .fsbar { display: flex; gap: 4px; position: absolute; z-index: 6; top: 4px; right: 4px; }
+  html.phone .fsbar button {
+    height: 32px; min-width: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line);
+    font-size: 0.8rem; line-height: 1; white-space: nowrap; color: var(--fg);
+    background: color-mix(in srgb, var(--panel) 80%, transparent);
+  }
+  html.phone .fsbar #fsExit { padding: 0; font-size: 1.05rem; }
+  html.phone .fsbar button:disabled { opacity: 0.45; }
+  html.phone .fsbar button.armed { border-color: var(--foe); color: var(--foe); }
+  html.phone .tut { display: none; } /* im Vollbild steht «Tutorial beenden» in der obersten Reihe links neben Pause (#fsTut) */
+  html.phone .stage { margin-bottom: 0; }
+  html.phone .units { left: 4px; right: 4px; bottom: 0; height: var(--uh); gap: 4px; }
+  html.phone .unit { max-width: none; min-height: 0; height: 100%; padding: 2px 1px; justify-content: center; }
+  html.phone .unit canvas { width: auto; max-width: 100%; height: calc(var(--uh) - 19px); }
+  html.phone .unit .cost { font-size: 0.8rem; line-height: 1.1; }
+  html.phone .overlay { gap: 5px; padding: 8px; overflow: auto; justify-content: safe center; }
+  html.phone .overlay h2 { font-size: 1.1rem; }
+  html.phone .overlay p { font-size: 0.78rem; line-height: 1.3; }
+  html.phone .ovrow { gap: 6px; margin-top: 2px; }
+  html.phone .ovrow select { font-size: 0.8rem; padding: 6px 6px; }
+  html.phone .ovrow .primary { padding: 8px 16px; }
+  html.phone .rotate {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--display);
+    font-size: 1.25rem;
+  }
+  @media (orientation: portrait) { html.phone .rotate { display: flex; } }
+
+  @media (max-width: 520px) {
+    /* Auf dem Handy ist das Spielfeld nur etwa 165 px hoch: Startanzeige kompakt halten */
+    .overlay { gap: 5px; padding: 8px; overflow: auto; }
+    .overlay h2 { font-size: 1.1rem; }
+    .overlay p { font-size: 0.78rem; line-height: 1.3; }
+    .ovrow { width: 100%; gap: 6px; margin-top: 2px; }
+    .ovrow .choice { display: flex; gap: 6px; width: 100%; }
+    .ovrow select { flex: 1 1 0; min-width: 0; font-size: 0.8rem; padding: 6px 4px; }
+    .ovrow .primary { width: 100%; padding: 8px 12px; }
+  }
+  @media (max-width: 520px) {
+    .stage { margin-bottom: 22px; }
+    .units { left: 3px; right: 3px; gap: 2px; }
+    .units .unit { padding: 2px 1px; border-radius: 7px; }
+    .units .unit canvas { max-width: 24px; }
+    .units .unit .cost { font-size: 0.72rem; }
+  }
+  @media (max-width: 420px) {
+    .units { gap: 2px; }
+    .unit .cost { font-size: 0.88rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
+
+<div class="wrap">
+  <div class="rotate" aria-hidden="true"><span>Bitte das Handy quer halten</span></div>
+  <div class="top">
+  <header>
+    <h1>Stronghold Mini</h1>
+    <div class="gold-row">
+      <div class="stat"><span class="label"><i class="dot me"></i>Dein Gold</span><span class="value" id="goldMe">0</span></div>
+      <div class="stat"><span class="label"><i class="dot foe"></i>Gegner</span><span class="value" id="goldFoe">0</span></div>
+    </div>
+  </header>
+
+  <div class="pay">
+    <div class="meter"><i id="payFill"></i></div>
+    <span class="txt" id="payText">+10 Gold in 5 s</span>
+    <span class="btns">
+      <button class="ghost" id="soundBtn" type="button" aria-pressed="true">Ton an</button>
+      <button class="ghost" id="phoneBtn" type="button" aria-pressed="false" title="Vollbild: Spielfeld so gross wie möglich (Handy quer halten)">Vollbild</button>
+      <button class="ghost" id="pauseBtn" type="button">Pause</button>
+      <button class="ghost" id="giveBtn" type="button" disabled>Aufgeben</button>
+    </span>
+  </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="fsbar" id="fsBar"><button id="fsTut" type="button" hidden>Tutorial beenden</button><button id="fsPause" type="button">Pause</button><button id="fsGive" type="button" disabled>Aufgeben</button><button id="fsExit" type="button" aria-label="Vollbild verlassen" title="Vollbild verlassen">✕</button></div>
+    <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
+    <div class="units" id="units"></div>
+    <div class="overlay" id="overlay">
+      <h2 id="ovTitle">Besiege den gegnerischen König</h2>
+      <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
+      <div class="ovrow">
+        <span class="choice" id="ovChoice">
+          <select id="botType" aria-label="Gegner">
+            <option value="bauern" selected>Gegner: Bandit</option>
+            <option value="prinz">Gegner: Kleiner Prinz</option>
+            <option value="feldherr">Gegner: Feldherr</option>
+            <option value="baron">Gegner: Baron</option>
+          </select>
+        </span>
+        <button class="primary" id="ovBtn" type="button">Spiel starten</button>
+        <button class="ghost" id="pvpBtn" type="button" hidden title="Spiele online gegen einen anderen Spieler">Online (PvP)</button>
+        <button class="ghost" id="tutBtn" type="button" title="Lerne jede Einheit an einem Trainingsgegner kennen">Tutorial</button>
+        <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 9999 Gold, der Gegner mit 160">Sandbox</button>
+      </div>
+    </div>
+    <div class="tut" id="tutPanel" hidden><button class="ghost" id="tutEnd" type="button">Tutorial beenden</button></div>
+    <div class="tutbox" id="tutBox" hidden><p id="tutBoxText"></p><button class="primary" id="tutOk" type="button">Verstanden</button></div>
+  </div>
+
+  <div class="statcard" id="statCard" hidden></div>
+
+  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und beschießt jede Sekunde mit dem Bogen den nächsten Gegner innerhalb der gestrichelten Linie (Reichweite 4,5, Angriff 2). Fällt die Burg, kämpft er mit dem Zweihänder (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), erhöht er jede Auszahlung um 1 Gold, solange er lebt. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Tasten 1 bis 9, 0, Q und E bauen Einheiten, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 130 Gold an: sofort 1 Rammbock, nach 4 Sekunden 2 Speerkämpfer, nach 6 Sekunden 4 Speerkämpfer, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 4 Speerkämpfer (zusammen 157 Gold). Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 6 Speerkämpfer (zusammen 202 Gold); was er sich dann leisten kann. Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Katapult und 1 Rammbock, nach 7 Sekunden 6 Bogenschützen, nach 9 Sekunden 5 Speerkämpfer und nach 13 Sekunden 4 Reiter (zusammen 267 Gold). Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 4. Stufe, deren Türme er mit je 3 Bogenschützen besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 5 Sekunden 2 Speerkämpfer, nach 6 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 8 Speerkämpfer (zusammen 262 Gold). Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht; sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 2 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,2 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
+
+  <div class="logrow">
+    <button class="ghost" id="logBtn" type="button" title="Kopiert den Ablauf der letzten Partie (deine Käufe und die des Gegners), damit der Bot daraus lernen kann">Spielprotokoll kopieren</button>
+    <textarea id="logBox" rows="5" readonly hidden aria-label="Spielprotokoll zum Kopieren"></textarea>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Alle Spielwerte an einer Stelle, damit sich leicht daran drehen lässt.
+  var CONFIG = {
+    GOLD_EVERY: 5,
+    GOLD_AMOUNT: 10,
+    START_GOLD: 10,
+    UNIT_HEAL: { delay: 10, rate: 1 }, // jede Einheit heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
+    GOLD_MAX: Infinity, SANDBOX_GOLD: 9999, // GOLD_MAX = mehr Gold kann niemand haben (alle Modi; Infinity = keine Obergrenze)
+     SANDBOX_FOE_GOLD: 160, // Sandbox-Knopf im Menü: du startest mit so viel Gold, der Gegner mit so viel
+    BASE_HP: 40,
+    FARMER_RADIUS: 1.8, // so nah dürfen sich zwei Bauern nicht niederlassen
+    FARMER_EDGE: 2,   // so nah am Spielfeldrand darf sich kein Bauer niederlassen
+    BASE_ATK: 2,
+    BASE_RANGE: 4.5,
+    BASE_CD: 1,
+    BASE_DELAY: 0.5, // Flugzeit des Kasernenpfeils in Sekunden
+    // Computergegner: bekommt wie du 10 Gold pro Auszahlung (ohne Bauernbonus). 
+    levels: {
+      normal: { income: 10 }
+    },
+    // think = Sekunden zwischen Entscheidungen; weakHp = Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit
+    // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
+    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 40 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
+    // Gegner «Bandit» (Zahlen in BOTS.bauern):
+    // farmers = höchstens so viele Bauern; huntLead = so viele Sekunden lang musst du mehr Bauern haben, bis die Jagd kommt; hunt = Jagdtrupp, huntEvery = Pause zwischen zwei Jagden;
+    // wallGold = so viel Gold, dann baut er eine Mauer (repairAt 0 = er repariert nie, baut sie aber neu), wallClear = nur, solange kein Gegner in seiner Spielfeldhälfte ist;
+    // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
+    // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (deine Einheiten abzüglich seiner Turmbesatzung) plus so vielen Einheiten mehr als du hast,
+    // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
+    BOTS: {
+      bauern: { farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
+                wallGold: 60, wallUnits: 0, repairAt: 0, wallClear: true,
+                attackGold: 130, lockSecs: 15,
+                attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
+                defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
+      // «Kleiner Prinz»: wie der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
+      prinz: { farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
+               wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 3, wallClear: true,
+               attackGold: 180, lockSecs: 15,
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
+               defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
+      // «Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
+      // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
+      feldherr: { farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
+               wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 2, wallClear: true,
+               attackGold: 210, lockSecs: 15,
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['catapult', 1], ['ram', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 13, buy: [['rider', 4]] }],
+               defPlus: 1, defPool: ['archer', 'spear', 'rider'], defMage: 99, noOutput: 10 },
+      // «Baron»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 4 (die Türme besetzt er wie alle Gegner komplett, also mit je 3 Bogenschützen),
+      // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
+      // verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern, greift bei 230 Gold an
+      baron: { farmers: 9, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
+               huntLater: [{ after: 3, buy: [['archer', 2]] }, { after: 4, buy: [['spear', 2]] }],
+               wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 4, wallClear: true,
+               attackGold: 230, lockSecs: 15,
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 5, buy: [['spear', 2]] }, { after: 6, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 8]] }],
+               defPlus: 1, defPool: ['knight', 'archer', 'spear', 'digger'], defMage: 99, noOutput: 10,
+               defDiggerVsCatapult: 2 } // hat der Gegner ein Katapult auf dem Feld (nicht auf dem Turm), sind mindestens so viele Tunnelgräber in der Verteidigung
+    },
+    // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
+    // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
+    // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
+    units: {
+      farmer: { name: 'Bauer',         cost: 4,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1 },
+      spear: { name: 'Speersoldat',   cost: 5,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
+      archer: { name: 'Bogenschütze',  cost: 12, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
+      rider:  { name: 'Reiter',        cost: 15, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
+      mage:   { name: 'Magier',        cost: 25, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
+      knight: { name: 'Ritter',        cost: 20, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
+      // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
+      // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
+      // Die Grabspur bleibt trail Sekunden sichtbar. Danach ist er eine normale Einheit mit Marschtempo speed.
+      digger: { name: 'Tunnelgräber', cost: 10, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.30, key: '5', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
+      // ram = greift nur Mauern und Kasernen an, keine Einheiten
+      ram: { name: 'Rammbock', cost: 35, hp: 20, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
+      // wall = Mauer: im Abstand dist Kacheln um die eigene Kaserne herum gebogen, workers Arbeiter, die mit rate Leben pro Sekunde bis zu add Leben bringen
+      // rate Leben pro Sekunde bauen (jeder). Erst wenn sie einmal fertig ist, blockiert sie gegnerische Einheiten.
+      wall: { name: 'Mauer',     cost: 20, hp: 0, atk: 0, range: 0, speed: 0, cd: 1, r: 0.3, key: '8',
+              wall: { dist: 3, thick: 0.5, workers: 4, rate: 3, add: 10, cap: 200, heal: 0.6, fade: 1, tower: { from: 2, takeDist: 4, // takeDist = so nah (in Kacheln) an der Kaserne muss eine Einheit sein, damit sie einen freien Turmplatz nimmt
+              taken: 0.25, // Einheiten in einem Turm erleiden von Fernkämpfern (auch von der Kaserne) nur diesen Anteil des Schadens
+              // Türme ab Mauer 2: links und rechts (f = Stelle auf der Mauer, 0 oben bis 1 unten) je ein Turm; k = sq (Viereck) oder rd (Rund), w/h bzw. r = Grösse in Kacheln,
+              // out = Abstand vor der Mauer; slots = Plätze (types = erlaubte Einheitentypen, dx/dy = Versatz in Kacheln)
+              levels: {
+                2: { list: [
+                  { k: 'sq', f: 0.25, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage'], dx: 0, dy: 0 }] },
+                  { k: 'sq', f: 0.75, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage'], dx: 0, dy: 0 }] }] },
+                3: { list: [
+                  { k: 'sq', f: 0.25, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage'], dx: 0, dy: 0.28 }] },
+                  { k: 'sq', f: 0.75, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage'], dx: 0, dy: 0.28 }] }] },
+                4: { list: [
+                  { k: 'rd', f: 0.25, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage'], dx: -0.2, dy: 0.38 }] },
+                  { k: 'rd', f: 0.75, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage'], dx: -0.2, dy: 0.38 }] }] },
+                5: { list: [
+                  { k: 'rd', f: 0.25, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste'], dx: -0.4, dy: 0.3 }] },
+                  { k: 'rd', f: 0.75, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste'], dx: -0.4, dy: 0.3 }] }] }
+              } }, stages: [40, 80, 120, 160, 200], bars: [40, 40, 80, 120, 160, 200] } }, // rate = Leben pro Sekunde je Arbeiter, add = Leben, die jeder Arbeiter insgesamt bringt, cap = höchstes Leben der Mauer; stages = ab so viel Leben erscheint die nächste der 5 Optiken (davor nur ein Gerüst), bars = Maximum der Lebensleiste je Stufe (Gerüst, Optik 1 bis 5) = Leben, ab denen die Optik erscheint; heal = Leben pro Sekunde, die eine Mauer unter dem Höchstwert ihrer Optik von selbst heilt (erst ab der ersten Optik)
+      // shield = Belagerungsschild: greift nur Mauern und Kasernen an (wie der Rammbock), richtet aber keinen Schaden an
+      shield: { name: 'Belagerungsschild', cost: 25, hp: 12, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
+      // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
+      // fire = Katapult: Feuerbälle mit Flächenschaden (splash), ignoriert Mauern (nichts blockiert Ziel oder Schuss), schießt nur alle cd Sekunden
+      catapult: { name: 'Katapult', cost: 50, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 2, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
+      // baliste = Kriegsmaschine: ein schwerer Bolzen auf ein Ziel, trifft nach delay Sekunden, wird von Mauern aufgehalten wie ein Pfeil; passt wie das Katapult auf den großen Turm
+      baliste: { name: 'Baliste', cost: 40, hp: 4, atk: 10, range: 4, speed: 0.6, cd: 2, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
+      worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
+      // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
+      king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
+    }
+  };
+  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste'];
+  var BUY_TYPES = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'wall', 'ram', 'shield', 'catapult', 'baliste']; // Knöpfe in dieser Reihenfolge (Tasten 1–9, 0, Q, E von links nach rechts)
+  var WALL = CONFIG.units.wall.wall, WALL_TH = WALL.thick;
+
+  var W = 22, H = 10, T = 50; // Feld in Kacheln, T = Pixel pro Kachel
+  var $ = function (id) { return document.getElementById(id); };
+  var canvas = $('field'), ctx = canvas.getContext('2d');
+  canvas.width = W * T;
+  canvas.height = H * T;
+
+  var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
+  var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
+  var ME = 0; // welches Team du bist (0 = links/blau, 1 = rechts/rot im Online-Spiel)
+  var pvp = { on: false, me: 0, ws: null, searching: false, ended: false, tick: 0, acc: 0, alpha: 0, inbox: {}, sent: {}, pending: [], hashes: {}, remoteHash: {}, stall: 0 };
+  var sandbox = false, sandBtn = $('sandBtn');
+  var tut = { on: false, i: 0, avail: [], bought: {}, script: [], si: 0, rt: 0, st: 0, boxOpen: false };
+  var overlay = $('overlay'), ovTitle = $('ovTitle'), ovText = $('ovText'), ovBtn = $('ovBtn');
+  var pauseBtn = $('pauseBtn'), goldMeEl = $('goldMe'), goldFoeEl = $('goldFoe');
+  var payFill = $('payFill'), payText = $('payText'), unitsEl = $('units');
+
+  // ---------- Farben aus dem Theme ----------
+  var TOKENS = ['me', 'foe', 'gold', 'gold-fill', 'grass-a', 'grass-b', 'tuft', 'dirt', 'dirt-edge', 'tree',
+    'tree-hi', 'water', 'water-hi', 'stone', 'stone-dark', 'wood', 'steel', 'shade', 'bg', 'line'];
+  var P = {};
+  function readPalette() {
+    var cs = getComputedStyle(document.documentElement);
+    for (var i = 0; i < TOKENS.length; i++) P[TOKENS[i]] = cs.getPropertyValue('--' + TOKENS[i]).trim();
+  }
+
+  // ---------- Hilfsfunktionen ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Deterministische Mathematik: nur + - * / sqrt, damit der Online-Modus in jedem Browser exakt gleich rechnet
+  var PI_ = 3.141592653589793;
+  function hyp(a, b) { return Math.sqrt(a * a + b * b); }
+  function dred(x) { return x - Math.floor(x / (2 * PI_) + 0.5) * (2 * PI_); }
+  function dsin(x) { x = dred(x); var x2 = x * x, t = x, r = x; for (var n = 1; n < 14; n++) { t = -t * x2 / ((2 * n) * (2 * n + 1)); r += t; } return r; }
+  function dcos(x) { x = dred(x); var x2 = x * x, t = 1, r = 1; for (var n = 1; n < 14; n++) { t = -t * x2 / ((2 * n - 1) * (2 * n)); r += t; } return r; }
+  function datan(x) {
+    var neg = x < 0; if (neg) x = -x;
+    var inv = x > 1; if (inv) x = 1 / x;
+    x = x / (1 + Math.sqrt(1 + x * x)); x = x / (1 + Math.sqrt(1 + x * x));
+    var x2 = x * x, t = x, r = x;
+    for (var n = 1; n < 10; n++) { t = -t * x2; r += t / (2 * n + 1); }
+    r *= 4;
+    if (inv) r = PI_ / 2 - r;
+    return neg ? -r : r;
+  }
+  function datan2(y, x) {
+    if (x > 0) return datan(y / x);
+    if (x < 0) return y >= 0 ? datan(y / x) + PI_ : datan(y / x) - PI_;
+    return y > 0 ? PI_ / 2 : y < 0 ? -PI_ / 2 : 0;
+  }
+  function dasin(v) { return v >= 1 ? PI_ / 2 : v <= -1 ? -PI_ / 2 : datan(v / Math.sqrt(1 - v * v)); }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, k) { return a + (b - a) * k; }
+  function rr(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  // ---------- Landschaft (einmal gezeichnet) ----------
+  var back = document.createElement('canvas');
+  back.width = W * T;
+  back.height = H * T;
+
+  function buildBackdrop() {
+    var c = back.getContext('2d'), rnd = mulberry32(11), x, y, i;
+    c.fillStyle = P['grass-a'];
+    c.fillRect(0, 0, back.width, back.height);
+    for (x = 0; x < W; x++) {
+      for (y = 0; y < H; y++) {
+        if (rnd() < 0.5) { c.fillStyle = P['grass-b']; c.fillRect(x * T, y * T, T, T); }
+      }
+    }
+    // Weg zwischen den Kasernen
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    var layers = [[T * 1.55, P['dirt-edge']], [T * 1.3, P.dirt]];
+    for (var l = 0; l < layers.length; l++) {
+      c.strokeStyle = layers[l][1];
+      c.lineWidth = layers[l][0];
+      c.beginPath();
+      for (i = 0; i <= 40; i++) {
+        var px = (0.5 + i * (W - 1) / 40) * T;
+        var py = (5 + Math.sin(i * 0.3) * 0.55) * T;
+        if (i === 0) c.moveTo(px, py); else c.lineTo(px, py);
+      }
+      c.stroke();
+    }
+    // Grasbüschel
+    c.strokeStyle = P.tuft;
+    c.lineWidth = 2;
+    for (i = 0; i < 170; i++) {
+      var gx = rnd() * back.width, gy = rnd() * back.height;
+      c.beginPath();
+      c.moveTo(gx, gy); c.lineTo(gx - 3, gy - 7);
+      c.moveTo(gx, gy); c.lineTo(gx + 3, gy - 7);
+      c.stroke();
+    }
+    // Teich
+    c.fillStyle = P['water'];
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = P['water-hi'];
+    c.lineWidth = 3;
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.ellipse((W / 2 - 0.4) * T, 1.3 * T, 0.7 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
+    // Bäume an den Rändern, die Wege bleiben frei
+    var tries = 0, placed = 0;
+    while (placed < 24 && tries < 200) {
+      tries++;
+      var tx = rnd() * W;
+      var ty = rnd() < 0.5 ? 0.35 + rnd() * 2.2 : 7.5 + rnd() * 2.2;
+      var dx = (tx - W / 2) / 2.3, dy = (ty - 1.45) / 1.2;
+      if (dx * dx + dy * dy < 1) continue;
+      var tr = (0.32 + rnd() * 0.2) * T;
+      c.fillStyle = P.shade;
+      c.beginPath(); c.ellipse(tx * T + 5, ty * T + 8, tr, tr * 0.7, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = P.tree;
+      c.beginPath(); c.arc(tx * T, ty * T, tr, 0, Math.PI * 2); c.fill();
+      c.fillStyle = P['tree-hi'];
+      c.beginPath(); c.arc(tx * T - tr * 0.2, ty * T - tr * 0.25, tr * 0.55, 0, Math.PI * 2); c.fill();
+      placed++;
+    }
+    // Steine
+    for (i = 0; i < 9; i++) {
+      var sx = (3.5 + rnd() * (W - 7)) * T;
+      var sy = (rnd() < 0.5 ? 0.3 + rnd() * 2.4 : 7.4 + rnd() * 2.3) * T;
+      c.fillStyle = P.stone;
+      c.strokeStyle = P['stone-dark'];
+      c.lineWidth = 2;
+      c.beginPath(); c.ellipse(sx, sy, 9 + rnd() * 6, 6 + rnd() * 3, rnd(), 0, Math.PI * 2); c.fill(); c.stroke();
+    }
+  }
+
+  // ---------- Akustik ----------
+  // Alle Töne werden mit WebAudio erzeugt (keine Dateien). Der Ton startet erst nach dem ersten Tippen oder Klicken.
+  var audio = { ctx: null, master: null, noise: null, on: true, last: {} };
+  try { if (localStorage.getItem('kasernenkrieg-sound') === '0') audio.on = false; } catch (err) {}
+  function audioInit() {
+    if (audio.ctx) { if (audio.ctx.state === 'suspended') { try { audio.ctx.resume(); } catch (err) {} } return; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      var c = new AC(), comp = c.createDynamicsCompressor();
+      audio.master = c.createGain();
+      audio.master.gain.value = 0.4;
+      audio.master.connect(comp);
+      comp.connect(c.destination);
+      var buf = c.createBuffer(1, Math.floor(c.sampleRate * 0.6), c.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      audio.noise = buf;
+      audio.ctx = c;
+    } catch (err) { audio.ctx = null; }
+  }
+  ['pointerdown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, audioInit, true); });
+  function audioOn() { return audio.on && audio.ctx; }
+  function audioOut(node, pan) {
+    var c = audio.ctx;
+    if (pan && c.createStereoPanner) {
+      var p = c.createStereoPanner();
+      p.pan.value = clamp(pan, -1, 1);
+      node.connect(p);
+      p.connect(audio.master);
+    } else node.connect(audio.master);
+  }
+  function envelope(g, t, dur, vol) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  function tone(f0, f1, dur, type, vol, pan, delay) {
+    var c = audio.ctx, t = c.currentTime + (delay || 0), o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    envelope(g, t, dur, vol);
+    o.connect(g);
+    audioOut(g, pan);
+    o.start(t);
+    o.stop(t + dur + 0.03);
+  }
+  function hiss(dur, vol, f0, f1, q, pan, type) {
+    var c = audio.ctx, t = c.currentTime, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = audio.noise;
+    f.type = type || 'bandpass';
+    f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    envelope(g, t, dur, vol);
+    s.connect(f);
+    f.connect(g);
+    audioOut(g, pan);
+    s.start(t);
+    s.stop(t + dur + 0.03);
+  }
+  // Pro Art höchstens alle gap Sekunden, damit große Heere kein Dauerrauschen erzeugen
+  function gate(kind, gap) {
+    var n = audio.ctx.currentTime;
+    if (audio.last[kind] !== undefined && n - audio.last[kind] < gap) return false;
+    audio.last[kind] = n;
+    return true;
+  }
+  function sfx(e) {
+    if (!audioOn()) return;
+    var x = e.x1 !== undefined ? e.x1 : e.x, pan = x === undefined ? 0 : (x / W - 0.5) * 1.2;
+    if (e.kind === 'arrow') { if (gate('arrow', 0.05)) { hiss(0.09, 0.22, 3600, 1300, 2, pan); tone(1300, 520, 0.08, 'triangle', 0.07, pan); } }
+    else if (e.kind === 'block') { if (gate('block', 0.08)) { tone(1500, 900, 0.06, 'square', 0.05, pan); hiss(0.05, 0.14, 4000, 2500, 2, pan); } }
+    else if (e.kind === 'bolthit') { if (gate('bolthit', 0.06)) { hiss(0.08, 0.3, 1800, 300, 1, pan); tone(260, 90, 0.09, 'square', 0.08, pan); } }
+    else if (e.kind === 'slam') { if (gate('slam', 0.1)) { hiss(0.12, 0.35, 500, 120, 0.8, pan, 'lowpass'); tone(110, 50, 0.14, 'square', 0.12, pan); } }
+    else if (e.kind === 'stab') { if (gate('stab', 0.05)) { hiss(0.07, 0.28, 1000, 300, 1, pan); tone(190, 90, 0.07, 'square', 0.06, pan); } }
+    else if (e.kind === 'orb') { if (gate('orb', 0.12)) tone(320, 950, 0.25, 'sine', 0.11, pan); }
+    else if (e.kind === 'blast') { if (gate('blast', 0.1)) { hiss(0.4, 0.45, 700, 90, 0.7, pan, 'lowpass'); tone(120, 40, 0.35, 'sine', 0.32, pan); } }
+    else if (e.kind === 'fball') { if (gate('fball', 0.15)) { hiss(0.35, 0.18, 900, 250, 1, pan, 'lowpass'); tone(240, 520, 0.3, 'sawtooth', 0.05, pan); } }
+    else if (e.kind === 'fblast') { if (gate('fblast', 0.1)) { hiss(0.45, 0.5, 900, 80, 0.9, pan, 'lowpass'); tone(95, 38, 0.4, 'sine', 0.34, pan); } }
+    else if (e.kind === 'dig') { if (gate('dig', 0.14)) { hiss(0.16, 0.13, 420, 110, 0.9, pan, 'lowpass'); tone(78, 52, 0.15, 'square', 0.035, pan); } }
+    else if (e.kind === 'puff') { if (gate('puff', 0.06)) { tone(280, 90, 0.14, 'triangle', 0.11, pan); hiss(0.12, 0.1, 1600, 400, 1, pan); } }
+    else if (e.kind === 'text' && e.x < W / 2) { if (gate('coin', 0.1)) { tone(988, 988, 0.09, 'square', 0.05, 0); tone(1319, 1319, 0.2, 'square', 0.05, 0, 0.08); } }
+  }
+  function sfxBuy(type, ok) {
+    if (!audioOn()) return;
+    if (!ok) { tone(150, 100, 0.14, 'sawtooth', 0.08, 0); return; }
+    var f = 300 + TYPES.indexOf(type) * 45;
+    tone(f, f * 1.5, 0.1, 'square', 0.06, 0);
+    if (type === 'digger') hiss(0.25, 0.2, 400, 120, 1, 0, 'lowpass');
+  }
+  function jingle(kind) {
+    if (!audioOn()) return;
+    var seq = kind === 'win' ? [523, 659, 784, 1047] : kind === 'start' ? [392, 523] : [392, 330, 262, 196];
+    seq.forEach(function (f, i) { tone(f, f, 0.22, kind === 'lose' ? 'sawtooth' : 'triangle', 0.1, 0, i * (kind === 'start' ? 0.12 : 0.15)); });
+  }
+  var soundBtn = $('soundBtn');
+  function syncSoundBtn() {
+    soundBtn.textContent = audio.on ? 'Ton an' : 'Ton aus';
+    soundBtn.setAttribute('aria-pressed', audio.on ? 'true' : 'false');
+  }
+  syncSoundBtn();
+  soundBtn.addEventListener('click', function (e) {
+    audio.on = !audio.on;
+    try { localStorage.setItem('kasernenkrieg-sound', audio.on ? '1' : '0'); } catch (err) {}
+    syncSoundBtn();
+    if (audio.on) jingle('start');
+    if (e.detail > 0) soundBtn.blur();
+  });
+
+  // ---------- Spielzustand ----------
+  var units, effects, bases, gold, payT, clock, nextId, produced;
+  var walls = [null, null]; // pro Seite höchstens eine Mauer
+  var shots = []; // Geschosse im Flug: der Schaden folgt erst nach delay Sekunden
+  var state = 'ready'; // ready | playing | paused | over
+  var winner = -1;
+
+  function makeBase(team) {
+    var x1 = team === 0 ? 0.6 : W - 2.6;
+    return { team: team, x1: x1, x2: x1 + 2, y1: 3.5, y2: 6.5, hp: CONFIG.BASE_HP, flash: 0, cd: 0, lastHit: -99, down: false };
+  }
+
+  function reset() {
+    units = [];
+    effects = [];
+    shots = [];
+    bases = [makeBase(0), makeBase(1)];
+    walls = [null, null];
+    spawnKing(0); spawnKing(1);
+    gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
+    sandbox = false;
+    payT = 0;
+    clock = 0;
+    nextId = 1;
+    produced = 0;
+    winner = -1;
+    aiRoll();
+    rec = [[], []];
+    gaveUp = false;
+  }
+
+  // Standplatz eines Bauern: der Platz, der der eigenen Kaserne am nächsten liegt und
+  //  - nicht hinter der vorderen Kante der eigenen Kaserne liegt,
+  //  - mindestens FARMER_EDGE vom Spielfeldrand entfernt ist,
+  //  - mindestens FARMER_RADIUS von jedem anderen Bauern (auch dem des Gegners) entfernt ist.
+  // Gibt es keinen solchen Platz mehr, ist das Ergebnis null und der Bauer marschiert zur gegnerischen Kaserne.
+  function findSpot(team, self) {
+    var b = bases[team], E = CONFIG.FARMER_EDGE;
+    var x0 = E, x1 = W - E, y0 = E, y1 = H - E;
+    if (team === 0) x0 = Math.max(x0, b.x2); else x1 = Math.min(x1, b.x1);
+    var others = [], i, ix, iy;
+    for (i = 0; i < units.length; i++) {
+      var o = units[i];
+      if (o !== self && CONFIG.units[o.type].passive && o.tx !== null) others.push(o);
+    }
+    var best = null, bestScore = 1e9;
+    var nx = Math.floor((x1 - x0) / 0.2 + 1e-6), ny = Math.floor((y1 - y0) / 0.2 + 1e-6);
+    for (ix = 0; ix <= nx; ix++) {
+      var x = x0 + ix * 0.2;
+      for (iy = 0; iy <= ny; iy++) {
+        var y = y0 + iy * 0.2;
+        var dist = hyp(x - clamp(x, b.x1, b.x2), y - clamp(y, b.y1, b.y2));
+        if (dist < 0.6 - 1e-6) continue; // nicht auf der Kaserne
+        var ok = true;
+        for (i = 0; i < others.length; i++) {
+          if (hyp(others[i].tx - x, others[i].ty - y) < CONFIG.FARMER_RADIUS - 1e-6) { ok = false; break; }
+        }
+        if (!ok) continue;
+        var score = dist + simRand() * 0.15; // kleine Streuung, damit nicht alles auf einer Linie liegt
+        if (score < bestScore) { bestScore = score; best = { x: x, y: y }; }
+      }
+    }
+    return best;
+  }
+  // Liegt der Standplatz (tx, ty) eines Bauern auf einer Mauer oder einem Turm (eigener oder gegnerischer, auch Gerüst), stellt er sich
+  // an den nächsten freien Rand (steht er vor einer fertigen gegnerischen Mauer, an deren Außenrand). Das ist seine echte Position (Treffer, Online-Abgleich);
+  // für den Abstand zu anderen Bauern zählt weiter nur der ursprüngliche Platz (tx, ty).
+  function farmerStand(u) {
+    var fr = CONFIG.units.farmer.r * 0.9, tx = u.tx, ty = u.ty, obs = [], wi, k, ti;
+    // Hindernisse sammeln: Mauerband (so breit wie gezeichnet, Mauer 5 ist breiter) und Türme (Viereck oder Rund)
+    for (wi = 0; wi < 2; wi++) {
+      var w = walls[wi];
+      if (!w) continue;
+      var st = w.stage || 0, half = WALL_TH / 2 + [0, 1.5, 2, 2, 2, 6][st] / T;
+      obs.push({ k: 'w', w: w, b: bases[wi], in: WALL.dist - half - fr, out: WALL.dist + half + fr, outOnly: wi !== u.team && w.built && wallOut(w, u.x, u.y) });
+      if (st >= WALL.tower.from) {
+        var tl = WALL.tower.levels[st].list;
+        for (ti = 0; ti < tl.length; ti++) {
+          var tw = tl[ti], c = wallPoint(wi, tw.f, WALL.dist + tw.out), an = towerAng(wi, tw.f);
+          var pad = (st >= 5 ? 6 : 2) / T + fr; // Rahmen bzw. Zinnen
+          if (tw.k === 'rd') obs.push({ k: 'rd', x: c.x, y: c.y, r: tw.r + pad });
+          else obs.push({ k: 'sq', x: c.x, y: c.y, ca: dcos(an), sa: dsin(an), hw: tw.w / 2 + pad, hh: tw.h / 2 + pad });
+        }
+      }
+    }
+    function inside(o, x, y) {
+      if (o.k === 'w') { var d0 = wallD(o.w.team, x, y); return o.outOnly ? d0 < o.out : d0 > o.in && d0 < o.out; }
+      if (o.k === 'rd') return hyp(x - o.x, y - o.y) < o.r - 1e-6;
+      var dx = x - o.x, dy = y - o.y, lx = dx * o.ca + dy * o.sa, ly = -dx * o.sa + dy * o.ca;
+      return Math.abs(lx) < o.hw - 1e-6 && Math.abs(ly) < o.hh - 1e-6;
+    }
+    function free(x, y) { for (var q = 0; q < obs.length; q++) if (inside(obs[q], x, y)) return false; return true; }
+    // Kandidaten: von (x, y) aus die nächsten Punkte am Rand des Hindernisses o
+    function exits(o, x, y) {
+      var e = 0.01, res = [];
+      if (o.k === 'w') {
+        var px = clamp(x, o.b.x1, o.b.x2), py = clamp(y, o.b.y1, o.b.y2), dd = hyp(x - px, y - py);
+        if (dd < 1e-6) return res;
+        if (!o.outOnly) res.push({ x: px + (x - px) / dd * (o.in - e), y: py + (y - py) / dd * (o.in - e) });
+        res.push({ x: px + (x - px) / dd * (o.out + e), y: py + (y - py) / dd * (o.out + e) });
+      } else if (o.k === 'rd') {
+        var rx = x - o.x, ry = y - o.y, rl = hyp(rx, ry);
+        if (rl < 1e-6) { rx = 1; ry = 0; rl = 1; }
+        res.push({ x: o.x + rx / rl * (o.r + e), y: o.y + ry / rl * (o.r + e) });
+      } else {
+        var dx = x - o.x, dy = y - o.y, lx = dx * o.ca + dy * o.sa, ly = -dx * o.sa + dy * o.ca;
+        [[o.hw + e, ly], [-o.hw - e, ly], [lx, o.hh + e], [lx, -o.hh - e]].forEach(function (p) {
+          res.push({ x: o.x + p[0] * o.ca - p[1] * o.sa, y: o.y + p[0] * o.sa + p[1] * o.ca });
+        });
+      }
+      return res;
+    }
+    if (free(tx, ty)) return { x: tx, y: ty };
+    // bis zu drei Schritte vom Platz weg zum nächsten freien Randpunkt (Mauer und Turm können sich überlappen)
+    var front = [{ x: tx, y: ty }], best = null, bd = 1e9;
+    for (var depth = 0; depth < 3 && !best; depth++) {
+      var next = [];
+      for (k = 0; k < front.length; k++) for (var q = 0; q < obs.length; q++) {
+        if (!inside(obs[q], front[k].x, front[k].y)) continue;
+        var ex = exits(obs[q], front[k].x, front[k].y);
+        for (var m = 0; m < ex.length; m++) {
+          var p = { x: clamp(ex[m].x, 0.3, W - 0.3), y: clamp(ex[m].y, 0.3, H - 0.3) }, pd = hyp(p.x - tx, p.y - ty);
+          if (free(p.x, p.y)) { if (pd < bd) { bd = pd; best = p; } }
+          else next.push(p);
+        }
+      }
+      front = next;
+    }
+    return best || { x: tx, y: ty };
+  }
+  function pickSpot(u) {
+    var spot = findSpot(u.team, u);
+    u.tx = spot ? spot.x : null;
+    u.ty = spot ? spot.y : null;
+  }
+
+  function spawn(team, type) {
+    var d = CONFIG.units[type], b = bases[team];
+    var x = team === 0 ? b.x2 + 0.5 : b.x1 - 0.5;
+    var y = b.y1 + 0.35 + simRand() * (b.y2 - b.y1 - 0.7);
+    units.push({
+      id: nextId++, team: team, type: type,
+      x: x + (simRand() - 0.5) * 0.2, y: y,
+      hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
+      face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
+    });
+    if (d.passive) pickSpot(units[units.length - 1]);
+    if (type === 'archer' || type === 'mage' || type === 'catapult' || type === 'baliste') seekSlot(units[units.length - 1]);
+    if (d.dig) units[units.length - 1].dig = pickDigTarget(team);
+  }
+
+  // Der König ist eine Einheit, die in der Burg sitzen kann (inCastle): oben Bogenschütze und unverwundbar, ohne Burg Nahkämpfer
+  function spawnKing(team) {
+    var kd = CONFIG.units.king, kb = bases[team];
+    units.push({
+      id: nextId++, team: team, type: 'king',
+      x: (kb.x1 + kb.x2) / 2, y: (kb.y1 + kb.y2) / 2,
+      hp: kd.hp, max: kd.hp, cd: 0.5, inCastle: true,
+      face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
+    });
+  }
+
+  // Ziel eines Tunnelgräbers: ein zufälliger Punkt im Umkreis eines zufälligen gegnerischen Bogenschützen oder
+  // Magiers (gibt es keinen, ein Punkt in der Spielfeldmitte), nie näher als minBase an der gegnerischen Kaserne.
+  function pickDigTarget(team) {
+    var cfg = CONFIG.units.digger.dig, fb = bases[1 - team], list = [], i, o;
+    for (i = 0; i < units.length; i++) {
+      o = units[i];
+      if (o.team !== team && o.hp > 0 && !o.dig && !o.tower && (o.type === 'archer' || o.type === 'mage' || o.type === 'catapult' || o.type === 'baliste')) list.push(o); // Einheiten auf Türmen werden nicht angepeilt
+    }
+    var cx, cy, rad = 0;
+    if (list.length) { o = list[Math.floor(simRand() * list.length)]; cx = o.x; cy = o.y; rad = cfg.radius; }
+    else { cx = W * (0.4 + simRand() * 0.2); cy = 1 + simRand() * (H - 2); }
+    var a = simRand() * Math.PI * 2, r = rad * Math.sqrt(simRand());
+    var x = clamp(cx + dcos(a) * r, 0.5, W - 0.5), y = clamp(cy + dsin(a) * r, 0.5, H - 0.5);
+    for (i = 0; i < 40; i++) {
+      var dd = hyp(x - clamp(x, fb.x1, fb.x2), y - clamp(y, fb.y1, fb.y2));
+      if (dd >= cfg.minBase) break;
+      x = clamp(x + (team === 0 ? -1 : 1) * (cfg.minBase - dd + 0.05), 0.5, W - 0.5);
+    }
+    return { x: x, y: y };
+  }
+  // Grabspur: kurze Stücke, die genau trail Sekunden sichtbar bleiben
+  function trailStep(u, force) {
+    if (u.lx === undefined) { u.lx = u.x; u.ly = u.y; }
+    if (force || hyp(u.x - u.lx, u.y - u.ly) >= 0.2) {
+      effects.push({ kind: 'dirt', x1: u.lx, y1: u.ly, x2: u.x, y2: u.y, t: 0, dur: CONFIG.units.digger.dig.trail });
+      u.lx = u.x; u.ly = u.y;
+    }
+  }
+
+  // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a' };
+  var rec = [[], []], gaveUp = false;
+
+  // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
+  // Die Mauer liegt im Abstand WALL.dist rund um die Kaserne (wie die gestrichelte Schusslinie, nur enger) und endet
+  // am Spielfeldrand. Innen ist, was näher als dist an der Kaserne liegt.
+  function wallD(team, x, y) {
+    var b = bases[team];
+    return hyp(x - clamp(x, b.x1, b.x2), y - clamp(y, b.y1, b.y2));
+  }
+  function wallOut(w, x, y) { return wallD(w.team, x, y) > WALL.dist; }
+  // Blockiert die Mauer des Gegners den Weg oder Schuss? Nur fertige, nur von außen nach innen.
+  function wallBlocks(shooterTeam, sx, sy, tx, ty) {
+    var w = walls[1 - shooterTeam];
+    return !!(w && w.built && wallOut(w, sx, sy) && !wallOut(w, tx, ty));
+  }
+  // Punkt auf der Mauer (f von 0 bis 1 vom oberen zum unteren Feldrand) im Abstand r von der Kaserne
+  function wallPoint(team, f, r) {
+    var b = bases[team], x2 = team === 0 ? b.x2 : W - b.x1, y1 = b.y1, y2 = b.y2;
+    var a0 = dasin(Math.min(1, y1 / r)), l1 = r * a0, l2 = y2 - y1, s = f * (2 * l1 + l2), x, y, an;
+    if (s < l1) { an = -a0 + s / r; x = x2 + r * dcos(an); y = y1 + r * dsin(an); }
+    else if (s < l1 + l2) { x = x2 + r; y = y1 + (s - l1); }
+    else { an = (s - l1 - l2) / r; x = x2 + r * dcos(an); y = y2 + r * dsin(an); }
+    return { x: team === 0 ? x : W - x, y: y };
+  }
+  // Türme ab Mauer 2: Sie nehmen Einheiten auf (Plätze je Turm, WALL.tower.levels). Hat ein Turm für eine neu gekaufte Einheit noch einen
+  // freien Platz, läuft sie dorthin statt nach vorne und bleibt dort stehen. Sie schießt von dort aus; Nahkämpfer greifen sie nicht an.
+  function towerAng(team, f) {
+    var p1 = wallPoint(team, clamp(f - 0.01, 0, 1), WALL.dist), p2 = wallPoint(team, clamp(f + 0.01, 0, 1), WALL.dist);
+    return datan2(p2.y - p1.y, p2.x - p1.x) - Math.PI / 2;
+  }
+  function slotPos(team, tw, sl) {
+    var p = wallPoint(team, tw.f, WALL.dist + tw.out), an = towerAng(team, tw.f), ox = sl.dx * (team === 0 ? 1 : -1), oy = sl.dy;
+    return { x: p.x + ox * dcos(an) - oy * dsin(an), y: p.y + ox * dsin(an) + oy * dcos(an) };
+  }
+  function slotFree(w, key) { var o = w.sl[key]; return !o || o.hp <= 0 || !o.gar || o.gar.key !== key; }
+  // Platz für u suchen (abwechselnd links und rechts); setzt u.gar
+  function seekSlot(u) {
+    var w = walls[u.team];
+    if (!w || !w.sl || !w.tlv || w.stage < WALL.tower.from) return false;
+    var lv = WALL.tower.levels[w.stage], most = 0, ti, ci;
+    for (ti = 0; ti < lv.list.length; ti++) most = Math.max(most, lv.list[ti].slots.length);
+    for (ci = 0; ci < most; ci++) for (ti = 0; ti < lv.list.length; ti++) {
+      var sl = lv.list[ti].slots[ci], key = ti + '_' + ci;
+      if (sl && sl.types.indexOf(u.type) >= 0 && slotFree(w, key)) { w.sl[key] = u; u.gar = { key: key, ti: ti, ci: ci }; return true; }
+    }
+    return false;
+  }
+  // Hat u einen angreifbaren Gegner in Reichweite? Dann kämpft es zuerst, statt in den Turm zu laufen.
+  function unitInFight(u, d) {
+    for (var j = 0; j < units.length; j++) {
+      var e = units[j];
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue;
+      if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
+    }
+    return false;
+  }
+  // Schaden an u: halbiert, wenn u in einem Turm einer Mauer ab Mauer 3 steht
+  function hurt(v, amt, from) { // from = Werte des Angreifers (Einheit oder Kaserne mit range)
+    var gw = v.tower ? walls[v.team] : null, vd = CONFIG.units[v.type];
+    var blocked = false;
+    if (vd.rangedTaken && from && from.range > 1.5) { amt *= vd.rangedTaken; blocked = true; } // Belagerungsschild und König: nur ein Teil des Schadens von Fernkämpfern
+    if (gw && from && from.range > 1.5) { amt *= WALL.tower.taken; blocked = true; } // in Türmen: nur ein Teil des Schadens von Fernkämpfern
+    if (blocked && clock - (v.blockT === undefined ? -9 : v.blockT) > 0.2) { // kleine Block-Animation
+      v.blockT = clock;
+      effects.push({ kind: 'block', x: v.x, y: v.y, dir: v.team === 0 ? 1 : -1, t: 0, dur: 0.3 });
+    }
+    v.hp -= amt;
+  }
+  function buyWall(team) {
+    for (var wi = 0; wi < units.length; wi++) if (units[wi].team === team && units[wi].type === 'worker' && units[wi].hp > 0) return false; // solange eigene Arbeiter auf dem Feld sind, geht kein neuer Bau
+    var cb = bases[team];
+    if (cb.down) { // Burg zerstört: derselbe Knopf baut sie wieder auf
+      for (var ci = 0; ci < WALL.workers; ci++) {
+        spawn(team, 'worker');
+        var cwk = units[units.length - 1];
+        cwk.castle = true;
+        cwk.bp = { x: team === 0 ? cb.x2 + 0.35 : cb.x1 - 0.35, y: cb.y1 + (ci + 0.5) / WALL.workers * (cb.y2 - cb.y1) };
+      }
+      return true;
+    }
+    var w = walls[team];
+    if (!w) w = walls[team] = { team: team, hp: 0, built: false, hit: 0, lastHit: -99, stage: 0, peak: 0 };
+    for (var i = 0; i < WALL.workers; i++) {
+      spawn(team, 'worker');
+      units[units.length - 1].bp = wallPoint(team, (i + 0.5) / WALL.workers, WALL.dist - WALL_TH / 2 - 0.3);
+    }
+    return true;
+  }
+
+  function buy(team, type) {
+    if (state !== 'playing') return false;
+    var d = CONFIG.units[type];
+    if (!d || d.hidden || gold[team] < d.cost) return false;
+    if (tut.on && team === 0 && tut.avail.indexOf(type) < 0) return false; // im Tutorial nur, was gerade verlangt ist
+    if (d.wall) {
+      if (!buyWall(team)) return false;
+      gold[team] -= d.cost;
+      if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
+      rec[team].push(clock.toFixed(1) + LOGKEY[type]);
+      return true;
+    }
+    gold[team] -= d.cost;
+    if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
+    rec[team].push(clock.toFixed(1) + LOGKEY[type]);
+    spawn(team, type);
+    if (team === ME) produced++;
+    return true;
+  }
+
+  // ---------- Computergegner ----------
+  // Alle Stufen spielen dieselbe Strategie, sie unterscheiden sich nur im Gold pro Auszahlung.
+  // Der Computer entscheidet nur, was er wann kauft, seine Einheiten verhalten sich exakt wie deine.
+  var ai = { think: 1.2, leadT: 0, defCool: 0, huntCool: 0, towerCool: 0, attackLock: 0, wave: null, queue: [], steps: [] };
+  var level = 'normal';
+  var botType = 'bauern';
+  var botEl = $('botType');
+  botEl.addEventListener('change', function () { botType = CONFIG.BOTS[botEl.value] ? botEl.value : 'bauern'; aiRoll(); });
+
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+  function randomAffordable(types, budget) {
+    var ok = types.filter(function (t) { return CONFIG.units[t].cost <= budget; });
+    return ok.length ? pick(ok) : null;
+  }
+  function countFarmers(team) {
+    var n = 0;
+    for (var i = 0; i < units.length; i++) {
+      if (units[i].team === team && units[i].type === 'farmer' && units[i].hp > 0) n++;
+    }
+    return n;
+  }
+  // Gold, das für die zweite Welle des Angriffs zurückgelegt ist
+  function reserved() {
+    var r = ai.wave ? ai.wave.gold : 0;
+    if (ai.queue) for (var qi = 0; qi < ai.queue.length; qi++) r += planCost(ai.queue[qi].buy); // zeitversetzte Käufe der Jagd und Verteidigung
+    return r;
+  }
+  function spendable() { return gold[1] - reserved(); }
+  // Wurden seine Bauern, seine Einheiten auf den Türmen, seine Mauer oder seine Burg zuletzt angegriffen?
+  function isAttacked() {
+    var mem = CONFIG.AI.attackMemory, b = bases[1], i;
+    if (clock - b.lastHit <= mem) return true;
+    if (walls[1] && walls[1].built && clock - walls[1].lastHit <= mem) return true; // auch ein Angriff auf die Mauer
+    for (i = 0; i < units.length; i++) {
+      var f = units[i];
+      if (f.team === 1 && (f.type === 'farmer' || f.tower) && f.hp > 0 && clock - f.lastHit <= mem) return true; // Bauern und Einheiten auf den Türmen
+    }
+    return false;
+  }
+  // Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit zusammen höchstens
+  // weakHp Leben hat und weder Bogenschütze noch Magier noch Baliste noch Katapult dabei ist. Bauern und Tunnelgräber unterwegs zählen nicht.
+  function enemyIsWeak() {
+    var hp = 0, i, u;
+    for (i = 0; i < units.length; i++) {
+      u = units[i];
+      if (u.team !== 0 || u.hp <= 0 || u.dig || u.tower || CONFIG.units[u.type].passive || CONFIG.units[u.type].worker || CONFIG.units[u.type].king) continue;
+      if (u.type === 'archer' || u.type === 'mage' || u.type === 'baliste' || u.type === 'catapult') return false;
+      hp += u.hp;
+    }
+    return hp <= CONFIG.AI.weakHp;
+  }
+  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss Leben bis zum Höchstwert ihrer Optik (40, 80, 120, 160, 200), wird sie repariert
+  function wallWeak(w) {
+    return !!(w && w.built && (w.stage || 0) >= 1 && WALL.stages[w.stage - 1] - w.hp > CONFIG.AI.wallRepairLoss);
+  }
+  // Steht ein sichtbarer Gegner in der Spielfeldhälfte des Computers (rechts)?
+  function enemyInMyHalf() {
+    for (var i = 0; i < units.length; i++) {
+      var u = units[i];
+      if (u.team === 0 && u.hp > 0 && !u.dig && !CONFIG.units[u.type].worker && !CONFIG.units[u.type].king && u.x > W / 2) return true;
+    }
+    return false;
+  }
+  // Wie viele Einheiten der Seite stehen auf den Türmen?
+  function countTowerUnits(team) {
+    var n = 0;
+    for (var i = 0; i < units.length; i++) if (units[i].team === team && units[i].hp > 0 && units[i].tower) n++;
+    return n;
+  }
+  // Wie viele Kampfeinheiten des Gegners (ohne Bauern, Arbeiter, König, Grabende) stehen in der Spielfeldhälfte des Computers?
+  function countEnemiesInMyHalf() {
+    var n = 0;
+    for (var i = 0; i < units.length; i++) {
+      var u = units[i], ud = CONFIG.units[u.type];
+      if (u.team === 0 && u.hp > 0 && !u.dig && !ud.passive && !ud.worker && !ud.king && u.x > W / 2) n++;
+    }
+    return n;
+  }
+  // Kampfeinheiten (ohne Bauern); grabende Tunnelgräber des Gegners sieht die KI nicht
+  function countFighters(team, noTower) { // noTower: Einheiten in Türmen zählen nicht mit
+    var n = 0, i, u;
+    for (i = 0; i < units.length; i++) {
+      u = units[i];
+      if (u.team === team && u.hp > 0 && !CONFIG.units[u.type].passive && !CONFIG.units[u.type].worker && !CONFIG.units[u.type].king && !(team === 0 && u.dig) && !(noTower && u.tower)) n++;
+    }
+    return n;
+  }
+  function aiRoll() {
+    ai.think = 1.2;
+    ai.leadT = 0;
+    ai.defCool = 0;
+    ai.wave = null;
+    ai.huntCool = 0;
+    ai.towerCool = 0;
+    ai.attackLock = 0;
+    ai.queue = [];
+    ai.steps = [];
+  }
+
+  // ---------- Gegner «Bandit» ----------
+  function planCost(list) { return list.reduce(function (a, b) { return a + CONFIG.units[b[0]].cost * b[1]; }, 0); }
+  function botUpdate(dt) {
+    var R = CONFIG.BOTS[botType], i, j, st;
+    ai.defCool = Math.max(0, ai.defCool - dt);   // Sperre für Einheitenkäufe nach einer Verteidigung
+    ai.huntCool = Math.max(0, ai.huntCool - dt);
+    ai.towerCool = Math.max(0, ai.towerCool - dt);
+    if (countFarmers(0) > countFarmers(1)) ai.leadT += dt; else ai.leadT = 0; // so lange hast du schon mehr Bauern
+    // Zeitversetzte Käufe (Jagd, Verteidigung), immer pünktlich
+    while (ai.queue.length && clock >= ai.queue[0].at) {
+      st = ai.queue.shift();
+      for (i = 0; i < st.buy.length; i++) for (j = 0; j < st.buy[i][1]; j++) if (!buy(1, st.buy[i][0])) break;
+    }
+    // Weitere Schritte des Angriffs, immer pünktlich (auch während einer Sperre)
+    while (ai.steps.length && clock >= ai.steps[0].at) {
+      st = ai.steps.shift();
+      for (i = 0; i < st.buy.length; i++) for (j = 0; j < st.buy[i][1]; j++) if (!buy(1, st.buy[i][0])) break;
+      ai.wave.gold -= planCost(st.buy);
+      if (!ai.steps.length) ai.wave = null;
+    }
+    ai.think -= dt;
+    if (ai.think > 0) return;
+    var T = CONFIG.AI.think;
+    ai.think = T[0] + Math.random() * (T[1] - T[0]);
+    // Burg zerstört (gilt für alle Gegner): sobald das Gold reicht, wird sie mit dem Mauer-Knopf wieder aufgebaut (nicht doppelt, solange Arbeiter dran sind)
+    if (bases[1].down && clock - bases[1].downAt >= CONFIG.AI.castleWait && gold[1] >= CONFIG.units.wall.cost && !units.some(function (w) { return w.team === 1 && w.castle && w.hp > 0; })) buy(1, 'wall');
+    if (clock < ai.attackLock) return; // nach Beginn des Angriffs lockSecs Sekunden lang nichts kaufen, ausser den Schritten des Angriffs
+    var free = ai.defCool <= 0;
+
+    // Verteidigung: wird etwas angegriffen, so viele Einheiten wie du hast plus defPlus (erlaubte Einheiten), danach noOutput Sekunden keine Einheiten
+    // (gilt für alle Gegner) auch ohne Angriff: stehen mindestens 2 gegnerische Einheiten in seiner Hälfte und hat der Gegner insgesamt mehr Einheiten (ohne Turmbesatzung) als er (mit Turmbesatzung)
+    var invaded = countEnemiesInMyHalf() >= 2 && countFighters(0, true) > countFighters(1, false);
+    // Spezialregel (alle Gegner): hat der Gegner auf dem Feld (nicht auf Türmen) nur noch Katapulte und wird irgendetwas von ihnen angegriffen, wird in jedem Fall verteidigt
+    var catOnly = false;
+    if (countFighters(0, true) >= 1 && (isAttacked() || units.some(function (o) { return o.team === 1 && o.hp > 0 && !CONFIG.units[o.type].worker && clock - o.lastHit <= CONFIG.AI.attackMemory; }))) {
+      catOnly = units.every(function (e) { return e.team !== 0 || e.hp <= 0 || e.tower || e.dig || CONFIG.units[e.type].passive || CONFIG.units[e.type].worker || CONFIG.units[e.type].king || e.type === 'catapult'; });
+    }
+    var defHold = false; // Verteidigung geht vor: solange sie gebraucht wird, kein Gold für die Neubesetzung der Türme
+    if (free && ((isAttacked() && !enemyIsWeak()) || invaded || catOnly)) {
+      var nDef = Math.max(0, countFighters(0, true) - countTowerUnits(1) + R.defPlus), tDef, nBought = 0;
+      var pool = nDef >= R.defMage || (R.defMageAtt && countFighters(0, true) >= R.defMageAtt) ? R.defPool.concat(['mage']) : R.defPool;
+      if (R.defDiggerAt) { // Tunnelgräber nur, wenn du genug Bogenschützen und Magier hast
+        var shooters = 0;
+        for (i = 0; i < units.length; i++) if (units[i].team === 0 && units[i].hp > 0 && !units[i].dig && (units[i].type === 'archer' || units[i].type === 'mage')) shooters++;
+        if (shooters >= R.defDiggerAt) pool = pool.concat(['digger']);
+      }
+      if (catOnly) nDef = Math.max(nDef, 1); // mindestens eine Einheit
+      var iStart = 0;
+      if (R.defDiggerVsCatapult && units.some(function (c) { return c.team === 0 && c.type === 'catapult' && c.hp > 0 && !c.tower; })) { // der Gegner hat ein Katapult auf dem Feld: mindestens 1 Tunnelgräber gehört zur Verteidigung
+        nDef = Math.max(nDef, R.defDiggerVsCatapult);
+        while (iStart < R.defDiggerVsCatapult && spendable() >= CONFIG.units.digger.cost && buy(1, 'digger')) { nBought++; iStart++; }
+      }
+      for (i = iStart; i < nDef && (tDef = randomAffordable(pool, spendable())); i++) { if (!buy(1, tDef)) break; nBought++; }
+      defHold = nDef > 0;
+      if (nBought) { ai.defCool = R.noOutput; free = false; } // die Sperre gilt nur, wenn wirklich verteidigt wurde
+    }
+    // Mauer (keine Einheit, die Sperre gilt hier nicht): ab wallGold Gold, nur ohne Gegner in seiner Hälfte; repariert wird nie, nur neu gebaut
+    var aw = walls[1];
+    if (!bases[1].down && (!aw || !aw.built || aw.hp <= R.repairAt || wallWeak(aw) || (R.wallStage && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
+    if (!free) return;
+
+    // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
+    var guard = 0;
+    while (guard++ < 3 && countFarmers(1) < R.farmers && countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
+    // Türme (gilt für alle Gegner): jeder freie Platz wird besetzt (nach einem Kauf 20 Sekunden Pause), mit Bogenschützen und Katapulten (nur, wenn die Mauer Türme hat)
+    if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
+      var need = { archer: 0, catapult: 0 }, tl = aw.tlv.list, tt, tc;
+      for (tt = 0; tt < tl.length; tt++) for (tc = 0; tc < tl[tt].slots.length; tc++) if (slotFree(aw, tt + '_' + tc)) need[tl[tt].slots[tc].types[0]]++;
+      ['catapult', 'archer'].forEach(function (ty) {
+        for (var nn = 0; nn < need[ty] && spendable() >= CONFIG.units[ty].cost; nn++) if (buy(1, ty)) ai.towerCool = CONFIG.AI.towerCool; else break; // danach 20 Sekunden Pause
+      });
+    }
+    // Jagd: hast du mehr Bauern, kommt alle huntEvery Sekunden der Jagdtrupp
+    if (ai.leadT >= R.huntLead && ai.huntCool <= 0 && spendable() >= planCost(R.hunt) + (R.huntLater ? R.huntLater.reduce(function (a, h) { return a + planCost(h.buy); }, 0) : 0)) {
+      for (i = 0; i < R.hunt.length; i++) for (j = 0; j < R.hunt[i][1]; j++) buy(1, R.hunt[i][0]);
+      if (R.huntLater) R.huntLater.forEach(function (h) { ai.queue.push({ at: clock + h.after, buy: h.buy }); });
+      ai.huntCool = R.huntEvery;
+    }
+    // Angriff: ab attackGold Gold; der erste Schritt sofort, die weiteren pünktlich danach (ihr Gold bleibt zurückgelegt)
+    if (!ai.wave && spendable() >= R.attackGold) {
+      var first = R.attack[0], later = R.attack.slice(1);
+      for (i = 0; i < first.buy.length; i++) for (j = 0; j < first.buy[i][1]; j++) if (!buy(1, first.buy[i][0])) break;
+      ai.attackLock = clock + R.lockSecs;
+      ai.steps = later.map(function (x) { return { at: clock + x.after, buy: x.buy }; });
+      ai.wave = ai.steps.length ? { at: 0, gold: later.reduce(function (a, x) { return a + planCost(x.buy); }, 0) } : null;
+    }
+  }
+
+
+  // Der Computer entscheidet nur, was er wann kauft, seine Einheiten verhalten sich exakt wie deine.
+  function aiUpdate(dt) {
+    botUpdate(dt);
+  }
+
+  // ---------- Simulation ----------
+  // Gold pro Auszahlung: Grundbetrag plus Bonus aller Bauern, die schon an ihrem Platz stehen
+  function income(team) {
+    var sum = team === 1 ? (CONFIG.levels[level] || CONFIG.levels.normal).income : CONFIG.GOLD_AMOUNT;
+    if (!units) return sum;
+    for (var i = 0; i < units.length; i++) {
+      var u = units[i];
+      if (u.team === team && u.hp > 0 && u.settled) sum += CONFIG.units[u.type].bonus || 0;
+    }
+    return sum;
+  }
+
+  function nearestOnRect(u, b) {
+    return { x: clamp(u.x, b.x1, b.x2), y: clamp(u.y, b.y1, b.y2) };
+  }
+
+  // Flächenschaden um (cx, cy): alle Gegner im Umkreis, außer exclude (schon getroffen). Feuerbälle ignorieren Mauern.
+  function applySplash(team, sx, sy, cx, cy, d, exclude) {
+    for (var j = 0; j < units.length; j++) {
+      var sv = units[j];
+      if (sv.team === team || sv.hp <= 0 || sv.dig || sv.inCastle || (!d.fire && wallBlocks(team, sx, sy, sv.x, sv.y))) continue;
+      if (hyp(sv.x - cx, sv.y - cy) > d.splash) continue;
+      if (sv !== exclude) { hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock; }
+      if (d.slow) sv.slow = d.slow.secs;
+    }
+  }
+  // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
+  function landShot(s) {
+    if (s.base) { // Pfeil der Kaserne
+      var bv = s.tgt;
+      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK, { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
+      return;
+    }
+    var d = CONFIG.units[s.type], tgt = s.tgt, cx = s.tx, cy = s.ty;
+    if (d.fire) { // Feuerball: schlägt an der Stelle ein, auf die gezielt wurde; wer bis dahin aus dem Umkreis ist, bleibt unverletzt
+      if (!tgt) { var fb0 = bases[1 - s.team]; fb0.hp = Math.max(0, fb0.hp - d.atk); fb0.flash = 0.2; fb0.lastHit = clock; } // Ziel war die Kaserne
+      applySplash(s.team, s.sx, s.sy, s.tx, s.ty, d, null);
+      return;
+    }
+    if (tgt) {
+      if (tgt.hp > 0 && !tgt.dig && !tgt.inCastle) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; cx = tgt.x; cy = tgt.y; }
+      else tgt = null;
+    } else if (s.wall) {
+      var sw = s.wall;
+      if (walls[sw.team] === sw) {
+        sw.hit = 0.15; sw.lastHit = clock;
+        sw.hp -= d.atk;
+        if (sw.hp <= 0) {
+          walls[sw.team] = null;
+          effects.push({ kind: 'blast', x: s.tx, y: s.ty, r: 1.2, t: 0, dur: 0.45 });
+        }
+      }
+    } else {
+      var fb = bases[1 - s.team];
+      fb.hp = Math.max(0, fb.hp - d.atk); fb.flash = 0.2; fb.lastHit = clock;
+    }
+    if (s.type === 'baliste') effects.push({ kind: 'bolthit', x: cx, y: cy, ang: Math.atan2(cy - s.sy, cx - s.sx), t: 0, dur: 0.35 }); // Einschlag des Bolzens
+    if (d.splash) applySplash(s.team, s.sx, s.sy, cx, cy, d, tgt);
+  }
+
+  function update(dt) {
+    clock += dt;
+    payT += dt;
+    if (payT >= CONFIG.GOLD_EVERY) {
+      payT -= CONFIG.GOLD_EVERY;
+      for (var t = 0; t < 2; t++) {
+        if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
+        var amt = income(t);
+        gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
+        var bb = bases[t];
+        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2, y: bb.y2 + 0.3, t: 0, dur: 1.2 });
+      }
+    }
+    if (!tut.on && !pvp.on) aiUpdate(dt);
+
+    var i, j;
+    for (i = 0; i < units.length; i++) {
+      var u = units[i];
+      if (u.hp <= 0) continue;
+      var d = CONFIG.units[u.type];
+      if (u.dummy) { u.hit = Math.max(0, u.hit - dt); u.slow = Math.max(0, u.slow - dt); continue; } // Trainingspuppe: steht still
+      u.cd = Math.max(0, u.cd - dt);
+      u.hit = Math.max(0, u.hit - dt);
+      u.slow = Math.max(0, u.slow - dt);
+      if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
+      var spd = d.speed * (u.slow > 0 ? 0.5 : 1);
+      if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
+        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
+        if (u.inCastle) {
+          if (kb.down) u.inCastle = false;
+          else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
+            u.x = kcx; u.y = kcy;
+            if (u.cd <= 0) {
+              var vic = null, vd = 1e9, vp = null;
+              for (j = 0; j < units.length; j++) {
+                var en = units[j];
+                if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y)) continue;
+                var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
+                if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; vp = np; }
+              }
+              if (vic) {
+                shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
+                u.cd = CONFIG.BASE_CD;
+                u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel
+                effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand
+              }
+            }
+            continue;
+          }
+        }
+        if (!kb.down) { // Burg steht wieder (ab 1 Leben): sofort zurück, oben wird er wieder zum Fernkämpfer
+          kdx = kcx - u.x; kdy = kcy - u.y; kdl = hyp(kdx, kdy);
+          if (kdl <= 0.15) { u.inCastle = true; u.x = kcx; u.y = kcy; }
+          else { var krs = Math.min(spd * dt, kdl); u.x += kdx / kdl * krs; u.y += kdy / kdl * krs; if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1; }
+          continue;
+        }
+        var kt = null, kdd = 1e9;
+        for (j = 0; j < units.length; j++) {
+          var ke = units[j];
+          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower) continue;
+          if (hyp(ke.x - kcx, ke.y - kcy) > KL + d.range) continue; // weiter als 5 Kacheln von der Burg: ignoriert
+          var kde = hyp(ke.x - u.x, ke.y - u.y);
+          if (kde < kdd) { kdd = kde; kt = ke; }
+        }
+        var kgx = kt ? kt.x : kcx, kgy = kt ? kt.y : kcy, kstop = kt ? d.range - 0.1 : 0.05;
+        kdx = kgx - u.x; kdy = kgy - u.y; kdl = hyp(kdx, kdy);
+        if (kdl > kstop) {
+          var kst = Math.min(spd * dt, kdl - kstop);
+          u.x += kdx / kdl * kst; u.y += kdy / kdl * kst;
+          if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1;
+        }
+        var khx = u.x - kcx, khy = u.y - kcy, khl = hyp(khx, khy);
+        if (khl > KL) { u.x = kcx + khx / khl * KL; u.y = kcy + khy / khl * KL; }
+        if (kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001 && u.cd <= 0) {
+          u.cd = d.cd;
+          if (Math.abs(kt.x - u.x) > 0.05) u.face = kt.x > u.x ? 1 : -1;
+          hurt(kt, d.atk, d); kt.hit = 0.15; kt.lastHit = clock;
+          effects.push({ kind: 'stab', heavy: true, x1: u.x, y1: u.y, x2: kt.x, y2: kt.y, t: 0, dur: 0.16 });
+        }
+        continue;
+      }
+      if (!u.gar && !u.dig && (u.type === 'archer' || u.type === 'mage' || u.type === 'catapult' || u.type === 'baliste') && wallD(u.team, u.x, u.y) <= WALL.tower.takeDist) seekSlot(u); // sobald ein Platz frei ist, solange die Einheit höchstens 4 Kacheln von der Kaserne entfernt ist
+      var ow = walls[1 - u.team];
+      u.o = !!(ow && ow.built && wallOut(ow, u.x, u.y)); // steht vor der fertigen gegnerischen Mauer
+      if (u.gar) { // Besatzung eines Turms: läuft zu ihrem Platz und bleibt dort stehen
+        var gw = walls[u.team];
+        if (!gw || !gw.sl || gw.sl[u.gar.key] !== u) { u.gar = null; u.tower = false; } // Mauer weg oder Platz verloren: marschiert normal los
+        else if (!u.tower && unitInFight(u, d)) { /* Angreifen hat Vorrang: erst kämpfen, dann in den Turm */ }
+        else if (!u.tower) {
+          var gp = slotPos(u.team, gw.tlv.list[u.gar.ti], gw.tlv.list[u.gar.ti].slots[u.gar.ci]), gdx2 = gp.x - u.x, gdy2 = gp.y - u.y, gd2 = hyp(gdx2, gdy2);
+          if (gd2 > 0.04) {
+            var gs2 = Math.min(spd * dt, gd2);
+            u.x += gdx2 / gd2 * gs2; u.y += gdy2 / gd2 * gs2;
+            if (Math.abs(gdx2) > 0.1) u.face = gdx2 > 0 ? 1 : -1;
+            continue;
+          }
+          u.x = gp.x; u.y = gp.y; u.tower = true;
+        } else {
+          var gp3 = slotPos(u.team, gw.tlv.list[u.gar.ti], gw.tlv.list[u.gar.ti].slots[u.gar.ci]);
+          u.x = gp3.x; u.y = gp3.y; u.o = false; spd = 0;
+        }
+      }
+      if (u.dig) {
+        // Unter der Erde: geradeaus zum Ziel, greift nicht an, kann nicht getroffen werden und wird nicht gesehen
+        var gdx = u.dig.x - u.x, gdy = u.dig.y - u.y, gl = hyp(gdx, gdy), gs = Math.min(d.dig.speed * dt, gl);
+        if (gl > 1e-6) {
+          u.x += gdx / gl * gs;
+          u.y += gdy / gl * gs;
+          if (Math.abs(gdx) > 0.2) u.face = gdx > 0 ? 1 : -1;
+        }
+        trailStep(u, false);
+        u.digSnd = (u.digSnd || 0) - dt;
+        if (u.digSnd <= 0) { u.digSnd = 0.2; sfx({ kind: 'dig', x: u.x }); }
+        if (hyp(u.dig.x - u.x, u.dig.y - u.y) <= 0.02) {
+          trailStep(u, true);
+          u.dig = null;
+          u.cd = 0.4;
+          effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.5 });
+        }
+        continue;
+      }
+      if (d.worker) {
+        // Arbeiter: zum Bauplatz gehen, mit rate Leben pro Sekunde bis zu add Leben bringen und verschwinden.
+        var wl = u.castle ? bases[u.team] : walls[u.team], wcap = u.castle ? CONFIG.BASE_HP : WALL.cap;
+        if (u.fade > 0) {
+          u.fade -= dt;
+          if (u.fade <= 0) { u.hp = 0; u.gone = true; }
+          continue;
+        }
+        if (!wl) { u.fade = WALL.fade; continue; }
+        var wdx = u.bp.x - u.x, wdy = u.bp.y - u.y, wd = hyp(wdx, wdy);
+        if (wd > 0.05) {
+          var ws = Math.min(spd * dt, wd);
+          u.x += wdx / wd * ws;
+          u.y += wdy / wd * ws;
+          if (Math.abs(wdx) > 0.1) u.face = wdx > 0 ? 1 : -1;
+        } else {
+          // angekommen: baut mit rate Leben pro Sekunde, bis er add Leben gebracht hat oder die Mauer voll ist
+          if (u.left === undefined) u.left = WALL.add;
+          var wg = Math.min(WALL.rate * dt, u.left, wcap - wl.hp);
+          if (wg > 0) { wl.hp = Math.round((wl.hp + wg) * 1e6) / 1e6; u.left = Math.round((u.left - wg) * 1e6) / 1e6; if (!u.castle) wl.built = true; } // gerundet, sonst kann 40,0000001 als 41 erscheinen
+          if (u.left <= 1e-6 || wl.hp >= wcap - 1e-6) u.fade = WALL.fade; // löst sich ohne Ton auf
+        }
+        continue;
+      }
+      if (d.passive) {
+        // Bauern gehen zu ihrem Standplatz und bleiben dort. Ohne Platz marschieren sie zur
+        // gegnerischen Kaserne und suchen unterwegs jede Sekunde erneut.
+        if (!u.settled) {
+          if (u.tx === null) {
+            u.retry -= dt;
+            if (u.retry <= 0) { u.retry = 1; pickSpot(u); }
+          }
+          var gx, gy, gd, stopAt;
+          if (u.tx !== null) { var fsp = farmerStand(u); gx = fsp.x; gy = fsp.y; stopAt = 0.03; }
+          else { var fbp = nearestOnRect(u, bases[1 - u.team]); gx = fbp.x; gy = fbp.y; stopAt = 0.9; }
+          var fdx = gx - u.x, fdy = gy - u.y, fd = hyp(fdx, fdy);
+          if (fd > stopAt) {
+            var fs = Math.min(spd * dt, fd - (u.tx !== null ? 0 : stopAt));
+            u.x += fdx / fd * fs;
+            u.y += fdy / fd * fs;
+            if (Math.abs(fdx) > 0.2) u.face = fdx > 0 ? 1 : -1;
+          }
+          if (u.tx !== null && hyp(gx - u.x, gy - u.y) <= 0.03) {
+            u.x = gx; u.y = gy;
+            u.settled = true;
+            effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.35 });
+          }
+        } else { // steht schon: entsteht oder verschwindet eine Mauer an seinem Platz, geht er an ihren Rand bzw. zurück
+          var fst2 = farmerStand(u), fdx2 = fst2.x - u.x, fdy2 = fst2.y - u.y, fd2 = hyp(fdx2, fdy2);
+          if (fd2 > 1e-6) {
+            var fs2 = Math.min(spd * dt, fd2);
+            u.x += fdx2 / fd2 * fs2; u.y += fdy2 / fd2 * fs2;
+            if (Math.abs(fdx2) > 0.2) u.face = fdx2 > 0 ? 1 : -1;
+          }
+        }
+        continue;
+      }
+      var foeBase = bases[1 - u.team];
+
+      // Alle Einheiten beider Seiten verhalten sich gleich: auf die gegnerische Kaserne zumarschieren und
+      // auf den nächsten Gegner in Reichweite schießen. Eine fertige gegnerische Mauer ist im Weg: Was dahinter
+      // steht (auch die Kaserne), ist nicht erreichbar, die Mauer selbst wird zum Ziel.
+      var outside = u.o && !d.fire, dw = outside ? wallD(ow.team, u.x, u.y) - WALL.dist - WALL_TH / 2 : 1e9;
+      var best = null, bd = 1e9, bt = null, btd = 1e9, rngd = d.range > 1.5 && !d.ram; // bt = nächster Gegner im Turm (nur für Fernkämpfer)
+      for (j = 0; j < units.length; j++) {
+        var e = units[j];
+        if (d.ram || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue; // der Rammbock sieht nur Mauern und Kasernen
+        if (outside && !wallOut(ow, e.x, e.y)) continue;
+        var dd = hyp(e.x - u.x, e.y - u.y);
+        if (d.minRange && dd < d.minRange) continue; // zu nah: das Katapult kann dieses Ziel nicht angreifen
+        if (dd < bd) { bd = dd; best = e; }
+        if (rngd && e.tower && dd < btd) { btd = dd; bt = e; }
+      }
+      var foeDown = foeBase.down, fk = null;
+      if (foeDown) for (j = 0; j < units.length; j++) if (units[j].type === 'king' && units[j].team !== u.team && units[j].hp > 0) { fk = units[j]; break; }
+      var bp = foeDown && fk ? { x: fk.x, y: fk.y } : nearestOnRect(u, foeBase);
+      var db = hyp(bp.x - u.x, bp.y - u.y);
+      var sight = Math.max(4, d.range + 1.5);
+
+      var dbe = outside || foeDown || (d.minRange && db < d.minRange) ? 1e9 : db, wallT = false;
+      var tgt = null, tx, ty, td;
+      if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
+      else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
+      else if (outside && dw <= d.range && !bt) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+        // nächster Punkt auf der Außenkante der Mauer
+        var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
+        wallT = true;
+        tx = wpx + (u.x - wpx) / wl2 * (WALL.dist + WALL_TH / 2);
+        ty = wpy + (u.y - wpy) / wl2 * (WALL.dist + WALL_TH / 2);
+        td = Math.max(dw, 0);
+      }
+      else if (bt) { tgt = bt; tx = bt.x; ty = bt.y; td = btd; } // zuerst die Besatzung der Türme
+      else if (best && bd <= sight) { tgt = best; tx = best.x; ty = best.y; td = bd; }
+      else { tx = bp.x; ty = bp.y; td = db; }
+
+      var stop = d.range - 0.1;
+      if (wallT && d.range <= 1.5) stop = Math.min(stop, 0.5); // Nahkämpfer gehen dicht an die Mauer, damit die Kaserne sie trifft
+      if (td > stop && td > 1e-6) {
+        var step = Math.min(spd * dt, td - stop);
+        var vx = (tx - u.x) / td, vy = (ty - u.y) / td;
+        u.x += vx * step;
+        u.y += vy * step;
+        if (Math.abs(vx) > 0.2) u.face = vx > 0 ? 1 : -1;
+      }
+
+      var reach = wallT && d.range <= 1.5 ? 0.55 : d.range; // Nahkämpfer schlagen erst direkt an der Mauer zu
+      if (td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange)) {
+        u.cd = d.cd * (u.cdm || 1);
+        if (Math.abs(tx - u.x) > 0.05) u.face = tx > u.x ? 1 : -1;
+        if (d.delay) {
+          // Geschoss fliegt: der Schaden folgt erst nach delay Sekunden (landShot), auch wenn der Schütze bis dahin fällt
+          shots.push({ type: u.type, team: u.team, sx: u.x, sy: u.y, tx: tx, ty: ty, tgt: tgt, wall: (!tgt && wallT) ? ow : null, t: d.delay });
+        } else {
+          if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
+          else if (wallT) {
+            if (d.atk > 0) { ow.hit = 0.15; ow.lastHit = clock; }
+            ow.hp -= d.atk;
+            if (ow.hp <= 0) {
+              walls[ow.team] = null;
+              effects.push({ kind: 'blast', x: tx, y: ty, r: 1.2, t: 0, dur: 0.45 });
+            }
+          }
+          else { foeBase.hp = Math.max(0, foeBase.hp - d.atk); if (d.atk > 0) { foeBase.flash = 0.2; foeBase.lastHit = clock; } }
+          if (d.splash) applySplash(u.team, u.x, u.y, tx, ty, d, tgt);
+        }
+        if (d.splash) {
+          if (d.fire) {
+            effects.push({ kind: 'fball', x1: u.x, y1: u.y, x2: tx, y2: ty, t: 0, dur: d.delay });
+            effects.push({ kind: 'fblast', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.55 });
+          } else {
+            effects.push({ kind: 'orb', x1: u.x, y1: u.y, x2: tx, y2: ty, t: 0, dur: 0.5 });
+            effects.push({ kind: 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: 0.45 });
+          }
+        } else if (d.ram) {
+          if (d.atk > 0) effects.push({ kind: 'slam', x: tx, y: ty, t: 0, dur: 0.4 }); // Rammbock: Einschlag mit Staub und Splittern
+        } else {
+          effects.push({
+            kind: (u.type === 'archer' || u.type === 'baliste') ? 'arrow' : 'stab', heavy: d.atk >= 2,
+            x1: u.x, y1: u.y, x2: tx, y2: ty, t: 0, dur: d.delay ? d.delay : (u.type === 'archer' ? 0.5 : 0.16)
+          });
+        }
+      }
+    }
+
+    // Geschosse im Flug: landen nach ihrer Flugzeit
+    var restShots = [];
+    for (var si = 0; si < shots.length; si++) {
+      shots[si].t -= dt;
+      if (shots[si].t <= 0) landShot(shots[si]); else restShots.push(shots[si]);
+    }
+    shots = restShots;
+
+    // Einheiten voneinander trennen
+    var k = Math.min(1, dt * 12);
+    for (i = 0; i < units.length; i++) {
+      var a = units[i];
+      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || CONFIG.units[a.type].passive || CONFIG.units[a.type].worker) continue;
+      for (j = i + 1; j < units.length; j++) {
+        var b = units[j];
+        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || CONFIG.units[b.type].passive || CONFIG.units[b.type].worker) continue;
+        var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy);
+        if (dist < 0.55) {
+          if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
+          var push = (0.55 - dist) * k; // zusammen, verteilt nach Masse: der Rammbock drückt sich durch, die anderen weichen aus
+          var ma = CONFIG.units[a.type].mass || 1, mb = CONFIG.units[b.type].mass || 1, pa = push * mb / (ma + mb), pb = push * ma / (ma + mb);
+          var nx = dx / dist, ny = dy / dist;
+          a.x -= nx * pa; a.y -= ny * pa;
+          b.x += nx * pb; b.y += ny * pb;
+        }
+      }
+    }
+
+    // König gefallen? (nur möglich, wenn die Burg zerstört ist; ein heimkehrender König, der oben ankommt, zählt nicht)
+    var kdead = [false, false];
+    for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
+
+    // Gefallene entfernen
+    var alive = [];
+    for (i = 0; i < units.length; i++) {
+      var q = units[i];
+      if (q.hp <= 0) {
+        if (!q.gone) effects.push({ kind: 'puff', x: q.x, y: q.y, team: q.team, t: 0, dur: 0.5 });
+      } else {
+        var cw = walls[1 - q.team];
+        if (q.o && cw && cw.built && !q.dig) {
+          // durch eine fertige gegnerische Mauer kommt keiner
+          var lim = WALL.dist + WALL_TH / 2 + CONFIG.units[q.type].r * 0.8;
+          if (wallD(cw.team, q.x, q.y) < lim) {
+            var cb = bases[cw.team], cdy = Math.max(0, cb.y1 - q.y, q.y - cb.y2);
+            if (cdy < lim) {
+              var need = Math.sqrt(lim * lim - cdy * cdy);
+              if (cw.team === 0) q.x = Math.max(q.x, cb.x2 + need); else q.x = Math.min(q.x, cb.x1 - need);
+            }
+          }
+        }
+        q.x = clamp(q.x, 0.25, W - 0.25);
+        q.y = clamp(q.y, 0.3, H - 0.3);
+        alive.push(q);
+      }
+    }
+    units = alive;
+
+    for (i = 0; i < 2; i++) {
+      var hw = walls[i];
+      if (!hw) continue;
+      hw.hit = Math.max(0, hw.hit - dt);
+      // Heilung: erst ab der ersten Optik, nur bis zum Höchstwert der erreichten Optik (40, 80, 120, 160, 200)
+      var hs = 0, hk;
+      for (hk = 0; hk < WALL.stages.length; hk++) if (hw.hp >= WALL.stages[hk]) hs++;
+      hw.stage = Math.max(hw.stage || 0, hs);
+      if (hw.stage >= WALL.tower.from) {
+        var tlv = WALL.tower.levels[hw.stage];
+        if (hw.tlv !== tlv) { // neue Optik: die Türme werden umgebaut, die Besatzung sucht sich neue Plätze
+          var olds = [], okey;
+          if (hw.sl) for (okey in hw.sl) if (hw.sl[okey] && hw.sl[okey].hp > 0) olds.push(hw.sl[okey]);
+          hw.sl = {}; hw.tlv = tlv;
+          for (var oi = 0; oi < olds.length; oi++) { olds[oi].gar = null; olds[oi].tower = false; seekSlot(olds[oi]); }
+        }
+      }
+      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1]) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + WALL.heal * dt) * 1e6) / 1e6;
+    }
+    bases[0].flash = Math.max(0, bases[0].flash - dt);
+    bases[1].flash = Math.max(0, bases[1].flash - dt);
+    // Burgen: zerstört (0 Leben) -> der König kommt herab; ab 1 Leben gilt sie als errichtet (er kehrt zurück); sonst heilt sie wie die Mauer
+    for (i = 0; i < 2; i++) {
+      var cs = bases[i];
+      if (!cs.down && cs.hp <= 0) {
+        cs.hp = 0; cs.down = true; cs.downAt = clock;
+        for (j = 0; j < units.length; j++) if (units[j].type === 'king' && units[j].team === i) units[j].inCastle = false; // der König steigt herab
+        effects.push({ kind: 'blast', x: (cs.x1 + cs.x2) / 2, y: (cs.y1 + cs.y2) / 2, r: 1.6, t: 0, dur: 0.6 });
+      } else if (cs.down && cs.hp >= 1) cs.down = false;
+      if (!cs.down) {
+        if (cs.hp < CONFIG.BASE_HP) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + WALL.heal * dt) * 1e6) / 1e6;
+      }
+    }
+    if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));
+  }
+
+  function updateEffects(dt) {
+    var keep = [];
+    for (var i = 0; i < effects.length; i++) {
+      var e = effects[i];
+      e.t += dt;
+      if (!e.snd && e.t >= 0) { e.snd = 1; sfx(e); }
+      if (e.t < e.dur) keep.push(e);
+    }
+    effects = keep;
+    if (state === 'over') {
+      bases[0].flash = Math.max(0, bases[0].flash - dt);
+      bases[1].flash = Math.max(0, bases[1].flash - dt);
+    }
+  }
+
+  // ---------- Zeichnen ----------
+  function drawUnit(c, type, x, y, r, team, face, hit, settled) {
+    if (type === 'knight') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
+    var col = team === 0 ? P.me : P.foe;
+    c.save();
+    c.translate(x, y);
+    c.fillStyle = P.shade;
+    c.beginPath(); c.ellipse(1, r * 0.75, r * 0.95, r * 0.5, 0, 0, Math.PI * 2); c.fill();
+    c.scale(face, 1);
+    c.lineCap = 'round';
+
+    if (type === 'rider') {
+      // Pferd von oben: Körper, Kopf, Schweif
+      c.fillStyle = P.wood;
+      c.strokeStyle = 'rgba(0,0,0,0.45)';
+      c.lineWidth = 2;
+      c.beginPath(); c.ellipse(0, 0, r * 1.3, r * 0.66, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(r * 1.45, 0, r * 0.5, r * 0.3, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
+    }
+
+    var bodyR = type === 'knight' ? r : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow') ? 0 : r * 0.9;
+    c.fillStyle = col;
+    c.strokeStyle = 'rgba(0,0,0,0.45)';
+    c.lineWidth = 2;
+    c.beginPath(); c.arc(0, 0, bodyR, 0, Math.PI * 2); c.fill(); c.stroke();
+
+    if (type === 'spear') {
+      c.fillStyle = P.steel;
+      c.beginPath(); c.arc(0, 0, r * 0.42, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 0.3, r * 0.5); c.lineTo(r * 2.0, r * 0.5); c.stroke();
+      c.fillStyle = P.steel;
+      c.beginPath(); c.moveTo(r * 2.35, r * 0.5); c.lineTo(r * 1.85, r * 0.22); c.lineTo(r * 1.85, r * 0.78); c.closePath(); c.fill();
+    } else if (type === 'ram') {
+      // Rammbock von oben: Karren mit Rädern, Dach in Teamfarbe, Balken mit Eisenkopf
+      c.fillStyle = '#5e3b18'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
+      [-1, 1].forEach(function (sg) {
+        rr(c, -r * 0.8, sg * r * 0.88 - r * 0.14, r * 0.9, r * 0.28, 3); c.fill(); c.stroke();
+        rr(c, r * 0.25, sg * r * 0.88 - r * 0.14, r * 0.9, r * 0.28, 3); c.fill(); c.stroke();
+      });
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(3, r * 0.4);
+      c.beginPath(); c.moveTo(-r * 0.9, 0); c.lineTo(r * 2.1, 0); c.stroke();
+      c.fillStyle = '#a0763f';
+      rr(c, -r * 1.0, -r * 0.75, r * 2.0, r * 1.5, 4); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2; c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.2)';
+      c.fillRect(-r * 0.1, -r * 0.75, r * 0.12, r * 1.5);
+      c.strokeStyle = 'rgba(0,0,0,0.22)'; c.lineWidth = 1.5;
+      for (var pi = -3; pi <= 3; pi++) { c.beginPath(); c.moveTo(-r * 0.95, pi * r * 0.2); c.lineTo(r * 0.95, pi * r * 0.2); c.stroke(); }
+      c.strokeStyle = col; c.lineWidth = r * 0.2; c.strokeRect(-r * 0.88, -r * 0.63, r * 1.76, r * 1.26); // Teamfarbe nur als Rand
+      c.fillStyle = '#6f7680';
+      [-0.5, 0.5].forEach(function (y) { c.beginPath(); c.arc(r * 0.8, y * r, r * 0.09, 0, Math.PI * 2); c.fill(); });
+      c.fillStyle = P.steel; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(r * 2.7, 0); c.lineTo(r * 2.0, -r * 0.45); c.lineTo(r * 2.0, r * 0.45); c.closePath(); c.fill(); c.stroke();
+    } else if (type === 'shield') {
+      // Belagerungsschild von oben (Schilddach): nach vorne gekippte Holzplatte mit Eisenrahmen und -kreuz,
+      // hinten angehoben (breiter), vorne schmaler mit dunkler Kante; der Träger ist hinten nur halb verdeckt zu sehen
+      var s = r * 1.2; // 20 % grösser dargestellt
+      var poly = function (p) { c.beginPath(); for (var i = 0; i < p.length; i++) { if (i) c.lineTo(p[i][0] * s, p[i][1] * s); else c.moveTo(p[i][0] * s, p[i][1] * s); } c.closePath(); };
+      // Träger: Schultern, Hände, Helm
+      c.fillStyle = col;
+      c.beginPath(); c.ellipse(-0.88 * s, 0, 0.3 * s, 0.78 * s, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#d9a066';
+      c.beginPath(); c.arc(-0.62 * s, -0.62 * s, 0.13 * s, 0, Math.PI * 2); c.arc(-0.62 * s, 0.62 * s, 0.13 * s, 0, Math.PI * 2); c.fill();
+      c.fillStyle = P.steel;
+      c.beginPath(); c.arc(-0.72 * s, 0, 0.3 * s, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.35)';
+      c.beginPath(); c.arc(-0.77 * s, -0.05 * s, 0.14 * s, 0, Math.PI * 2); c.fill();
+      // Schatten der Platte auf dem Boden
+      c.fillStyle = 'rgba(0,0,0,0.27)';
+      poly([[-0.55, -1.05], [1.25, -0.95], [1.25, 1.1], [-0.55, 1.2]]); c.fill();
+      var SP = [[-0.8, -1.25], [0.8, -1.0], [0.8, 1.0], [-0.8, 1.25]];
+      var sg = c.createLinearGradient(-0.8 * s, 0, 0.8 * s, 0);
+      sg.addColorStop(0, '#b98a52'); sg.addColorStop(1, '#80582c');
+      poly(SP); c.fillStyle = sg; c.fill();
+      c.save(); poly(SP); c.clip();
+      c.strokeStyle = 'rgba(70,40,15,0.75)'; c.lineWidth = Math.max(1, s * 0.04);
+      for (var pl = 1; pl < 5; pl++) { var px = (-0.8 + 1.6 * pl / 5) * s; c.beginPath(); c.moveTo(px, -1.3 * s); c.lineTo(px, 1.3 * s); c.stroke(); }
+      c.restore();
+      c.strokeStyle = P.steel; c.lineJoin = 'round'; c.lineWidth = Math.max(2, s * 0.08);
+      poly(SP); c.stroke();
+      c.lineWidth = Math.max(2, s * 0.07);
+      c.beginPath(); c.moveTo(-0.8 * s, -1.25 * s); c.lineTo(0.8 * s, 1.0 * s); c.moveTo(0.8 * s, -1.0 * s); c.lineTo(-0.8 * s, 1.25 * s); c.stroke();
+      c.fillStyle = P.steel; c.beginPath(); c.arc(0, 0, 0.18 * s, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.arc(-0.04 * s, -0.04 * s, 0.07 * s, 0, Math.PI * 2); c.fill();
+      // Vorderkante (Dicke) mit Teamfarbe
+      c.fillStyle = '#4a3218'; poly([[0.8, -1.0], [0.95, -0.95], [0.95, 0.95], [0.8, 1.0]]); c.fill();
+      c.fillStyle = col; poly([[0.82, -0.55], [0.93, -0.53], [0.93, 0.53], [0.82, 0.55]]); c.fill();
+    } else if (type === 'catapult') {
+      // Katapult von oben: Holzrahmen auf Rädern, Wurfarm mit glühender Kugel
+      c.fillStyle = '#3b2b1b';
+      c.beginPath(); c.ellipse(-r * 0.55, -r * 0.8, r * 0.32, r * 0.16, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(-r * 0.55, r * 0.8, r * 0.32, r * 0.16, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(r * 0.55, -r * 0.8, r * 0.32, r * 0.16, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(r * 0.55, r * 0.8, r * 0.32, r * 0.16, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = P.wood;
+      rr(c, -r * 1.0, -r * 0.7, r * 2.0, r * 1.4, 4); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2; c.stroke();
+      c.fillStyle = col;
+      rr(c, r * 0.1, -r * 0.45, r * 0.7, r * 0.9, 3); c.fill(); // Teamkasten vorne
+      c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.28); // Hebearm gerade nach hinten
+      c.beginPath(); c.moveTo(r * 0.3, 0); c.lineTo(-r * 1.55, 0); c.stroke();
+      c.lineWidth = Math.max(3, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 0.2, -r * 0.75); c.lineTo(-r * 0.2, r * 0.75); c.stroke(); // Querstrebe
+      c.fillStyle = '#4a3b2a';
+      c.beginPath(); c.arc(-r * 1.65, 0, r * 0.5, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#ff7a1a';
+      c.beginPath(); c.arc(-r * 1.65, 0, r * 0.34, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#ffd34a';
+      c.beginPath(); c.arc(-r * 1.72, -r * 0.07, r * 0.16, 0, Math.PI * 2); c.fill();
+    } else if (type === 'baliste') {
+      // Baliste von oben: Holzrahmen auf Rädern, zwei Bogenarme mit Sehne, Bolzen in der Rinne
+      c.fillStyle = '#3b2b1b';
+      c.beginPath(); c.ellipse(-r * 0.5, -r * 0.85, r * 0.3, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(-r * 0.5, r * 0.85, r * 0.3, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(r * 0.5, -r * 0.85, r * 0.3, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(r * 0.5, r * 0.85, r * 0.3, r * 0.15, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = P.wood;
+      rr(c, -r * 1.0, -r * 0.3, r * 2.0, r * 0.6, 3); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2; c.stroke();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(3, r * 0.26); c.lineCap = 'round';
+      c.beginPath(); c.moveTo(r * 0.55, -r * 1.05); c.quadraticCurveTo(r * 0.95, 0, r * 0.55, r * 1.05); c.stroke();
+      c.strokeStyle = col; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(r * 0.55, -r * 1.05); c.lineTo(-r * 0.45, 0); c.lineTo(r * 0.55, r * 1.05); c.stroke();
+      c.strokeStyle = '#4a3b2a'; c.lineWidth = Math.max(3, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 0.45, 0); c.lineTo(r * 1.3, 0); c.stroke();
+      c.fillStyle = P.steel;
+      c.beginPath(); c.moveTo(r * 1.75, 0); c.lineTo(r * 1.2, -r * 0.3); c.lineTo(r * 1.2, r * 0.3); c.closePath(); c.fill();
+    } else if (type === 'king' || type === 'kingbow') {
+      // König von oben: Umhang in Teamfarbe, Rüstung, Krone; mit Bogen (auf der Burg) oder großem Zweihänder (ohne Burg)
+      var gold1 = '#d4a017';
+      c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 2; // Umhang: schmal, gedeckt (Teamfarbe nur als Tönung)
+      c.beginPath(); c.moveTo(-r * 0.1, -r * 0.75); c.lineTo(-r * 1.2, -r * 0.95); c.quadraticCurveTo(-r * 1.4, 0, -r * 1.2, r * 0.95); c.lineTo(-r * 0.1, r * 0.75); c.closePath();
+      c.fillStyle = col; c.fill(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); c.stroke(); // Umhang: Teamfarbe, etwas abgedunkelt
+      c.fillStyle = '#7d8790'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
+      c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      if (type === 'king') {
+        // Zweihänder: langes Blatt nach vorn, goldene Parierstange, beide Hände am Griff
+        c.fillStyle = P.steel; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(r * 3.5, 0); c.lineTo(r * 3.1, -r * 0.2); c.lineTo(r * 0.9, -r * 0.2); c.lineTo(r * 0.9, r * 0.2); c.lineTo(r * 3.1, r * 0.2); c.closePath(); c.fill(); c.stroke();
+        c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 1.0, 0); c.lineTo(r * 3.2, 0); c.stroke();
+        c.strokeStyle = gold1; c.lineWidth = Math.max(3, r * 0.22);
+        c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
+        c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2);
+        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
+        c.fillStyle = '#d9a066';
+        c.beginPath(); c.arc(r * 0.45, -r * 0.13, r * 0.14, 0, Math.PI * 2); c.arc(r * 0.7, r * 0.13, r * 0.14, 0, Math.PI * 2); c.fill();
+      } else {
+        // Bogen mit aufgelegtem Pfeil
+        c.strokeStyle = P.wood; c.lineWidth = Math.max(3, r * 0.22);
+        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * 1.15); c.stroke();
+        c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.lineTo(r * 0.5, 0); c.lineTo(r * 0.95, r * 1.15); c.stroke();
+        c.strokeStyle = P.wood; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(r * 0.5, 0); c.lineTo(r * 1.6, 0); c.stroke();
+        c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 1.9, 0); c.lineTo(r * 1.5, -r * 0.14); c.lineTo(r * 1.5, r * 0.14); c.closePath(); c.fill();
+        c.fillStyle = '#d9a066';
+        c.beginPath(); c.arc(r * 0.95, 0, r * 0.14, 0, Math.PI * 2); c.arc(r * 0.45, 0, r * 0.14, 0, Math.PI * 2); c.fill();
+      }
+      // Kopf mit goldener Krone
+      c.fillStyle = '#d9a066'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
+      c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.strokeStyle = gold1; c.lineWidth = Math.max(2, r * 0.1); // runder Kopf, nur ein schmaler Kronreif
+      c.beginPath(); c.arc(r * 0.05, 0, r * 0.38, -2.2, 2.2); c.stroke();
+    } else if (type === 'worker') {
+      // Bauhelm und Hammer
+      c.fillStyle = '#e8b81c';
+      c.beginPath(); c.arc(0, 0, r * 0.62, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.22);
+      c.beginPath(); c.moveTo(r * 0.2, r * 0.7); c.lineTo(r * 1.5, r * 0.7); c.stroke();
+      c.fillStyle = P['stone-dark'];
+      rr(c, r * 1.25, r * 0.38, r * 0.55, r * 0.64, 2); c.fill();
+    } else if (type === 'mage') {
+      // Kapuze, Stab mit leuchtender Kugel
+      c.fillStyle = '#5b3fa8';
+      c.beginPath(); c.arc(0, 0, r * 0.6, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#3a2575';
+      c.beginPath(); c.moveTo(r * 0.55, 0); c.lineTo(-r * 0.25, -r * 0.4); c.lineTo(-r * 0.25, r * 0.4); c.closePath(); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 0.2, r * 0.6); c.lineTo(r * 1.5, r * 0.6); c.stroke();
+      c.fillStyle = 'rgba(155,107,255,0.4)';
+      c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.6, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#b894ff';
+      c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.34, 0, Math.PI * 2); c.fill();
+    } else if (type === 'farmer') {
+      // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
+      if (!settled) {
+        c.fillStyle = 'rgba(255,255,255,0.4)';
+        c.beginPath(); c.arc(0, 0, bodyR, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = settled ? '#c48a12' : '#ead58f';
+      c.beginPath(); c.arc(0, 0, r * 0.75, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      c.fillStyle = P.wood;
+      c.beginPath(); c.arc(0, 0, r * 0.28, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.18);
+      c.beginPath(); c.moveTo(-r * 0.2, r * 0.9); c.lineTo(r * 1.6, r * 0.9); c.stroke();
+      c.strokeStyle = P.steel; c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(r * 1.6, r * 0.5); c.lineTo(r * 1.6, r * 1.3);
+      c.moveTo(r * 1.6, r * 0.5); c.lineTo(r * 2.0, r * 0.5);
+      c.moveTo(r * 1.6, r * 0.9); c.lineTo(r * 2.0, r * 0.9);
+      c.moveTo(r * 1.6, r * 1.3); c.lineTo(r * 2.0, r * 1.3);
+      c.stroke();
+    } else if (type === 'digger') {
+      // Gelber Helm mit Lampe und Spitzhacke
+      c.fillStyle = '#e0b020';
+      c.beginPath(); c.arc(0, 0, r * 0.66, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      c.fillStyle = '#fff6c8';
+      c.beginPath(); c.arc(r * 0.45, 0, r * 0.2, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.moveTo(-r * 0.2, r * 0.7); c.lineTo(r * 1.6, r * 0.7); c.stroke();
+      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
+      c.beginPath(); c.moveTo(r * 1.5, r * 0.1); c.quadraticCurveTo(r * 1.9, r * 0.7, r * 1.5, r * 1.3); c.stroke();
+    } else if (type === 'archer') {
+      c.fillStyle = P.wood;
+      c.beginPath(); c.arc(-r * 0.1, 0, r * 0.45, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.arc(r * 0.3, 0, r * 1.2, -1.0, 1.0); c.stroke();
+      c.strokeStyle = P.steel; c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(r * 0.3 + Math.cos(-1.0) * r * 1.2, Math.sin(-1.0) * r * 1.2);
+      c.lineTo(r * 0.3 + Math.cos(1.0) * r * 1.2, Math.sin(1.0) * r * 1.2);
+      c.stroke();
+    } else if (type === 'rider') {
+      c.fillStyle = P.steel;
+      c.beginPath(); c.arc(0, 0, r * 0.3, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
+      c.beginPath(); c.moveTo(r * 0.2, -r * 0.6); c.lineTo(r * 2.1, -r * 0.6); c.stroke();
+      c.fillStyle = P.steel;
+      c.beginPath(); c.moveTo(r * 2.45, -r * 0.6); c.lineTo(r * 2.0, -r * 0.85); c.lineTo(r * 2.0, -r * 0.35); c.closePath(); c.fill();
+    } else {
+      c.fillStyle = P.steel;
+      c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill();
+      c.fillStyle = col;
+      rr(c, -r * 0.1, -r * 0.1, r * 0.55, r * 0.2, 2); c.fill();
+      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
+      c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * 1.9, -r * 0.75); c.stroke();
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2.5, r * 0.22);
+      c.beginPath(); c.moveTo(r * 0.55, -r * 1.0); c.lineTo(r * 0.55, -r * 0.5); c.stroke();
+      c.fillStyle = P.steel;
+      c.strokeStyle = col; c.lineWidth = 2.5;
+      c.beginPath(); c.ellipse(r * 0.85, r * 0.45, r * 0.34, r * 0.62, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    }
+
+    if (hit > 0) {
+      c.fillStyle = 'rgba(255,255,255,' + (0.7 * hit / 0.15) + ')';
+      c.beginPath(); c.arc(0, 0, bodyR || r, 0, Math.PI * 2); c.fill();
+    }
+    c.restore();
+  }
+
+  function drawWallIcon(c) {
+    c.fillStyle = P.stone;
+    rr(c, 14, 20, 60, 50, 6); c.fill();
+    c.strokeStyle = P['stone-dark']; c.lineWidth = 3; c.stroke();
+    c.lineWidth = 2;
+    for (var row = 0; row < 3; row++) {
+      var yy = 20 + row * 50 / 3;
+      c.beginPath(); c.moveTo(14, yy + 50 / 3); c.lineTo(74, yy + 50 / 3); c.stroke();
+      var off = row % 2 ? 10 : 25;
+      for (var xx = 14 + off; xx < 74; xx += 30) { c.beginPath(); c.moveTo(xx, yy); c.lineTo(xx, yy + 50 / 3); c.stroke(); }
+    }
+  }
+
+  // Mauerlinie im Abstand r um die Kaserne (für die linke Kaserne; die rechte wird gespiegelt gezeichnet)
+  function wallPath(r) {
+    var b = bases[0], x2 = b.x2 * T, y1 = b.y1 * T, y2 = b.y2 * T, rp = r * T, a0 = Math.asin(Math.min(1, b.y1 / r));
+    ctx.beginPath();
+    ctx.arc(x2, y1, rp, -a0, 0);
+    ctx.lineTo(x2 + rp, y2);
+    ctx.arc(x2, y2, rp, 0, a0);
+  }
+  // Bis 40 Leben nur ein Gerüst (blasser Bauplatz); ab 40, 80, 120, 160 und 200 Leben je eine neue Optik: Holzpfähle, Planken, Ziegel,
+  // Ziegel mit Eisenbändern, Zinnenmauer. Die höchste erreichte Stufe bleibt, bis die Mauer zerstört ist.
+  // Turm (Viereck oder Rund) im Stil der Mauer-Optik st
+  function drawTower(w, tw, st, col) {
+    var tp = wallPoint(w.team, tw.f, WALL.dist + tw.out), an = towerAng(w.team, tw.f), tk, iron = '#4f5963';
+    var rd = tw.k === 'rd', hw = (rd ? tw.r : tw.w / 2) * T, hh = (rd ? tw.r : tw.h / 2) * T;
+    var body = function (grow) { if (rd) { ctx.beginPath(); ctx.arc(0, 0, hw + grow, 0, Math.PI * 2); } else rr(ctx, -hw - grow, -hh - grow, 2 * (hw + grow), 2 * (hh + grow), 2 + grow); };
+    ctx.save();
+    ctx.translate(tp.x * T, tp.y * T);
+    ctx.save(); ctx.translate(4, 5); ctx.fillStyle = P.shade; body(0); ctx.fill(); ctx.restore();
+    ctx.rotate(an);
+    var wood = st === 2;
+    ctx.fillStyle = wood ? 'rgba(0,0,0,0.5)' : P['stone-dark']; body(2); ctx.fill();
+    ctx.fillStyle = wood ? P.wood : P.stone; body(0); ctx.fill();
+    ctx.save(); body(0); ctx.clip();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = wood ? 'rgba(0,0,0,0.4)' : P['stone-dark'];
+    var n = wood ? 4 : 5;
+    for (tk = 1; tk < n; tk++) { var yy = -hh + tk * 2 * hh / n; ctx.beginPath(); ctx.moveTo(-hw, yy); ctx.lineTo(hw, yy); ctx.stroke(); }
+    if (st >= 4) { ctx.fillStyle = iron; ctx.fillRect(-hw, -hh + hh * 0.4 - 2, 2 * hw, 4); ctx.fillRect(-hw, hh * 0.5 - 2, 2 * hw, 4); }
+    ctx.restore();
+    if (st >= 5) { // Zinnen rundherum
+      ctx.fillStyle = P['stone-dark'];
+      if (rd) { var nz = Math.round(hw * 0.55); for (tk = 0; tk < nz; tk++) { var za = tk * Math.PI * 2 / nz; ctx.save(); ctx.translate(Math.cos(za) * (hw - 1), Math.sin(za) * (hw - 1)); ctx.rotate(za); ctx.fillRect(-3, -4, 7, 8); ctx.restore(); } }
+      else for (tk = 0; tk < 3; tk++) { ctx.fillRect(-hw - 3, -hh + 1 + tk * (2 * hh - 9) / 2, 6, 8); ctx.fillRect(hw - 3, -hh + 1 + tk * (2 * hh - 9) / 2, 6, 8); }
+    }
+    ctx.strokeStyle = col; ctx.lineWidth = 3; body(-1.5); ctx.stroke();
+    ctx.restore();
+  }
+  function drawWall(w) {
+    var th = WALL_TH * T, col = w.team === 0 ? P.me : P.foe, R = WALL.dist, k, stg = 0;
+    for (k = 0; k < WALL.stages.length; k++) if (w.hp >= WALL.stages[k]) stg++;
+    w.stage = Math.max(w.stage || 0, stg);
+    w.peak = Math.max(w.peak || 0, w.hp);
+    var st = w.stage, bmax = WALL.bars[st], f = clamp(w.hp / bmax, 0, 1), ex = st >= 5 ? 12 : 0;
+    ctx.save();
+    if (w.team === 1) { ctx.translate(W * T, 0); ctx.scale(-1, 1); }
+    ctx.lineCap = 'butt';
+    ctx.save(); ctx.translate(5, 6); wallPath(R); ctx.strokeStyle = P.shade; ctx.lineWidth = th + ex; ctx.stroke(); ctx.restore();
+    if (st === 0) { // nur das Gerüst, bis 40 Leben erreicht sind
+      ctx.globalAlpha = 0.3 + 0.3 * f;
+      wallPath(R); ctx.strokeStyle = P.stone; ctx.lineWidth = th; ctx.stroke();
+      ctx.globalAlpha = 0.9;
+      ctx.setLineDash([8, 6]); ctx.lineWidth = 2; ctx.strokeStyle = col;
+      wallPath(R + WALL_TH / 2); ctx.stroke();
+      wallPath(R - WALL_TH / 2); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      var dark = 'rgba(0,0,0,0.5)', iron = '#4f5963', line = function (lw, color, dash, off) {
+        wallPath(R); ctx.lineWidth = lw; ctx.strokeStyle = color; ctx.setLineDash(dash || []); ctx.lineDashOffset = off || 0; ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      };
+      if (st === 1) { // Holzpfähle
+        line(th + 3, dark); line(th - 1, P.wood); line(th - 1, 'rgba(0,0,0,0.4)', [2, T * 0.17]);
+      } else if (st === 2) { // Holzplanken
+        line(th + 4, dark); line(th, P.wood);
+        wallPath(R - th / 6 / T); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.stroke();
+        wallPath(R + th / 6 / T); ctx.stroke();
+        line(th, 'rgba(0,0,0,0.35)', [2, T * 0.55]);
+      } else if (st === 3) { // Ziegel
+        line(th + 4, P['stone-dark']); line(th - 2, P.stone); line(th - 2, P['stone-dark'], [2, T * 0.34]);
+      } else if (st === 4) { // Ziegel mit Eisenbändern
+        line(th + 4, P['stone-dark']); line(th - 2, P.stone); line(th - 2, P['stone-dark'], [2, T * 0.34]);
+        line(th + 2, iron, [5, T * 0.8], T * 0.2); line(th - 4, 'rgba(255,255,255,0.18)', [2, T * 0.8 + 3], T * 0.2);
+      } else { // Zinnenmauer
+        line(th + 12, dark); line(th + 8, P['stone-dark']);
+        line(th + 8, P.stone, [T * 0.26, T * 0.16]); // Zinnen
+        line(th - 2, P.stone); line(th - 2, P['stone-dark'], [2, T * 0.34]);
+        line(th + 4, iron, [5, T * 0.8], T * 0.2); line(th + 12, 'rgba(0,0,0,0.25)', [2, T * 0.42 - 2], T * 0.13);
+      }
+      wallPath(R - WALL_TH / 2 + 1.5 / T); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.stroke(); // Farbe der eigenen Seite
+      if (w.hit > 0) { wallPath(R); ctx.strokeStyle = 'rgba(255,255,255,' + (0.55 * w.hit / 0.15) + ')'; ctx.lineWidth = th + ex; ctx.stroke(); }
+    }
+    ctx.restore();
+    if (st >= WALL.tower.from) {
+      var tlist = WALL.tower.levels[st].list;
+      for (i = 0; i < tlist.length; i++) drawTower(w, tlist[i], st, col);
+    }
+    // Risse und Lebensanzeige an der Spitze der Mauer
+    var tb = bases[w.team], tip = { x: w.team === 0 ? tb.x2 + R : tb.x1 - R, y: tb.y1 }, i;
+    if (st >= 1) {
+      // je weniger Leben im Verhältnis zum Höchstwert der erreichten Optik (40, 80, 120, 160, 200), desto mehr Risse; beim Bauen keine
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      var cr = Math.floor((1 - clamp(w.hp / WALL.stages[st - 1], 0, 1)) * 20); // Höchstwert dieser Optik = Leben, ab denen sie erscheint
+      for (i = 0; i < cr; i++) {
+        var cp = wallPoint(w.team, ((i * 7 + 3) % 29 + 0.5) / 29.5, R + ((i % 3) - 1) * 0.1);
+        var cx = cp.x * T, cy = cp.y * T, sgn = i % 2 ? 1 : -1;
+        ctx.beginPath(); ctx.moveTo(cx - 7, cy - 5 * sgn); ctx.lineTo(cx - 1, cy + 1); ctx.lineTo(cx + 3, cy - 3 * sgn); ctx.lineTo(cx + 8, cy + 4);
+        ctx.moveTo(cx - 1, cy + 1); ctx.lineTo(cx + 1, cy + 7 * sgn); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    var bw = 44, bx = tip.x * T - bw / 2, by = tip.y * T - 26;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 8);
+    ctx.fillStyle = col; ctx.fillRect(bx, by, bw * f, 6);
+    ctx.fillStyle = P.fg || '#fff';
+    ctx.font = '600 10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+    ctx.strokeText(Math.ceil(w.hp) + '', tip.x * T, by + 19); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(w.hp) + '', tip.x * T, by + 19);
+    ctx.restore();
+  }
+
+  function drawBase(b) {
+    var col = b.team === 0 ? P.me : P.foe, dir = b.team === 0 ? 1 : -1;
+    var x = b.x1 * T, y = b.y1 * T, w = (b.x2 - b.x1) * T, h = (b.y2 - b.y1) * T;
+    var dead = b.down, i;
+
+    var cx = x + w / 2, cy = y + h / 2, dk = '#585f63', st = '#8d9396'; // kräftiges Burggrau
+    // Grundplatte (Burghof) und Schatten; die Burg ist 10 % kleiner als ihr Feld
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(0.9, 0.9); ctx.translate(-cx, -cy);
+    ctx.fillStyle = P.shade; rr(ctx, x + 6, y + 8, w, h, 10); ctx.fill();
+    ctx.fillStyle = dk; rr(ctx, x, y, w, h, 10); ctx.fill();
+    ctx.fillStyle = st; rr(ctx, x + 4, y + 4, w - 8, h - 8, 8); ctx.fill();
+    if (b.down) { // zerstört: Trümmer; im Wiederaufbau wird die Burg mit den Leben sichtbar
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; rr(ctx, x, y, w, h, 10); ctx.fill();
+      ctx.fillStyle = dk;
+      for (i = 0; i < 9; i++) {
+        ctx.beginPath(); ctx.arc(x + 12 + (i * 37) % (w - 24), y + 12 + (i * 53) % (h - 24), 6 + (i % 3) * 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (!b.down || b.hp > 0) {
+      ctx.save();
+      if (b.down) ctx.globalAlpha = clamp(b.hp, 0, 1) * 0.85;
+      // Zinnen entlang der Mauer
+      ctx.fillStyle = dk;
+      for (i = 0; i < 5; i++) { ctx.fillRect(x + 10 + i * (w - 28) / 4, y + 1, 8, 7); ctx.fillRect(x + 10 + i * (w - 28) / 4, y + h - 8, 8, 7); }
+      for (i = 0; i < 7; i++) { ctx.fillRect(x + 1, y + 10 + i * (h - 28) / 6, 7, 8); ctx.fillRect(x + w - 8, y + 10 + i * (h - 28) / 6, 7, 8); }
+      // vier Ecktürme mit Dach in Teamfarbe
+      [[x + 12, y + 12], [x + w - 12, y + 12], [x + 12, y + h - 12], [x + w - 12, y + h - 12]].forEach(function (tp) {
+        ctx.fillStyle = st; ctx.strokeStyle = dk; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(tp[0], tp[1], 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(tp[0], tp[1], 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.arc(tp[0] - 3, tp[1] - 3, 3, 0, Math.PI * 2); ctx.fill();
+      });
+      // Bergfried in der Mitte (Dach in Teamfarbe, zwei Hälften)
+      var kx = x + w * 0.24, ky = y + h * 0.3, kw = w * 0.52, kh = h * 0.4;
+      ctx.fillStyle = P.shade; rr(ctx, kx + 4, ky + 5, kw, kh, 6); ctx.fill();
+      ctx.fillStyle = st; rr(ctx, kx - 3, ky - 3, kw + 6, kh + 6, 7); ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = dk; ctx.stroke();
+      ctx.fillStyle = '#6a5a48'; rr(ctx, kx, ky, kw, kh, 5); ctx.fill(); // Standplatz des Königs: Holzboden, nicht in Teamfarbe
+      ctx.save(); rr(ctx, kx, ky, kw, kh, 5); ctx.clip();
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1.5;
+      for (i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(kx, ky + kh * i / 5); ctx.lineTo(kx + kw, ky + kh * i / 5); ctx.stroke(); }
+      ctx.restore();
+      // Tor zur Gegnerseite
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      rr(ctx, dir === 1 ? x + w - 10 : x, cy - 14, 10, 28, 3); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    if (b.flash > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.55 * b.flash / 0.2) + ')';
+      rr(ctx, x, y, w, h, 10); ctx.fill();
+    }
+
+    // Lebensanzeige: Balken mit Strich alle 5 Leben und der Zahl darüber
+    var n = CONFIG.BASE_HP, py = y - 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    rr(ctx, x - 4, py - 4, w + 8, 18, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(x, py, w, 10);
+    ctx.fillStyle = col;
+    ctx.fillRect(x, py, w * clamp(b.hp / n, 0, 1), 10);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    for (i = 5; i < n; i += 5) ctx.fillRect(x + w * i / n - 0.5, py, 1, 10);
+    ctx.font = '600 13px "Space Grotesk", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.strokeText(Math.ceil(b.hp), x + w / 2, py - 8);
+    ctx.fillStyle = '#ffffff'; ctx.fillText(Math.ceil(b.hp), x + w / 2, py - 8);
+  }
+
+  // Grabspur der Tunnelgräber: bleibt die volle Dauer sichtbar, nur das letzte Fünftel blendet aus
+  function drawTrench() {
+    ctx.lineCap = 'round';
+    // zwei Durchgänge (erst der dunkle Rand, dann die Mitte), damit die Spur ohne Perlen-Muster zusammenhängt
+    for (var pass = 0; pass < 2; pass++) {
+      ctx.strokeStyle = pass === 0 ? 'rgba(80,56,36,0.5)' : 'rgba(140,104,70,0.5)';
+      ctx.lineWidth = pass === 0 ? 9 : 5;
+      for (var i = 0; i < effects.length; i++) {
+        var e = effects[i];
+        if (e.kind !== 'dirt') continue;
+        var k = e.t / e.dur;
+        ctx.globalAlpha = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
+        ctx.beginPath(); ctx.moveTo(e.x1 * T, e.y1 * T); ctx.lineTo(e.x2 * T, e.y2 * T); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawMound(x, y, r) {
+    // kleiner, flacher Erdhaufen (nur ein leichter Hinweis auf den Gräber)
+    ctx.fillStyle = 'rgba(70,48,30,0.55)';
+    ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(140,104,70,0.6)';
+    ctx.beginPath(); ctx.arc(x - r * 0.1, y - r * 0.1, r * 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawEffects() {
+    for (var i = 0; i < effects.length; i++) {
+      var e = effects[i], k = e.t / e.dur;
+      if (e.t < 0 || e.kind === 'dirt') continue;
+      if (e.kind === 'orb') {
+        var ox = lerp(e.x1, e.x2, k) * T, oy = lerp(e.y1, e.y2, k) * T;
+        ctx.fillStyle = 'rgba(155,107,255,0.35)';
+        ctx.beginPath(); ctx.arc(ox, oy, 11, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#b894ff';
+        ctx.beginPath(); ctx.arc(ox, oy, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(ox - 1.5, oy - 1.5, 2, 0, Math.PI * 2); ctx.fill();
+      } else if (e.kind === 'blast') {
+        var br = e.r * T * (0.35 + 0.65 * Math.min(1, k * 2));
+        ctx.globalAlpha = 1 - k;
+        ctx.fillStyle = 'rgba(155,107,255,0.28)';
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, br, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#9b6bff'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, br, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (e.kind === 'arrow') {
+        var ax = lerp(e.x1, e.x2, k) * T, ay = lerp(e.y1, e.y2, k) * T;
+        var ang = Math.atan2(e.y2 - e.y1, e.x2 - e.x1);
+        ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang);
+        if (e.heavy) ctx.scale(1.7, 1.7);
+        ctx.strokeStyle = P.wood; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(8, 0); ctx.stroke();
+        ctx.fillStyle = P.steel;
+        ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(6, -4); ctx.lineTo(6, 4); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      } else if (e.kind === 'stab') {
+        ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = P.steel; ctx.lineWidth = e.heavy ? 6 : 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(lerp(e.x1, e.x2, 0.35) * T, lerp(e.y1, e.y2, 0.35) * T); ctx.lineTo(e.x2 * T, e.y2 * T); ctx.stroke();
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(e.x2 * T, e.y2 * T, 6 + 14 * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (e.kind === 'fball') {
+        // Feuerball fliegt im Bogen zum Ziel, mit Flammenschweif
+        var fx = lerp(e.x1, e.x2, k) * T, fy = lerp(e.y1, e.y2, k) * T - Math.sin(k * Math.PI) * 38;
+        for (var ft = 0; ft < 5; ft++) {
+          var fk = Math.max(0, k - ft * 0.045), fpx = lerp(e.x1, e.x2, fk) * T, fpy = lerp(e.y1, e.y2, fk) * T - Math.sin(fk * Math.PI) * 38;
+          ctx.globalAlpha = 0.5 - ft * 0.09;
+          ctx.fillStyle = ft < 2 ? '#ff9a1f' : '#e0431a';
+          ctx.beginPath(); ctx.arc(fpx, fpy, 9 - ft * 1.3, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(255,120,20,0.45)';
+        ctx.beginPath(); ctx.arc(fx, fy, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff8a1a';
+        ctx.beginPath(); ctx.arc(fx, fy, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd34a';
+        ctx.beginPath(); ctx.arc(fx - 1.5, fy - 1.5, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff6c8';
+        ctx.beginPath(); ctx.arc(fx - 2.5, fy - 2.5, 2, 0, Math.PI * 2); ctx.fill();
+        // Schatten am Boden
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath(); ctx.ellipse(lerp(e.x1, e.x2, k) * T, lerp(e.y1, e.y2, k) * T, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+      } else if (e.kind === 'fblast') {
+        // Feuerexplosion mit Flammenzungen
+        var fbr = e.r * T * (0.3 + 0.7 * Math.min(1, k * 2.2));
+        ctx.globalAlpha = Math.max(0, 1 - k);
+        ctx.fillStyle = 'rgba(255,110,20,0.38)';
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, fbr, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,205,70,0.55)';
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, fbr * 0.55, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#e0431a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, fbr, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#ff9a1f';
+        for (var fl = 0; fl < 9; fl++) {
+          var fa = fl * Math.PI * 2 / 9 + 0.5, f0 = fbr * 0.55, f1 = fbr * (0.9 + 0.35 * Math.sin(fl * 3.1));
+          ctx.beginPath();
+          ctx.moveTo(e.x * T + Math.cos(fa - 0.18) * f0, e.y * T + Math.sin(fa - 0.18) * f0);
+          ctx.lineTo(e.x * T + Math.cos(fa) * f1, e.y * T + Math.sin(fa) * f1);
+          ctx.lineTo(e.x * T + Math.cos(fa + 0.18) * f0, e.y * T + Math.sin(fa + 0.18) * f0);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      } else if (e.kind === 'bolthit') { // Einschlag: Ring, Funken in Flugrichtung, Holzsplitter, steckender Bolzen
+        ctx.save(); ctx.translate(e.x * T, e.y * T); ctx.lineCap = 'round';
+        ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 - 2 * k;
+        ctx.beginPath(); ctx.arc(0, 0, 5 + 14 * k, 0, Math.PI * 2); ctx.stroke();
+        for (var bh = 0; bh < 7; bh++) {
+          var bha = e.ang + Math.PI + (bh - 3) * 0.42, bhr0 = 4 + 6 * k, bhr1 = 8 + 20 * k * (0.7 + 0.3 * ((bh * 7) % 3) / 2);
+          ctx.strokeStyle = bh % 2 ? P.wood : '#ffd34a'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(Math.cos(bha) * bhr0, Math.sin(bha) * bhr0); ctx.lineTo(Math.cos(bha) * bhr1, Math.sin(bha) * bhr1); ctx.stroke();
+        }
+        ctx.rotate(e.ang); ctx.globalAlpha = Math.min(1, 1.6 * (1 - k));
+        ctx.strokeStyle = P.wood; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(2, 0); ctx.stroke();
+        ctx.fillStyle = P.steel; ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(1, -3); ctx.lineTo(1, 3); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      } else if (e.kind === 'block') { // Schildblitz: ein Bogen vor der Einheit und kurze Funken
+        ctx.save(); ctx.translate(e.x * T, e.y * T); ctx.globalAlpha = 1 - k; ctx.lineCap = 'round';
+        var bra = 13 + 7 * k, bang = e.dir === 1 ? 0 : Math.PI;
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4 - 2 * k;
+        ctx.beginPath(); ctx.arc(0, 0, bra, bang - 0.9, bang + 0.9); ctx.stroke();
+        ctx.strokeStyle = '#ffd34a'; ctx.lineWidth = 2;
+        for (var bsi = -1; bsi <= 1; bsi++) {
+          var bsa = bang + bsi * 0.55;
+          ctx.beginPath(); ctx.moveTo(Math.cos(bsa) * (bra + 2), Math.sin(bsa) * (bra + 2)); ctx.lineTo(Math.cos(bsa) * (bra + 6 + 8 * k), Math.sin(bsa) * (bra + 6 + 8 * k)); ctx.stroke();
+        }
+        ctx.restore();
+      } else if (e.kind === 'slam') {
+        var sx = e.x * T, sy = e.y * T, sk = Math.min(1, k * 1.6);
+        ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = P.wood; ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(sx, sy, 6 + 24 * sk, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = P.steel; ctx.lineWidth = 3;
+        for (var sp = 0; sp < 8; sp++) {
+          var sa = sp * Math.PI / 4 + 0.4, s0 = 8 + 8 * sk, s1 = 14 + 22 * sk;
+          ctx.beginPath(); ctx.moveTo(sx + Math.cos(sa) * s0, sy + Math.sin(sa) * s0); ctx.lineTo(sx + Math.cos(sa) * s1, sy + Math.sin(sa) * s1); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      } else if (e.kind === 'puff') {
+        ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = e.team === 0 ? P.me : P.foe; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(e.x * T, e.y * T, 8 + 22 * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (e.kind === 'text') {
+        ctx.globalAlpha = 1 - k * k;
+        ctx.font = '600 28px "Space Grotesk", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 5; ctx.strokeStyle = P.shade; ctx.strokeText(e.text, e.x * T, e.y * T - k * 34);
+        ctx.fillStyle = P['gold-fill']; ctx.fillText(e.text, e.x * T, e.y * T - k * 34);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  function render() {
+    ctx.drawImage(back, 0, 0);
+    drawBase(bases[0]);
+    drawBase(bases[1]);
+    if (walls[0]) drawWall(walls[0]);
+    if (walls[1]) drawWall(walls[1]);
+    if (tut.on && tut.hl && walls[0] && walls[0].stage >= WALL.tower.from) { // Tutorial: eigene Türme grün umranden
+      var hlv = WALL.tower.levels[walls[0].stage].list, hk = 0.5 + 0.5 * Math.sin(performance.now() / 180);
+      ctx.save(); ctx.strokeStyle = '#1fae4b'; ctx.lineWidth = 4 + 2 * hk; ctx.setLineDash([]);
+      for (var hi = 0; hi < hlv.length; hi++) {
+        var htw = hlv[hi], hp = wallPoint(0, htw.f, WALL.dist + htw.out), hr = (htw.k === 'rd' ? htw.r : Math.max(htw.w, htw.h) / 2) + 0.3 + 0.06 * hk;
+        ctx.beginPath(); ctx.arc(hp.x * T, hp.y * T, hr * T, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    drawTrench();
+    var order = units.slice().sort(function (a, b) { return a.y - b.y; });
+    for (var i = 0; i < order.length; i++) {
+      var u = order[i], d = CONFIG.units[u.type], r = d.r * T;
+      if (u.dig) { drawMound(u.x * T, u.y * T, r); continue; }
+      if (u.slow > 0) {
+        ctx.fillStyle = 'rgba(96,170,255,0.35)';
+        ctx.strokeStyle = 'rgba(96,170,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
+      if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
+        var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
+        if (u.ang === undefined) u.ang = kwant;
+        u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
+        ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
+        drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, true);
+        ctx.restore();
+      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.settled);
+      if (u.fade > 0) ctx.globalAlpha = 1;
+      if (u.dummy) { ctx.save(); ctx.strokeStyle = P.gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+      if (u.hp < u.max && !(u.fade > 0)) {
+        var bw = 30, bx = u.x * T - bw / 2, by = u.y * T - r - 12;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
+        ctx.fillStyle = u.team === 0 ? P.me : P.foe; ctx.fillRect(bx, by, bw * u.hp / u.max, 5);
+      }
+    }
+    drawEffects();
+  }
+
+  // ---------- Oberfläche ----------
+  var btns = {}, icons = {}, ui = { gm: -1, gf: -1, sec: -1, inc: -1 };
+
+  BUY_TYPES.forEach(function (type) {
+    var d = CONFIG.units[type];
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'unit';
+    b.setAttribute('data-type', type);
+    // Auf dem Knopf stehen nur Bild und Kosten, die Werte erscheinen als Tooltip
+    var info = d.name + ': ' + d.cost + ' Gold, Leben ' + d.hp + ', Angriff ' + d.atk + ', Reichweite ' + d.range +
+      ', Marschtempo ' + d.speed.toFixed(1) +
+      (d.bonus ? ', Gold-Bonus +' + d.bonus : '') + (d.ram && d.atk ? ', greift nur Mauern und Kasernen an' : '') + (type === 'shield' ? ', Fernkampfschaden ist um 75% reduziert' : '') +
+      (d.splash ? ', Fläche Radius ' + d.splash + (d.slow ? ', bremst auf ' + Math.round(d.slow.factor * 100) + ' % für ' + d.slow.secs + ' s' : '') : '') +
+      (d.delay && !d.fire ? ', schießt alle ' + d.cd + ' s, Bolzen trifft nach ' + d.delay + ' s' : '') + (d.minRange ? ', kann Ziele näher als ' + d.minRange + (d.minRange === 1 ? ' Kachel' : ' Kacheln') + ' nicht angreifen' : '') + (d.fire ? ', schießt Feuerbälle alle ' + d.cd + ' s, ignoriert Mauern' : '') +
+      ' (Taste ' + d.key.toUpperCase() + ')';
+    if (d.wall) info = d.name + ': ' + d.cost + ' Gold. ' + WALL.workers + ' Arbeiter (Leben ' + CONFIG.units.worker.hp + ', Tempo ' + CONFIG.units.worker.speed.toFixed(1) + ') bauen mit je ' + WALL.rate + ' Leben pro Sekunde und bringen je ' + WALL.add + ' Leben für eine gebogene Mauer ' + WALL.dist + ' Kacheln um deine Kaserne herum (höchstens ' + WALL.cap + ' Leben). Sie wirkt, sobald sie Leben hat, heilt 0,6 Leben pro Sekunde bis zum Höchstwert ihrer Optik und zeigt bis 40 Leben nur ein Gerüst und wird ab 40, 80, 120, 160 und 200 Leben stabiler. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, und bringt vier neue. Ist deine Burg zerstört, baut dieser Knopf sie wieder auf (bis 40 Leben, ab 1 Leben steht sie wieder, heilt wie die Mauer) (Taste ' + d.key + ')';
+    b.title = info;
+    b.setAttribute('aria-label', info);
+    b.innerHTML = '<canvas width="88" height="88"></canvas><span class="cost">' + d.cost + '</span>';
+    unitsEl.appendChild(b);
+    btns[type] = b;
+    icons[type] = b.querySelector('canvas');
+  });
+
+  // Ausdehnung der Figuren links und rechts vom Mittelpunkt (in Vielfachen des Radius), damit jedes Symbol groß und mittig steht
+  var ICON_EXT = { farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
+  // Symbol des Mauer-Knopfs, solange die eigene Burg zerstört ist: eine kleine Burg (der Knopf baut sie dann wieder auf)
+  function drawCastleIcon(c) {
+    var col = P.me, st = '#8d9396', dk = '#585f63', x = 14, y = 12, w = 60, h = 64;
+    c.fillStyle = 'rgba(0,0,0,0.25)'; rr(c, x + 3, y + 4, w, h, 7); c.fill();
+    c.fillStyle = dk; rr(c, x, y, w, h, 7); c.fill();
+    c.fillStyle = st; rr(c, x + 3, y + 3, w - 6, h - 6, 5); c.fill();
+    c.fillStyle = dk;
+    for (var i = 0; i < 4; i++) { c.fillRect(x + 12 + i * 12, y, 6, 5); c.fillRect(x + 12 + i * 12, y + h - 5, 6, 5); }
+    [[x + 8, y + 8], [x + w - 8, y + 8], [x + 8, y + h - 8], [x + w - 8, y + h - 8]].forEach(function (tp) {
+      c.fillStyle = st; c.strokeStyle = dk; c.lineWidth = 2;
+      c.beginPath(); c.arc(tp[0], tp[1], 9, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.fillStyle = col; c.beginPath(); c.arc(tp[0], tp[1], 5, 0, Math.PI * 2); c.fill();
+    });
+    c.fillStyle = st; c.strokeStyle = dk; c.lineWidth = 2; rr(c, x + 17, y + 19, w - 34, h - 38, 4); c.fill(); c.stroke();
+    c.fillStyle = '#6a5a48'; rr(c, x + 20, y + 22, w - 40, h - 44, 3); c.fill();
+    c.fillStyle = 'rgba(0,0,0,0.65)'; rr(c, x + w - 5, y + h / 2 - 7, 5, 14, 2); c.fill();
+    drawUnit(c, 'kingbow', x + w / 2, y + h / 2, 9, 0, 1, 0, true);
+  }
+
+  function drawIcons() {
+    BUY_TYPES.forEach(function (type) {
+      var c = icons[type].getContext('2d');
+      c.clearRect(0, 0, 88, 88);
+      if (type === 'wall') { if (bases && bases[ME] && bases[ME].down) drawCastleIcon(c); else drawWallIcon(c); return; }
+      var ext = ICON_EXT[type] || [1, 2], span = ext[0] + ext[1];
+      var r = Math.min(24, 78 / span);
+      drawUnit(c, type, (88 - span * r) / 2 + ext[0] * r, 44, r, 0, 1, 0, true);
+    });
+  }
+
+  function syncUi() {
+    var gm = gold[ME], gf = gold[1 - ME];
+    var canGive = state === 'playing' || state === 'paused';
+    var tv = tut.on && canGive;
+    if (tutPanelEl.hidden === tv) tutPanelEl.hidden = !tv;
+    if (tutBoxEl.hidden === (tv && tut.boxOpen)) tutBoxEl.hidden = !(tv && tut.boxOpen);
+    BUY_TYPES.forEach(function (t) {
+      var lk = tut.on && tut.avail.indexOf(t) < 0;
+      btns[t].classList.toggle('locked', lk);
+      var th = tutArrow(t);
+      btns[t].classList.toggle('tuthint', th);
+      if (th) { var tn = String(TUT[tut.i].need[t] - (tut.bought[t] || 0)); if (btns[t].getAttribute('data-need') !== tn) btns[t].setAttribute('data-need', tn); }
+    });
+    if (giveBtn.disabled === canGive) giveBtn.disabled = !canGive;
+    if (gm !== ui.gm) {
+      goldMeEl.textContent = gm;
+      ui.gm = gm;
+      BUY_TYPES.forEach(function (t) { btns[t].classList.toggle('poor', gm < CONFIG.units[t].cost); });
+    }
+    if (gf !== ui.gf) { goldFoeEl.textContent = gf; ui.gf = gf; }
+    var cdown = !!(bases && bases[ME] && bases[ME].down);
+    if (cdown !== ui.cdown && btns.wall) { // Burg gefallen: der Mauer-Knopf zeigt eine Burg und baut sie wieder auf
+      if (ui.wallTitle === undefined) ui.wallTitle = btns.wall.title;
+      ui.cdown = cdown;
+      var wc = icons.wall.getContext('2d'); wc.clearRect(0, 0, 88, 88);
+      if (cdown) drawCastleIcon(wc); else drawWallIcon(wc);
+      btns.wall.title = cdown ? 'Burg wiederaufbauen: ' + CONFIG.units.wall.cost + ' Gold. ' + WALL.workers + ' Arbeiter bringen je ' + WALL.add + ' Leben (bis ' + CONFIG.BASE_HP + '). Ab 1 Leben steht die Burg wieder und der König kehrt zurück (Taste ' + CONFIG.units.wall.key.toUpperCase() + ')' : ui.wallTitle;
+      btns.wall.setAttribute('aria-label', btns.wall.title);
+    }
+    payFill.style.width = (payT / CONFIG.GOLD_EVERY * 100) + '%';
+    var sec = Math.ceil(CONFIG.GOLD_EVERY - payT);
+    var inc = income(ME);
+    if (sec !== ui.sec || inc !== ui.inc) {
+      payText.textContent = '+' + inc + ' Gold in ' + sec + ' s';
+      ui.sec = sec;
+      ui.inc = inc;
+    }
+  }
+
+  function showOverlay(title, text, btnText, withChoice) {
+    $('ovChoice').hidden = withChoice === false;
+    sandBtn.hidden = withChoice === false || (state === 'paused');
+    $('tutBtn').hidden = sandBtn.hidden;
+    $('pvpBtn').hidden = sandBtn.hidden || !ONLINE;
+    ovTitle.textContent = title;
+    ovText.textContent = text;
+    ovBtn.textContent = btnText;
+    if (title === 'Sieg!') jingle('win');
+    else if (title === 'Niederlage' || title === 'Aufgegeben' || title === 'Unentschieden') jingle('lose');
+    overlay.hidden = false;
+    ovBtn.focus();
+  }
+
+  function fmtTime(s) {
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  function finish(w, note) {
+    if (tut.on) {
+      tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
+      tutBox('');
+      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Spiel starten');
+      if (w === 0) jingle('win'); else jingle('lose');
+      return;
+    }
+    if (pvp.on) { pvp.ended = true; if (pvp.me === 1 && w >= 0) w = 1 - w; } // im Online-Spiel immer aus deiner Sicht
+    state = 'over';
+    winner = w;
+    var again = pvp.on ? 'Zum Menü' : 'Nochmal';
+    var stats = 'Spielzeit ' + fmtTime(clock) + ', ' + produced + (produced === 1 ? ' Einheit' : ' Einheiten') + ' gebaut.';
+    if (w === 0) showOverlay('Sieg!', note || 'Der gegnerische König ist gefallen. ' + stats, again);
+    else if (w === 1) showOverlay('Niederlage', note || 'Dein König ist gefallen. ' + stats, again);
+    else showOverlay('Unentschieden', 'Beide Könige sind gleichzeitig gefallen. ' + stats, again);
+    pauseBtn.textContent = 'Pause';
+  }
+
+  function logText() {
+    var res = gaveUp ? 'Aufgegeben' : state === 'over' ? (winner === 0 ? 'Sieg' : winner === 1 ? 'Niederlage' : 'Unentschieden') : 'laeuft';
+    return 'SM1 gegner=' + level + ' ergebnis=' + res +
+      ' dauer=' + Math.round(clock) + ' burgIch=' + Math.ceil(bases[0].hp) + ' burgGegner=' + Math.ceil(bases[1].hp) +
+      '\nICH: ' + rec[0].join(' ') + '\nGEGNER: ' + rec[1].join(' ');
+  }
+  var logBtn = $('logBtn'), logBox = $('logBox');
+  logBtn.addEventListener('click', function () {
+    var text = logText();
+    logBox.value = text;
+    var showBox = function () { logBox.hidden = false; logBox.focus(); logBox.select(); };
+    try {
+      navigator.clipboard.writeText(text).then(function () {
+        logBtn.textContent = 'Kopiert';
+        setTimeout(function () { logBtn.textContent = 'Spielprotokoll kopieren'; }, 1800);
+        logBox.hidden = true;
+      }, showBox);
+    } catch (err) { showBox(); }
+  });
+
+  // Aufgeben: erst tippen, dann innerhalb von 3 Sekunden noch einmal bestätigen (verhindert Fehlklicks)
+  var giveBtn = $('giveBtn'), giveTimer = 0;
+  function disarmGive() {
+    clearTimeout(giveTimer);
+    giveBtn.classList.remove('armed');
+    giveBtn.textContent = 'Aufgeben';
+  }
+  giveBtn.addEventListener('click', function (e) {
+    if (state !== 'playing' && state !== 'paused') return;
+    if (e.detail > 0) giveBtn.blur();
+    if (!giveBtn.classList.contains('armed')) {
+      giveBtn.classList.add('armed');
+      giveBtn.textContent = 'Sicher?';
+      giveTimer = setTimeout(disarmGive, 3000);
+      return;
+    }
+    disarmGive();
+    if (pvp.on) { pvp.pending.push('resign'); return; } // wird für beide gleichzeitig ausgeführt
+    tut.on = false;
+    tutBox('');
+    state = 'over';
+    winner = 1;
+    gaveUp = true;
+    showOverlay('Aufgegeben', 'Du hast das Spiel abgebrochen. Spielzeit ' + fmtTime(clock) + '.', 'Nochmal');
+    pauseBtn.textContent = 'Pause';
+  });
+
+  function start(keepTut) {
+    if (keepTut !== true) tut.on = false;
+    reset();
+    disarmGive();
+    state = 'playing';
+    jingle('start');
+    overlay.hidden = true;
+    pauseBtn.textContent = 'Pause';
+    ui.gm = ui.gf = ui.sec = ui.inc = -1;
+  }
+
+  // ---------- Tutorial ----------
+  // Geführte Partie gegen einen Trainingsgegner mit König und Burg. Er tut nur das, was das Tutorial verlangt.
+  // Grüne Pfeile zeigen, welchen Knopf man drücken soll. Das Gold läuft ganz normal (es gibt nie extra Gold).
+  // Sobald das Gold für den Kaufschritt reicht (oder ein Hinweisfeld offen ist), läuft das Spiel nur noch mit 20 % Tempo.
+  var TUT_SLOW = 0.2;
+  function eb(type, n) { for (var k = 0; k < n; k++) { gold[1] += CONFIG.units[type].cost; buy(1, type); } }
+  function noWorkers(team) { return !units.some(function (u) { return u.team === team && u.type === 'worker' && u.hp > 0; }); }
+  function wallDone(team, hp) { var w = walls[team]; return !!(w && w.hp >= hp && noWorkers(team)); }
+  function noFoe() { return !units.some(function (u) { return u.team === 1 && u.type !== 'king' && !u.tower && u.hp > 0; }); } // Besatzung der gegnerischen Türme zählt nicht
+  function towerCount(team) { return units.filter(function (u) { return u.team === team && u.tower && u.hp > 0; }).length; }
+  // keine Kampfeinheit mehr auf dem Feld, auf beiden Seiten (Könige, Bauern, Arbeiter und Turmbesatzungen zählen nicht)
+  function noFighters() { return !units.some(function (u) { var d = CONFIG.units[u.type]; return u.hp > 0 && !u.tower && !d.king && !d.passive && !d.worker; }); }
+  function knightNearWall() { return units.some(function (u) { return u.team === 1 && u.type === 'knight' && u.hp > 0 && wallD(0, u.x, u.y) <= WALL.dist + 3; }); } // höchstens 3 Kacheln vor deiner Mauer
+  function farmersSettled() { return units.filter(function (u) { return u.team === 0 && u.type === 'farmer' && u.settled && u.hp > 0; }).length; }
+  var TUT = [
+    { mode: 'info', avail: [], box: 'Ziel des Spiels ist es, den gegnerischen König zu besiegen.' },
+    { mode: 'buy', avail: ['spear'], need: { spear: 4 } },
+    { mode: 'run', avail: [], check: function () { // erst 1 s nachdem alle eigenen Einheiten (ausser dem König) gefallen sind
+      if (units.some(function (u) { return u.team === 0 && u.type !== 'king' && u.hp > 0; })) { tut.qt = tut.st; return false; }
+      return tut.st - tut.qt >= 1; } },
+    { mode: 'buy', avail: ['farmer'], need: { farmer: 12 }, box: 'Bauern erhöhen deine Einnahmen.' },
+    { mode: 'run', avail: [], check: function () { return farmersSettled() >= 12; } },
+    { mode: 'run', avail: [], start: function () { eb('archer', 2); }, check: function () { return countFarmers(0) < 12; } },
+    { mode: 'buy', avail: ['rider'], need: { rider: 1 } },
+    { mode: 'run', avail: [], check: function () { return tut.st > 0.5 && !units.some(function (u) { return u.team === 0 && u.type === 'rider' && u.hp > 0; }); } }, // fertig, sobald der Reiter gefallen ist
+    { mode: 'buy', avail: ['wall'], need: { wall: 1 } },
+    { mode: 'run', avail: [], check: function () { return wallDone(0, 40); } },
+    { mode: 'buy', avail: ['wall'], need: { wall: 1 } },
+    { mode: 'run', avail: [], check: function () { return wallDone(0, 80); } },
+    { mode: 'buy', avail: ['archer'], need: { archer: 2 } },
+    { mode: 'run', avail: [], // der Gegner baut Mauer 1, danach Mauer 2, und besetzt dann ihre Türme mit 2 Bogenschützen
+      // gleichzeitig (ohne Verlangsamung): 2 s nach Beginn ein Erklärfenster, 1 s nach dem Schliessen ein zweites; solange sind deine Türme grün umrandet
+      notes: [{ after: 2, hl: true, box: 'Fernkampfeinheiten besetzen zuerst die Türme und sind dort geschützter.' },
+              { after: 1, hl: true, box: 'Mit dem Ausbau der Mauer werden die Türme mächtiger. Auf den grössten Türmen können sogar Kriegsmaschinen positioniert werden.' }],
+      script: [{ do: function () { eb('wall', 1); } },
+               { until: function () { return wallDone(1, 40); }, do: function () { eb('wall', 1); } },
+               { until: function () { var w = walls[1]; return wallDone(1, 80) && !!(w.sl && w.tlv); }, do: function () { eb('archer', 2); } }],
+      check: function () { return towerCount(1) >= 2; } },
+    { mode: 'run', avail: [], start: function () { eb('knight', 1); },
+      script: [{ after: 5, do: function () { eb('spear', 4); } }, { after: 1, do: function () { eb('archer', 2); } }],
+      check: function () { return knightNearWall(); } },
+    { mode: 'buy', avail: ['archer'], need: { archer: 2 } },
+    { mode: 'run', avail: [], check: function () { // 5 s nachdem der Angriff vorbei ist (alle Gegner auf dem Feld tot; seine Turmbesatzung zählt nicht)
+      if (!noFoe()) { tut.qt = tut.st; return false; }
+      return tut.st - tut.qt >= 5; } },
+    { mode: 'buy', avail: ['ram'], need: { ram: 1 }, box: 'Mit dem Rammbock reissen wir die gegnerische Mauer ein.' },
+    { mode: 'run', avail: [], check: function () { return tut.st >= 1; } },
+    { mode: 'buy', avail: ['knight'], need: { knight: 4 } },
+    { mode: 'run', avail: [], check: function () { return tut.st >= 4; } },
+    { mode: 'buy', avail: ['archer'], need: { archer: 4 } },
+    { mode: 'run', avail: [], check: function () { return false; } }
+  ];
+  var tutPanelEl = $('tutPanel'), tutBoxEl = $('tutBox');
+  function tutNeed(s) { var ok = true; for (var t in s.need) if ((tut.bought[t] || 0) < s.need[t]) ok = false; return ok; }
+  function tutCost(s) { var c = 0; for (var t in s.need) c += Math.max(0, s.need[t] - (tut.bought[t] || 0)) * CONFIG.units[t].cost; return c; }
+  function tutArrow(t) { var s = TUT[tut.i]; return tut.on && s.mode === 'buy' && s.need[t] !== undefined && (tut.bought[t] || 0) < s.need[t]; }
+  // Tempo des Spiels: bei offenem Hinweisfeld oder wenn das Gold für den Kaufschritt reicht nur 20 %
+  function tutScale() {
+    if (!tut.on) return 1;
+    var s = TUT[tut.i];
+    if ((tut.boxOpen && !tut.noSlow) || (s.mode === 'buy' && gold[0] >= tutCost(s))) return TUT_SLOW; // Erklärfenster aus notes verlangsamen nicht
+    return 1;
+  }
+  function tutBox(text, noSlow) {
+    tut.boxOpen = !!text;
+    tut.noSlow = !!(text && noSlow);
+    if (!text && !(tut.notes && tut.notes.length)) tut.hl = false; // grüne Turm-Umrandung endet mit dem letzten Erklärfenster
+    tutBoxEl.hidden = !text;
+    if (text) $('tutBoxText').textContent = text;
+  }
+  function tutEnter(n) {
+    var s = TUT[n];
+    tut.i = n; tut.bought = {}; tut.script = (s.script || []).slice(); tut.si = 0; tut.rt = 0; tut.st = 0; tut.qt = 0;
+    tut.avail = s.avail || [];
+    ui.gm = ui.gf = -1;
+    if (s.start) s.start();
+    if (s.notes) { tut.notes = s.notes.slice(); tut.nt = 0; }
+    if (s.box || !(tut.boxOpen && tut.noSlow)) tutBox(s.box || ''); // ein offenes Erklärfenster aus notes bleibt beim Schrittwechsel offen
+  }
+  function tutNextStep() { if (tut.i < TUT.length - 1) tutEnter(tut.i + 1); }
+  function tutGo() { tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
+  // gdt = Spielzeit dieses Bildes
+  function tutTick(gdt) {
+    if (!tut.on) return;
+    gold[1] = 0; // der Trainingsgegner kauft nur auf Befehl des Tutorials
+    if (tut.notes && tut.notes.length && !tut.boxOpen) { // Erklärfenster, die parallel zu den Schritten erscheinen
+      tut.nt += gdt;
+      if (tut.nt >= tut.notes[0].after) { var nn = tut.notes.shift(); tut.nt = 0; tut.hl = !!nn.hl; tutBox(nn.box, true); }
+    }
+    var s = TUT[tut.i];
+    if (s.mode === 'buy') { if (tutNeed(s)) tutNextStep(); return; }
+    if (s.mode === 'info') { if (!tut.boxOpen) tutNextStep(); return; }
+    tut.rt += gdt; tut.st += gdt;
+    while (tut.si < tut.script.length) {
+      var it = tut.script[tut.si];
+      if (tut.rt >= (it.after || 0) && (!it.until || it.until())) { it.do(); tut.si++; tut.rt = 0; } else break;
+    }
+    if (tut.si >= tut.script.length && s.check && s.check()) tutNextStep();
+  }
+  function tutExit() {
+    tut.on = false; state = 'over'; pauseBtn.textContent = 'Pause';
+    tutBox('');
+    showOverlay('Tutorial beendet', 'Du kannst es jederzeit im Startmenü wieder aufrufen.', 'Spiel starten');
+  }
+  $('tutBtn').addEventListener('click', function () { tutGo(); });
+  $('tutEnd').addEventListener('click', tutExit);
+  $('tutOk').addEventListener('click', function () { tutBox(''); });
+
+  // ---------- Online-Spiel (PvP) ----------
+  // Beide Browser rechnen dieselbe Partie (gleicher Startwert, feste Schrittlänge) und tauschen nur Kaufbefehle aus.
+  // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
+  // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
+  var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
+  if (ONLINE) { $('pvpBtn').hidden = false; presenceOpen(); }
+  function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
+  function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
+  function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
+  function pvpOpen(onOpen) {
+    var ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
+    pvp.ws = ws;
+    var opened = false;
+    ws.onopen = function () { opened = true; onOpen(); };
+    ws.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } pvpMsg(m); };
+    ws.onclose = function () {
+      if (pvp.ws !== ws) return;
+      pvp.ws = null;
+      // Der Gratis-Server schläft nach Pause ein und braucht bis zu ~1 Minute zum Aufwachen: beim Suchen mehrmals neu versuchen.
+      if (!opened && pvp.searching && (pvp.tries = (pvp.tries || 0) + 1) <= 20) {
+        ovText.textContent = 'Server wird geweckt … (kann bis zu einer Minute dauern)';
+        setTimeout(function () { if (pvp.searching && !pvp.ws) pvpOpen(onOpen); }, 3000);
+        return;
+      }
+      pvpLost();
+      if (!pvp.on && !pvp.searching) setTimeout(presenceOpen, 5000); // Anwesenheit wieder aufbauen
+    };
+  }
+  // Anwesenheit: Auf der Online-Seite ist jeder Besucher mit dem Server verbunden (auch ohne PvP), damit «Spieler online» alle zählt.
+  // Dieselbe Verbindung dient dann auch der Gegnersuche (keine doppelte Zählung). Bricht sie ab, wird sie nach 5 s neu aufgebaut.
+  function presenceOpen() {
+    if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
+    pvpOpen(function () {});
+  }
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); }
+  function pvpSearch() {
+    if (!ONLINE || pvp.on || pvp.searching) return;
+    pvp.searching = true; pvp.ended = false; pvp.tries = 0;
+    showOverlay('Suche Gegner …', 'Verbinde mit dem Server …', 'Abbrechen', false);
+    if (pvp.ws && pvp.ws.readyState === 1) pvpQueue(); // schon verbunden (Anwesenheit): direkt in die Warteschlange
+    else { pvpClose(); pvpOpen(pvpQueue); }
+  }
+  function pvpCancel() { pvpSend({ k: 'cancel' }); pvp.searching = false; showMenu(); } // Verbindung bleibt für die Anwesenheit offen
+  function pvpLeave() {
+    pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
+    setTimeout(presenceOpen, 300);
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random;
+    document.documentElement.classList.remove('guest');
+    ui.gm = ui.gf = ui.cdown = -1;
+    showMenu();
+  }
+  function pvpLost() {
+    if (pvp.searching) { pvp.searching = false; pvp.ended = true; showOverlay('Keine Verbindung', 'Der Server ist gerade nicht erreichbar. Versuche es gleich noch einmal.', 'Zum Menü', false); }
+    else if (pvp.on && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Verbindung verloren', 'Die Verbindung zum Server wurde getrennt.', 'Zum Menü', false); }
+  }
+  function pvpMsg(m) {
+    if (!m) return;
+    if (m.k === 'info') {
+      if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
+    }
+    else if (m.k === 'match') startPvp(m.me === 1 ? 1 : 0, m.seed | 0);
+    else if (m.k === 't') pvpRecv(m);
+    else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+  }
+  function startPvp(me, seed) {
+    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me;
+    document.documentElement.classList.toggle('guest', me === 1);
+    simRand = mulberry32(seed);
+    tut.on = false; sandbox = false;
+    reset();
+    state = 'playing';
+    disarmGive();
+    jingle('start');
+    overlay.hidden = true;
+    pauseBtn.hidden = true;
+    ui.gm = ui.gf = ui.sec = ui.inc = -1; ui.cdown = -1;
+    pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
+    for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
+  }
+  function pvpHash() {
+    var h = 2166136261;
+    function mix(n) { h ^= n | 0; h = Math.imul(h, 16777619); }
+    mix(units.length);
+    for (var i = 0; i < units.length; i++) { var u = units[i]; mix(u.id); mix(Math.round(u.x * 1000)); mix(Math.round(u.y * 1000)); mix(Math.round(u.hp * 1000)); }
+    mix(gold[0]); mix(gold[1]); mix(Math.round(bases[0].hp * 100)); mix(Math.round(bases[1].hp * 100));
+    return h >>> 0;
+  }
+  function pvpDesync() {
+    if (state !== 'playing') return;
+    state = 'over'; pvp.ended = true;
+    showOverlay('Synchronisationsfehler', 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
+  }
+  function pvpCheck(t, h) {
+    if (pvp.hashes[t] !== undefined) { if (pvp.hashes[t] !== h) pvpDesync(); delete pvp.hashes[t]; }
+    else pvp.remoteHash[t] = h;
+  }
+  function pvpValid(c) { return c === 'resign' || (typeof c === 'string' && CONFIG.units[c] && !CONFIG.units[c].hidden); }
+  function pvpRecv(m) {
+    if (!pvp.on || typeof m.t !== 'number' || m.t < pvp.tick || m.t > pvp.tick + 60) return;
+    var box = pvp.inbox[m.t] = pvp.inbox[m.t] || {};
+    box[1 - pvp.me] = Array.isArray(m.c) ? m.c.filter(pvpValid).slice(0, 6) : [];
+    if (typeof m.ht === 'number' && typeof m.h === 'number') pvpCheck(m.ht, m.h);
+  }
+  function pvpSendTick(T) {
+    var target = T + PVP_DELAY, cmds = pvp.pending.splice(0, 6), msg = { k: 't', t: target, c: cmds };
+    var box = pvp.inbox[target] = pvp.inbox[target] || {};
+    box[pvp.me] = cmds;
+    pvp.sent[target] = true;
+    if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h; if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
+    pvpSend(msg);
+  }
+  function pvpApply(team, cmds) {
+    for (var i = 0; i < cmds.length && state === 'playing'; i++) {
+      if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
+      else buy(team, cmds[i]);
+    }
+  }
+  function pvpFrame(rdt) {
+    pvp.acc = Math.min(pvp.acc + rdt, 0.5);
+    var steps = 0, waited = false;
+    while (pvp.acc >= STEP && steps < 8 && state === 'playing') {
+      var T = pvp.tick;
+      if (!pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
+      var box = pvp.inbox[T];
+      if (state !== 'playing') break;
+      if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
+      for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
+      pvpApply(0, box[0]); pvpApply(1, box[1]);
+      if (state === 'playing') update(STEP);
+      pvp.tick = T + 1; delete pvp.inbox[T]; delete pvp.sent[T];
+      pvp.acc -= STEP; steps++;
+    }
+    pvp.stall = waited ? pvp.stall + rdt : 0;
+    if (pvp.stall > 20 && state === 'playing') finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
+    pvp.alpha = Math.min(1, pvp.acc / STEP);
+  }
+  // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
+  function pvpRender() {
+    var a = pvp.alpha, saved = [], i, u;
+    for (i = 0; i < units.length; i++) {
+      u = units[i];
+      if (u.px !== undefined) {
+        var dx = u.x - u.px, dy = u.y - u.py;
+        if (dx * dx + dy * dy < 1) { saved.push(u, u.x, u.y); u.x = u.px + dx * a; u.y = u.py + dy * a; }
+      }
+    }
+    render();
+    for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
+  }
+  $('pvpBtn').addEventListener('click', pvpSearch);
+
+  function setPaused(p) {
+    if (pvp.on) return; // Online gibt es keine Pause
+    if (p && state === 'playing') {
+      state = 'paused';
+      pauseBtn.textContent = 'Weiter';
+      showOverlay('Pause', 'Das Spiel steht still.', 'Weiter', false);
+    } else if (!p && state === 'paused') {
+      state = 'playing';
+      pauseBtn.textContent = 'Pause';
+      overlay.hidden = true;
+    }
+  }
+
+  function tryBuy(type, el) {
+    if (state !== 'playing') return;
+    var ok;
+    if (pvp.on) { // Online: der Kaufbefehl wird für beide Spieler im selben Spielschritt ausgeführt
+      var pd = CONFIG.units[type];
+      ok = !!pd && !pd.hidden && gold[ME] >= pd.cost;
+      if (ok) pvp.pending.push(type);
+    } else ok = buy(0, type);
+    sfxBuy(type, ok);
+    if (!ok && el) {
+      el.classList.add('nope');
+      setTimeout(function () { el.classList.remove('nope'); }, 300);
+    }
+  }
+
+  // ---------- Werte-Karte: lange auf einen Einheiten-Knopf drücken ----------
+  var SPECIAL = {
+    farmer: 'Bringt bei jeder Auszahlung +1 Gold, sobald er an seinem Platz steht.',
+    archer: 'Setzt sich in Türme (ab Mauer 2) und nimmt dort nur 25 % Fernkampfschaden.',
+    mage: 'Flächenschaden (Radius 1) und bremst Getroffene 3 s lang auf halbes Tempo. Setzt sich in Türme.',
+    rider: 'Sehr schnell.',
+    knight: 'Hält am meisten aus.',
+    digger: 'Gräbt sich unsichtbar zu einem gegnerischen Fernkämpfer (nicht auf Türmen, nie näher als 6 Kacheln an der Burg).',
+    ram: 'Greift nur Mauern und Burgen an.',
+    shield: 'Fernkampfschaden ist um 75% reduziert',
+    catapult: 'Feuerball mit Flächenschaden (Radius 1,2). Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
+    baliste: 'Mächtiger Bolzen, trifft nach 0,5 s. Kann Ziele unter 2 Kacheln nicht treffen. Setzt sich in Türme der Stufe 5.',
+    wall: 'Vier Arbeiter bauen sie in Stufen (40, 80 … Leben). Ab Mauer 2 mit Türmen. Ist die Burg gefallen, baut der Knopf die Burg neu.'
+  };
+  var statCard = $('statCard'), lpTimer = 0, lpFired = false, lpX = 0, lpY = 0;
+  function num(v) { return String(Math.round(v * 10) / 10).replace('.', ','); }
+  function showStats(type, btn) {
+    var d = CONFIG.units[type], rows;
+    if (d.wall) rows = [['Kosten', d.cost + ' Gold'], ['Arbeiter', WALL.workers], ['Leben', 'bis ' + WALL.cap]];
+    else {
+      rows = [['Kosten', d.cost + ' Gold'], ['Leben', d.hp], ['Tempo', num(d.speed)],
+        ['Angriff', d.atk > 0 ? d.atk : 'keiner'], ['Reichweite', d.range <= 1 ? 'Nahkampf' : num(d.range) + ' Kacheln']];
+      if (d.atk > 0) rows.push(['Angriffstempo', 'alle ' + num(d.cd) + ' s']);
+    }
+    var h = '<b>' + d.name + '</b><dl>' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl>';
+    if (SPECIAL[type]) h += '<p class="spec">' + SPECIAL[type] + '</p>';
+    statCard.innerHTML = h;
+    statCard.hidden = false;
+    var fr = $('field').getBoundingClientRect(), cr = statCard.getBoundingClientRect(); // mittig im Spielfeld, damit der Finger nichts verdeckt
+    statCard.style.left = Math.max(8, Math.min(window.innerWidth - cr.width - 8, fr.left + fr.width / 2 - cr.width / 2)) + 'px';
+    statCard.style.top = Math.max(8, fr.top + fr.height / 2 - cr.height / 2) + 'px';
+  }
+  function hideStats() { clearTimeout(lpTimer); statCard.hidden = true; }
+  unitsEl.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest ? e.target.closest('button.unit') : null;
+    lpFired = false;
+    if (!b) return;
+    lpX = e.clientX; lpY = e.clientY;
+    clearTimeout(lpTimer);
+    lpTimer = setTimeout(function () { lpFired = true; showStats(b.getAttribute('data-type'), b); }, 450);
+  });
+  unitsEl.addEventListener('pointermove', function (e) { if (hyp(e.clientX - lpX, e.clientY - lpY) > 12 && !lpFired) clearTimeout(lpTimer); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { unitsEl.addEventListener(n, hideStats); });
+  unitsEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  unitsEl.addEventListener('click', function (e) { if (lpFired) { lpFired = false; e.stopPropagation(); } }, true); // der Klick nach dem langen Drücken kauft nichts
+
+  unitsEl.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button.unit') : null;
+    if (!b) return;
+    tryBuy(b.getAttribute('data-type'), b);
+    if (e.detail > 0) b.blur();
+  });
+  ovBtn.addEventListener('click', function () {
+    if (pvp.searching) { pvpCancel(); return; }
+    if (pvp.ended) { pvpLeave(); return; }
+    if (state === 'paused') setPaused(false); else start();
+  });
+  sandBtn.addEventListener('click', function () {
+    if (state === 'paused') return;
+    sandbox = true;
+    start();
+  });
+  pauseBtn.addEventListener('click', function (e) {
+    if (state === 'playing') setPaused(true); else if (state === 'paused') setPaused(false);
+    if (e.detail > 0) pauseBtn.blur();
+  });
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; // beim Tippen des Codes nichts kaufen
+    if (k === 'p' || k === 'P') {
+      if (state === 'playing') setPaused(true); else if (state === 'paused') setPaused(false);
+      return;
+    }
+    for (var i = 0; i < BUY_TYPES.length; i++) {
+      if (CONFIG.units[BUY_TYPES[i]].key === String(k).toLowerCase()) tryBuy(BUY_TYPES[i], btns[BUY_TYPES[i]]);
+    }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state === 'playing') setPaused(true);
+  });
+
+  function themeChanged() {
+    readPalette();
+    buildBackdrop();
+    drawIcons();
+  }
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeChanged);
+    new MutationObserver(themeChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  } catch (err) {}
+
+  // ---------- Vollbild (früher Handymodus) ----------
+  // Querformat: Spielfeld so gross wie möglich, Einheitenknöpfe in einer Reihe darunter, Gold oben links, oben rechts ✕ zum Verlassen.
+  // Wer das Vollbild verlässt (✕ oder Zurück-Geste), sieht wieder Pause, Aufgeben usw.; ein Offline-Spiel wird dabei pausiert.
+  var phoneBtn = $('phoneBtn');
+  function setPhone(on, goFull) {
+    document.documentElement.classList.toggle('phone', on);
+    phoneBtn.textContent = on ? 'Normal' : 'Vollbild';
+    phoneBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    try {
+      if (goFull && on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+      else if (goFull && !on && document.fullscreenElement) document.exitFullscreen().catch(function () {});
+    } catch (err) {}
+    try { window.scrollTo(0, 0); } catch (err) {}
+  }
+  phoneBtn.addEventListener('click', function (e) {
+    setPhone(!document.documentElement.classList.contains('phone'), true);
+    if (e.detail > 0) phoneBtn.blur();
+  });
+  $('fsExit').addEventListener('click', function () {
+    if (state === 'playing' && !pvp.on) setPaused(true);
+    setPhone(false, true);
+  });
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement && document.documentElement.classList.contains('phone')) { // Zurück-Geste beendet das Vollbild
+      if (state === 'playing' && !pvp.on) setPaused(true);
+      setPhone(false, false);
+    }
+  });
+  // Pause und Aufgeben auch im Vollbild (oben rechts): sie lösen die normalen Knöpfe aus und zeigen deren Zustand
+  var fsPause = $('fsPause'), fsGive = $('fsGive');
+  fsPause.addEventListener('click', function () { pauseBtn.click(); fsPause.blur(); });
+  fsGive.addEventListener('click', function () { giveBtn.click(); fsGive.blur(); });
+  var fsTut = $('fsTut');
+  fsTut.addEventListener('click', function () { $('tutEnd').click(); });
+  function syncFsBar() {
+    if (fsPause.textContent !== pauseBtn.textContent) fsPause.textContent = pauseBtn.textContent;
+    if (fsPause.hidden !== pauseBtn.hidden) fsPause.hidden = pauseBtn.hidden;
+    var pOff = !(state === 'playing' || state === 'paused');
+    if (fsPause.disabled !== pOff) fsPause.disabled = pOff;
+    if (fsGive.textContent !== giveBtn.textContent) fsGive.textContent = giveBtn.textContent;
+    if (fsGive.disabled !== giveBtn.disabled) fsGive.disabled = giveBtn.disabled;
+    fsGive.classList.toggle('armed', giveBtn.classList.contains('armed'));
+    if (fsTut.hidden !== tutPanelEl.hidden) fsTut.hidden = tutPanelEl.hidden;
+  }
+  // Beim Laden immer im normalen Modus starten (echtes Vollbild geht nur nach einem Tippen); alter gespeicherter Handymodus wird gelöscht
+  try { localStorage.removeItem('kasernenkrieg-phone'); } catch (err) {}
+
+  // ---------- Start ----------
+  readPalette();
+  buildBackdrop();
+  drawIcons();
+  reset();
+
+  var last = 0;
+  function frame(ts) {
+    var rdt = Math.min(0.25, (ts - last) / 1000 || 0), dt = Math.min(0.05, rdt);
+    last = ts;
+    if (pvp.on && state === 'playing') { pvpFrame(rdt); updateEffects(dt); }
+    else if (state === 'playing') {
+      var gdt = dt * tutScale(); // im Tutorial läuft das Spiel bei Hinweisen und Kaufschritten stark verlangsamt
+      update(gdt); updateEffects(gdt);
+      if (tut.on) tutTick(gdt);
+    }
+    else if (state === 'over') updateEffects(dt);
+    if (pvp.on && state === 'playing') pvpRender(); else render();
+    syncUi(); syncFsBar();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<p style="margin:0 auto;padding:6px 16px 14px;max-width:1000px;text-align:center;font:12px system-ui,sans-serif;color:#6b7a7e">Datenschutz: Diese Seite zählt anonym Seitenaufrufe (GoatCounter, ohne Cookies und ohne Werbeprofile).</p>
+</body>
+</html>
