@@ -2,9 +2,22 @@
   // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Belagerungsturm, Trebuchet).
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
   // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
-  var konto = { user: null, token: null, refresh: null, exp: 0 };
+  // Einladungen (nur auf der Online-Seite, der Render-Server führt Buch): konto.code = eigener Einladungscode, konto.freunde = Anzahl Freunde,
+  // die über den Link gespielt haben, konto.einheiten = freigeschaltete Einheiten (z. B. 'crossbow')
+  var konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] };
   function kontoAn() { return !!KONTO.url; }
-  function unitLocked(t) { var d = CONFIG.units[t]; return !!(d && d.account && kontoAn() && !(konto && konto.user)); }
+  function unitLocked(t) {
+    var d = CONFIG.units[t], k = konto || {};
+    if (!d || !kontoAn()) return false;
+    if (d.account && !k.user) return true;
+    if (d.invite && ONLINE && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // im Artifact (ohne Server) nicht gesperrt
+    return false;
+  }
+  function lockText(t) {
+    var d = CONFIG.units[t] || {};
+    if (d.invite) return konto.user ? 'Nicht freigeschaltet – lade einen Freund ein (👥 Freund einladen)' : 'Nicht freigeschaltet – benötigt Account und einen eingeladenen Freund';
+    return 'Nicht freigeschaltet – benötigt Account';
+  }
   function kontoSave() {
     try { if (konto.user) localStorage.setItem('stronghold-konto', JSON.stringify(konto)); else localStorage.removeItem('stronghold-konto'); } catch (err) {}
   }
@@ -12,9 +25,9 @@
     konto.user = (r.user && r.user.email) || konto.user;
     konto.token = r.access_token; konto.refresh = r.refresh_token;
     konto.exp = Date.now() + (r.expires_in || 3600) * 1000;
-    kontoSave(); kontoChanged();
+    kontoSave(); kontoChanged(); kontoServer();
   }
-  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0 }; kontoSave(); kontoChanged(); }
+  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] }; kontoSave(); kontoChanged(); }
   function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {
       method: methode || 'POST',
@@ -45,6 +58,7 @@
   function kontoChanged() {
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
+    $('inviteBtn').hidden = !(kontoAn() && ONLINE);
     kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -55,6 +69,22 @@
     kontoView();
   }
   var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
+  // Eigene Einladungsdaten vom Render-Server holen (nur online, nur angemeldet)
+  var kontoServerLaeuft = false;
+  function kontoServer() {
+    if (!ONLINE || !konto.token || kontoServerLaeuft) return Promise.resolve(false);
+    kontoServerLaeuft = true;
+    return fetch('/api/konto', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      kontoServerLaeuft = false;
+      if (!j || !j.code) return false;
+      var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
+      konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
+      kontoSave(); kontoChanged();
+      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Dein Freund ist dabei! Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
+      return true;
+    }).catch(function () { kontoServerLaeuft = false; return false; });
+  }
+  function einladeLink() { return location.origin + location.pathname + '?von=' + konto.code; }
   function kontoView() {
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
@@ -63,12 +93,19 @@
     $('kontoForm').hidden = on;
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;
+    var inv = on && !pw && ONLINE && !!konto.code;
+    $('kontoInv').hidden = !inv;
+    if (inv) {
+      var frei = (konto.einheiten || []).indexOf('crossbow') >= 0;
+      $('kontoInvText').textContent = (frei ? '✓ Armbrustschütze freigeschaltet. ' : 'Spielt ein Freund über deinen Link eine Partie, bekommst du den Armbrustschützen. ') + 'Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
+      $('kontoLink').value = einladeLink();
+    }
   }
   function kontoMsg(t, ok) { var m = $('kontoMsg'); m.textContent = t || ''; m.classList.toggle('ok', !!ok); }
   function kontoOpen(on) {
     $('konto').hidden = !on;
     if (!on) kontoPwModus = '';
-    if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); }
+    if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); else kontoServer(); }
   }
   function kontoBusy(b) { ['kontoLogin', 'kontoReg', 'kontoOut', 'kontoVergessen', 'kontoPwSave', 'kontoPwBtn'].forEach(function (id) { $(id).disabled = b; }); }
   function kontoEingabe() {
@@ -118,6 +155,47 @@
     kontoClear(); kontoMsg('Du bist abgemeldet.', true);
     if (tk) kontoApi('/auth/v1/logout', {}, tk).catch(function () {});
   }
+  // Freund einladen: Link über das Teilen-Menü des Handys schicken (sonst kopieren)
+  function kopieren(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
+    var f = $('kontoLink'); f.focus(); f.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} return Promise.resolve(ok);
+  }
+  function teilen() {
+    var weiter = konto.code ? Promise.resolve(true) : kontoServer();
+    weiter.then(function () {
+      if (!konto.code) { kontoOpen(true); kontoMsg('Einladen geht gerade nicht. Bitte später nochmals versuchen.'); return; }
+      var url = einladeLink(), text = 'Spiel mit mir Stronghold Mini – ein kleines Burgen-Strategiespiel im Browser!';
+      if (navigator.share) navigator.share({ title: 'Stronghold Mini', text: text, url: url }).catch(function () {});
+      else kopieren(url).then(function (ok) { kontoOpen(true); kontoMsg(ok ? 'Link kopiert – schick ihn deinem Freund.' : 'Kopiere den Link oben und schick ihn deinem Freund.', true); });
+    });
+  }
+  $('inviteBtn').addEventListener('click', function () {
+    if (!konto.user) { kontoOpen(true); kontoMsg('Melde dich zuerst an (gratis). Dann bekommst du deinen Einladungslink.', true); return; }
+    teilen();
+  });
+  $('kontoShare').addEventListener('click', teilen);
+  $('kontoCopy').addEventListener('click', function () { kopieren(einladeLink()).then(function (ok) { kontoMsg(ok ? 'Link kopiert.' : 'Bitte den Link oben von Hand kopieren.', ok); }); });
+  // Eingeladen worden? ?von=CODE merken; nach der ersten Partie (mind. 30 s) dem Einladenden gutschreiben, einmal pro Gerät
+  function geraetId() {
+    var g = ''; try { g = localStorage.getItem('stronghold-geraet') || ''; } catch (e) {}
+    if (!/^[a-z0-9]{8,40}$/.test(g)) { g = ''; for (var i = 0; i < 20; i++) g += 'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36)); try { localStorage.setItem('stronghold-geraet', g); } catch (e) {} }
+    return g;
+  }
+  (function () {
+    var m = /[?&]von=([A-Za-z0-9]{6})(?:&|$)/.exec(location.search);
+    if (!m) return;
+    try { if (!localStorage.getItem('stronghold-von-ok')) localStorage.setItem('stronghold-von', m[1].toUpperCase()); } catch (e) {}
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+  })();
+  function einladungGespielt() {
+    if (!ONLINE || clock < 30) return;
+    var code = ''; try { if (localStorage.getItem('stronghold-von-ok')) return; code = localStorage.getItem('stronghold-von') || ''; } catch (e) { return; }
+    if (!code) return;
+    var h = { 'Content-Type': 'application/json' }; if (konto.token) h.Authorization = 'Bearer ' + konto.token;
+    fetch('/api/besuch', { method: 'POST', headers: h, body: JSON.stringify({ code: code, geraet: geraetId() }) }).then(function (r) {
+      if (r.ok || r.status === 400 || r.status === 404) { try { localStorage.setItem('stronghold-von-ok', '1'); localStorage.removeItem('stronghold-von'); } catch (e) {} } // erledigt (oder ungültig): nicht nochmals senden
+    }).catch(function () {}); // ohne Netz: beim nächsten Mal nochmals
+  }
   $('kontoBtn').addEventListener('click', function () { kontoOpen(true); });
   $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
   $('kontoForm').addEventListener('submit', kontoLogin);
@@ -143,6 +221,7 @@
       if (q.type === 'recovery') { kontoPwModus = 'reset'; kontoOpen(true); $('kontoPwNeu').focus(); }
     }).catch(function () { kontoClear(); kontoOpen(true); kontoMsg('Der Link hat nicht funktioniert. Fordere unten einen neuen an.'); });
   })();
+  if (!konto.einheiten) konto.einheiten = [];
   kontoChanged();
-  if (kontoAn() && konto.refresh) kontoRefresh();
+  if (kontoAn() && konto.refresh) kontoRefresh(); else kontoServer();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);

@@ -229,6 +229,9 @@
   .kontorow { display: flex; gap: 8px; justify-content: center; }
   .kontorow .primary { margin-top: 0; }
   .kontorow[hidden], .konto form[hidden] { display: none; }
+  .kontoinv { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: color-mix(in srgb, var(--me) 8%, transparent); }
+  .kontoinv[hidden] { display: none; }
+  .kontoinv input { flex: 1; min-width: 0; font-size: 0.8rem; }
   .kontolink { background: none; border: 0; padding: 0; color: var(--me); font-size: 0.82rem; text-decoration: underline; justify-self: center; }
   .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
   .konto .kontomsg.ok { color: #2f8a3e; }
@@ -565,6 +568,7 @@
       <div class="ovrow">
         <button class="ghost bookbtn" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck" aria-label="Einheitenbuch">📖</button>
         <button class="ghost" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
+        <button class="ghost" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen">👥 Freund einladen</button>
         <span class="choice" id="ovChoice">
           <select id="botType" aria-label="Gegner">
             <option value="bauern" selected>Gegner: Bandit</option>
@@ -602,6 +606,7 @@
         <input type="password" id="kontoPwNeu" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="new-password" minlength="6" required>
         <div class="kontorow"><button class="primary" type="submit" id="kontoPwSave">Passwort speichern</button><button class="ghost" type="button" id="kontoPwAbbr">Abbrechen</button></div>
       </form>
+      <div class="kontoinv" id="kontoInv" hidden><p id="kontoInvText"></p><div class="kontorow"><input type="text" id="kontoLink" readonly aria-label="Dein Einladungslink"><button class="ghost" id="kontoCopy" type="button">Kopieren</button></div><button class="primary" id="kontoShare" type="button">👥 Freund einladen</button></div>
       <div class="kontorow" id="kontoIn" hidden><button class="ghost" id="kontoPwBtn" type="button">Passwort ändern</button><button class="ghost" id="kontoOut" type="button">Abmelden</button></div>
       <p class="kontomsg" id="kontoMsg"></p>
       <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
@@ -687,6 +692,7 @@
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
     // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
   // account: true = nur mit (gratis) Konto spielbar; ohne Konto im Buch ausgegraut, nicht ins Deck wählbar
+  // invite: true = wird freigeschaltet, sobald ein eingeladener Freund über den eigenen Einladungslink eine Partie gespielt hat (braucht Konto; nur online)
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
@@ -748,7 +754,7 @@
       trebuchet: { cat: 'siege', name: 'Trebuchet', account: true, cost: 70, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 18, hp: 2, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3 },
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', invite: true, cost: 18, hp: 2, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3 },
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
@@ -3307,11 +3313,11 @@
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
       '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
       '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
-      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 Nicht freigeschaltet – benötigt Account</p>' : '') + '</div>';
+      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 ' + lockText(t) + '</p>' : '') + '</div>';
   }
   function miniHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0;
-    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (benötigt Account)' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (' + lockText(t) + ')' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span></div>';
   }
   function drawCardIcons(el) {
@@ -3406,7 +3412,7 @@
       return;
     }
     var t = b.getAttribute('data-pick'), i = DECK.indexOf(t), msg = '';
-    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = 'Nicht freigeschaltet – benötigt Account'; return; }
+    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = lockText(t); return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
     else DECK.push(t);
@@ -3508,6 +3514,7 @@
   }
 
   function finish(w, note) {
+    einladungGespielt(); // kam der Spieler über einen Einladungslink: dem Einladenden gutschreiben (einmal pro Gerät)
     if (tut.on) {
       tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
       tutBox('');
@@ -3590,9 +3597,22 @@
   // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Belagerungsturm, Trebuchet).
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
   // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
-  var konto = { user: null, token: null, refresh: null, exp: 0 };
+  // Einladungen (nur auf der Online-Seite, der Render-Server führt Buch): konto.code = eigener Einladungscode, konto.freunde = Anzahl Freunde,
+  // die über den Link gespielt haben, konto.einheiten = freigeschaltete Einheiten (z. B. 'crossbow')
+  var konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] };
   function kontoAn() { return !!KONTO.url; }
-  function unitLocked(t) { var d = CONFIG.units[t]; return !!(d && d.account && kontoAn() && !(konto && konto.user)); }
+  function unitLocked(t) {
+    var d = CONFIG.units[t], k = konto || {};
+    if (!d || !kontoAn()) return false;
+    if (d.account && !k.user) return true;
+    if (d.invite && ONLINE && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // im Artifact (ohne Server) nicht gesperrt
+    return false;
+  }
+  function lockText(t) {
+    var d = CONFIG.units[t] || {};
+    if (d.invite) return konto.user ? 'Nicht freigeschaltet – lade einen Freund ein (👥 Freund einladen)' : 'Nicht freigeschaltet – benötigt Account und einen eingeladenen Freund';
+    return 'Nicht freigeschaltet – benötigt Account';
+  }
   function kontoSave() {
     try { if (konto.user) localStorage.setItem('stronghold-konto', JSON.stringify(konto)); else localStorage.removeItem('stronghold-konto'); } catch (err) {}
   }
@@ -3600,9 +3620,9 @@
     konto.user = (r.user && r.user.email) || konto.user;
     konto.token = r.access_token; konto.refresh = r.refresh_token;
     konto.exp = Date.now() + (r.expires_in || 3600) * 1000;
-    kontoSave(); kontoChanged();
+    kontoSave(); kontoChanged(); kontoServer();
   }
-  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0 }; kontoSave(); kontoChanged(); }
+  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] }; kontoSave(); kontoChanged(); }
   function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {
       method: methode || 'POST',
@@ -3633,6 +3653,7 @@
   function kontoChanged() {
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
+    $('inviteBtn').hidden = !(kontoAn() && ONLINE);
     kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -3643,6 +3664,22 @@
     kontoView();
   }
   var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
+  // Eigene Einladungsdaten vom Render-Server holen (nur online, nur angemeldet)
+  var kontoServerLaeuft = false;
+  function kontoServer() {
+    if (!ONLINE || !konto.token || kontoServerLaeuft) return Promise.resolve(false);
+    kontoServerLaeuft = true;
+    return fetch('/api/konto', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      kontoServerLaeuft = false;
+      if (!j || !j.code) return false;
+      var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
+      konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
+      kontoSave(); kontoChanged();
+      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Dein Freund ist dabei! Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
+      return true;
+    }).catch(function () { kontoServerLaeuft = false; return false; });
+  }
+  function einladeLink() { return location.origin + location.pathname + '?von=' + konto.code; }
   function kontoView() {
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
@@ -3651,12 +3688,19 @@
     $('kontoForm').hidden = on;
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;
+    var inv = on && !pw && ONLINE && !!konto.code;
+    $('kontoInv').hidden = !inv;
+    if (inv) {
+      var frei = (konto.einheiten || []).indexOf('crossbow') >= 0;
+      $('kontoInvText').textContent = (frei ? '✓ Armbrustschütze freigeschaltet. ' : 'Spielt ein Freund über deinen Link eine Partie, bekommst du den Armbrustschützen. ') + 'Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
+      $('kontoLink').value = einladeLink();
+    }
   }
   function kontoMsg(t, ok) { var m = $('kontoMsg'); m.textContent = t || ''; m.classList.toggle('ok', !!ok); }
   function kontoOpen(on) {
     $('konto').hidden = !on;
     if (!on) kontoPwModus = '';
-    if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); }
+    if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); else kontoServer(); }
   }
   function kontoBusy(b) { ['kontoLogin', 'kontoReg', 'kontoOut', 'kontoVergessen', 'kontoPwSave', 'kontoPwBtn'].forEach(function (id) { $(id).disabled = b; }); }
   function kontoEingabe() {
@@ -3706,6 +3750,47 @@
     kontoClear(); kontoMsg('Du bist abgemeldet.', true);
     if (tk) kontoApi('/auth/v1/logout', {}, tk).catch(function () {});
   }
+  // Freund einladen: Link über das Teilen-Menü des Handys schicken (sonst kopieren)
+  function kopieren(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
+    var f = $('kontoLink'); f.focus(); f.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} return Promise.resolve(ok);
+  }
+  function teilen() {
+    var weiter = konto.code ? Promise.resolve(true) : kontoServer();
+    weiter.then(function () {
+      if (!konto.code) { kontoOpen(true); kontoMsg('Einladen geht gerade nicht. Bitte später nochmals versuchen.'); return; }
+      var url = einladeLink(), text = 'Spiel mit mir Stronghold Mini – ein kleines Burgen-Strategiespiel im Browser!';
+      if (navigator.share) navigator.share({ title: 'Stronghold Mini', text: text, url: url }).catch(function () {});
+      else kopieren(url).then(function (ok) { kontoOpen(true); kontoMsg(ok ? 'Link kopiert – schick ihn deinem Freund.' : 'Kopiere den Link oben und schick ihn deinem Freund.', true); });
+    });
+  }
+  $('inviteBtn').addEventListener('click', function () {
+    if (!konto.user) { kontoOpen(true); kontoMsg('Melde dich zuerst an (gratis). Dann bekommst du deinen Einladungslink.', true); return; }
+    teilen();
+  });
+  $('kontoShare').addEventListener('click', teilen);
+  $('kontoCopy').addEventListener('click', function () { kopieren(einladeLink()).then(function (ok) { kontoMsg(ok ? 'Link kopiert.' : 'Bitte den Link oben von Hand kopieren.', ok); }); });
+  // Eingeladen worden? ?von=CODE merken; nach der ersten Partie (mind. 30 s) dem Einladenden gutschreiben, einmal pro Gerät
+  function geraetId() {
+    var g = ''; try { g = localStorage.getItem('stronghold-geraet') || ''; } catch (e) {}
+    if (!/^[a-z0-9]{8,40}$/.test(g)) { g = ''; for (var i = 0; i < 20; i++) g += 'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36)); try { localStorage.setItem('stronghold-geraet', g); } catch (e) {} }
+    return g;
+  }
+  (function () {
+    var m = /[?&]von=([A-Za-z0-9]{6})(?:&|$)/.exec(location.search);
+    if (!m) return;
+    try { if (!localStorage.getItem('stronghold-von-ok')) localStorage.setItem('stronghold-von', m[1].toUpperCase()); } catch (e) {}
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+  })();
+  function einladungGespielt() {
+    if (!ONLINE || clock < 30) return;
+    var code = ''; try { if (localStorage.getItem('stronghold-von-ok')) return; code = localStorage.getItem('stronghold-von') || ''; } catch (e) { return; }
+    if (!code) return;
+    var h = { 'Content-Type': 'application/json' }; if (konto.token) h.Authorization = 'Bearer ' + konto.token;
+    fetch('/api/besuch', { method: 'POST', headers: h, body: JSON.stringify({ code: code, geraet: geraetId() }) }).then(function (r) {
+      if (r.ok || r.status === 400 || r.status === 404) { try { localStorage.setItem('stronghold-von-ok', '1'); localStorage.removeItem('stronghold-von'); } catch (e) {} } // erledigt (oder ungültig): nicht nochmals senden
+    }).catch(function () {}); // ohne Netz: beim nächsten Mal nochmals
+  }
   $('kontoBtn').addEventListener('click', function () { kontoOpen(true); });
   $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
   $('kontoForm').addEventListener('submit', kontoLogin);
@@ -3731,8 +3816,9 @@
       if (q.type === 'recovery') { kontoPwModus = 'reset'; kontoOpen(true); $('kontoPwNeu').focus(); }
     }).catch(function () { kontoClear(); kontoOpen(true); kontoMsg('Der Link hat nicht funktioniert. Fordere unten einen neuen an.'); });
   })();
+  if (!konto.einheiten) konto.einheiten = [];
   kontoChanged();
-  if (kontoAn() && konto.refresh) kontoRefresh();
+  if (kontoAn() && konto.refresh) kontoRefresh(); else kontoServer();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);
   // ---------- Tutorial ----------
   // Geführte Partie gegen einen Trainingsgegner mit König und Burg. Er tut nur das, was das Tutorial verlangt.
@@ -3907,7 +3993,7 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.acc = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.acc = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
   }
@@ -3960,12 +4046,20 @@
     if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h; if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
     pvpSend(msg);
   }
+  // Darf dieses Team diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für beide Browser gleich)
+  function pvpErlaubt(team, type) {
+    var d = CONFIG.units[type];
+    if (!d || !KONTO.url) return true;
+    if (d.account && !(pvp.acc && pvp.acc[team])) return false;
+    if (d.invite && !(pvp.acc && pvp.acc[team] && pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0)) return false;
+    return true;
+  }
   function pvpApply(team, cmds) {
     for (var i = 0; i < cmds.length && state === 'playing'; i++) {
       if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
       else {
         if (team === pvp.me) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
-        if (CONFIG.units[cmds[i]].account && KONTO.url && !(pvp.acc && pvp.acc[team])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
+        if (!pvpErlaubt(team, cmds[i])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
         buy(team, cmds[i]);
       }
     }
@@ -4021,7 +4115,7 @@
     if (state !== 'playing') return;
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
     if (unitLocked(type)) return; // braucht ein Konto
-    if (pvp.on && CONFIG.units[type] && CONFIG.units[type].account && KONTO.url && !(pvp.acc && pvp.acc[ME])) return; // online zählt das vom Server bestätigte Konto
+    if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
     var ok, pd = CONFIG.units[type];
     ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= pd.cost && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet

@@ -59,11 +59,11 @@
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
       '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
       '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
-      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 Nicht freigeschaltet – benötigt Account</p>' : '') + '</div>';
+      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 ' + lockText(t) + '</p>' : '') + '</div>';
   }
   function miniHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0;
-    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (benötigt Account)' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (' + lockText(t) + ')' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span></div>';
   }
   function drawCardIcons(el) {
@@ -158,7 +158,7 @@
       return;
     }
     var t = b.getAttribute('data-pick'), i = DECK.indexOf(t), msg = '';
-    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = 'Nicht freigeschaltet – benötigt Account'; return; }
+    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = lockText(t); return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
     else DECK.push(t);
@@ -260,6 +260,7 @@
   }
 
   function finish(w, note) {
+    einladungGespielt(); // kam der Spieler über einen Einladungslink: dem Einladenden gutschreiben (einmal pro Gerät)
     if (tut.on) {
       tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
       tutBox('');

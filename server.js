@@ -14,14 +14,65 @@ const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 // Konto (Supabase): dieselben öffentlichen Werte wie im Spiel (daten/konto.js). Über Umgebungsvariablen änderbar.
 const KONTO_URL = process.env.SUPABASE_URL || 'https://odxpdyrwtvgicntbjlrh.supabase.co';
 const KONTO_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn';
-// Prüft ein Zugangs-Token bei Supabase: true = gültiges Konto
-function kontoPruefen(token) {
-  if (!token || !KONTO_URL || typeof fetch !== 'function') return Promise.resolve(false);
-  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 5000);
-  return fetch(KONTO_URL + '/auth/v1/user', { headers: { apikey: KONTO_KEY, Authorization: 'Bearer ' + token }, signal: ctrl.signal })
-    .then((r) => r.ok ? r.json().then((u) => !!(u && u.id)) : false)
-    .catch(() => false)
-    .finally(() => clearTimeout(t));
+// Geheimer Schlüssel (Secret Key) nur als Umgebungsvariable auf Render, NIE im Code: damit liest/schreibt der Server Einladungen und Freischaltungen
+const KONTO_SECRET = process.env.SUPABASE_SECRET_KEY || '';
+function mitZeit(ms, p) { const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), ms); return p(ctrl.signal).finally(() => clearTimeout(t)); }
+// Prüft ein Zugangs-Token bei Supabase: liefert { id, email } oder null
+function kontoUser(token) {
+  if (!token || typeof token !== 'string' || token.length > 4096 || !KONTO_URL || typeof fetch !== 'function') return Promise.resolve(null);
+  return mitZeit(5000, (signal) => fetch(KONTO_URL + '/auth/v1/user', { headers: { apikey: KONTO_KEY, Authorization: 'Bearer ' + token }, signal })
+    .then((r) => r.ok ? r.json().then((u) => (u && u.id ? { id: u.id, email: u.email } : null)) : null)).catch(() => null);
+}
+function kontoPruefen(token) { return kontoUser(token).then((u) => !!u); }
+// Datenbank (Supabase REST) mit dem geheimen Schlüssel
+function db(method, pfad, body, prefer) {
+  if (!KONTO_SECRET) return Promise.reject(new Error('kein Secret Key'));
+  const headers = { apikey: KONTO_SECRET, 'Content-Type': 'application/json' };
+  if (prefer) headers.Prefer = prefer;
+  return mitZeit(6000, (signal) => fetch(KONTO_URL + '/rest/v1/' + pfad, { method, headers, body: body ? JSON.stringify(body) : undefined, signal })
+    .then((r) => r.text().then((t) => { if (!r.ok) { const e = new Error('DB ' + r.status + ' ' + t); e.status = r.status; throw e; } return t ? JSON.parse(t) : null; })));
+}
+function freischaltungen(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); }
+const CODE_ZEICHEN = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function neuerCode() { let c = ''; for (let i = 0; i < 6; i++) c += CODE_ZEICHEN[crypto.randomInt(CODE_ZEICHEN.length)]; return c; }
+async function eigenerCode(userId) {
+  const l = await db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId));
+  if (l && l.length) return l[0].code;
+  for (let v = 0; v < 5; v++) {
+    const code = neuerCode();
+    try { await db('POST', 'einladungen', { code, user_id: userId }); return code; } catch (e) { if (e.status !== 409) throw e; }
+  }
+  throw new Error('kein Code');
+}
+// einfache Bremse gegen Missbrauch: höchstens n Anfragen pro Stunde und IP
+const bremse = new Map();
+function zuViel(ip, n) { const now = Date.now(), b = bremse.get(ip) || { t: now, n: 0 }; if (now - b.t > 3600000) { b.t = now; b.n = 0; } b.n++; bremse.set(ip, b); return b.n > n; }
+function lesen(req) { return new Promise((ok) => { let d = ''; req.on('data', (c) => { d += c; if (d.length > 8192) req.destroy(); }); req.on('end', () => { try { ok(JSON.parse(d || '{}')); } catch (e) { ok({}); } }); }); }
+function json(res, code, obj) { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); }
+function bearer(req) { const a = req.headers.authorization || ''; return a.startsWith('Bearer ') ? a.slice(7) : ''; }
+// /api/konto: eigener Einladungscode, Anzahl Freunde, freigeschaltete Einheiten
+async function apiKonto(req, res) {
+  const u = await kontoUser(bearer(req));
+  if (!u) return json(res, 401, { fehler: 'nicht angemeldet' });
+  if (!KONTO_SECRET) return json(res, 503, { fehler: 'Einladungen noch nicht eingerichtet' });
+  const code = await eigenerCode(u.id);
+  const [besuche, einheiten] = await Promise.all([db('GET', 'einladung_besuche?select=geraet&code=eq.' + code), freischaltungen(u.id)]);
+  json(res, 200, { code, freunde: (besuche || []).length, einheiten });
+}
+// /api/besuch: ein Freund hat über einen Einladungslink eine Partie gespielt -> der Einladende bekommt den Armbrustschützen
+async function apiBesuch(req, res) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  if (zuViel(ip, 10)) return json(res, 429, { fehler: 'zu viele Anfragen' });
+  if (!KONTO_SECRET) return json(res, 503, { fehler: 'Einladungen noch nicht eingerichtet' });
+  const b = await lesen(req), code = String(b.code || '').toUpperCase(), geraet = String(b.geraet || '');
+  if (!/^[A-Z0-9]{6}$/.test(code) || !/^[a-z0-9]{8,40}$/.test(geraet)) return json(res, 400, { fehler: 'ungültig' });
+  const l = await db('GET', 'einladungen?select=user_id&code=eq.' + code);
+  if (!l || !l.length) return json(res, 404, { fehler: 'unbekannter Code' });
+  const besitzer = l[0].user_id, ich = await kontoUser(bearer(req));
+  if (ich && ich.id === besitzer) return json(res, 200, { ok: false, grund: 'selbst' }); // sich selbst einladen zählt nicht
+  await db('POST', 'einladung_besuche', { code, geraet }, 'resolution=ignore-duplicates');
+  await db('POST', 'freischaltungen', { user_id: besitzer, einheit: 'crossbow', grund: 'einladung' }, 'resolution=ignore-duplicates');
+  json(res, 200, { ok: true });
 }
 
 // ---------- Webseite ----------
@@ -37,6 +88,10 @@ const BILDER = {
 const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
+  if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch')) {
+    (url === '/api/konto' ? apiKonto : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler' }); });
+    return;
+  }
   if (url === '/' || url === '/index.html') {
     fs.readFile(INDEX, 'utf8', (err, html) => {
       if (err) { res.writeHead(500); res.end('Fehler'); return; }
@@ -128,8 +183,10 @@ class Client {
     try { m = JSON.parse(text); } catch (e) { return; }
     if (!m || typeof m.k !== 'string') return;
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
-      if (typeof m.token === 'string' && m.token.length < 4096) kontoPruefen(m.token).then((ok) => { this.acc = ok; if (this.alive) enqueue(this); });
-      else { this.acc = false; enqueue(this); }
+      if (typeof m.token === 'string' && m.token.length < 4096) {
+        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id).catch(() => []) : []; })
+          .then((frei) => { this.frei = frei; if (this.alive) enqueue(this); });
+      } else { this.acc = false; this.frei = []; enqueue(this); }
       return;
     }
     if (m.k === 'cancel') { dequeue(this); return; }
@@ -173,8 +230,9 @@ function tryMatch() {
     a.peer = b; b.peer = a;
     const seed = crypto.randomInt(1, 2147483647); // gemeinsamer Zufalls-Startwert: beide Browser rechnen dieselbe Partie
     const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
-    a.send({ k: 'match', me: 0, seed, acc });
-    b.send({ k: 'match', me: 1, seed, acc });
+    const frei = [a.frei || [], b.frei || []]; // freigeschaltete Einheiten (z. B. Armbrustschütze durch Einladung)
+    a.send({ k: 'match', me: 0, seed, acc, frei });
+    b.send({ k: 'match', me: 1, seed, acc, frei });
   }
 }
 function broadcastInfo() {

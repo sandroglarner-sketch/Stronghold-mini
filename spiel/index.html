@@ -42,6 +42,7 @@
       <div class="ovrow">
         <button class="ghost bookbtn" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck" aria-label="Einheitenbuch">📖</button>
         <button class="ghost" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
+        <button class="ghost" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen">👥 Freund einladen</button>
         <span class="choice" id="ovChoice">
           <select id="botType" aria-label="Gegner">
             <option value="bauern" selected>Gegner: Bandit</option>
@@ -79,6 +80,7 @@
         <input type="password" id="kontoPwNeu" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="new-password" minlength="6" required>
         <div class="kontorow"><button class="primary" type="submit" id="kontoPwSave">Passwort speichern</button><button class="ghost" type="button" id="kontoPwAbbr">Abbrechen</button></div>
       </form>
+      <div class="kontoinv" id="kontoInv" hidden><p id="kontoInvText"></p><div class="kontorow"><input type="text" id="kontoLink" readonly aria-label="Dein Einladungslink"><button class="ghost" id="kontoCopy" type="button">Kopieren</button></div><button class="primary" id="kontoShare" type="button">👥 Freund einladen</button></div>
       <div class="kontorow" id="kontoIn" hidden><button class="ghost" id="kontoPwBtn" type="button">Passwort ändern</button><button class="ghost" id="kontoOut" type="button">Abmelden</button></div>
       <p class="kontomsg" id="kontoMsg"></p>
       <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>

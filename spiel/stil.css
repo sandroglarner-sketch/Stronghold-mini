@@ -209,6 +209,9 @@
   .kontorow { display: flex; gap: 8px; justify-content: center; }
   .kontorow .primary { margin-top: 0; }
   .kontorow[hidden], .konto form[hidden] { display: none; }
+  .kontoinv { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: color-mix(in srgb, var(--me) 8%, transparent); }
+  .kontoinv[hidden] { display: none; }
+  .kontoinv input { flex: 1; min-width: 0; font-size: 0.8rem; }
   .kontolink { background: none; border: 0; padding: 0; color: var(--me); font-size: 0.82rem; text-decoration: underline; justify-self: center; }
   .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
   .konto .kontomsg.ok { color: #2f8a3e; }
