@@ -39,6 +39,9 @@ const kopf = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Stronghold">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="manifest" href="/manifest.webmanifest">
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}[hidden]:not([hidden=until-found i]){display:none!important}.privacy{text-align:center;font-size:11px;color:#8a979a;margin:6px 0 14px}html.phone .privacy{display:none}</style>
 <script data-goatcounter="https://sandro.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>

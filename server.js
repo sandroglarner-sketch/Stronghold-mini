@@ -25,6 +25,15 @@ function kontoPruefen(token) {
 }
 
 // ---------- Webseite ----------
+const BILDER = {
+  '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'],
+  '/apple-touch-icon-precomposed.png': ['apple-touch-icon.png', 'image/png'],
+  '/icon-192.png': ['icon-192.png', 'image/png'],
+  '/icon-512.png': ['icon-512.png', 'image/png'],
+  '/favicon-32.png': ['favicon-32.png', 'image/png'],
+  '/favicon.ico': ['favicon-32.png', 'image/png'],
+  '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'],
+};
 const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
@@ -34,6 +43,15 @@ const server = http.createServer((req, res) => {
       html = html.replace('/*ONLINE*/false', '/*ONLINE*/true'); // schaltet den Online-Knopf frei
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
       res.end(html);
+    });
+    return;
+  }
+  const bild = BILDER[url]; // Symbol für den Startbildschirm, Browser-Tab und App-Beschreibung (Ordner bilder/)
+  if (bild) {
+    fs.readFile(path.join(__dirname, 'bilder', bild[0]), (err, data) => {
+      if (err) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': bild[1], 'Cache-Control': 'public, max-age=86400' });
+      res.end(data);
     });
     return;
   }

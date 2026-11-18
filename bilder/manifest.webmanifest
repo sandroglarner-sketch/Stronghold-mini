@@ -1,0 +1,17 @@
+{
+  "name": "Stronghold Mini",
+  "short_name": "Stronghold",
+  "description": "Kleines Echtzeitstrategie-Spiel: Burg und Mauer bauen, Einheiten ausbilden, gegen Bots oder online spielen.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#e9edef",
+  "theme_color": "#e9edef",
+  "lang": "de",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
