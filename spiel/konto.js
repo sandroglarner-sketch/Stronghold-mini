@@ -15,11 +15,11 @@
     kontoSave(); kontoChanged();
   }
   function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0 }; kontoSave(); kontoChanged(); }
-  function kontoApi(pfad, body, token) {
+  function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {
-      method: 'POST',
+      method: methode || 'POST',
       headers: token ? { 'apikey': KONTO.key, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'apikey': KONTO.key, 'Content-Type': 'application/json' }, // neue «publishable» Keys gehören nur in apikey, nie als Bearer
-      body: JSON.stringify(body || {})
+      body: (methode || 'POST') === 'GET' ? undefined : JSON.stringify(body || {})
     }).then(function (res) {
       return res.text().then(function (t) { var j = {}; try { j = t ? JSON.parse(t) : {}; } catch (e) {} if (!res.ok) { var er = new Error(j.msg || j.error_description || j.message || j.error || ('Fehler ' + res.status)); er.status = res.status; er.code = j.error_code || j.code; throw er; } return j; });
     });
@@ -54,19 +54,23 @@
     if (!$('book').hidden) renderBook();
     kontoView();
   }
+  var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
   function kontoView() {
-    var on = !!konto.user;
-    $('kontoTitel').textContent = on ? 'Dein Konto' : 'Gratis-Konto';
-    $('kontoText').textContent = on ? 'Angemeldet als ' + konto.user + '. Belagerungsturm und Trebuchet sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du Belagerungsturm und Trebuchet frei.';
+    var on = !!konto.user, pw = on && !!kontoPwModus;
+    $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
+    $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
+      on ? 'Angemeldet als ' + konto.user + '. Belagerungsturm und Trebuchet sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du Belagerungsturm und Trebuchet frei.';
     $('kontoForm').hidden = on;
-    $('kontoOut').hidden = !on;
+    $('kontoPwForm').hidden = !pw;
+    $('kontoIn').hidden = !on || pw;
   }
   function kontoMsg(t, ok) { var m = $('kontoMsg'); m.textContent = t || ''; m.classList.toggle('ok', !!ok); }
   function kontoOpen(on) {
     $('konto').hidden = !on;
+    if (!on) kontoPwModus = '';
     if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); }
   }
-  function kontoBusy(b) { ['kontoLogin', 'kontoReg', 'kontoOut'].forEach(function (id) { $(id).disabled = b; }); }
+  function kontoBusy(b) { ['kontoLogin', 'kontoReg', 'kontoOut', 'kontoVergessen', 'kontoPwSave', 'kontoPwBtn'].forEach(function (id) { $(id).disabled = b; }); }
   function kontoEingabe() {
     var mail = $('kontoMail').value.trim(), pw = $('kontoPw').value;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { kontoMsg('Bitte eine gültige E-Mail eingeben.'); return null; }
@@ -88,6 +92,27 @@
       else kontoMsg('Fast geschafft: Bitte bestätige deine E-Mail (Link im Postfach) und melde dich dann an.', true);
     }).catch(function (er) { kontoMsg(kontoFehler(er)); }).then(function () { kontoBusy(false); });
   }
+  // Passwort vergessen: Supabase schickt eine Mail mit Link zurück auf diese Seite (#access_token=…&type=recovery)
+  function kontoVergessen() {
+    var mail = $('kontoMail').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { kontoMsg('Gib oben deine E-Mail ein, dann nochmals auf «Passwort vergessen?» tippen.'); return; }
+    kontoBusy(true); kontoMsg('Mail wird verschickt …', true);
+    var zurueck = location.origin + location.pathname;
+    kontoApi('/auth/v1/recover?redirect_to=' + encodeURIComponent(zurueck), { email: mail }).then(function () {
+      kontoMsg('Falls es ein Konto mit dieser E-Mail gibt, ist jetzt eine Mail unterwegs. Öffne den Link darin, dann kannst du ein neues Passwort wählen.', true);
+    }).catch(function (er) { kontoMsg(kontoFehler(er)); }).then(function () { kontoBusy(false); });
+  }
+  // Neues Passwort speichern (angemeldet oder über den Link aus der Mail)
+  function kontoPwSpeichern(e) {
+    if (e) e.preventDefault();
+    var pw = $('kontoPwNeu').value;
+    if (pw.length < 6) { kontoMsg('Das Passwort braucht mindestens 6 Zeichen.'); return; }
+    kontoBusy(true); kontoMsg('Speichern …', true);
+    var los = konto.exp - Date.now() < 60 * 1000 ? kontoRefresh() : Promise.resolve(true);
+    los.then(function () { return kontoApi('/auth/v1/user', { password: pw }, konto.token, 'PUT'); }).then(function () {
+      $('kontoPwNeu').value = ''; kontoPwModus = ''; kontoView(); kontoMsg('Dein neues Passwort ist gespeichert.', true);
+    }).catch(function (er) { kontoMsg(/same|different/i.test(er.message) ? 'Das neue Passwort muss anders sein als das alte.' : kontoFehler(er)); }).then(function () { kontoBusy(false); });
+  }
   function kontoLogout() {
     var tk = konto.token;
     kontoClear(); kontoMsg('Du bist abgemeldet.', true);
@@ -98,9 +123,26 @@
   $('kontoForm').addEventListener('submit', kontoLogin);
   $('kontoReg').addEventListener('click', kontoRegister);
   $('kontoOut').addEventListener('click', kontoLogout);
+  $('kontoVergessen').addEventListener('click', kontoVergessen);
+  $('kontoPwBtn').addEventListener('click', function () { kontoPwModus = 'aendern'; kontoMsg(''); kontoView(); $('kontoPwNeu').focus(); });
+  $('kontoPwAbbr').addEventListener('click', function () { kontoPwModus = ''; kontoMsg(''); kontoView(); });
+  $('kontoPwForm').addEventListener('submit', kontoPwSpeichern);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('konto').hidden) kontoOpen(false); });
   // Start: gespeicherte Sitzung übernehmen und im Hintergrund erneuern
   try { var ks = JSON.parse(localStorage.getItem('stronghold-konto') || 'null'); if (ks && ks.user && ks.refresh) konto = ks; } catch (err) {}
+  // Zurück aus der Passwort-vergessen-Mail: Anmeldedaten stehen hinter # in der Adresse
+  (function () {
+    var h = location.hash || '';
+    if (!kontoAn() || h.indexOf('access_token=') < 0 && h.indexOf('error=') < 0) return;
+    var q = {}; h.slice(1).split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) q[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); });
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (err) {} // Token nicht in der Adresse lassen
+    if (q.error) { setTimeout(function () { kontoOpen(true); kontoMsg(/expired/i.test(q.error_code + q.error_description) ? 'Der Link ist abgelaufen. Fordere unten einen neuen an.' : 'Der Link hat nicht funktioniert. Fordere unten einen neuen an.'); }, 0); return; }
+    konto.token = q.access_token; konto.refresh = q.refresh_token || konto.refresh; konto.exp = Date.now() + (Number(q.expires_in) || 3600) * 1000;
+    kontoApi('/auth/v1/user', null, konto.token, 'GET').then(function (u) { // E-Mail zum Token holen
+      konto.user = u.email; kontoSave(); kontoChanged();
+      if (q.type === 'recovery') { kontoPwModus = 'reset'; kontoOpen(true); $('kontoPwNeu').focus(); }
+    }).catch(function () { kontoClear(); kontoOpen(true); kontoMsg('Der Link hat nicht funktioniert. Fordere unten einen neuen an.'); });
+  })();
   kontoChanged();
   if (kontoAn() && konto.refresh) kontoRefresh();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);

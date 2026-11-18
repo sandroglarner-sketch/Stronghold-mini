@@ -73,8 +73,13 @@
         <input type="email" id="kontoMail" placeholder="E-Mail" autocomplete="email" required>
         <input type="password" id="kontoPw" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" minlength="6" required>
         <div class="kontorow"><button class="primary" type="submit" id="kontoLogin">Anmelden</button><button class="ghost" type="button" id="kontoReg">Registrieren</button></div>
+        <button class="kontolink" type="button" id="kontoVergessen">Passwort vergessen?</button>
       </form>
-      <button class="ghost" id="kontoOut" type="button" hidden>Abmelden</button>
+      <form id="kontoPwForm" novalidate hidden>
+        <input type="password" id="kontoPwNeu" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="new-password" minlength="6" required>
+        <div class="kontorow"><button class="primary" type="submit" id="kontoPwSave">Passwort speichern</button><button class="ghost" type="button" id="kontoPwAbbr">Abbrechen</button></div>
+      </form>
+      <div class="kontorow" id="kontoIn" hidden><button class="ghost" id="kontoPwBtn" type="button">Passwort ändern</button><button class="ghost" id="kontoOut" type="button">Abmelden</button></div>
       <p class="kontomsg" id="kontoMsg"></p>
       <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
     </div>

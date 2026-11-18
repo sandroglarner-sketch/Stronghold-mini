@@ -208,6 +208,8 @@
   .konto input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
   .kontorow { display: flex; gap: 8px; justify-content: center; }
   .kontorow .primary { margin-top: 0; }
+  .kontorow[hidden], .konto form[hidden] { display: none; }
+  .kontolink { background: none; border: 0; padding: 0; color: var(--me); font-size: 0.82rem; text-decoration: underline; justify-self: center; }
   .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
   .konto .kontomsg.ok { color: #2f8a3e; }
   .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
