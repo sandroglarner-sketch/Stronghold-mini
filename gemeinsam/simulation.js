@@ -1,0 +1,542 @@
+  // ---------- Simulation ----------
+  // Grundeinkommen pro Auszahlung (Bauern zahlen seit 18.11. selbst, mit eigenem Takt)
+  function income(team) {
+    return team === 1 ? (CONFIG.levels[level] || CONFIG.levels.normal).income : CONFIG.GOLD_AMOUNT;
+  }
+
+  function nearestOnRect(u, b) {
+    return { x: clamp(u.x, b.x1, b.x2), y: clamp(u.y, b.y1, b.y2) };
+  }
+
+  // Flächenschaden um (cx, cy): alle Gegner im Umkreis, außer exclude (schon getroffen). Die Mauer hält Flächenschaden nie auf (auch Einheiten
+  // hinter der Mauer oder im Turm werden getroffen, Turm: nur 25 %). Grundprinzip: alle gegnerischen Einheiten UND Gebäude (Mauer, Burg) im Radius
+  // nehmen Schaden, ausser das Gebäude war selbst das Ziel des Schusses (wallHit/baseHit, dann nicht doppelt).
+  function applySplash(team, sx, sy, cx, cy, d, exclude, wallHit, baseHit) {
+    var sb = bases[1 - team];
+    if (!baseHit && d.atk > 0 && sb && !sb.down && sb.hp > 0 && hyp(cx - clamp(cx, sb.x1, sb.x2), cy - clamp(cy, sb.y1, sb.y2)) <= d.splash) {
+      sb.hp = Math.max(0, sb.hp - d.atk); sb.flash = 0.2; sb.lastHit = clock;
+    }
+    if (!wallHit && d.atk > 0) {
+      var ew = walls[1 - team], eb = bases[1 - team];
+      if (ew && ew.hp > 0 && (ew.team === 0 ? cx > eb.x2 - d.splash : cx < eb.x1 + d.splash) && Math.abs(wallD(ew.team, cx, cy) - WALL.dist) <= d.splash + WALL_TH / 2) {
+        ew.hit = 0.15; ew.lastHit = clock;
+        ew.hp -= d.atk;
+        if (ew.hp <= 0) { walls[ew.team] = null; effects.push({ kind: 'blast', x: cx, y: cy, r: 1.2, t: 0, dur: 0.45 }); }
+      }
+    }
+    for (var j = 0; j < units.length; j++) {
+      var sv = units[j];
+      if (sv.team === team || sv.hp <= 0 || sv.dig || sv.inCastle) continue;
+      if (hyp(sv.x - cx, sv.y - cy) > d.splash) continue;
+      if (sv !== exclude) { hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock; }
+      if (d.slow) sv.slow = d.slow.secs;
+    }
+  }
+  // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
+  function landShot(s) {
+    if (s.base) { // Pfeil der Kaserne
+      var bv = s.tgt;
+      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK, { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
+      return;
+    }
+    var d = CONFIG.units[s.type], tgt = s.tgt, cx = s.tx, cy = s.ty, aimBase = !s.tgt && !s.wall;
+    if (d.fire) { // Feuerball: schlägt an der Stelle ein, auf die gezielt wurde; wer bis dahin aus dem Umkreis ist, bleibt unverletzt
+      if (!tgt && !s.multi) { var fb0 = bases[1 - s.team]; fb0.hp = Math.max(0, fb0.hp - d.atk); fb0.flash = 0.2; fb0.lastHit = clock; } // Ziel war die Kaserne
+      applySplash(s.team, s.sx, s.sy, s.tx, s.ty, d, null, false, !tgt && !s.multi); // Trebuchet-Steine (multi): nur Flächenschaden am Einschlagpunkt
+      return;
+    }
+    if (tgt) {
+      if (tgt.hp > 0 && !tgt.dig && !tgt.inCastle) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; cx = tgt.x; cy = tgt.y; }
+      else tgt = null;
+    } else if (s.wall) {
+      var sw = s.wall;
+      if (walls[sw.team] === sw) {
+        sw.hit = 0.15; sw.lastHit = clock;
+        sw.hp -= d.atk;
+        if (sw.hp <= 0) {
+          walls[sw.team] = null;
+          effects.push({ kind: 'blast', x: s.tx, y: s.ty, r: 1.2, t: 0, dur: 0.45 });
+        }
+      }
+    } else {
+      var fb = bases[1 - s.team];
+      fb.hp = Math.max(0, fb.hp - d.atk); fb.flash = 0.2; fb.lastHit = clock;
+    }
+    if (s.type === 'baliste') effects.push({ kind: 'bolthit', x: cx, y: cy, ang: Math.atan2(cy - s.sy, cx - s.sx), t: 0, dur: 0.35 }); // Einschlag des Bolzens
+    if (d.splash) applySplash(s.team, s.sx, s.sy, cx, cy, d, tgt, !!s.wall, aimBase);
+    if (d.blast) applySplash(s.team, s.sx, s.sy, s.tx, s.ty, { atk: d.blast.atk, splash: d.blast.r, range: d.range }, null, false, false); // Onager: zusätzlich Flächenschaden um den Einschlagpunkt, trifft alles (auch die getroffene Mauer/Burg nochmals)
+  }
+
+  function update(dt) {
+    clock += dt;
+    payT += dt;
+    if (payT >= CONFIG.GOLD_EVERY) {
+      payT -= CONFIG.GOLD_EVERY;
+      for (var t = 0; t < 2; t++) {
+        if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
+        var amt = income(t);
+        gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
+        var bb = bases[t];
+        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2, y: bb.y1 + 0.55, t: 0, dur: 1.2 }); // Grundeinkommen im oberen Bereich der Burg
+      }
+    }
+    for (var gi = 0; gi < units.length; gi++) { // Bauern: jeder bringt alle bonusEvery Sekunden bonus Gold, sein Takt startet beim Niederlassen
+      var gu = units[gi], gd = CONFIG.units[gu.type];
+      if (!gd.bonus || !gu.settled || gu.hp <= 0 || (tut.on && gu.team === 1)) continue;
+      gu.gT = (gu.gT || 0) + dt;
+      if (gu.gT >= gd.bonusEvery) {
+        gu.gT -= gd.bonusEvery;
+        gold[gu.team] = Math.min(CONFIG.GOLD_MAX, gold[gu.team] + gd.bonus);
+        effects.push({ kind: 'text', text: '+' + gd.bonus, x: gu.x, y: gu.y - 0.55, farmer: true, t: 0, dur: 1.1 });
+      }
+    }
+    if (!tut.on && !pvp.on) aiUpdate(dt);
+
+    var i, j;
+    for (i = 0; i < units.length; i++) {
+      var u = units[i];
+      if (u.hp <= 0) continue;
+      var d = CONFIG.units[u.type];
+      var ewIn = walls[1 - u.team]; u.inFoe = !!(ewIn && ewIn.built && !wallOut(ewIn, u.x, u.y)); // steht hinter der fertigen gegnerischen Mauer
+      if (u.dummy) { u.hit = Math.max(0, u.hit - dt); u.slow = Math.max(0, u.slow - dt); continue; } // Trainingspuppe: steht still
+      u.cd = Math.max(0, u.cd - dt);
+      u.hit = Math.max(0, u.hit - dt);
+      u.slow = Math.max(0, u.slow - dt);
+      if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
+      var spd = d.speed * (u.slow > 0 ? 0.5 : 1);
+      if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
+        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
+        if (u.inCastle) {
+          if (kb.down) u.inCastle = false;
+          else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
+            u.x = kcx; u.y = kcy;
+            u.ready = u.aimT !== undefined && clock - u.aimT < CONFIG.BASE_CD + 0.3; // schießt gerade: nächsten Pfeil schon spannen (Animation)
+            if (u.cd <= 0) {
+              var vic = null, vd = 1e9, vp = null;
+              for (j = 0; j < units.length; j++) {
+                var en = units[j];
+                if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
+                var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
+                if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; vp = np; }
+              }
+              if (vic) {
+                shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
+                u.cd = CONFIG.BASE_CD; u.atkT = clock;
+                u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel
+                effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand
+              }
+            }
+            continue;
+          }
+        }
+        if (!kb.down) { // Burg steht wieder (ab 1 Leben): sofort zurück, oben wird er wieder zum Fernkämpfer
+          kdx = kcx - u.x; kdy = kcy - u.y; kdl = hyp(kdx, kdy);
+          if (kdl <= 0.15) { u.inCastle = true; u.x = kcx; u.y = kcy; }
+          else { var krs = Math.min(spd * dt, kdl); u.x += kdx / kdl * krs; u.y += kdy / kdl * krs; if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1; }
+          continue;
+        }
+        var kt = null, kdd = 1e9;
+        for (j = 0; j < units.length; j++) {
+          var ke = units[j];
+          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower) continue;
+          if (hyp(ke.x - kcx, ke.y - kcy) > KL + d.range) continue; // weiter als 5 Kacheln von der Burg: ignoriert
+          var kde = hyp(ke.x - u.x, ke.y - u.y);
+          if (kde < kdd) { kdd = kde; kt = ke; }
+        }
+        var kgx = kt ? kt.x : kcx, kgy = kt ? kt.y : kcy, kstop = kt ? d.range - 0.1 : 0.05;
+        kdx = kgx - u.x; kdy = kgy - u.y; kdl = hyp(kdx, kdy);
+        if (kdl > kstop) {
+          var kst = Math.min(spd * dt, kdl - kstop);
+          u.x += kdx / kdl * kst; u.y += kdy / kdl * kst;
+          if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1;
+        }
+        var khx = u.x - kcx, khy = u.y - kcy, khl = hyp(khx, khy);
+        if (khl > KL) { u.x = kcx + khx / khl * KL; u.y = kcy + khy / khl * KL; }
+        u.ready = !!kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001;
+        if (u.ready) { u.aimX = kt.x; u.aimY = kt.y; }
+        if (kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001 && u.cd <= 0) {
+          u.cd = d.cd; u.atkT = clock;
+          if (Math.abs(kt.x - u.x) > 0.05) u.face = kt.x > u.x ? 1 : -1;
+          hurt(kt, d.atk, d); kt.hit = 0.15; kt.lastHit = clock;
+          effects.push({ kind: 'stab', heavy: true, x1: u.x, y1: u.y, x2: kt.x, y2: kt.y, t: 0, dur: 0.16 });
+        }
+        continue;
+      }
+      if (!u.gar && !u.dig && !u.bf && !u.tSpot && d.range > 1.5 && !d.king && wallD(u.team, u.x, u.y) <= WALL.tower.takeDist) seekSlot(u); // sobald ein Platz frei ist, solange die Einheit höchstens 4 Kacheln von der Kaserne entfernt ist
+      var ow = walls[1 - u.team];
+      u.o = !!(ow && ow.built && wallOut(ow, u.x, u.y)); // steht vor der fertigen gegnerischen Mauer
+      if (u.gar) { // Besatzung eines Turms: läuft zu ihrem Platz und bleibt dort stehen
+        var gw = walls[u.team];
+        if (!gw || !gw.sl || gw.sl[u.gar.key] !== u) { u.gar = null; u.tower = false; u.seat = false; } // Mauer weg oder Platz verloren: marschiert normal los
+        else if (!u.tower && unitInFight(u, d)) { /* Angreifen hat Vorrang: erst kämpfen, dann in den Turm */ }
+        else if (!u.seat) { // läuft zu ihrem Platz; sobald ihr Mittelpunkt im Turm liegt, gilt sie als «im Turm» (u.tower: nur 25 % Fernkampfschaden usw.)
+          var gtw = gw.tlv.list[u.gar.ti], gp = slotPos(u.team, gtw, gtw.slots[u.gar.ci]), gdx2 = gp.x - u.x, gdy2 = gp.y - u.y, gd2 = hyp(gdx2, gdy2);
+          if (gd2 > 0.04) {
+            var gs2 = Math.min(spd * dt, gd2);
+            u.x += gdx2 / gd2 * gs2; u.y += gdy2 / gd2 * gs2;
+            if (Math.abs(gdx2) > 0.1) u.face = gdx2 > 0 ? 1 : -1;
+            u.tower = inTowerArea(u.team, gtw, u.x, u.y);
+            continue;
+          }
+          u.x = gp.x; u.y = gp.y; u.tower = true; u.seat = true;
+        } else {
+          var gp3 = slotPos(u.team, gw.tlv.list[u.gar.ti], gw.tlv.list[u.gar.ti].slots[u.gar.ci]);
+          u.x = gp3.x; u.y = gp3.y; u.o = false; spd = 0;
+        }
+      }
+      if (d.spot && !u.gar && !u.tSpot) u.tSpot = pickTrebSpot(u.team, d); // kein Turmplatz (oder verloren): Angriffsmodus
+      if (u.tSpot && !u.gar) { // Trebuchet im Angriff: zum Standplatz, aufbauen, immer denselben Punkt beschiessen
+        var tsp2 = u.tSpot, tdx = tsp2.x - u.x, tdy = tsp2.y - u.y, tdl = hyp(tdx, tdy);
+        u.ready = false;
+        if (!u.atSpot && wallD(u.team, u.x, u.y) <= WALL.dist + WALL_TH / 2 && seekSlot(u)) { u.tSpot = null; u.setupT = 0; continue; } // noch nicht über die eigene Mauerlinie: wird ein Turmplatz frei, geht es auf den Turm
+        if (!u.atSpot && tdl > 0.05) { var tst = Math.min(spd * dt, tdl); u.x += tdx / tdl * tst; u.y += tdy / tdl * tst; if (Math.abs(tdx) > 0.1) u.face = tdx > 0 ? 1 : -1; u.setupT = 0; continue; }
+        u.atSpot = true; u.setupT = (u.setupT || 0) + dt;
+        if (u.setupT >= d.setup) {
+          u.ready = true; u.aimX = tsp2.tx; u.aimY = tsp2.ty;
+          if (u.cd <= 0) { u.cd = d.cd * (u.cdm || 1); u.atkT = clock; u.face = tsp2.tx > u.x ? 1 : -1; fireMulti(u, d, tsp2.tx, tsp2.ty); }
+        }
+        continue;
+      }
+      if (u.bf) { // Bogenschütze auf dem Belagerungsturm: fährt mit, schießt über die Mauer; fällt der Turm, stirbt er mit
+        if (u.bf.hp <= 0) { u.hp = 0; continue; }
+        else { u.x = u.bf.x - 0.12 * (u.team === 0 ? 1 : -1); u.y = u.bf.y + u.bfSlot * 0.22; u.o = false; spd = 0; }
+      }
+      if (u.goWall) { // Leiterträger und Belagerungsturm: direkt zur gegnerischen Mauer
+        var gv = u.goWall, ewl = walls[1 - u.team];
+        u.ready = false;
+        if (!u.dock && !u.climb) {
+          if (d.belfry) { freeDockSpot(u, d); gv = u.goWall; }
+          var gdx3 = gv.ox - u.x, gdy3 = gv.oy - u.y, gd3 = hyp(gdx3, gdy3);
+          if (gd3 > 0.03) { var gs3 = Math.min(spd * dt, gd3); u.x += gdx3 / gd3 * gs3; u.y += gdy3 / gd3 * gs3; if (Math.abs(gdx3) > 0.1) u.face = gdx3 > 0 ? 1 : -1; continue; }
+          u.x = gv.ox; u.y = gv.oy;
+          var hasW = !!(ewl && ewl.built);
+          if (d.ladder) {
+            if (hasW) { u.climb = { t: 0 }; effects.push({ kind: 'ladder', x: (gv.ox + gv.ix) / 2, y: (gv.oy + gv.iy) / 2, ang: Math.atan2(gv.iy - gv.oy, gv.ix - gv.ox), len: hyp(gv.ix - gv.ox, gv.iy - gv.oy) + 0.3, team: u.team, t: 0, dur: d.ladder.show }); }
+            else { u.goWall = null; u.climbed = true; } // keine fertige Mauer: kämpft gleich normal
+          } else if (d.belfry) { u.dock = { t: 0, n: 0, wall: hasW }; }
+          continue;
+        }
+        if (u.climb) { // klettert über die Leiter auf die andere Seite
+          u.climb.t += dt;
+          var ck3 = Math.min(1, u.climb.t / d.ladder.climb); // klettert immer genau climb Sekunden
+          u.x = lerp(gv.ox, gv.ix, ck3); u.y = lerp(gv.oy, gv.iy, ck3);
+          if (ck3 >= 1) { u.climb = null; u.goWall = null; u.climbed = true; u.cd = Math.max(u.cd, 0.3); }
+          continue;
+        }
+        if (u.dock) { // angedockt: Schwertkämpfer strömen über die Mauer (ohne fertige Mauer direkt vor dem Turm)
+          var bc = d.belfry, sg = u.team === 0 ? 1 : -1;
+          u.dock.t += dt;
+          while (u.dock.n < bc.troops && u.dock.t >= u.dock.n * bc.every) {
+            spawn(u.team, 'sword');
+            var sw = units[units.length - 1], so = ((u.dock.n % 3) - 1) * 0.25;
+            if (u.dock.wall) { sw.x = gv.ix - sg * 0.1; sw.y = gv.iy + so; } else { sw.x = u.x + sg * 0.7; sw.y = u.y + so; }
+            sw.face = sg; sw.fromBf = true;
+            effects.push({ kind: 'puff', x: sw.x, y: sw.y, team: u.team, t: 0, dur: 0.4 });
+            u.dock.n++;
+          }
+          continue;
+        }
+      }
+      if (u.dig) {
+        // Unter der Erde: geradeaus zum Ziel, greift nicht an, kann nicht getroffen werden und wird nicht gesehen
+        var gdx = u.dig.x - u.x, gdy = u.dig.y - u.y, gl = hyp(gdx, gdy), gs = Math.min(d.dig.speed * dt, gl);
+        if (gl > 1e-6) {
+          u.x += gdx / gl * gs;
+          u.y += gdy / gl * gs;
+          if (Math.abs(gdx) > 0.2) u.face = gdx > 0 ? 1 : -1;
+        }
+        trailStep(u, false);
+        u.digSnd = (u.digSnd || 0) - dt;
+        if (u.digSnd <= 0) { u.digSnd = 0.2; sfx({ kind: 'dig', x: u.x }); }
+        if (hyp(u.dig.x - u.x, u.dig.y - u.y) <= 0.02) {
+          trailStep(u, true);
+          u.dig = null;
+          u.cd = 0.4;
+          effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.5 });
+        }
+        continue;
+      }
+      if (d.worker) {
+        // Arbeiter: zum Bauplatz gehen, mit rate Leben pro Sekunde bis zu add Leben bringen und verschwinden.
+        var wl = u.castle ? bases[u.team] : walls[u.team], wcap = u.castle ? CONFIG.BASE_HP : WALL.cap;
+        if (u.fade > 0) {
+          u.fade -= dt;
+          if (u.fade <= 0) { u.hp = 0; u.gone = true; }
+          continue;
+        }
+        if (!wl) { u.fade = WALL.fade; continue; }
+        var wdx = u.bp.x - u.x, wdy = u.bp.y - u.y, wd = hyp(wdx, wdy);
+        if (wd > 0.05) {
+          var ws = Math.min(spd * dt, wd);
+          u.x += wdx / wd * ws;
+          u.y += wdy / wd * ws;
+          if (Math.abs(wdx) > 0.1) u.face = wdx > 0 ? 1 : -1;
+        } else {
+          // angekommen: baut mit rate Leben pro Sekunde, bis er add Leben gebracht hat oder die Mauer voll ist
+          if (u.left === undefined) u.left = WALL.add;
+          var wg = Math.min(WALL.rate * dt, u.left, wcap - wl.hp);
+          if (wg > 0) { wl.hp = Math.round((wl.hp + wg) * 1e6) / 1e6; u.left = Math.round((u.left - wg) * 1e6) / 1e6; if (!u.castle) wl.built = true; } // gerundet, sonst kann 40,0000001 als 41 erscheinen
+          if (u.left <= 1e-6 || wl.hp >= wcap - 1e-6) u.fade = WALL.fade; // löst sich ohne Ton auf
+        }
+        continue;
+      }
+      if (d.passive) {
+        // Bauern gehen zu ihrem Standplatz und bleiben dort. Ohne Platz marschieren sie zur
+        // gegnerischen Kaserne und suchen unterwegs jede Sekunde erneut.
+        if (!u.settled) {
+          if (u.tx === null) {
+            u.retry -= dt;
+            if (u.retry <= 0) { u.retry = 1; pickSpot(u); }
+          }
+          var gx, gy, gd, stopAt;
+          if (u.tx !== null) { var fsp = farmerStand(u); gx = fsp.x; gy = fsp.y; stopAt = 0.03; }
+          else { var fbp = nearestOnRect(u, bases[1 - u.team]); gx = fbp.x; gy = fbp.y; stopAt = 0.9; }
+          var fdx = gx - u.x, fdy = gy - u.y, fd = hyp(fdx, fdy);
+          if (fd > stopAt) {
+            var fs = Math.min(spd * dt, fd - (u.tx !== null ? 0 : stopAt));
+            u.x += fdx / fd * fs;
+            u.y += fdy / fd * fs;
+            if (Math.abs(fdx) > 0.2) u.face = fdx > 0 ? 1 : -1;
+          }
+          if (u.tx !== null && hyp(gx - u.x, gy - u.y) <= 0.03) {
+            u.x = gx; u.y = gy;
+            u.settled = true; u.gT = 0; // Gold-Takt des Bauern startet jetzt
+            effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.35 });
+          }
+        } else { // steht schon: entsteht oder verschwindet eine Mauer an seinem Platz, geht er an ihren Rand bzw. zurück
+          var fst2 = farmerStand(u), fdx2 = fst2.x - u.x, fdy2 = fst2.y - u.y, fd2 = hyp(fdx2, fdy2);
+          if (fd2 > 1e-6) {
+            var fs2 = Math.min(spd * dt, fd2);
+            u.x += fdx2 / fd2 * fs2; u.y += fdy2 / fd2 * fs2;
+            if (Math.abs(fdx2) > 0.2) u.face = fdx2 > 0 ? 1 : -1;
+          }
+        }
+        continue;
+      }
+      var foeBase = bases[1 - u.team];
+
+      // Alle Einheiten beider Seiten verhalten sich gleich: auf die gegnerische Kaserne zumarschieren und
+      // auf den nächsten Gegner in Reichweite schießen. Eine fertige gegnerische Mauer ist im Weg: Was dahinter
+      // steht (auch die Kaserne), ist nicht erreichbar, die Mauer selbst wird zum Ziel.
+      var outside = u.o && !d.fire, dw = outside ? wallD(ow.team, u.x, u.y) - WALL.dist - WALL_TH / 2 : 1e9;
+      var best = null, bd = 1e9, bt = null, btd = 1e9, rngd = d.range > 1.5 && !d.ram; // bt = nächster Gegner im Turm (nur für Fernkämpfer)
+      for (j = 0; j < units.length; j++) {
+        var e = units[j];
+        if (d.ram || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue; // der Rammbock sieht nur Mauern und Kasernen
+        if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
+        if (outside && !wallOut(ow, e.x, e.y)) continue;
+        if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen
+        var dd = hyp(e.x - u.x, e.y - u.y);
+        if (d.minRange && dd < d.minRange) continue; // zu nah: das Katapult kann dieses Ziel nicht angreifen
+        if (dd < bd) { bd = dd; best = e; }
+        if (rngd && e.tower && dd < btd) { btd = dd; bt = e; }
+      }
+      var foeDown = foeBase.down, fk = null;
+      if (foeDown) for (j = 0; j < units.length; j++) if (units[j].type === 'king' && units[j].team !== u.team && units[j].hp > 0) { fk = units[j]; break; }
+      var bp = foeDown && fk ? { x: fk.x, y: fk.y } : nearestOnRect(u, foeBase);
+      var db = hyp(bp.x - u.x, bp.y - u.y);
+      var sight = Math.max(4, d.range + 1.5);
+
+      var dbe = outside || foeDown || (d.minRange && db < d.minRange) ? 1e9 : db, wallT = false;
+      var tgt = null, tx, ty, td;
+      if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
+      else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
+      else if (outside && dw <= d.range && !bt) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+        // nächster Punkt auf der Außenkante der Mauer
+        var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
+        wallT = true;
+        tx = wpx + (u.x - wpx) / wl2 * (WALL.dist + WALL_TH / 2);
+        ty = wpy + (u.y - wpy) / wl2 * (WALL.dist + WALL_TH / 2);
+        td = Math.max(dw, 0);
+      }
+      else if (bt) { tgt = bt; tx = bt.x; ty = bt.y; td = btd; } // zuerst die Besatzung der Türme
+      else if (best && bd <= sight) { tgt = best; tx = best.x; ty = best.y; td = bd; }
+      else { tx = bp.x; ty = bp.y; td = db; }
+
+      var stop = d.range - 0.1;
+      if (wallT && d.range <= 1.5) stop = Math.min(stop, 0.5); // Nahkämpfer gehen dicht an die Mauer, damit die Kaserne sie trifft
+      if (td > stop && td > 1e-6) {
+        var step = Math.min(spd * dt, td - stop);
+        var vx = (tx - u.x) / td, vy = (ty - u.y) / td;
+        u.x += vx * step;
+        u.y += vy * step;
+        if (Math.abs(vx) > 0.2) u.face = vx > 0 ? 1 : -1;
+      }
+
+      var reach = wallT && d.range <= 1.5 ? 0.55 : d.range; // Nahkämpfer schlagen erst direkt an der Mauer zu
+      if (d.setup) { // Trebuchet: zählt, wie lange es stillsteht (aufbauen); jede Bewegung baut es wieder ab
+        var mvd = u.lx === undefined || hyp(u.x - u.lx, u.y - u.ly) > 0.01;
+        u.lx = u.x; u.ly = u.y; u.setupT = mvd ? 0 : (u.setupT || 0) + dt;
+      }
+      var built = !d.setup || u.setupT >= d.setup;
+      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
+      if (u.ready) { u.aimX = tx; u.aimY = ty; }
+      if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange)) {
+        u.cd = d.cd * (u.cdm || 1);
+        u.atkT = clock; var lp = launchPt(u, d, tx, ty);
+        if (Math.abs(tx - u.x) > 0.05) u.face = tx > u.x ? 1 : -1;
+        if (d.delay) {
+          // Geschoss fliegt: der Schaden folgt erst nach delay Sekunden (landShot), auch wenn der Schütze bis dahin fällt
+          if (d.multi) fireMulti(u, d, tx, ty); // mehrere Steine, zufällig verteilt im Umkreis multi.spread um das Ziel
+          else shots.push({ type: u.type, team: u.team, sx: u.x, sy: u.y, tx: tx, ty: ty, tgt: tgt, wall: (!tgt && wallT) ? ow : null, t: d.delay });
+        } else {
+          if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
+          else if (wallT) {
+            if (d.atk > 0) { ow.hit = 0.15; ow.lastHit = clock; }
+            ow.hp -= d.atk;
+            if (ow.hp <= 0) {
+              walls[ow.team] = null;
+              effects.push({ kind: 'blast', x: tx, y: ty, r: 1.2, t: 0, dur: 0.45 });
+            }
+          }
+          else { foeBase.hp = Math.max(0, foeBase.hp - d.atk); if (d.atk > 0) { foeBase.flash = 0.2; foeBase.lastHit = clock; } }
+          if (d.splash) applySplash(u.team, u.x, u.y, tx, ty, d, tgt, wallT, !tgt && !wallT);
+        }
+        if (d.multi) { /* Trebuchet: Steine und Einschläge zeichnet fireMulti, keine Stich-/Ziellinie */ }
+        else if (u.type === 'onager') { // Onager: grauer Stein fliegt gerade, Einschlag mit Staub
+          effects.push({ kind: 'rock', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
+          effects.push({ kind: 'oblast', x: tx, y: ty, r: (d.blast ? d.blast.r : 1) * 0.8, t: -d.delay, dur: 0.7 }); // Optik 20 % kleiner als der Schadensradius
+        }
+        else if (d.splash) {
+          if (d.fire) {
+            effects.push({ kind: 'fball', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
+            effects.push({ kind: 'fblast', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.55 });
+          } else {
+            effects.push({ kind: 'orb', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: 0.5 });
+            effects.push({ kind: 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: 0.45 });
+          }
+        } else if (d.ram) {
+          if (d.atk > 0) effects.push({ kind: 'slam', x: tx, y: ty, t: 0, dur: 0.4 }); // Rammbock: Einschlag mit Staub und Splittern
+        } else {
+          effects.push({
+            kind: u.type === 'javelin' ? 'javelin' : u.type === 'crossbow' ? 'cbolt' : (u.type === 'archer' || u.type === 'baliste') ? 'arrow' : 'stab', heavy: d.atk >= 2,
+            x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay ? d.delay : (u.type === 'archer' ? 0.5 : 0.16)
+          });
+        }
+      }
+    }
+
+    // Geschosse im Flug: landen nach ihrer Flugzeit
+    var restShots = [];
+    for (var si = 0; si < shots.length; si++) {
+      shots[si].t -= dt;
+      if (shots[si].t <= 0) landShot(shots[si]); else restShots.push(shots[si]);
+    }
+    shots = restShots;
+
+    // Einheiten voneinander trennen
+    var k = Math.min(1, dt * 12);
+    for (i = 0; i < units.length; i++) {
+      var a = units[i];
+      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || CONFIG.units[a.type].passive || CONFIG.units[a.type].worker) continue;
+      for (j = i + 1; j < units.length; j++) {
+        var b = units[j];
+        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || CONFIG.units[b.type].passive || CONFIG.units[b.type].worker) continue;
+        var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
+        if (dist < sep) {
+          if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
+          var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
+          var ma = a.dock || a.atSpot || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var nx = dx / dist, ny = dy / dist;
+          a.x -= nx * pa; a.y -= ny * pa;
+          b.x += nx * pb; b.y += ny * pb;
+        }
+      }
+    }
+
+    // Einheiten hinter der gegnerischen Mauer ignorieren die Mauer, kommen aber nicht durch sie hindurch nach draussen
+    for (i = 0; i < units.length; i++) {
+      var cu = units[i];
+      if (!cu.inFoe || cu.hp <= 0 || cu.climb || cu.dig || cu.tower || cu.inCastle) continue;
+      var cw = walls[1 - cu.team];
+      if (!cw || !cw.built) continue;
+      var cb = bases[cw.team], cpx = clamp(cu.x, cb.x1, cb.x2), cpy = clamp(cu.y, cb.y1, cb.y2), cdd = hyp(cu.x - cpx, cu.y - cpy), clim = WALL.dist - WALL_TH / 2 - CONFIG.units[cu.type].r * 0.8;
+      if (cdd > clim && cdd > 1e-6) { cu.x = cpx + (cu.x - cpx) / cdd * clim; cu.y = cpy + (cu.y - cpy) / cdd * clim; }
+    }
+
+    // König gefallen? (nur möglich, wenn die Burg zerstört ist; ein heimkehrender König, der oben ankommt, zählt nicht)
+    var kdead = [false, false];
+    for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
+
+    // Gefallene entfernen
+    var alive = [];
+    for (i = 0; i < units.length; i++) {
+      var q = units[i];
+      if (q.hp <= 0) {
+        if (!q.gone) effects.push({ kind: 'puff', x: q.x, y: q.y, team: q.team, t: 0, dur: 0.5 });
+        var qbf = CONFIG.units[q.type].belfry;
+        if (qbf && !q.bfOut) { // Belagerungsturm zerstört: die Bogenschützen oben sterben mit, es steigen keine weiteren Schwertkämpfer mehr aus
+          q.bfOut = true;
+          for (var qa = 0; qa < units.length; qa++) if (units[qa].bf === q && units[qa].hp > 0) units[qa].hp = 0;
+        }
+      } else {
+        var cw = walls[1 - q.team];
+        if (q.o && cw && cw.built && !q.dig && !q.climb) { // (der Leiterträger auf der Leiter darf hinüber)
+          // durch eine fertige gegnerische Mauer kommt keiner
+          var lim = WALL.dist + WALL_TH / 2 + CONFIG.units[q.type].r * 0.8;
+          if (wallD(cw.team, q.x, q.y) < lim) {
+            var cb = bases[cw.team], cdy = Math.max(0, cb.y1 - q.y, q.y - cb.y2);
+            if (cdy < lim) {
+              var need = Math.sqrt(lim * lim - cdy * cdy);
+              if (cw.team === 0) q.x = Math.max(q.x, cb.x2 + need); else q.x = Math.min(q.x, cb.x1 - need);
+            }
+          }
+        }
+        q.x = clamp(q.x, 0.25, W - 0.25);
+        q.y = clamp(q.y, 0.3, H - 0.3);
+        alive.push(q);
+      }
+    }
+    units = alive;
+
+    for (i = 0; i < 2; i++) {
+      var hw = walls[i];
+      if (!hw) continue;
+      hw.hit = Math.max(0, hw.hit - dt);
+      // Heilung: erst ab der ersten Optik, nur bis zum Höchstwert der erreichten Optik (40, 80, 120, 160, 200)
+      var hs = 0, hk;
+      for (hk = 0; hk < WALL.stages.length; hk++) if (hw.hp >= WALL.stages[hk]) hs++;
+      hw.stage = Math.max(hw.stage || 0, hs);
+      if (hw.stage >= WALL.tower.from) {
+        var tlv = WALL.tower.levels[hw.stage];
+        if (hw.tlv !== tlv) { // neue Optik: die Türme werden umgebaut, die Besatzung sucht sich neue Plätze
+          var olds = [], okey;
+          if (hw.sl) for (okey in hw.sl) if (hw.sl[okey] && hw.sl[okey].hp > 0) olds.push(hw.sl[okey]);
+          hw.sl = {}; hw.tlv = tlv;
+          for (var oi = 0; oi < olds.length; oi++) { olds[oi].gar = null; olds[oi].tower = false; olds[oi].seat = false; seekSlot(olds[oi]); }
+        }
+      }
+      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1]) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + WALL.heal * dt) * 1e6) / 1e6;
+    }
+    bases[0].flash = Math.max(0, bases[0].flash - dt);
+    bases[1].flash = Math.max(0, bases[1].flash - dt);
+    // Burgen: zerstört (0 Leben) -> der König kommt herab; ab 1 Leben gilt sie als errichtet (er kehrt zurück); sonst heilt sie wie die Mauer
+    for (i = 0; i < 2; i++) {
+      var cs = bases[i];
+      if (!cs.down && cs.hp <= 0) {
+        cs.hp = 0; cs.down = true; cs.downAt = clock;
+        for (j = 0; j < units.length; j++) if (units[j].type === 'king' && units[j].team === i) units[j].inCastle = false; // der König steigt herab
+        effects.push({ kind: 'blast', x: (cs.x1 + cs.x2) / 2, y: (cs.y1 + cs.y2) / 2, r: 1.6, t: 0, dur: 0.6 });
+      } else if (cs.down && cs.hp >= 1) cs.down = false;
+      if (!cs.down) {
+        if (cs.hp < CONFIG.BASE_HP) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + WALL.heal * dt) * 1e6) / 1e6;
+      }
+    }
+    if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));
+  }
+
+  function updateEffects(dt) {
+    var keep = [];
+    for (var i = 0; i < effects.length; i++) {
+      var e = effects[i];
+      e.t += dt;
+      if (!e.snd && e.t >= 0) { e.snd = 1; sfx(e); }
+      if (e.t < e.dur) keep.push(e);
+    }
+    effects = keep;
+    if (state === 'over') {
+      bases[0].flash = Math.max(0, bases[0].flash - dt);
+      bases[1].flash = Math.max(0, bases[1].flash - dt);
+    }
+  }
+
