@@ -11,7 +11,11 @@ const schreib = (p, s) => { fs.mkdirSync(path.dirname(path.join(root, p)), { rec
 
 // Skriptteile in fester Reihenfolge (die Reihenfolge ist wichtig: so laufen sie auch ab)
 const teile = lies('werkzeuge/reihenfolge.txt').split('\n').map((s) => s.trim()).filter(Boolean);
-const skript = teile.map(lies).join('');
+let skript = teile.map(lies).join('');
+// Versionskennung: Prüfsumme des Spielcodes. Der Server kennt die Version seiner index.html; alte offene Seiten laden sich dann neu.
+const version = require('crypto').createHash('sha1').update(skript).digest('hex').slice(0, 10);
+if (skript.indexOf("var VERSION = 'dev';") < 0) throw new Error('VERSION-Platzhalter fehlt');
+skript = skript.replace("var VERSION = 'dev';", "var VERSION = '" + version + "';");
 const vorlage = lies('spiel/index.html');
 const ersetze = (s, marke, inhalt) => { const i = s.indexOf(marke); if (i < 0) throw new Error('Marke fehlt: ' + marke); return s.slice(0, i) + inhalt + s.slice(i + marke.length); };
 

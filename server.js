@@ -8,6 +8,9 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 3000;
 const ROOT_INDEX = path.join(__dirname, 'index.html'); // index.html liegt entweder direkt neben server.js oder im Ordner public
 const INDEX = process.env.INDEX_FILE || (fs.existsSync(ROOT_INDEX) ? ROOT_INDEX : path.join(__dirname, 'public', 'index.html'));
+// Version des ausgelieferten Spiels (steht in index.html): Spieler mit älterem Stand werden nicht gepaart, ihre Seite lädt neu
+let SPIEL_V = '';
+try { const mv = /var VERSION = '([a-z0-9]+)'/.exec(fs.readFileSync(INDEX, 'utf8')); SPIEL_V = mv ? mv[1] : ''; } catch (e) { /* egal */ }
 const TEST_DELAY = Number(process.env.RELAY_DELAY_MS || 0); // nur für Tests: künstliche Verzögerung
 const MAX_MSG = 512 * 1024; // grösste erlaubte Nachricht
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
@@ -182,6 +185,7 @@ class Client {
     let m;
     try { m = JSON.parse(text); } catch (e) { return; }
     if (!m || typeof m.k !== 'string') return;
+    if (m.k === 'queue' && SPIEL_V && m.v !== SPIEL_V) { this.send({ k: 'alt', v: SPIEL_V }); return; } // veraltete Seite: nicht paaren (würde auseinanderlaufen)
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
       if (typeof m.token === 'string' && m.token.length < 4096) {
         kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id).catch(() => []) : []; })
@@ -236,7 +240,7 @@ function tryMatch() {
   }
 }
 function broadcastInfo() {
-  const info = { k: 'info', online: clients.size, queued: queue.length };
+  const info = { k: 'info', online: clients.size, queued: queue.length, v: SPIEL_V };
   for (const c of clients) if (c.queued || !c.peer) c.send(info);
 }
 

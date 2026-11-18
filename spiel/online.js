@@ -32,8 +32,19 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend(konto.token ? { k: 'queue', token: konto.token } : { k: 'queue' }); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  // Der Server hat eine neuere Spielversion: Seite neu laden (nicht mitten in einer Partie; höchstens einmal pro Version)
+  var neueVersion = '';
+  function veraltet(v) {
+    neueVersion = v;
+    var schon = ''; try { schon = sessionStorage.getItem('stronghold-neu') || ''; } catch (e) {}
+    if (schon === v) return; // schon einmal neu geladen: nicht endlos wiederholen
+    if (pvp.on || state === 'playing' || state === 'paused') return; // nach der Partie
+    try { sessionStorage.setItem('stronghold-neu', v); } catch (e) {}
+    location.reload();
+  }
   function pvpSearch() {
+    if (neueVersion && neueVersion !== VERSION) { veraltet(neueVersion); }
     if (!ONLINE || pvp.on || pvp.searching) return;
     pvp.searching = true; pvp.ended = false; pvp.tries = 0;
     showOverlay('Suche Gegner …', 'Verbinde mit dem Server …', 'Abbrechen', false);
@@ -55,11 +66,13 @@
   }
   function pvpMsg(m) {
     if (!m) return;
+    if ((m.k === 'info' || m.k === 'alt') && m.v && m.v !== VERSION) veraltet(m.v);
+    if (m.k === 'alt') return;
     if (m.k === 'info') {
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.acc = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
   }
@@ -116,8 +129,8 @@
   function pvpErlaubt(team, type) {
     var d = CONFIG.units[type];
     if (!d || !KONTO.url) return true;
-    if (d.account && !(pvp.acc && pvp.acc[team])) return false;
-    if (d.invite && !(pvp.acc && pvp.acc[team] && pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0)) return false;
+    if (d.account && !(pvp.konten && pvp.konten[team])) return false;
+    if (d.invite && !(pvp.konten && pvp.konten[team] && pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0)) return false;
     return true;
   }
   function pvpApply(team, cmds) {
