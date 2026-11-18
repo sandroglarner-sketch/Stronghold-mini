@@ -89,7 +89,7 @@ const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
   if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch')) {
-    (url === '/api/konto' ? apiKonto : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler' }); });
+    (url === '/api/konto' ? apiKonto : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
     return;
   }
   if (url === '/' || url === '/index.html') {

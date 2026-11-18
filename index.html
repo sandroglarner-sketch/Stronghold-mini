@@ -3665,11 +3665,13 @@
   }
   var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
   // Eigene Einladungsdaten vom Render-Server holen (nur online, nur angemeldet)
-  var kontoServerLaeuft = false;
+  var kontoServerLaeuft = false, kontoServerFehler = ''; // letzte Fehlermeldung des Servers (zur Fehlersuche angezeigt)
   function kontoServer() {
     if (!ONLINE || !konto.token || kontoServerLaeuft) return Promise.resolve(false);
     kontoServerLaeuft = true;
-    return fetch('/api/konto', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token } }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    return fetch('/api/konto', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token } }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { kontoServerFehler = r.ok ? '' : 'Code ' + r.status + (j && j.fehler ? ': ' + j.fehler : ''); return r.ok ? j : null; });
+    }).then(function (j) {
       kontoServerLaeuft = false;
       if (!j || !j.code) return false;
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
@@ -3677,7 +3679,7 @@
       kontoSave(); kontoChanged();
       if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Dein Freund ist dabei! Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
       return true;
-    }).catch(function () { kontoServerLaeuft = false; return false; });
+    }).catch(function (e) { kontoServerLaeuft = false; kontoServerFehler = 'keine Verbindung zum Server'; return false; });
   }
   function einladeLink() { return location.origin + location.pathname + '?von=' + konto.code; }
   function kontoView() {
@@ -3758,7 +3760,7 @@
   function teilen() {
     var weiter = konto.code ? Promise.resolve(true) : kontoServer();
     weiter.then(function () {
-      if (!konto.code) { kontoOpen(true); kontoMsg('Einladen geht gerade nicht. Bitte später nochmals versuchen.'); return; }
+      if (!konto.code) { kontoOpen(true); kontoMsg('Einladen geht gerade nicht' + (kontoServerFehler ? ' (' + kontoServerFehler + ')' : '') + '. Bitte später nochmals versuchen.'); return; }
       var url = einladeLink(), text = 'Spiel mit mir Stronghold Mini – ein kleines Burgen-Strategiespiel im Browser!';
       if (navigator.share) navigator.share({ title: 'Stronghold Mini', text: text, url: url }).catch(function () {});
       else kopieren(url).then(function (ok) { kontoOpen(true); kontoMsg(ok ? 'Link kopiert – schick ihn deinem Freund.' : 'Kopiere den Link oben und schick ihn deinem Freund.', true); });
