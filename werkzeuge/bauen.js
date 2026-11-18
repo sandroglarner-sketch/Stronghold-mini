@@ -44,6 +44,6 @@ const kopf = `<!DOCTYPE html>
 </head>
 <body>
 `;
-const schwanz = '\n<p class="privacy">Anonyme Besucherstatistik ohne Cookies (GoatCounter).</p>\n</body>\n</html>\n';
+const schwanz = '\n<p class="privacy">Anonyme Besucherstatistik ohne Cookies (GoatCounter). Gratis-Konten: E-Mail und Passwort werden verschlüsselt bei Supabase (EU, Frankfurt) gespeichert.</p>\n</body>\n</html>\n';
 schreib('index.html', kopf + body + schwanz);
 console.log('gebaut: build/artifact.html (' + artifact.length + ' Zeichen), index.html');

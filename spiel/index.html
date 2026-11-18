@@ -41,6 +41,7 @@
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
       <div class="ovrow">
         <button class="ghost bookbtn" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck" aria-label="Einheitenbuch">📖</button>
+        <button class="ghost" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
         <span class="choice" id="ovChoice">
           <select id="botType" aria-label="Gegner">
             <option value="bauern" selected>Gegner: Bandit</option>
@@ -64,6 +65,18 @@
         <div class="bookdetail" id="bookDetail"></div>
       </div>
       <div class="bookfoot"><span class="bookmsg" id="bookMsg"></span><span id="bookPg"></span></div>
+    </div>
+    <div class="konto" id="konto" hidden role="dialog" aria-label="Konto">
+      <h3 id="kontoTitel">Konto</h3>
+      <p id="kontoText"></p>
+      <form id="kontoForm" novalidate>
+        <input type="email" id="kontoMail" placeholder="E-Mail" autocomplete="email" required>
+        <input type="password" id="kontoPw" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" minlength="6" required>
+        <div class="kontorow"><button class="primary" type="submit" id="kontoLogin">Anmelden</button><button class="ghost" type="button" id="kontoReg">Registrieren</button></div>
+      </form>
+      <button class="ghost" id="kontoOut" type="button" hidden>Abmelden</button>
+      <p class="kontomsg" id="kontoMsg"></p>
+      <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
     </div>
     <div class="tut" id="tutPanel" hidden><button class="ghost" id="tutEnd" type="button">Tutorial beenden</button></div>
     <div class="tutbox" id="tutBox" hidden><p id="tutBoxText"></p><button class="primary" id="tutOk" type="button">Verstanden</button></div>

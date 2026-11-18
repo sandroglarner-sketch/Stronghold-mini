@@ -11,6 +11,18 @@ const INDEX = process.env.INDEX_FILE || (fs.existsSync(ROOT_INDEX) ? ROOT_INDEX 
 const TEST_DELAY = Number(process.env.RELAY_DELAY_MS || 0); // nur für Tests: künstliche Verzögerung
 const MAX_MSG = 512 * 1024; // grösste erlaubte Nachricht
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+// Konto (Supabase): dieselben öffentlichen Werte wie im Spiel (daten/konto.js). Über Umgebungsvariablen änderbar.
+const KONTO_URL = process.env.SUPABASE_URL || 'https://odxpdyrwtvgicntbjlrh.supabase.co';
+const KONTO_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn';
+// Prüft ein Zugangs-Token bei Supabase: true = gültiges Konto
+function kontoPruefen(token) {
+  if (!token || !KONTO_URL || typeof fetch !== 'function') return Promise.resolve(false);
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 5000);
+  return fetch(KONTO_URL + '/auth/v1/user', { headers: { apikey: KONTO_KEY, Authorization: 'Bearer ' + token }, signal: ctrl.signal })
+    .then((r) => r.ok ? r.json().then((u) => !!(u && u.id)) : false)
+    .catch(() => false)
+    .finally(() => clearTimeout(t));
+}
 
 // ---------- Webseite ----------
 const server = http.createServer((req, res) => {
@@ -49,6 +61,7 @@ class Client {
     this.peer = null;   // Gegner in einer laufenden Partie
     this.queued = false;
     this.msgs = 0;      // einfache Begrenzung
+    this.acc = false;   // hat ein (von Supabase bestätigtes) Konto
     socket.on('data', (d) => this.onData(d));
     socket.on('close', () => this.onClose());
     socket.on('error', () => this.onClose());
@@ -96,7 +109,11 @@ class Client {
     let m;
     try { m = JSON.parse(text); } catch (e) { return; }
     if (!m || typeof m.k !== 'string') return;
-    if (m.k === 'queue') { enqueue(this); return; }
+    if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
+      if (typeof m.token === 'string' && m.token.length < 4096) kontoPruefen(m.token).then((ok) => { this.acc = ok; if (this.alive) enqueue(this); });
+      else { this.acc = false; enqueue(this); }
+      return;
+    }
     if (m.k === 'cancel') { dequeue(this); return; }
     if (this.peer && m.k === 't') { // Spielschritt-Nachrichten 1:1 weitergeben
       const peer = this.peer;
@@ -137,8 +154,9 @@ function tryMatch() {
     if (!a.alive || !b.alive) { if (a.alive) { a.queued = true; queue.unshift(a); } if (b.alive) { b.queued = true; queue.unshift(b); } continue; }
     a.peer = b; b.peer = a;
     const seed = crypto.randomInt(1, 2147483647); // gemeinsamer Zufalls-Startwert: beide Browser rechnen dieselbe Partie
-    a.send({ k: 'match', me: 0, seed });
-    b.send({ k: 'match', me: 1, seed });
+    const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
+    a.send({ k: 'match', me: 0, seed, acc });
+    b.send({ k: 'match', me: 1, seed, acc });
   }
 }
 function broadcastInfo() {

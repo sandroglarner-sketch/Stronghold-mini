@@ -213,6 +213,25 @@
     font-size: 0.85rem;
   }
 
+  .konto {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
+    display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .konto[hidden] { display: none; }
+  .konto h3 { margin: 0; font-family: var(--display); font-size: 1.2rem; }
+  .konto p { margin: 0; color: var(--muted); font-size: 0.88rem; text-wrap: balance; }
+  .konto form { display: grid; gap: 8px; }
+  .konto input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  .kontorow { display: flex; gap: 8px; justify-content: center; }
+  .kontorow .primary { margin-top: 0; }
+  .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
+  .konto .kontomsg.ok { color: #2f8a3e; }
+  .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
+  .mcard.lockd canvas, .ucard.lockd canvas, .mcard.lockd .mc { filter: grayscale(1); opacity: 0.45; }
+  .mcard.lockd .pick, .ucard.lockd .pick { background: var(--line); border-color: var(--line); }
+  .mcard.lockd::after { content: '🔒'; position: absolute; left: 4px; top: 3px; font-size: 12px; }
+  .ucard .lockinfo { margin: 4px 0 0; font-size: 0.8rem; color: var(--muted); }
   .tut { position: absolute; right: 8px; top: 8px; z-index: 3; }
   .tut[hidden] { display: none; }
   .tutbox {
@@ -540,6 +559,7 @@
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
       <div class="ovrow">
         <button class="ghost bookbtn" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck" aria-label="Einheitenbuch">📖</button>
+        <button class="ghost" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
         <span class="choice" id="ovChoice">
           <select id="botType" aria-label="Gegner">
             <option value="bauern" selected>Gegner: Bandit</option>
@@ -563,6 +583,18 @@
         <div class="bookdetail" id="bookDetail"></div>
       </div>
       <div class="bookfoot"><span class="bookmsg" id="bookMsg"></span><span id="bookPg"></span></div>
+    </div>
+    <div class="konto" id="konto" hidden role="dialog" aria-label="Konto">
+      <h3 id="kontoTitel">Konto</h3>
+      <p id="kontoText"></p>
+      <form id="kontoForm" novalidate>
+        <input type="email" id="kontoMail" placeholder="E-Mail" autocomplete="email" required>
+        <input type="password" id="kontoPw" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" minlength="6" required>
+        <div class="kontorow"><button class="primary" type="submit" id="kontoLogin">Anmelden</button><button class="ghost" type="button" id="kontoReg">Registrieren</button></div>
+      </form>
+      <button class="ghost" id="kontoOut" type="button" hidden>Abmelden</button>
+      <p class="kontomsg" id="kontoMsg"></p>
+      <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
     </div>
     <div class="tut" id="tutPanel" hidden><button class="ghost" id="tutEnd" type="button">Tutorial beenden</button></div>
     <div class="tutbox" id="tutBox" hidden><p id="tutBoxText"></p><button class="primary" id="tutOk" type="button">Verstanden</button></div>
@@ -644,6 +676,7 @@
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
     // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
+  // account: true = nur mit (gratis) Konto spielbar; ohne Konto im Buch ausgegraut, nicht ins Deck wählbar
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
@@ -697,12 +730,12 @@
       // troops × every Sekunden klettern troops Schwertkämpfer über die Mauer. Oben archers Bogenschützen (25 % Fernkampfschaden,
       // nur von Fernkämpfern angreifbar, werden von gegnerischen Fernkämpfern vor dem Turm anvisiert). mass wie der Rammbock; push = Druckradius im Gedränge
       // (Standard 0,275 je Einheit): drückt Einheiten aus seiner Fläche, Türme überlappen sich nie; angedockt bewegt er sich nicht mehr
-      belfry: { cat: 'siege', name: 'Belagerungsturm', cost: 80, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
+      belfry: { cat: 'siege', name: 'Belagerungsturm', account: true, cost: 80, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
       // Trebuchet: muss setup Sekunden stillstehen (aufbauen), bevor es schiesst; ein Schuss = multi.n Steine, die sich zufällig im Umkreis
       // multi.spread um das Ziel verteilen (je Flächenschaden splash), fliegen über Mauern (fire). Zwei Arten: bekommt es beim Kauf einen Platz auf dem grossen Turm (Mauer 5),
       // baut es sich dort auf und schiesst auf Gegner in Reichweite. Sonst (spot): fährt es zu einem zufälligen Punkt spot.dist vom Zielpunkt entfernt (Richtung eigene Seite,
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
-      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
+      trebuchet: { cat: 'siege', name: 'Trebuchet', account: true, cost: 70, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 18, hp: 2, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3 },
@@ -710,6 +743,9 @@
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
   };
+  // Konto (Supabase): öffentliche Projekt-Adresse und öffentlicher Schlüssel («anon/publishable», darf im Spiel stehen).
+  // Leer = Kontofunktion aus (dann ist auch nichts gesperrt).
+  var KONTO = { url: 'https://odxpdyrwtvgicntbjlrh.supabase.co', key: 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn' };
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
@@ -3214,7 +3250,7 @@
   function applyDeck() {
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e'], n = 0;
     BUY_TYPES.forEach(function (t) {
-      var vis = t === 'wall' || (tut.on ? TUT_TYPES.indexOf(t) >= 0 : DECK.indexOf(t) >= 0);
+      var vis = t === 'wall' || (tut.on ? TUT_TYPES.indexOf(t) >= 0 : DECK.indexOf(t) >= 0 && !unitLocked(t));
       if (btns[t].hidden === vis) btns[t].hidden = !vis;
       CONFIG.units[t].key = vis ? (keys[n++] || '') : '';
       var info = unitInfo(t);
@@ -3255,16 +3291,17 @@
   // Goldmünze: ein Symbol für Burg-Anzeige, Deck-Knöpfe, Buch (Mini- und Grosskarte) und die aufpoppenden +Gold-Zahlen
   function cardHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0, c = cardCat(d), ab = abilityText(d);
-    return '<div class="ucard' + (on ? ' on' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    var lk = unitLocked(t);
+    return '<div class="ucard' + (on ? ' on' : '') + (lk ? ' lockd' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><div class="nm">' + d.name + '</div>' +
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
       '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
       '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
-      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div></div>';
+      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 Nicht freigeschaltet – benötigt Account</p>' : '') + '</div>';
   }
   function miniHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0;
-    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + '" data-show="' + t + '" title="' + d.name + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (benötigt Account)' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span></div>';
   }
   function drawCardIcons(el) {
@@ -3359,6 +3396,7 @@
       return;
     }
     var t = b.getAttribute('data-pick'), i = DECK.indexOf(t), msg = '';
+    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = 'Nicht freigeschaltet – benötigt Account'; return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
     else DECK.push(t);
@@ -3538,6 +3576,112 @@
     ui.gm = ui.gf = ui.sec = ui.inc = -1;
   }
 
+  // ---------- Konto (Supabase) ----------
+  // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Belagerungsturm, Trebuchet).
+  // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
+  // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
+  var konto = { user: null, token: null, refresh: null, exp: 0 };
+  function kontoAn() { return !!KONTO.url; }
+  function unitLocked(t) { var d = CONFIG.units[t]; return !!(d && d.account && kontoAn() && !(konto && konto.user)); }
+  function kontoSave() {
+    try { if (konto.user) localStorage.setItem('stronghold-konto', JSON.stringify(konto)); else localStorage.removeItem('stronghold-konto'); } catch (err) {}
+  }
+  function kontoSet(r) { // Antwort von Supabase mit access_token übernehmen
+    konto.user = (r.user && r.user.email) || konto.user;
+    konto.token = r.access_token; konto.refresh = r.refresh_token;
+    konto.exp = Date.now() + (r.expires_in || 3600) * 1000;
+    kontoSave(); kontoChanged();
+  }
+  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0 }; kontoSave(); kontoChanged(); }
+  function kontoApi(pfad, body, token) {
+    return fetch(KONTO.url + pfad, {
+      method: 'POST',
+      headers: token ? { 'apikey': KONTO.key, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'apikey': KONTO.key, 'Content-Type': 'application/json' }, // neue «publishable» Keys gehören nur in apikey, nie als Bearer
+      body: JSON.stringify(body || {})
+    }).then(function (res) {
+      return res.text().then(function (t) { var j = {}; try { j = t ? JSON.parse(t) : {}; } catch (e) {} if (!res.ok) { var er = new Error(j.msg || j.error_description || j.message || j.error || ('Fehler ' + res.status)); er.status = res.status; er.code = j.error_code || j.code; throw er; } return j; });
+    });
+  }
+  function kontoFehler(e) {
+    var m = String((e && e.message) || ''), c = String((e && e.code) || '');
+    if (/invalid login credentials|invalid_credentials/i.test(m + c)) return 'E-Mail oder Passwort ist falsch.';
+    if (/already registered|already been registered|user_already_exists/i.test(m + c)) return 'Für diese E-Mail gibt es schon ein Konto. Bitte anmelden.';
+    if (/password/i.test(m) && /6|short|weak/i.test(m + c)) return 'Das Passwort braucht mindestens 6 Zeichen.';
+    if (/email/i.test(m) && /invalid|valid/i.test(m)) return 'Bitte eine gültige E-Mail eingeben.';
+    if (/not confirmed|email_not_confirmed/i.test(m + c)) return 'Bitte zuerst die E-Mail bestätigen (Link im Postfach).';
+    if (/rate|too many/i.test(m + c)) return 'Zu viele Versuche. Bitte kurz warten.';
+    if (/failed to fetch|network/i.test(m)) return 'Keine Verbindung. Bitte später nochmals versuchen.';
+    return 'Das hat nicht geklappt (' + m + ').';
+  }
+  // Token rechtzeitig erneuern (Supabase-Token gelten 1 Stunde)
+  function kontoRefresh() {
+    if (!konto.refresh) return Promise.resolve(false);
+    return kontoApi('/auth/v1/token?grant_type=refresh_token', { refresh_token: konto.refresh }).then(function (r) { kontoSet(r); return true; })
+      .catch(function (e) { if (e.status === 400 || e.status === 401 || e.status === 403) kontoClear(); return false; }); // ungültig: abmelden; ohne Netz: Konto behalten
+  }
+  // Nach jeder Änderung: gesperrte Einheiten aus dem Deck, Knöpfe, Buch und Kontofenster aktualisieren
+  function kontoChanged() {
+    var kb = $('kontoBtn');
+    kb.hidden = !kontoAn();
+    kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
+    if (kontoAn() && !konto.user) {
+      var rest = DECK.filter(function (t) { return !unitLocked(t); });
+      if (rest.length !== DECK.length) { DECK = rest.length ? rest : DECK_START.slice(); saveDeck(); }
+    }
+    applyDeck();
+    if (!$('book').hidden) renderBook();
+    kontoView();
+  }
+  function kontoView() {
+    var on = !!konto.user;
+    $('kontoTitel').textContent = on ? 'Dein Konto' : 'Gratis-Konto';
+    $('kontoText').textContent = on ? 'Angemeldet als ' + konto.user + '. Belagerungsturm und Trebuchet sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du Belagerungsturm und Trebuchet frei.';
+    $('kontoForm').hidden = on;
+    $('kontoOut').hidden = !on;
+  }
+  function kontoMsg(t, ok) { var m = $('kontoMsg'); m.textContent = t || ''; m.classList.toggle('ok', !!ok); }
+  function kontoOpen(on) {
+    $('konto').hidden = !on;
+    if (on) { kontoMsg(''); kontoView(); if (!konto.user) $('kontoMail').focus(); }
+  }
+  function kontoBusy(b) { ['kontoLogin', 'kontoReg', 'kontoOut'].forEach(function (id) { $(id).disabled = b; }); }
+  function kontoEingabe() {
+    var mail = $('kontoMail').value.trim(), pw = $('kontoPw').value;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { kontoMsg('Bitte eine gültige E-Mail eingeben.'); return null; }
+    if (pw.length < 6) { kontoMsg('Das Passwort braucht mindestens 6 Zeichen.'); return null; }
+    return { email: mail, password: pw };
+  }
+  function kontoLogin(e) {
+    if (e) e.preventDefault();
+    var d = kontoEingabe(); if (!d) return;
+    kontoBusy(true); kontoMsg('Anmelden …', true);
+    kontoApi('/auth/v1/token?grant_type=password', d).then(function (r) { kontoSet(r); $('kontoPw').value = ''; kontoMsg('Willkommen! Du bist angemeldet.', true); })
+      .catch(function (er) { kontoMsg(kontoFehler(er)); }).then(function () { kontoBusy(false); });
+  }
+  function kontoRegister() {
+    var d = kontoEingabe(); if (!d) return;
+    kontoBusy(true); kontoMsg('Konto wird erstellt …', true);
+    kontoApi('/auth/v1/signup', d).then(function (r) {
+      if (r.access_token) { kontoSet(r); $('kontoPw').value = ''; kontoMsg('Konto erstellt. Viel Spass!', true); }
+      else kontoMsg('Fast geschafft: Bitte bestätige deine E-Mail (Link im Postfach) und melde dich dann an.', true);
+    }).catch(function (er) { kontoMsg(kontoFehler(er)); }).then(function () { kontoBusy(false); });
+  }
+  function kontoLogout() {
+    var tk = konto.token;
+    kontoClear(); kontoMsg('Du bist abgemeldet.', true);
+    if (tk) kontoApi('/auth/v1/logout', {}, tk).catch(function () {});
+  }
+  $('kontoBtn').addEventListener('click', function () { kontoOpen(true); });
+  $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
+  $('kontoForm').addEventListener('submit', kontoLogin);
+  $('kontoReg').addEventListener('click', kontoRegister);
+  $('kontoOut').addEventListener('click', kontoLogout);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('konto').hidden) kontoOpen(false); });
+  // Start: gespeicherte Sitzung übernehmen und im Hintergrund erneuern
+  try { var ks = JSON.parse(localStorage.getItem('stronghold-konto') || 'null'); if (ks && ks.user && ks.refresh) konto = ks; } catch (err) {}
+  kontoChanged();
+  if (kontoAn() && konto.refresh) kontoRefresh();
+  setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);
   // ---------- Tutorial ----------
   // Geführte Partie gegen einen Trainingsgegner mit König und Burg. Er tut nur das, was das Tutorial verlangt.
   // Grüne Pfeile zeigen, welchen Knopf man drücken soll. Das Gold läuft ganz normal (es gibt nie extra Gold).
@@ -3684,7 +3828,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); }
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend(konto.token ? { k: 'queue', token: konto.token } : { k: 'queue' }); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   function pvpSearch() {
     if (!ONLINE || pvp.on || pvp.searching) return;
     pvp.searching = true; pvp.ended = false; pvp.tries = 0;
@@ -3711,7 +3855,7 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
     }
-    else if (m.k === 'match') startPvp(m.me === 1 ? 1 : 0, m.seed | 0);
+    else if (m.k === 'match') { pvp.acc = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
   }
@@ -3769,6 +3913,7 @@
       if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
       else {
         if (team === pvp.me) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
+        if (CONFIG.units[cmds[i]].account && KONTO.url && !(pvp.acc && pvp.acc[team])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
         buy(team, cmds[i]);
       }
     }
@@ -3823,6 +3968,8 @@
   function tryBuy(type, el) {
     if (state !== 'playing') return;
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
+    if (unitLocked(type)) return; // braucht ein Konto
+    if (pvp.on && CONFIG.units[type] && CONFIG.units[type].account && KONTO.url && !(pvp.acc && pvp.acc[ME])) return; // online zählt das vom Server bestätigte Konto
     var ok, pd = CONFIG.units[type];
     ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= pd.cost && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet
@@ -4042,6 +4189,6 @@
   requestAnimationFrame(frame);
 })();
 </script>
-<p class="privacy">Anonyme Besucherstatistik ohne Cookies (GoatCounter).</p>
+<p class="privacy">Anonyme Besucherstatistik ohne Cookies (GoatCounter). Gratis-Konten: E-Mail und Passwort werden verschlüsselt bei Supabase (EU, Frankfurt) gespeichert.</p>
 </body>
 </html>

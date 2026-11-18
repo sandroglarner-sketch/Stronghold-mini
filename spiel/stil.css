@@ -196,6 +196,25 @@
     font-size: 0.85rem;
   }
 
+  .konto {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
+    display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .konto[hidden] { display: none; }
+  .konto h3 { margin: 0; font-family: var(--display); font-size: 1.2rem; }
+  .konto p { margin: 0; color: var(--muted); font-size: 0.88rem; text-wrap: balance; }
+  .konto form { display: grid; gap: 8px; }
+  .konto input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  .kontorow { display: flex; gap: 8px; justify-content: center; }
+  .kontorow .primary { margin-top: 0; }
+  .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
+  .konto .kontomsg.ok { color: #2f8a3e; }
+  .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
+  .mcard.lockd canvas, .ucard.lockd canvas, .mcard.lockd .mc { filter: grayscale(1); opacity: 0.45; }
+  .mcard.lockd .pick, .ucard.lockd .pick { background: var(--line); border-color: var(--line); }
+  .mcard.lockd::after { content: '🔒'; position: absolute; left: 4px; top: 3px; font-size: 12px; }
+  .ucard .lockinfo { margin: 4px 0 0; font-size: 0.8rem; color: var(--muted); }
   .tut { position: absolute; right: 8px; top: 8px; z-index: 3; }
   .tut[hidden] { display: none; }
   .tutbox {

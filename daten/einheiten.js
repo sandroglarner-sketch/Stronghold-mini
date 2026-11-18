@@ -1,6 +1,7 @@
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
     // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
+  // account: true = nur mit (gratis) Konto spielbar; ohne Konto im Buch ausgegraut, nicht ins Deck wählbar
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
@@ -54,12 +55,12 @@
       // troops × every Sekunden klettern troops Schwertkämpfer über die Mauer. Oben archers Bogenschützen (25 % Fernkampfschaden,
       // nur von Fernkämpfern angreifbar, werden von gegnerischen Fernkämpfern vor dem Turm anvisiert). mass wie der Rammbock; push = Druckradius im Gedränge
       // (Standard 0,275 je Einheit): drückt Einheiten aus seiner Fläche, Türme überlappen sich nie; angedockt bewegt er sich nicht mehr
-      belfry: { cat: 'siege', name: 'Belagerungsturm', cost: 80, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
+      belfry: { cat: 'siege', name: 'Belagerungsturm', account: true, cost: 80, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
       // Trebuchet: muss setup Sekunden stillstehen (aufbauen), bevor es schiesst; ein Schuss = multi.n Steine, die sich zufällig im Umkreis
       // multi.spread um das Ziel verteilen (je Flächenschaden splash), fliegen über Mauern (fire). Zwei Arten: bekommt es beim Kauf einen Platz auf dem grossen Turm (Mauer 5),
       // baut es sich dort auf und schiesst auf Gegner in Reichweite. Sonst (spot): fährt es zu einem zufälligen Punkt spot.dist vom Zielpunkt entfernt (Richtung eigene Seite,
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
-      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
+      trebuchet: { cat: 'siege', name: 'Trebuchet', account: true, cost: 70, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 18, hp: 2, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3 },

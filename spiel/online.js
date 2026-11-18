@@ -32,7 +32,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend({ k: 'queue' }); }
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; pvpSend(konto.token ? { k: 'queue', token: konto.token } : { k: 'queue' }); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   function pvpSearch() {
     if (!ONLINE || pvp.on || pvp.searching) return;
     pvp.searching = true; pvp.ended = false; pvp.tries = 0;
@@ -59,7 +59,7 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
     }
-    else if (m.k === 'match') startPvp(m.me === 1 ? 1 : 0, m.seed | 0);
+    else if (m.k === 'match') { pvp.acc = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
   }
@@ -117,6 +117,7 @@
       if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
       else {
         if (team === pvp.me) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
+        if (CONFIG.units[cmds[i]].account && KONTO.url && !(pvp.acc && pvp.acc[team])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
         buy(team, cmds[i]);
       }
     }
@@ -171,6 +172,8 @@
   function tryBuy(type, el) {
     if (state !== 'playing') return;
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
+    if (unitLocked(type)) return; // braucht ein Konto
+    if (pvp.on && CONFIG.units[type] && CONFIG.units[type].account && KONTO.url && !(pvp.acc && pvp.acc[ME])) return; // online zählt das vom Server bestätigte Konto
     var ok, pd = CONFIG.units[type];
     ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= pd.cost && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet

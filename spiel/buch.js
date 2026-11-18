@@ -12,7 +12,7 @@
   function applyDeck() {
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e'], n = 0;
     BUY_TYPES.forEach(function (t) {
-      var vis = t === 'wall' || (tut.on ? TUT_TYPES.indexOf(t) >= 0 : DECK.indexOf(t) >= 0);
+      var vis = t === 'wall' || (tut.on ? TUT_TYPES.indexOf(t) >= 0 : DECK.indexOf(t) >= 0 && !unitLocked(t));
       if (btns[t].hidden === vis) btns[t].hidden = !vis;
       CONFIG.units[t].key = vis ? (keys[n++] || '') : '';
       var info = unitInfo(t);
@@ -53,16 +53,17 @@
   // Goldmünze: ein Symbol für Burg-Anzeige, Deck-Knöpfe, Buch (Mini- und Grosskarte) und die aufpoppenden +Gold-Zahlen
   function cardHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0, c = cardCat(d), ab = abilityText(d);
-    return '<div class="ucard' + (on ? ' on' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    var lk = unitLocked(t);
+    return '<div class="ucard' + (on ? ' on' : '') + (lk ? ' lockd' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><div class="nm">' + d.name + '</div>' +
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
       '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
       '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
-      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div></div>';
+      '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 Nicht freigeschaltet – benötigt Account</p>' : '') + '</div>';
   }
   function miniHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0;
-    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + '" data-show="' + t + '" title="' + d.name + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
+    return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (benötigt Account)' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span></div>';
   }
   function drawCardIcons(el) {
@@ -157,6 +158,7 @@
       return;
     }
     var t = b.getAttribute('data-pick'), i = DECK.indexOf(t), msg = '';
+    if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = 'Nicht freigeschaltet – benötigt Account'; return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
     else DECK.push(t);

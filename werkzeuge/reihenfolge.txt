@@ -1,6 +1,7 @@
 daten/regeln.js
 daten/bots.js
 daten/einheiten.js
+daten/konto.js
 spiel/grundlagen.js
 gemeinsam/mathe.js
 spiel/landschaft.js
@@ -12,6 +13,7 @@ spiel/einheiten-optik.js
 spiel/zeichnen.js
 spiel/oberflaeche.js
 spiel/buch.js
+spiel/konto.js
 spiel/tutorial.js
 spiel/online.js
 spiel/wertekarte.js
