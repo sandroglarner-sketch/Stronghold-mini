@@ -1,5 +1,5 @@
   // ---------- Konto (Supabase) ----------
-  // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Belagerungsturm, Trebuchet).
+  // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Liste: kontoKarten()).
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
   // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
   // Einladungen (nur auf der Online-Seite, der Render-Server führt Buch): konto.code = eigener Einladungscode, konto.freunde = Anzahl Freunde,
@@ -13,6 +13,7 @@
     if (d.invite && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // auch im Artifact gesperrt (wie online), frei nur im Tester-Modus
     return false;
   }
+  function kontoKarten() { var l = Object.keys(CONFIG.units).filter(function (t) { return CONFIG.units[t].account && !CONFIG.units[t].hidden; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die ein Konto freischaltet
   function lockText(t) {
     var d = CONFIG.units[t] || {};
     if (d.invite) return konto.user ? 'Nicht freigeschaltet – lade einen Freund ein (👥 Freund einladen)' : 'Nicht freigeschaltet – benötigt Account und einen eingeladenen Freund';
@@ -92,7 +93,7 @@
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
-      on ? 'Angemeldet als ' + konto.user + '. Belagerungsturm und Trebuchet sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du Belagerungsturm und Trebuchet frei.';
+      on ? 'Angemeldet als ' + konto.user + '. ' + kontoKarten() + ' sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.';
     $('kontoForm').hidden = on;
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;

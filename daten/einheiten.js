@@ -12,7 +12,7 @@
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
-      mage:   { cat: 'ranged', name: 'Magier',        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
+      mage:   { cat: 'ranged', name: 'Magier', account: true,        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
@@ -61,11 +61,11 @@
       adel: { cat: 'building', name: 'Adelshaus', cost: 100, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.2, h: 1.0, alle: 30, steigt: 10, stufen: [{ cost: 100, hp: 20, gold: 10 }] } }, // 1. Auszahlung 10 Gold, jede weitere 10 mehr
       // Bank (Typ Gebäude): 80 Gold, 20 Leben; alle 10 s +10 % deines Goldes (aufgerundet). Ein Geschäftsmann geht zum König (2 s), zurück, 1 s in der Bank.
-      bank: { cat: 'building', name: 'Bank', cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+      bank: { cat: 'building', name: 'Bank', account: true, cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
       // Diebeshaus (Typ Gebäude): 50 Gold, 10 Leben; alle 30 s klaut ein Dieb 30 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
       // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
-      dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+      dieb: { cat: 'building', name: 'Diebeshaus', account: true, cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
       // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 40 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
@@ -76,7 +76,7 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 120, staerke: 0, hp: 30, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 120, hp: 30, gold: 0 }] } },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', account: true, cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
       ladder: { cat: 'melee', name: 'Leiterträger', cost: 4, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.08, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,08 = sehr kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
