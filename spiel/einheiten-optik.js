@@ -580,7 +580,7 @@
           }
         }
       }
-    } else if (type === 'bank' || type === 'dieb') {
+    } else if (type === 'bank' || type === 'dieb' || type === 'brand') {
       // Bank: viereckiges Steingebäude mit flachem Dach (Brüstung, Platten), Geschäftsmann geht zum König: 0–1 drin, 1–4 hin, 4–6 in der Burg, 6–9 zurück, 9–10 drin, dann +10 %.
       // Diebeshaus: dunkle Bretterhütte mit Laterne; der Dieb (Kapuze, mit Beute ein Sack) läuft halb durchsichtig (Deckkraft schwankt 5–50 %) am Spielfeldrand in die gegnerische Burg und zurück.
       var BGd = CONFIG.units[type].gebaeude, bw2 = r * BGd.w / CONFIG.units[type].r, bh2 = r * BGd.h / CONFIG.units[type].r;
@@ -588,7 +588,7 @@
       c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -bw2 / 2 + 3, -bh2 / 2 + 4, bw2, bh2, 3); c.fill();
       if (BZ.neu && BZ.bau < 1) {
         c.fillStyle = '#a89c86'; rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.fill();
-        c.save(); c.beginPath(); c.rect(-bw2 / 2, -bh2 / 2, bw2 * BZ.bau, bh2); c.clip(); c.fillStyle = type === 'bank' ? '#b8b2a6' : '#4a3a2c'; rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.fill(); c.restore();
+        c.save(); c.beginPath(); c.rect(-bw2 / 2, -bh2 / 2, bw2 * BZ.bau, bh2); c.clip(); c.fillStyle = type === 'bank' ? '#b8b2a6' : type === 'brand' ? '#3a2e28' : '#4a3a2c'; rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.fill(); c.restore();
         c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.stroke(); c.setLineDash([]);
         c.beginPath(); c.moveTo(-bw2 / 2, -bh2 / 2); c.lineTo(bw2 / 2, bh2 / 2); c.moveTo(-bw2 / 2, bh2 / 2); c.lineTo(bw2 / 2, -bh2 / 2); c.stroke();
       } else {
@@ -599,6 +599,16 @@
           c.strokeStyle = 'rgba(0,0,0,0.22)'; c.lineWidth = 1;
           for (var gx2 = 1; gx2 < 4; gx2++) { c.beginPath(); c.moveTo(bx0 + bi2 + (bw2 - 2 * bi2) * gx2 / 4, by0 + bi2); c.lineTo(bx0 + bi2 + (bw2 - 2 * bi2) * gx2 / 4, by0 + bh2 - bi2); c.stroke(); c.beginPath(); c.moveTo(bx0 + bi2, by0 + bi2 + (bh2 - 2 * bi2) * gx2 / 4); c.lineTo(bx0 + bw2 - bi2, by0 + bi2 + (bh2 - 2 * bi2) * gx2 / 4); c.stroke(); }
           c.fillStyle = '#8f897d'; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { c.fillRect(q[0] * (bw2 / 2 - bi2 * 0.5) - bi2 * 0.5, q[1] * (bh2 / 2 - bi2 * 0.5) - bi2 * 0.5, bi2, bi2); }); // Ecksteine
+        } else if (type === 'brand') { // Brandstifterhaus: verkohlte Hütte, Russflecken, glühende Feuerschale mit Rauch, Fackeln an der Wand
+          c.fillStyle = '#3a2e28'; c.strokeStyle = 'rgba(0,0,0,0.65)'; c.lineWidth = 2; rr(c, bx0, by0, bw2, bh2, 2); c.fill(); c.stroke();
+          c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; for (var db3 = 1; db3 < 6; db3++) { c.beginPath(); c.moveTo(bx0 + bw2 * db3 / 6, by0); c.lineTo(bx0 + bw2 * db3 / 6, by0 + bh2); c.stroke(); }
+          c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(bx0 + bw2 * 0.7, by0 + bh2 * 0.3, bw2 * 0.18, bh2 * 0.14, 0.4, 0, Math.PI * 2); c.fill(); c.beginPath(); c.ellipse(bx0 + bw2 * 0.3, by0 + bh2 * 0.75, bw2 * 0.14, bh2 * 0.1, -0.3, 0, Math.PI * 2); c.fill(); // Russ
+          var fg = 0.5 + 0.5 * Math.sin(bnow * 7), fx3 = bx0 + bw2 * 0.5, fy3 = by0 + bh2 * 0.5;
+          c.fillStyle = '#555'; c.beginPath(); c.arc(fx3, fy3, r * 0.26, 0, Math.PI * 2); c.fill(); // Feuerschale
+          c.fillStyle = 'rgba(255,120,30,' + (0.35 + 0.25 * fg) + ')'; c.beginPath(); c.arc(fx3, fy3, r * (0.32 + 0.06 * fg), 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#ffb02e'; c.beginPath(); c.arc(fx3, fy3, r * 0.15, 0, Math.PI * 2); c.fill(); c.fillStyle = '#fff1a8'; c.beginPath(); c.arc(fx3, fy3, r * 0.07, 0, Math.PI * 2); c.fill();
+          for (var sm = 0; sm < 3; sm++) { var sk = (bnow * 0.6 + sm / 3) % 1; c.fillStyle = 'rgba(80,80,80,' + (0.35 * (1 - sk)) + ')'; c.beginPath(); c.arc(fx3 + Math.sin(bnow + sm * 2) * r * 0.15, fy3 - sk * r * 0.9, r * (0.12 + 0.18 * sk), 0, Math.PI * 2); c.fill(); } // Rauch
+          c.fillStyle = col; c.fillRect(bx0 + bw2 - r * 0.25, by0, r * 0.25, r * 0.14); // kleines Tuch in Teamfarbe
         } else {
           c.fillStyle = '#4a3a2c'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2; rr(c, bx0, by0, bw2, bh2, 2); c.fill(); c.stroke();
           c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1; for (var db = 1; db < 7; db++) { c.beginPath(); c.moveTo(bx0 + bw2 * db / 7, by0 + (db % 2 ? 2 : 0)); c.lineTo(bx0 + bw2 * db / 7, by0 + bh2 - (db % 3 ? 0 : 3)); c.stroke(); } // schiefe Bretter
@@ -618,6 +628,12 @@
             c.fillStyle = '#e8b994'; c.beginPath(); c.arc(fsm * 0.1, 0, fsm * 0.38, 0, Math.PI * 2); c.fill(); c.stroke();
             c.fillStyle = '#2a2420'; c.beginPath(); c.arc(fsm * 0.05, 0, fsm * 0.36, 0, Math.PI * 2); c.fill(); // flacher Hut
             c.fillStyle = '#c98a12'; c.beginPath(); c.arc(-fsm * 0.2, fsm * 0.62, fsm * 0.2, 0, Math.PI * 2); c.fill(); // Geldbeutel
+          } else if (art === 'brand') { // Brandstifter: dunkelroter Umhang, Kapuze, brennende Fackel vorne
+            c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(-fsm * 0.1, 0, fsm * 0.78, fsm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+            c.fillStyle = '#6e2a22'; c.beginPath(); c.arc(fsm * 0.08, 0, fsm * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
+            c.fillStyle = '#c99a72'; c.beginPath(); c.arc(fsm * 0.32, 0, fsm * 0.15, 0, Math.PI * 2); c.fill();
+            c.strokeStyle = '#6b4a2a'; c.lineWidth = Math.max(1.5, fsm * 0.18); c.beginPath(); c.moveTo(fsm * 0.2, fsm * 0.5); c.lineTo(fsm * 0.95, fsm * 0.55); c.stroke(); // Fackel
+            var ffl = 0.5 + 0.5 * Math.sin(bnow * 12); c.fillStyle = '#ff8a1e'; c.beginPath(); c.arc(fsm * 1.05, fsm * 0.55, fsm * (0.26 + 0.06 * ffl), 0, Math.PI * 2); c.fill(); c.fillStyle = '#ffe07a'; c.beginPath(); c.arc(fsm * 1.05, fsm * 0.55, fsm * 0.12, 0, Math.PI * 2); c.fill();
           } else {
             if (sack) { c.fillStyle = '#9c7a4a'; c.beginPath(); c.arc(-fsm * 0.7, 0, fsm * 0.45, 0, Math.PI * 2); c.fill(); c.stroke(); }
             c.fillStyle = '#2b2b33'; c.beginPath(); c.ellipse(-fsm * 0.1, 0, fsm * 0.78, fsm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // dunkler Umhang
@@ -649,6 +665,12 @@
           var tur = { x: dvx * (dext + r * 0.25) / T, y: dvy * (dext + r * 0.25) / T }, burg = { x: BZ.kx || 0, y: BZ.ky || 0 }, bk2 = -1, hin2 = true;
           if (ph2 >= 1 && ph2 < 4) bk2 = (ph2 - 1) / 3; else if (ph2 >= 6 && ph2 < 9) { bk2 = (ph2 - 6) / 3; hin2 = false; }
           if (bk2 >= 0) { var pp = entlang(hin2 ? [tur, burg] : [burg, tur], bk2); figur(pp.x, pp.y, pp.ang, 'bank', Math.min(1, bk2 * 8, (1 - bk2) * 8)); }
+        }
+        if (ph2 >= 0 && type === 'brand' && BZ.weg) { // 0–1 drin, 1–13 hin, 13–15 legt Feuer in der gegnerischen Burg, 15–28 zurück, 28–30 drin
+          var W3 = BZ.weg, bp3 = null, bk3 = 0;
+          if (ph2 >= 1 && ph2 < 13) { bk3 = (ph2 - 1) / 12; bp3 = entlang(W3.hin, bk3); }
+          else if (ph2 >= 15 && ph2 < 28) { bk3 = (ph2 - 15) / 13; bp3 = entlang(W3.zur, bk3); }
+          if (bp3) figur(bp3.x, bp3.y, bp3.ang, 'brand', (0.05 + 0.45 * (0.5 + 0.5 * Math.sin(bnow * 2.5))) * Math.min(1, bk3 * 10, (1 - bk3) * 10), false);
         }
         if (ph2 >= 0 && type === 'dieb' && BZ.weg) { // 0–1 drin, 1–13 hin, 13–15 in der gegnerischen Burg, 15–28 direkt zurück ins Haus (mit Sack), 28–30 drin
           var W2 = BZ.weg, dp = null, sack = false, dk = 0;

@@ -244,6 +244,17 @@
         ctx.beginPath(); ctx.arc(ox, oy, 6, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(ox - 1.5, oy - 1.5, 2, 0, Math.PI * 2); ctx.fill();
+      } else if (e.kind === 'feuer') { // Brand in der Burg: flackernde Flammen auf dem Dach, Funken und Rauch; blendet ein und aus
+        var fa = Math.min(1, k * 6, (1 - k) * 4), fnow = performance.now() / 1000;
+        ctx.globalAlpha = fa;
+        for (var fi = 0; fi < 7; fi++) {
+          var fxx = (e.x + (((fi * 53) % 7) / 6 - 0.5) * e.w * 0.75) * T, fyy = (e.y + (((fi * 31) % 5) / 4 - 0.5) * e.h * 0.6) * T, ffr = T * (0.22 + 0.1 * Math.sin(fnow * 9 + fi * 1.7));
+          ctx.fillStyle = 'rgba(70,70,70,0.35)'; ctx.beginPath(); ctx.arc(fxx + Math.sin(fnow + fi) * 4, fyy - T * (0.5 + ((fnow * 0.8 + fi * 0.13) % 1) * 0.8), ffr * 1.2, 0, Math.PI * 2); ctx.fill(); // Rauch
+          ctx.fillStyle = 'rgba(230,70,20,0.85)'; ctx.beginPath(); ctx.moveTo(fxx - ffr, fyy); ctx.quadraticCurveTo(fxx - ffr * 0.3, fyy - ffr * 2.2, fxx, fyy - ffr * 2.6); ctx.quadraticCurveTo(fxx + ffr * 0.3, fyy - ffr * 2.2, fxx + ffr, fyy); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = 'rgba(255,190,50,0.95)'; ctx.beginPath(); ctx.moveTo(fxx - ffr * 0.55, fyy); ctx.quadraticCurveTo(fxx, fyy - ffr * 1.8, fxx + ffr * 0.55, fyy); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#ffe9a0'; ctx.beginPath(); ctx.arc(fxx + Math.sin(fnow * 7 + fi) * ffr, fyy - ffr * (1 + ((fnow * 2 + fi * 0.3) % 1) * 2), 1.6, 0, Math.PI * 2); ctx.fill(); // Funke
+        }
+        ctx.globalAlpha = 1;
       } else if (e.kind === 'blitz') { // Blitz: Zickzack von oben bis zum Einschlag, kurzer heller Schein
         ctx.globalAlpha = Math.max(0, 1 - k * 1.3);
         var bxp = e.x * T, byp = e.y * T, bs = e.seed || 1, by0 = Math.max(0, byp - 260);

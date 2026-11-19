@@ -1,11 +1,11 @@
-  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane'];
+  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'building' Gebäude, 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
   var BUY_TYPES = (function () {
-    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane'];
+    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand'];
     var grp = function (t) { var c = CONFIG.units[t].cat; return c === 'building' ? 0 : c === 'eco' ? 1 : c === 'siege' ? 3 : 2; }; // nach der Mauer: Gebäude, Wirtschaft, Kampfeinheiten, Belagerung
     all.sort(function (a, b) { return grp(a) - grp(b) || CONFIG.units[a].cost - CONFIG.units[b].cost || 0; });
-    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f'];
+    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g'];
     list.forEach(function (t, i) { CONFIG.units[t].key = keys[i] || ''; });
     return list;
   })();

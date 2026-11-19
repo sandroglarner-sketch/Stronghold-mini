@@ -127,6 +127,11 @@
             if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
             if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
           }
+          if (GD.art === 'brand' && !tut.on) { // Brandstifter: legt in der gegnerischen Burg Feuer, der Gegner verliert Gold
+            var bfb = bases[1 - u.team];
+            if (galt < GD.zuenden && u.gT >= GD.zuenden) effects.push({ kind: 'feuer', x: (bfb.x1 + bfb.x2) / 2, y: (bfb.y1 + bfb.y2) / 2, w: bfb.x2 - bfb.x1, h: bfb.y2 - bfb.y1, t: 0, dur: GD.klauen - GD.zuenden + 1.2 });
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= vb; if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+          }
           if (GD.art === 'kirche') { // Gebet und Unwetter
             u.gT = 0;
             if (u.gebetT > 0) { u.gebetT = Math.max(0, u.gebetT - dt); if (u.gebetT <= 0) { u.gunst = (u.gunst || 0) + 1; effects.push({ kind: 'puff', x: u.x, y: u.y - 0.5, team: u.team, t: 0, dur: 0.6 }); } }
@@ -148,13 +153,13 @@
           }
           else if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
-            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
+            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
             u.zahl = (u.zahl || 0) + 1;
             if (gg > 0 && !(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
         var kbp = bases[u.team], kpx = clamp(u.x, kbp.x1 + 0.3, kbp.x2 - 0.3), kpy = clamp(u.y, kbp.y1 + 0.3, kbp.y2 - 0.3);
-        if (d.gebaeude.art === 'dieb' && !u.weg) { // Weg: seitlich zum Spielfeldrand, am Rand entlang in die gegnerische Burg (relativ zum Gebäude)
+        if ((d.gebaeude.art === 'dieb' || d.gebaeude.art === 'brand') && !u.weg) { // Weg: seitlich zum Spielfeldrand, am Rand entlang in die gegnerische Burg (relativ zum Gebäude)
           var ey = u.y < H / 2 ? 0.55 : H - 1.15, efb = bases[1 - u.team], eob = bases[u.team], ecx = (efb.x1 + efb.x2) / 2, ocx = (eob.x1 + eob.x2) / 2;
           var tuer = { x: u.x, y: u.y + (ey < u.y ? -1 : 1) * (d.gebaeude.h / 2 + 0.15) };
           var rel = function (p) { return { x: p.x - u.x, y: p.y - u.y }; };
@@ -245,7 +250,7 @@
       if (u.gar) { // Besatzung eines Turms: läuft zu ihrem Platz und bleibt dort stehen
         var gw = walls[u.team];
         if (!gw || !gw.sl || gw.sl[u.gar.key] !== u) { u.gar = null; u.tower = false; u.seat = false; } // Mauer weg oder Platz verloren: marschiert normal los
-        else if (!u.tower && unitInFight(u, d)) { /* Angreifen hat Vorrang: erst kämpfen, dann in den Turm */ }
+        else if (!u.tower && !d.spot && unitInFight(u, d)) { /* Angreifen hat Vorrang: erst kämpfen, dann in den Turm (nicht das Trebuchet: es baut sich erst auf dem Turm auf) */ }
         else if (!u.seat) { // läuft zu ihrem Platz; sobald ihr Mittelpunkt im Turm liegt, gilt sie als «im Turm» (u.tower: nur 25 % Fernkampfschaden usw.)
           var gtw = gw.tlv.list[u.gar.ti], gp = slotPos(u.team, gtw, gtw.slots[u.gar.ci]), gdx2 = gp.x - u.x, gdy2 = gp.y - u.y, gd2 = hyp(gdx2, gdy2);
           if (gd2 > 0.04) {
