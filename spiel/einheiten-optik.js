@@ -112,6 +112,14 @@
     }
 
     var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : r * 0.9;
+    // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
+    var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
+    if (cbk > 0) {
+      bodyR *= 1 - 0.14 * cbk;
+      c.fillStyle = '#4a3b2a'; c.beginPath(); c.ellipse(-r * 0.85 * cbk, -r * 0.42, r * 0.26, r * 0.15, 0, 0, Math.PI * 2); c.fill(); // hinterer Fuss
+      c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5;
+      c.beginPath(); c.ellipse(r * 0.55 * cbk, r * 0.62, r * 0.3, r * 0.22, 0.4, 0, Math.PI * 2); c.fill(); c.stroke(); // Knie vorne
+    }
     c.fillStyle = col;
     c.strokeStyle = 'rgba(0,0,0,0.45)';
     c.lineWidth = 2;
@@ -479,6 +487,7 @@
     } else if (type === 'crossbow') {
       // Armbrustschütze: grauer Eisenhut mit Krempe, Armbrust nach vorne (Schaft, Bogen quer, Sehne, Bolzen)
       c.save(); c.translate(A.off, 0);
+      if (cbc) { c.translate(r * 0.55, r * 0.2); c.rotate(0.3); } // beim Kurbeln: Armbrust vorgeschoben und schräg vor sich auf dem Boden
       c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(2.5, r * 0.2);
       c.beginPath(); c.moveTo(r * 0.1, r * 0.1); c.lineTo(r * 1.45, r * 0.1); c.stroke(); // Schaft
       var cbs = 1.0 - 0.1 * A.tens;
@@ -493,6 +502,14 @@
       c.strokeStyle = '#5f666c'; c.lineWidth = Math.max(1.5, r * 0.08); c.stroke();
       c.fillStyle = '#a3a9ae'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); // Hutkopf
       c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.55 + A.off, r * 0.1, r * 0.13, 0, Math.PI * 2); c.fill();
+      if (cbc) { // Kurbel hinten am Schaft dreht sich (4 Umdrehungen während des Einrichtens), die Hand kurbelt mit
+        c.save(); c.translate(A.off + r * 0.55, r * 0.2); c.rotate(0.3);
+        var cka = settled * Math.PI * 8, ckx = r * 0.2, cky = r * 0.1, ckr = r * 0.32, hx = ckx + Math.cos(cka) * ckr, hy = cky + Math.sin(cka) * ckr;
+        c.fillStyle = '#6f7680'; c.beginPath(); c.arc(ckx, cky, r * 0.13, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#4b5158'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(ckx, cky); c.lineTo(hx, hy); c.stroke();
+        c.fillStyle = '#d9a066'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1; c.beginPath(); c.arc(hx, hy, r * 0.15, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.restore();
+      }
     } else if (type === 'archer') {
       c.fillStyle = '#8a6a44'; // brauner Lederhelm wie Speersoldat/Speerwerfer
       c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
