@@ -8,7 +8,7 @@
     // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
     // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (Stärkewert deiner Einheiten abzüglich seiner Turmbesatzung) plus so viel Stärke mehr als du hast (Stärkewert: CONFIG.units[..].staerke),
     // karawanen = so viele Karawanen strebt er an (wie die Bauern); gebaeude = Gebäudekäufe in Reihenfolge [{ type, gold }]: die n-te Zeile eines Gebäudes ist sein n-ter Kauf (Bau, Ausbaustufe, bei der Kirche ein Gebet), gekauft ab so viel freiem Gold und nur ohne gegnerische Einheit in seiner Spielfeldhälfte;
-    // eine Karawane zählt wie 2 Bauern (für die Jagd und für seine Bauern-Obergrenze farmers);
+    // für die Jagd zählt auf beiden Seiten jede Karawane wie 2 Bauern (er jagt nur, wenn du mehr Wirtschaft hast); farmers und karawanen kauft er genau wie angegeben;
     // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
   CONFIG.BOTS = {
       bauern: { income: 10, incomeEvery: 5, farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
