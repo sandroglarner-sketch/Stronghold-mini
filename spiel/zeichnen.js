@@ -442,7 +442,7 @@
       var sk = Math.min(1, renderDt / 0.35); u.mvx = (u.mvx || 0) * (1 - sk) + mx * sk; u.mvy = (u.mvy || 0) * (1 - sk) + my * sk; mx = u.mvx; my = u.mvy;
       var fw = u.team === 0 ? 1 : -1, ml = hyp(mx, my); mx += fw * ml * 0.8; // Tendenz nach vorne: seitliches Ausweichen nach einem Treffer dreht ihn nur wenig weg
     }
-    if (u.aimX !== undefined && (u.ready || (u.atkT !== undefined && clock - u.atkT < 0.6))) want = Math.atan2(u.aimY - u.y, u.aimX - u.x);
+    if (u.aimX !== undefined && (u.ready || (u.atkT !== undefined && clock - u.atkT < 0.6 && CONFIG.units[u.type].range > 1.5))) want = Math.atan2(u.aimY - u.y, u.aimX - u.x);
     else if (renderDt > 0 && hyp(mx, my) > Math.max(0.0005, 0.2 * renderDt)) want = Math.atan2(my, mx);
     else if (renderDt > 0) want = u.team === 0 ? 0 : Math.PI; // steht still: gerade zum Gegner
     u.px = u.x; u.py = u.y;
