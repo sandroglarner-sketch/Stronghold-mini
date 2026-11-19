@@ -50,6 +50,9 @@
       // dann wirft er alle cd Sekunden einen Stein, der gerade (ohne Bogen) fliegt und nach delay Sekunden trifft; Mauern blockieren ihn nicht (Ziel ist die Mauer selbst)
       onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 2, atk: 20, range: 5, speed: 0.6, cd: 3, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
       // Schwertkämpfer: Helm wie der Ritter, Holzschild mit Eisenrand
+      // Bank (Wirtschaft, Gebäude): steht seitlich der Burg (oben oder unten, zufällig) etwas Richtung Mauer; ein Arbeiter baut sie (gleich schnell wie die Mauer: WALL.rate Leben pro Sekunde);
+      // fertig bringt sie alle gebaeude.alle Sekunden gebaeude.gold Gold, heilt wie Mauer/Burg (WALL.heal). Kann angegriffen werden; Bauern weichen an ihren Rand aus. passive = zählt nicht als Kampfeinheit.
+      bank: { cat: 'eco', name: 'Bank', cost: 50, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.55, passive: true, gebaeude: { w: 1.3, h: 1.1, gold: 5, alle: 5 } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)

@@ -1,4 +1,4 @@
-  // ---------- Deck und Einheitenbuch ----------
+  // ---------- Deck und Kartenbuch ----------
   // DECK = gewählte Einheiten (höchstens DECK_MAX, die Mauer zählt nicht). Gespeichert nur im Browser (localStorage 'stronghold-deck').
   // Die Knöpfe zeigen immer die Mauer plus die Deck-Einheiten (im Tutorial alle), Tasten 1–9, 0, Q, E von links nach rechts über die sichtbaren Knöpfe.
   var TUT_TYPES = ['farmer', 'spear', 'archer', 'rider', 'knight', 'ram']; // genau die Einheiten, die das Tutorial braucht: im Tutorial nur diese Knöpfe (plus Mauer)
@@ -26,6 +26,7 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
+    if (d.gebaeude) a.push('Gebäude: ein Arbeiter baut sie neben der Burg. Fertig bringt sie <b>alle ' + d.gebaeude.alle + ' s +' + d.gebaeude.gold + ' Gold</b> und heilt sich wie die Mauer.');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');

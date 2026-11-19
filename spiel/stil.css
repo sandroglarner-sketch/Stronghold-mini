@@ -250,7 +250,7 @@
   .storykarte b { font-family: var(--display); font-size: 1.05rem; position: relative; }
   .storykarte .primary { margin: 0; position: relative; white-space: normal; }
   .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
-  /* Königswahl: kleineres Fenster wie das Einheitenbuch */
+  /* Königswahl: kleineres Fenster wie das Kartenbuch */
   .ovleft { display: flex; gap: 8px; align-items: center; }
   .ovkoenig canvas { width: 30px; height: 30px; margin: 0 -2px 0 -6px; }
   .koenigwahl { position: absolute; top: 7%; left: 12%; right: 12%; bottom: 64px; z-index: 8; display: flex; flex-direction: column; gap: 8px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.28); padding: 10px 12px; box-sizing: border-box; overflow: hidden; }

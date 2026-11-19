@@ -270,7 +270,7 @@
   .storykarte b { font-family: var(--display); font-size: 1.05rem; position: relative; }
   .storykarte .primary { margin: 0; position: relative; white-space: normal; }
   .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
-  /* Königswahl: kleineres Fenster wie das Einheitenbuch */
+  /* Königswahl: kleineres Fenster wie das Kartenbuch */
   .ovleft { display: flex; gap: 8px; align-items: center; }
   .ovkoenig canvas { width: 30px; height: 30px; margin: 0 -2px 0 -6px; }
   .koenigwahl { position: absolute; top: 7%; left: 12%; right: 12%; bottom: 64px; z-index: 8; display: flex; flex-direction: column; gap: 8px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.28); padding: 10px 12px; box-sizing: border-box; overflow: hidden; }
@@ -695,7 +695,7 @@
     <div class="overlay menu" id="overlay">
       <div class="ovtop">
         <span class="ovleft">
-        <button class="ghost ovbook" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Einheitenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
+        <button class="ghost ovbook" id="bookBtn" type="button" title="Kartenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Kartenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
           <button class="ghost ovkoenig" id="koenigBtn" type="button" title="Dein König: wähle sein Aussehen"><canvas id="koenigIcon" width="30" height="30" aria-hidden="true"></canvas><span>König</span></button>
         </span>
         <span class="ovright">
@@ -755,8 +755,8 @@
     <div class="toast" id="toast" hidden role="status"><p id="toastText"></p><div class="kontorow" id="toastKn"><button class="primary" id="toastJa" type="button">Annehmen</button><button class="ghost" id="toastNein" type="button">Ablehnen</button></div></div>
     <div class="zbanner" id="zBanner" hidden><span class="zbtext"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="zText"></span></span><button class="ghost" id="zRaus" type="button">Verlassen</button></div>
     <div class="augen" id="augen" hidden aria-live="polite"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="augenZahl">0</span></div>
-    <div class="book" id="book" hidden role="dialog" aria-label="Einheitenbuch">
-      <div class="bookhead"><b>Einheitenbuch</b><span class="bookfilter" id="bookFilter" role="group" aria-label="Nach Typ filtern"><button type="button" data-f="" class="on">Alle</button><button type="button" data-f="eco" title="Wirtschaft">🌾<span> Wirtschaft</span></button><button type="button" data-f="melee" title="Nahkampf">🗡️<span> Nahkampf</span></button><button type="button" data-f="ranged" title="Fernkampf">🏹<span> Fernkampf</span></button><button type="button" data-f="siege" title="Belagerung">🔨<span> Belagerung</span></button></span><span class="bookcnt">Deck <span id="bookN">0</span> / 10</span><button class="ghost bookx" id="bookClose" type="button" aria-label="Buch schliessen">✕</button></div>
+    <div class="book" id="book" hidden role="dialog" aria-label="Kartenbuch">
+      <div class="bookhead"><b>Kartenbuch</b><span class="bookfilter" id="bookFilter" role="group" aria-label="Nach Typ filtern"><button type="button" data-f="" class="on">Alle</button><button type="button" data-f="eco" title="Wirtschaft">🌾<span> Wirtschaft</span></button><button type="button" data-f="melee" title="Nahkampf">🗡️<span> Nahkampf</span></button><button type="button" data-f="ranged" title="Fernkampf">🏹<span> Fernkampf</span></button><button type="button" data-f="siege" title="Belagerung">🔨<span> Belagerung</span></button></span><span class="bookcnt">Deck <span id="bookN">0</span> / 10</span><button class="ghost bookx" id="bookClose" type="button" aria-label="Buch schliessen">✕</button></div>
       <div class="bookbody">
         <button class="bookarrow" id="bookPrev" type="button" aria-label="Zurückblättern">‹</button>
         <div class="bookarea" id="bookArea"><div class="bookpage" id="bookPage"></div></div>
@@ -789,7 +789,7 @@
 
   <div class="statcard" id="statCard" hidden></div>
 
-  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und hält in Ruhe keine Waffe. Kommt ein Gegner in Reichweite (5 Kacheln), holt er in 1 Sekunde seinen Bogen hervor und beschießt dann jede Sekunde den nächsten Gegner (Angriff 2); ist keiner mehr in Reichweite, verstaut er den Bogen wieder. Fällt die Burg, versorgt er den Bogen und holt seine Nahkampfwaffe hervor (1,8 Sekunden, so lange kämpft er nicht), kämpft dann mit ihr (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), bringt er alle 5 Sekunden 1 Gold, solange er lebt (sein Takt beginnt, sobald er steht). Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Im Einheitenbuch (📖) wählst du bis zu 10 Einheiten für dein Deck. Tasten 1 bis 9, 0, Q und E bauen die Einheiten von links nach rechts, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 130 Gold an: sofort 1 Rammbock, nach 4 Sekunden 2 Speerkämpfer, nach 6 Sekunden 4 Speerkämpfer, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 4 Speerkämpfer (zusammen 157 Gold). Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 6 Speerkämpfer (zusammen 202 Gold); was er sich dann leisten kann. Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Katapult und 1 Rammbock, nach 7 Sekunden 6 Bogenschützen, nach 9 Sekunden 5 Speerkämpfer und nach 13 Sekunden 4 Reiter (zusammen 267 Gold). Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 5. Stufe, deren Türme er mit je 3 Bogenschützen und je einem Trebuchet besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 5 Sekunden 2 Speerkämpfer, nach 6 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 8 Speerkämpfer (zusammen 262 Gold). Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht (auch nicht, wenn sie hinter die Mauer gelangt sind); sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 3 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,2 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
+  <p class="rules">Alle 5 Sekunden gibt es 10 Gold (ohne Obergrenze). Jede Burg hat 40 Leben. Der König (Leben 20) sitzt oben auf ihr, ist dort unverwundbar und hält in Ruhe keine Waffe. Kommt ein Gegner in Reichweite (5 Kacheln), holt er in 1 Sekunde seinen Bogen hervor und beschießt dann jede Sekunde den nächsten Gegner (Angriff 2); ist keiner mehr in Reichweite, verstaut er den Bogen wieder. Fällt die Burg, versorgt er den Bogen und holt seine Nahkampfwaffe hervor (1,8 Sekunden, so lange kämpft er nicht), kämpft dann mit ihr (Angriff 3, Tempo 1), geht aber höchstens 5 Kacheln von der Burg weg und kehrt zurück, wenn dort keine Gegner mehr stehen. Mit dem Mauer-Knopf baust du die zerstörte Burg wieder auf (vier Arbeiter, sie gilt ab 1 Leben als errichtet, der König kehrt sofort zurück). Wer zuerst den gegnerischen König besiegt, gewinnt. Einheiten laufen sofort los, einzelne schießt die Kaserne ab: spare Gold und kaufe lieber mehrere auf einmal. Bauern suchen sich einen Platz vor ihrer Kaserne, mindestens 2 Kacheln vom Rand und 1,8 Kacheln von anderen Bauern entfernt. Liegt sein Platz auf einer Mauer oder einem Turm, stellt er sich an den nächsten freien Rand (vor einer fertigen gegnerischen Mauer an den Außenrand); den Abstand zu anderen Bauern misst er weiter von seinem ursprünglichen Platz. Gibt es keinen, marschieren sie zur gegnerischen Kaserne. Sobald ein Bauer steht (seine Farbe wird kräftiger), bringt er alle 5 Sekunden 1 Gold, solange er lebt (sein Takt beginnt, sobald er steht). Die Bank (50 Gold, 20 Leben) ist ein Gebäude: ein Arbeiter baut sie seitlich der Burg (oben oder unten, etwas Richtung Mauer) gleich schnell wie eine Mauer; fertig bringt sie alle 5 Sekunden 5 Gold und heilt sich wie die Mauer. Sie kann angegriffen werden, Bauern weichen an ihren Rand aus; es gibt höchstens 4 Bauplätze. Der Magier trifft alle Gegner im Umkreis von 1 Kachel um sein Ziel und bremst sie 3 Sekunden lang auf halbes Tempo. Im Kartenbuch (📖) wählst du bis zu 10 Einheiten für dein Deck. Tasten 1 bis 9, 0, Q und E bauen die Einheiten von links nach rechts, P pausiert. Der Tunnelgräber gräbt sich unsichtbar zu einer zufälligen gegnerischen Fernkampfeinheit (Bogenschütze, Magier, Katapult, Baliste; nicht auf einem Turm) (Umkreis 1,5 Kacheln, nie näher als 6 Kacheln an der Kaserne). Seine Grabspur siehst du 1 Sekunde lang, erst danach kämpft er. Mit der Maus über einem Knopf siehst du die Werte der Einheit. Der Gegner «Bandit» bekommt wie du 10 Gold pro Auszahlung. Er baut 5 Bauern (keine, solange du mehr Kampfeinheiten hast als er; deine Einheiten auf Türmen zählen nicht mit), schickt 2 Speerkämpfer gegen deine Bauern, wenn du mindestens 20 Sekunden lang mehr Bauern hast als er (danach 30 Sekunden Pause), verteidigt sich mit deinen Einheiten auf dem Feld (ohne die auf Türmen) minus seiner eigenen Turmbesatzung, plus 1 Einheit (Speere und Bogenschützen, danach 10 Sekunden keine Einheiten), baut bei 60 Gold eine Mauer, aber nur, wenn keine deiner Einheiten in seiner Spielfeldhälfte steht (er repariert sie nie, baut sie aber neu), und greift bei 130 Gold an: sofort 1 Rammbock, nach 4 Sekunden 2 Speerkämpfer, nach 6 Sekunden 4 Speerkämpfer, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 4 Speerkämpfer (zusammen 157 Gold). Nach Beginn des Angriffs kauft er 15 Sekunden lang nichts ausser den weiteren Schritten. Alle Gegner reparieren ihre Mauer, sobald sie weniger als die Hälfte der Leben ihrer Optik hat. Alle Gegner besetzen jeden freien Platz in ihren Türmen mit passenden Einheiten (Bogenschützen und Katapulte); nach einem solchen Kauf warten sie 20 Sekunden, bevor sie wieder Plätze auffüllen. Der Gegner «Kleiner Prinz» spielt genauso, mit diesen Unterschieden: 6 Bauern; er jagt mit 1 Bogenschützen und 1 Speerkämpfer; er baut seine Mauer bis zur 3. Stufe (120 Leben) und repariert sie bei 60 oder weniger Leben; er greift bei 180 Gold an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 6 Speerkämpfer (zusammen 202 Gold); was er sich dann leisten kann. Der «Feldherr» ist wie der Kleine Prinz, aber: 12 Bauern; Mauer nur bis zur 2. Stufe; er jagt, sobald du 15 Sekunden lang mehr Bauern hast, mit 1 Reiter (danach 25 Sekunden Pause); er verteidigt mit Bogenschützen, Speerkämpfern und Reitern; bei 210 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Katapult und 1 Rammbock, nach 7 Sekunden 6 Bogenschützen, nach 9 Sekunden 5 Speerkämpfer und nach 13 Sekunden 4 Reiter (zusammen 267 Gold). Der «Baron» ist wie der Feldherr, aber: 9 Bauern; Mauer bis zur 5. Stufe, deren Türme er mit je 3 Bogenschützen und je einem Trebuchet besetzt; er jagt, sobald du 20 Sekunden lang mehr Bauern hast (danach 35 Sekunden Pause), mit 1 Ritter, 3 Sekunden später 2 Bogenschützen und 1 Sekunde danach 2 Speerkämpfern; er verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern (hast du ein Katapult auf dem Feld, nicht auf einem Turm, sind mindestens 2 Tunnelgräber dabei); bei 230 Gold greift er an: sofort 1 Belagerungsschild, nach 3 Sekunden 1 Rammbock, nach 4 Sekunden 2 Ritter, nach 5 Sekunden 2 Speerkämpfer, nach 6 Sekunden 2 Ritter, nach 7 Sekunden 6 Bogenschützen und nach 9 Sekunden 8 Speerkämpfer (zusammen 262 Gold). Für alle Gegner gilt: Wird etwas von ihnen angegriffen, auch Einheiten auf ihren Türmen, verteidigen sie sich. Außerdem verteidigen sie sich immer, wenn du auf dem Feld (nicht auf Türmen) nur noch Katapulte hast und etwas von ihnen angegriffen wird. Die Mauer (20 Gold) umschließt deine Kaserne im Abstand von 3 Kacheln, gebogen wie die Schusslinie: Vier Arbeiter bauen mit je 3 Leben pro Sekunde und bringen je 10 Leben, sobald die Mauer Leben hat, wirkt sie. Ein weiterer Klick geht erst, wenn deine Arbeiter fertig sind, dann schickt er vier neue (+40 Leben), höchstens hat sie 200 Leben. Sie heilt 0,6 Leben pro Sekunde, solange sie unter dem Höchstwert ihrer Optik liegt (erst ab 40 Leben). Bis 40 Leben ist nur ein Gerüst zu sehen, ab 40, 80, 120, 160 und 200 Leben bekommt sie eine neue, stabilere Optik und behält sie, bis sie ganz zerstört ist. Die Lebensleiste zeigt als Höchstwert die Leben, ab denen die Optik erscheint (40, 80, 120, 160 bzw. 200). Risse bekommt die Mauer erst durch Schaden: je weiter die Leben unter diesem Höchstwert liegen, desto mehr. Ab Mauer 2 (80 Leben) hat die Mauer links und rechts je einen Turm, der Einheiten aufnimmt. Sobald ein Turm für eine Einheit Platz hat, läuft sie dorthin statt nach vorne und bleibt dort stehen, um von dort zu schießen. Das gilt für jede passende Einheit, die höchstens 4 Kacheln von der Kaserne entfernt ist. Einheiten in einem Turm erleiden von Fernkämpfern nur 25 % des Schadens. Mauer 2: zwei kleine Vierecktürme mit je 1 Platz für einen Bogenschützen oder Magier. Mauer 3: etwas größere Vierecktürme mit je 2 Plätzen für Bogenschützen oder Magier. Mauer 4: zwei Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier. Mauer 5: zwei große Rundtürme mit je 3 Plätzen für Bogenschützen oder Magier und 1 Platz für ein Katapult oder eine Baliste. Gegnerische Fernkämpfer (Bogenschützen, Magier, Katapulte) können Einheiten im Turm beschießen, Nahkämpfer nicht (auch nicht, wenn sie hinter die Mauer gelangt sind); sie greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen, und nähere Einheiten zuerst. Angreifen hat immer Vorrang: Hat eine Einheit einen Gegner in Reichweite, kämpft sie erst, und geht nur in den Turm, wenn sie sonst ohnehin laufen würde. Fällt die Mauer, marschieren die Einheiten los. Jede Einheit, die 10 Sekunden lang keinen Schaden erlitten hat, heilt 1 Leben pro Sekunde. Wer die Mauer angreift, steht im Schussbereich deiner Kaserne. Der Rammbock (9) kämpft nur gegen Mauern und Kasernen, Einheiten ignoriert er; er ist langsam, hält viel aus und schiebt Einheiten, die ihm im Weg stehen, zur Seite. Das Belagerungsschild (0) greift ebenfalls nur Mauern und Kasernen an, richtet aber keinen Schaden an; es hält die Schüsse der Kaserne auf sich und erleidet von Fernkämpfern (Bogenschützen, Magier, Katapulte, Baliste) und von den Pfeilen des Königs nur 25 % des Schadens; es hat 12 Leben. Das Katapult (Q) schießt alle 3 Sekunden einen Feuerball auf 6 Kacheln Reichweite (Ziele näher als 2 Kacheln kann es nicht angreifen), der alle Gegner im Umkreis von 1,2 Kacheln trifft, und ignoriert Mauern: Sie blockieren weder sein Ziel noch seinen Schuss. Vollbild: Das Handy quer halten, dann wird das Spielfeld so gross wie möglich; oben rechts stehen Pause, Aufgeben und ✕ (zurück zur normalen Ansicht mit Ton usw.). Die Töne lassen sich mit „Ton an“ ausschalten.</p>
 
   <div class="logrow">
     <button class="ghost" id="logBtn" type="button" title="Kopiert den Ablauf der letzten Partie (deine Käufe und die des Gegners), damit der Bot daraus lernen kann">Spielprotokoll kopieren</button>
@@ -918,6 +918,9 @@
       // dann wirft er alle cd Sekunden einen Stein, der gerade (ohne Bogen) fliegt und nach delay Sekunden trifft; Mauern blockieren ihn nicht (Ziel ist die Mauer selbst)
       onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 2, atk: 20, range: 5, speed: 0.6, cd: 3, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
       // Schwertkämpfer: Helm wie der Ritter, Holzschild mit Eisenrand
+      // Bank (Wirtschaft, Gebäude): steht seitlich der Burg (oben oder unten, zufällig) etwas Richtung Mauer; ein Arbeiter baut sie (gleich schnell wie die Mauer: WALL.rate Leben pro Sekunde);
+      // fertig bringt sie alle gebaeude.alle Sekunden gebaeude.gold Gold, heilt wie Mauer/Burg (WALL.heal). Kann angegriffen werden; Bauern weichen an ihren Rand aus. passive = zählt nicht als Kampfeinheit.
+      bank: { cat: 'eco', name: 'Bank', cost: 50, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.55, passive: true, gebaeude: { w: 1.3, h: 1.1, gold: 5, alle: 5 } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
@@ -1026,14 +1029,14 @@
     .map(function (b, i) { var l = STORY_LAGE[i % STORY_PRO_SEITE]; return { id: b.id, bot: b.logik, name: b.name, koenig: b.koenig, x: l.x, y: l.y, seite: Math.floor(i / STORY_PRO_SEITE) }; });
   // Name und König eines Bots aus seinem Logik-Schlüssel (für Sandbox, Tutorial usw.)
   function botEintrag(logik) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].logik === logik) return BOT_DB[i]; return { name: 'Gegner', koenig: 'standard' }; }
-  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
+  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'bank'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
   var BUY_TYPES = (function () {
-    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
+    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'bank'];
     var grp = function (t) { return CONFIG.units[t].cat === 'siege' ? 1 : 0; };
     all.sort(function (a, b) { return grp(a) - grp(b) || CONFIG.units[a].cost - CONFIG.units[b].cost || 0; });
-    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u'];
+    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i'];
     list.forEach(function (t, i) { CONFIG.units[t].key = keys[i] || ''; });
     return list;
   })();
@@ -1046,7 +1049,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'b85739dd0c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'dabe2d6faf'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1551,6 +1554,7 @@
         var y = y0 + iy * 0.2;
         var dist = hyp(x - clamp(x, b.x1, b.x2), y - clamp(y, b.y1, b.y2));
         if (dist < 0.6 - 1e-6) continue; // nicht auf der Kaserne
+        if (units.some(function (bo) { return bo.type === 'bank' && bo.hp > 0 && Math.abs(bo.x - x) < CONFIG.units.bank.gebaeude.w / 2 + 0.3 && Math.abs(bo.y - y) < CONFIG.units.bank.gebaeude.h / 2 + 0.3; })) continue; // nicht auf einer Bank
         var ok = true;
         for (i = 0; i < others.length; i++) {
           if (hyp(others[i].tx - x, others[i].ty - y) < CONFIG.FARMER_RADIUS - 1e-6) { ok = false; break; }
@@ -1583,6 +1587,7 @@
         }
       }
     }
+    for (var bi = 0; bi < units.length; bi++) { var bo = units[bi]; if (bo.type === 'bank' && bo.hp > 0) { var BG = CONFIG.units.bank.gebaeude; obs.push({ k: 'sq', x: bo.x, y: bo.y, ca: 1, sa: 0, hw: BG.w / 2 + fr, hh: BG.h / 2 + fr }); } } // Bank: Bauern stehen an ihrem Rand
     function inside(o, x, y) {
       if (o.k === 'w') { var d0 = wallD(o.w.team, x, y); return o.outOnly ? d0 < o.out : d0 > o.in && d0 < o.out; }
       if (o.k === 'rd') return hyp(x - o.x, y - o.y) < o.r - 1e-6;
@@ -1743,7 +1748,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', bank: 'n' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -1820,7 +1825,7 @@
     v.hp -= amt;
   }
   function buyWall(team) {
-    for (var wi = 0; wi < units.length; wi++) if (units[wi].team === team && units[wi].type === 'worker' && units[wi].hp > 0) return false; // solange eigene Arbeiter auf dem Feld sind, geht kein neuer Bau
+    for (var wi = 0; wi < units.length; wi++) if (units[wi].team === team && units[wi].type === 'worker' && units[wi].hp > 0 && !units[wi].bank) return false; // solange eigene Arbeiter auf dem Feld sind, geht kein neuer Bau
     var cb = bases[team];
     if (cb.down) { // Burg zerstört: derselbe Knopf baut sie wieder auf
       for (var ci = 0; ci < WALL.workers; ci++) {
@@ -1840,6 +1845,22 @@
     return true;
   }
 
+  // Bank: freie Bauplätze seitlich der Burg (oben/unten), zuerst nahe, dann weiter Richtung Mauer
+  function bankPlaetze(team) {
+    var b = bases[team], G = CONFIG.units.bank.gebaeude, dir = team === 0 ? 1 : -1, cx = (b.x1 + b.x2) / 2 + dir * 0.9, l = [];
+    [0, 1.5].forEach(function (weiter) { [b.y1 - G.h / 2 - 0.3, b.y2 + G.h / 2 + 0.3].forEach(function (y) { l.push({ x: cx + dir * weiter, y: y }); }); });
+    return l.filter(function (p) { return !units.some(function (o) { return o.type === 'bank' && o.team === team && o.hp > 0 && hyp(o.x - p.x, o.y - p.y) < 0.2; }); });
+  }
+  function buyBank(team) {
+    var frei = bankPlaetze(team); if (!frei.length) return false;
+    var nah = frei.filter(function (p) { return Math.abs(p.x - frei[0].x) < 0.01; }), p = nah[Math.floor(simRand() * nah.length)]; // oben oder unten: Zufall
+    var d = CONFIG.units.bank, G = d.gebaeude, dir = team === 0 ? 1 : -1;
+    var bk = { id: nextId++, team: team, type: 'bank', x: p.x, y: p.y, hp: 1, max: d.hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1, bau: true, gT: 0 };
+    units.push(bk);
+    spawn(team, 'worker'); // ein Arbeiter baut sie (wie an der Mauer)
+    var wk = units[units.length - 1]; wk.bank = bk; wk.bp = { x: p.x - dir * (G.w / 2 + 0.3), y: p.y };
+    return true;
+  }
   function buy(team, type) {
     if (state !== 'playing') return false;
     var d = CONFIG.units[type];
@@ -1852,10 +1873,11 @@
       rec[team].push(clock.toFixed(1) + LOGKEY[type]);
       return true;
     }
+    if (d.gebaeude && !buyBank(team)) return false; // kein Bauplatz mehr frei
     gold[team] -= d.cost;
     if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
     rec[team].push(clock.toFixed(1) + LOGKEY[type]);
-    spawn(team, type);
+    if (!d.gebaeude) spawn(team, type);
     if (team === ME) produced++;
     return true;
   }
@@ -2181,6 +2203,18 @@
       var d = CONFIG.units[u.type];
       var ewIn = walls[1 - u.team]; u.inFoe = !!(ewIn && ewIn.built && !wallOut(ewIn, u.x, u.y)); // steht hinter der fertigen gegnerischen Mauer
       if (u.dummy) { u.hit = Math.max(0, u.hit - dt); u.slow = Math.max(0, u.slow - dt); continue; } // Trainingspuppe: steht still
+      if (d.gebaeude) { // Bank: steht still; fertig bringt sie Gold und heilt wie die Mauer
+        u.hit = Math.max(0, u.hit - dt); u.slow = 0; u.settled = u.bau ? u.hp / u.max : true;
+        if (!u.bau) {
+          if (u.hp < u.max) u.hp = Math.round(Math.min(u.max, u.hp + WALL.heal * dt) * 1e6) / 1e6;
+          u.gT += dt;
+          if (u.gT >= d.gebaeude.alle) {
+            u.gT -= d.gebaeude.alle;
+            if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + d.gebaeude.gold); effects.push({ kind: 'text', text: '+' + d.gebaeude.gold, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
+          }
+        }
+        continue;
+      }
       u.cd = Math.max(0, u.cd - dt);
       u.hit = Math.max(0, u.hit - dt);
       u.slow = Math.max(0, u.slow - dt);
@@ -2347,6 +2381,18 @@
           u.dig = null;
           u.cd = 0.4;
           effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.5 });
+        }
+        continue;
+      }
+      if (d.worker && u.bank) { // Arbeiter der Bank: hingehen und mit WALL.rate Leben pro Sekunde bauen, bis sie fertig ist
+        if (u.fade > 0) { u.fade -= dt; if (u.fade <= 0) { u.hp = 0; u.gone = true; } continue; }
+        var bk = u.bank;
+        if (bk.hp <= 0 || !bk.bau) { u.fade = WALL.fade; continue; }
+        var bdx = u.bp.x - u.x, bdy = u.bp.y - u.y, bdd = hyp(bdx, bdy);
+        if (bdd > 0.05) { var bs = Math.min(spd * dt, bdd); u.x += bdx / bdd * bs; u.y += bdy / bdd * bs; if (Math.abs(bdx) > 0.1) u.face = bdx > 0 ? 1 : -1; }
+        else {
+          bk.hp = Math.round(Math.min(bk.max, bk.hp + WALL.rate * dt) * 1e6) / 1e6;
+          if (bk.hp >= bk.max - 1e-6) { bk.hp = bk.max; bk.bau = false; bk.gT = 0; u.fade = WALL.fade; effects.push({ kind: 'puff', x: bk.x, y: bk.y, team: bk.team, t: 0, dur: 0.5 }); }
         }
         continue;
       }
@@ -2552,6 +2598,17 @@
     var kdead = [false, false];
     for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
 
+    // Banken: niemand steht in einer Bank (Bauern regeln das selbst über farmerStand)
+    for (i = 0; i < units.length; i++) {
+      var gb = units[i]; if (gb.type !== 'bank' || gb.hp <= 0) continue;
+      var GB = CONFIG.units.bank.gebaeude;
+      for (j = 0; j < units.length; j++) {
+        var gu2 = units[j], gd2 = CONFIG.units[gu2.type];
+        if (gu2 === gb || gu2.hp <= 0 || gd2.passive || gu2.tower || gu2.inCastle || gu2.dig || gu2.bf || gd2.worker) continue;
+        var hw2 = GB.w / 2 + gd2.r * 0.8, hh2 = GB.h / 2 + gd2.r * 0.8, ox = gu2.x - gb.x, oy = gu2.y - gb.y;
+        if (Math.abs(ox) < hw2 && Math.abs(oy) < hh2) { if (hw2 - Math.abs(ox) < hh2 - Math.abs(oy)) gu2.x = gb.x + (ox >= 0 ? hw2 : -hw2); else gu2.y = gb.y + (oy >= 0 ? hh2 : -hh2); }
+      }
+    }
     // Gefallene entfernen
     var alive = [];
     for (i = 0; i < units.length; i++) {
@@ -3035,6 +3092,28 @@
       c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.34 * A.orb * (1 + 0.3 * A.glow), 0, Math.PI * 2); c.fill();
       if (A.glow > 0) { c.strokeStyle = 'rgba(200,170,255,' + (0.8 * A.glow) + ')'; c.lineWidth = 1.5; for (var mi = 0; mi < 5; mi++) { var ma = mi * 1.257 + A.spin; c.beginPath(); c.moveTo(r * 1.65 + Math.cos(ma) * r * 0.75, r * 0.6 + Math.sin(ma) * r * 0.75); c.lineTo(r * 1.65 + Math.cos(ma) * r * 1.05, r * 0.6 + Math.sin(ma) * r * 1.05); c.stroke(); } }
       c.restore();
+    } else if (type === 'bank') {
+      // Bank von oben: Steinhaus mit Satteldach (Teamfarbe), goldene Münze über der Tür; im Bau (settled = Fortschritt 0..1) nur Gerüst und Fundament
+      var BG = CONFIG.units.bank.gebaeude, bw = r * BG.w / CONFIG.units.bank.r, bh = r * BG.h / CONFIG.units.bank.r, fort = typeof settled === 'number' ? settled : 1;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -bw / 2 + 3, -bh / 2 + 4, bw, bh, 4); c.fill();
+      if (fort < 1) {
+        c.fillStyle = '#b8ab92'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); // Fundament
+        c.save(); c.beginPath(); c.rect(-bw / 2, -bh / 2, bw * fort, bh); c.clip(); // wächst von hinten nach vorn
+        c.fillStyle = '#d8cfbd'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-bw / 2, -bh / 2); c.lineTo(bw / 2, bh / 2); c.moveTo(-bw / 2, bh / 2); c.lineTo(bw / 2, -bh / 2); c.stroke(); // Gerüst
+      } else {
+        c.fillStyle = '#d8cfbd'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.stroke(); // Mauern
+        var rd = r * 0.12; // Dach: zwei Hälften in Teamfarbe, First quer
+        c.fillStyle = col; rr(c, -bw / 2 + rd, -bh / 2 + rd, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
+        c.fillStyle = col; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill(); c.fillStyle = 'rgba(0,0,0,0.22)'; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = Math.max(1, r * 0.06);
+        for (var bz = 1; bz < 4; bz++) { var by = -bh / 2 + rd + (bh / 2 - rd) * bz / 4; c.beginPath(); c.moveTo(-bw / 2 + rd, by); c.lineTo(bw / 2 - rd, by); c.stroke(); c.beginPath(); c.moveTo(-bw / 2 + rd, -by); c.lineTo(bw / 2 - rd, -by); c.stroke(); } // Ziegelreihen
+        c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-bw / 2 + rd, 0); c.lineTo(bw / 2 - rd, 0); c.stroke(); // First
+        c.fillStyle = '#6a4a2a'; c.fillRect(bw / 2 - r * 0.12, -r * 0.22, r * 0.14, r * 0.44); // Tür vorne
+        c.fillStyle = '#f0c63a'; c.strokeStyle = '#a77d10'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.arc(0, 0, r * 0.32, 0, Math.PI * 2); c.fill(); c.stroke(); // Münze
+        c.fillStyle = '#a77d10'; c.font = '700 ' + Math.round(r * 0.42) + 'px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('$', 0, r * 0.03);
+      }
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
       if (!settled) {
@@ -3706,7 +3785,7 @@
   });
 
   // Ausdehnung der Figuren links und rechts vom Mittelpunkt (in Vielfachen des Radius), damit jedes Symbol groß und mittig steht
-  var ICON_EXT = { onager: [1.7, 1.5], javelin: [1.15, 1.75], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
+  var ICON_EXT = { bank: [1.25, 1.25], onager: [1.7, 1.5], javelin: [1.15, 1.75], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
   // Symbol des Mauer-Knopfs, solange die eigene Burg zerstört ist: eine kleine Burg (der Knopf baut sie dann wieder auf)
   function drawCastleIcon(c) {
     var col = P.me, st = '#8d9396', dk = '#585f63', x = 14, y = 12, w = 60, h = 64;
@@ -3737,7 +3816,7 @@
     });
   }
 
-  // ---------- Deck und Einheitenbuch ----------
+  // ---------- Deck und Kartenbuch ----------
   // DECK = gewählte Einheiten (höchstens DECK_MAX, die Mauer zählt nicht). Gespeichert nur im Browser (localStorage 'stronghold-deck').
   // Die Knöpfe zeigen immer die Mauer plus die Deck-Einheiten (im Tutorial alle), Tasten 1–9, 0, Q, E von links nach rechts über die sichtbaren Knöpfe.
   var TUT_TYPES = ['farmer', 'spear', 'archer', 'rider', 'knight', 'ram']; // genau die Einheiten, die das Tutorial braucht: im Tutorial nur diese Knöpfe (plus Mauer)
@@ -3765,6 +3844,7 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
+    if (d.gebaeude) a.push('Gebäude: ein Arbeiter baut sie neben der Burg. Fertig bringt sie <b>alle ' + d.gebaeude.alle + ' s +' + d.gebaeude.gold + ' Gold</b> und heilt sich wie die Mauer.');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');

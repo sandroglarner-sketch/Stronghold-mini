@@ -399,6 +399,28 @@
       c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.34 * A.orb * (1 + 0.3 * A.glow), 0, Math.PI * 2); c.fill();
       if (A.glow > 0) { c.strokeStyle = 'rgba(200,170,255,' + (0.8 * A.glow) + ')'; c.lineWidth = 1.5; for (var mi = 0; mi < 5; mi++) { var ma = mi * 1.257 + A.spin; c.beginPath(); c.moveTo(r * 1.65 + Math.cos(ma) * r * 0.75, r * 0.6 + Math.sin(ma) * r * 0.75); c.lineTo(r * 1.65 + Math.cos(ma) * r * 1.05, r * 0.6 + Math.sin(ma) * r * 1.05); c.stroke(); } }
       c.restore();
+    } else if (type === 'bank') {
+      // Bank von oben: Steinhaus mit Satteldach (Teamfarbe), goldene Münze über der Tür; im Bau (settled = Fortschritt 0..1) nur Gerüst und Fundament
+      var BG = CONFIG.units.bank.gebaeude, bw = r * BG.w / CONFIG.units.bank.r, bh = r * BG.h / CONFIG.units.bank.r, fort = typeof settled === 'number' ? settled : 1;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -bw / 2 + 3, -bh / 2 + 4, bw, bh, 4); c.fill();
+      if (fort < 1) {
+        c.fillStyle = '#b8ab92'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); // Fundament
+        c.save(); c.beginPath(); c.rect(-bw / 2, -bh / 2, bw * fort, bh); c.clip(); // wächst von hinten nach vorn
+        c.fillStyle = '#d8cfbd'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-bw / 2, -bh / 2); c.lineTo(bw / 2, bh / 2); c.moveTo(-bw / 2, bh / 2); c.lineTo(bw / 2, -bh / 2); c.stroke(); // Gerüst
+      } else {
+        c.fillStyle = '#d8cfbd'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.stroke(); // Mauern
+        var rd = r * 0.12; // Dach: zwei Hälften in Teamfarbe, First quer
+        c.fillStyle = col; rr(c, -bw / 2 + rd, -bh / 2 + rd, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
+        c.fillStyle = col; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill(); c.fillStyle = 'rgba(0,0,0,0.22)'; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = Math.max(1, r * 0.06);
+        for (var bz = 1; bz < 4; bz++) { var by = -bh / 2 + rd + (bh / 2 - rd) * bz / 4; c.beginPath(); c.moveTo(-bw / 2 + rd, by); c.lineTo(bw / 2 - rd, by); c.stroke(); c.beginPath(); c.moveTo(-bw / 2 + rd, -by); c.lineTo(bw / 2 - rd, -by); c.stroke(); } // Ziegelreihen
+        c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-bw / 2 + rd, 0); c.lineTo(bw / 2 - rd, 0); c.stroke(); // First
+        c.fillStyle = '#6a4a2a'; c.fillRect(bw / 2 - r * 0.12, -r * 0.22, r * 0.14, r * 0.44); // Tür vorne
+        c.fillStyle = '#f0c63a'; c.strokeStyle = '#a77d10'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.arc(0, 0, r * 0.32, 0, Math.PI * 2); c.fill(); c.stroke(); // Münze
+        c.fillStyle = '#a77d10'; c.font = '700 ' + Math.round(r * 0.42) + 'px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('$', 0, r * 0.03);
+      }
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
       if (!settled) {
