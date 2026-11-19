@@ -192,6 +192,7 @@ class Client {
     if (!m || typeof m.k !== 'string') return;
     if (m.k === 'queue' && SPIEL_V && m.v !== SPIEL_V) { this.send({ k: 'alt', v: SPIEL_V }); return; } // veraltete Seite: nicht paaren (würde auseinanderlaufen)
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
+      this.koenig = koenigId(m.koenig);
       if (typeof m.token === 'string' && m.token.length < 4096) {
         kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id).catch(() => []) : []; })
           .then((frei) => { this.frei = frei; if (this.alive) enqueue(this); });
@@ -258,10 +259,11 @@ function starteMatch(a, b) {
   const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
   const frei = [a.frei || [], b.frei || []]; // freigeschaltete Einheiten (z. B. Armbrustschütze durch Einladung)
   const namen = [a.user ? a.user.name : 'Gast', b.user ? b.user.name : 'Gast'];
-  const ma = { a, b, seed, acc, frei, namen, log: [], zuschauer: new Set(), start: Date.now() };
+  const koenige = [a.koenig || 'standard', b.koenig || 'standard']; // Aussehen der Könige (nur Optik)
+  const ma = { a, b, seed, acc, frei, namen, koenige, log: [], zuschauer: new Set(), start: Date.now() };
   a.match = b.match = ma;
-  a.send({ k: 'match', me: 0, seed, acc, frei, namen });
-  b.send({ k: 'match', me: 1, seed, acc, frei, namen });
+  a.send({ k: 'match', me: 0, seed, acc, frei, namen, koenige });
+  b.send({ k: 'match', me: 1, seed, acc, frei, namen, koenige });
   broadcastInfo();
 }
 // ---------- Freunde, Herausfordern, Zuschauen, Story ----------
@@ -298,9 +300,10 @@ async function freundesliste(c) {
   liste.sort((x, y) => rang[x.status] - rang[y.status] || x.name.localeCompare(y.name));
   c.send({ k: 'freunde', liste, code });
 }
+function koenigId(x) { return typeof x === 'string' && /^[a-z0-9]{1,24}$/.test(x) ? x : 'standard'; } // nur Optik: der Browser prüft, ob es ihn gibt
 async function sozial(c, m) {
   if (m.k === 'hallo') { // Anmeldung der Verbindung (Anwesenheit): mit Token weiss der Server, wer online ist
-    c.v = String(m.v || '');
+    c.v = String(m.v || ''); c.koenig = koenigId(m.koenig);
     const u = await kontoUser(m.token);
     if (c.user) { const set = online.get(c.user.id); if (set) { set.delete(c); if (!set.size) online.delete(c.user.id); } }
     c.user = u ? { id: u.id, name: nameAus(u.email) } : null; c.acc = !!u; c.frei = [];
@@ -316,6 +319,7 @@ async function sozial(c, m) {
     }
     return c.send({ k: 'ich', id: c.user.id, name: c.user.name, story });
   }
+  if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
   if (m.k === 'story') { const n = Math.max(0, Math.min(99, m.n | 0)); await db('PATCH', 'spieler?user_id=eq.' + c.user.id + '&story=lt.' + n, { story: n }); return; }
@@ -362,7 +366,7 @@ async function sozial(c, m) {
     if (!ma || ma.aus) return c.send({ k: 'sozialfehler', text: 'Diese Partie ist schon vorbei.' });
     if (c.schaut) zuschauenAus(c);
     c.schaut = ma; ma.zuschauer.add(c);
-    c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, log: ma.log, v: SPIEL_V });
+    c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
     return zuschauerMelden(ma);
   }
   if (m.k === 'nichtzuschauen') return zuschauenAus(c);

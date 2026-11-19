@@ -54,3 +54,14 @@ const kopf = `<!DOCTYPE html>
 const schwanz = '\n<p class="privacy">Anonyme Besucherstatistik ohne Cookies (GoatCounter). Gratis-Konten: E-Mail und Passwort werden verschlüsselt bei Supabase (EU, Frankfurt) gespeichert.</p>\n</body>\n</html>\n';
 schreib('index.html', kopf + body + schwanz);
 console.log('gebaut: build/artifact.html (' + artifact.length + ' Zeichen), index.html');
+
+// Bot-Datenbank als eigene Seite (build/botdatenbank.html), erzeugt aus denselben Dateien wie das Spiel
+{
+  const fsx = require('fs'), px = require('path'), wurzel = px.join(__dirname, '..');
+  const teile = ['daten/regeln.js', 'daten/bots.js', 'daten/einheiten.js', 'daten/koenige.js', 'daten/botdatenbank.js', 'spiel/koenig-optik.js'].map((f) => fsx.readFileSync(px.join(wurzel, f), 'utf8')).join('\n');
+  const stand = new Date().toLocaleString('de-CH', { timeZone: 'Europe/Zurich', dateStyle: 'medium', timeStyle: 'short' });
+  const seite = fsx.readFileSync(px.join(__dirname, 'datenbank-vorlage.html'), 'utf8').replace('/*DATEN*/', () => teile + '\n  var STAND = ' + JSON.stringify(stand) + ';');
+  fsx.mkdirSync(px.join(wurzel, 'build'), { recursive: true });
+  fsx.writeFileSync(px.join(wurzel, 'build', 'botdatenbank.html'), seite);
+  console.log('gebaut: build/botdatenbank.html');
+}

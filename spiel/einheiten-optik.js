@@ -275,48 +275,8 @@
         c.globalAlpha = 1;
       }
     } else if (type === 'king' || type === 'kingbow') {
-      // König von oben: Umhang in Teamfarbe, Rüstung, Krone; mit Bogen (auf der Burg) oder großem Zweihänder (ohne Burg)
-      var gold1 = '#d4a017';
-      c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 2; // Umhang: schmal, gedeckt (Teamfarbe nur als Tönung)
-      c.beginPath(); c.moveTo(-r * 0.1, -r * 0.75); c.lineTo(-r * 1.2, -r * 0.95); c.quadraticCurveTo(-r * 1.4, 0, -r * 1.2, r * 0.95); c.lineTo(-r * 0.1, r * 0.75); c.closePath();
-      c.fillStyle = col; c.fill(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); c.stroke(); // Umhang: Teamfarbe, etwas abgedunkelt
-      c.fillStyle = '#7d8790'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
-      c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-      if (type === 'king') {
-        // Zweihänder: langes Blatt nach vorn, goldene Parierstange, beide Hände am Griff (Hieb: dreht um die Hände)
-        c.save(); c.translate(r * 0.45, 0); c.rotate(A.rot); c.translate(-r * 0.45, 0);
-        c.fillStyle = P.steel; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
-        c.beginPath(); c.moveTo(r * 3.5, 0); c.lineTo(r * 3.1, -r * 0.2); c.lineTo(r * 0.9, -r * 0.2); c.lineTo(r * 0.9, r * 0.2); c.lineTo(r * 3.1, r * 0.2); c.closePath(); c.fill(); c.stroke();
-        c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 1.0, 0); c.lineTo(r * 3.2, 0); c.stroke();
-        c.strokeStyle = gold1; c.lineWidth = Math.max(3, r * 0.22);
-        c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
-        c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2);
-        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
-        c.fillStyle = '#d9a066';
-        c.beginPath(); c.arc(r * 0.45, -r * 0.13, r * 0.14, 0, Math.PI * 2); c.arc(r * 0.7, r * 0.13, r * 0.14, 0, Math.PI * 2); c.fill();
-        c.restore();
-      } else {
-        // Bogen mit aufgelegtem Pfeil
-        c.strokeStyle = P.wood; c.lineWidth = Math.max(3, r * 0.22);
-        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * 1.15); c.stroke();
-        var kmx = A.str * r; // Sehne: Ruhe 0.5r, voll gespannt 0.05r, nach dem Schuss gerade (0.95r) und schwingend
-        c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.5;
-        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.lineTo(kmx, A.vib * r); c.lineTo(r * 0.95, r * 1.15); c.stroke();
-        if (A.arrow > 0) {
-          c.globalAlpha = A.arrow;
-          c.strokeStyle = P.wood; c.lineWidth = 2;
-          c.beginPath(); c.moveTo(kmx, 0); c.lineTo(kmx + r * 1.1, 0); c.stroke();
-          c.fillStyle = P.steel; c.beginPath(); c.moveTo(kmx + r * 1.4, 0); c.lineTo(kmx + r * 1.0, -r * 0.14); c.lineTo(kmx + r * 1.0, r * 0.14); c.closePath(); c.fill();
-          c.globalAlpha = 1;
-        }
-        c.fillStyle = '#d9a066';
-        c.beginPath(); c.arc(r * 0.95, 0, r * 0.14, 0, Math.PI * 2); c.arc(Math.min(kmx, r * 0.5), 0, r * 0.14, 0, Math.PI * 2); c.fill();
-      }
-      // Kopf mit goldener Krone
-      c.fillStyle = '#d9a066'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
-      c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.strokeStyle = gold1; c.lineWidth = Math.max(2, r * 0.1); // runder Kopf, nur ein schmaler Kronreif
-      c.beginPath(); c.arc(r * 0.05, 0, r * 0.38, -2.2, 2.2); c.stroke();
+      // König von oben in der gewählten Optik (koenigTeam[team], siehe spiel/koenig-optik.js): mit Bogen (auf der Burg) oder seiner Waffe (ohne Burg)
+      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
     } else if (type === 'sword') {
       // Schwertkämpfer: einfacher grauer Eisenhelm mit dunklem Rand (anders als der Ritter), runder Holzschild mit Eisenrand und Buckel, Schwert
       c.fillStyle = '#8d9399';

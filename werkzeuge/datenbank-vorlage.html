@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stronghold Mini – Bot-Datenbank</title>
+<style>
+  :root { --bg: #eef1f3; --panel: #ffffff; --fg: #172023; --muted: #5d686c; --line: #d9dfe2; --me: #2a64b8; --foe: #c23a2e; --grass: #8ab565; --ok: #1d7a3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141a1c; --panel: #1e2629; --fg: #e8eef0; --muted: #9aa7ab; --line: #34403f; --grass: #33502f; --ok: #6fcf8a; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; }
+  h2 { font-size: 1.2rem; margin: 30px 0 8px; }
+  .lead { margin: 0 0 6px; color: var(--muted); max-width: 800px; }
+  .filter { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0 4px; }
+  .filter button { font: inherit; padding: 6px 13px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+  .filter button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .bot { display: grid; grid-template-columns: 220px 1fr; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 12px; }
+  .bot[hidden] { display: none; }
+  .bild { background: var(--grass); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; }
+  .bild canvas.gross { width: 196px; height: 110px; }
+  .knoten { width: 66px; height: 66px; border-radius: 50%; border: 4px solid var(--foe); background: #f7e3df; overflow: hidden; }
+  .knoten canvas { width: 100%; height: 100%; display: block; }
+  .bild small { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); font-size: 0.72rem; }
+  .info { padding: 12px 16px 14px; min-width: 0; }
+  .kopf { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .kopf b { font-size: 1.2rem; }
+  .tag { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .tag.ja { background: #e3f1e5; color: #1d6a33; } .tag.nein { background: #eceff1; color: #5d686c; }
+  @media (prefers-color-scheme: dark) { .tag.ja { background: #17351f; color: #a6dcb3; } .tag.nein { background: #2a3336; color: #9aa7ab; } }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 10px 0 0; font-size: 0.88rem; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .welle { display: flex; flex-wrap: wrap; gap: 5px; }
+  .welle span { padding: 2px 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.8rem; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--me); font-size: 0.85rem; }
+  pre { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; overflow: auto; font-size: 0.76rem; margin: 6px 0 0; }
+  .leer { color: var(--muted); font-style: italic; }
+  .spieler { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .sk { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sk canvas { width: 100%; height: 100px; background: var(--grass); display: block; }
+  .sk div { padding: 8px 10px; font-size: 0.85rem; }
+  @media (max-width: 640px) { .bot { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bot-Datenbank</h1>
+  <p class="lead">Alle Bots von Stronghold Mini. Diese Seite wird beim Bauen direkt aus den Spieldateien erzeugt (daten/botdatenbank.js, daten/koenige.js, daten/bots.js) und zeigt darum immer den aktuellen Stand. Stand: <span id="stand"></span>.</p>
+  <div class="filter" role="group" aria-label="Filter">
+    <button type="button" data-f="alle" aria-pressed="true">Alle</button>
+    <button type="button" data-f="spiel" aria-pressed="false">Im Spiel</button>
+    <button type="button" data-f="leer" aria-pressed="false">Ohne Logik</button>
+  </div>
+  <div id="liste"></div>
+  <h2>Könige des Spielers (immer frei)</h2>
+  <div class="spieler" id="spieler"></div>
+</main>
+<script>
+(function () {
+/*DATEN*/
+  var P = { me: '#2a64b8', foe: '#c23a2e' };
+  function bild(cv, id, team, scale) {
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var r = Math.min(h * (scale || 0.3), w * 0.2);
+    c.translate(w * 0.4, h / 2); koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, {});
+  }
+  function name(t) { var u = CONFIG.units[t]; return u ? (u.name || t) : t; }
+  function preis(t) { var u = CONFIG.units[t]; return u ? u.cost : 0; }
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  var byStory = {}; STORY.forEach(function (s, i) { byStory[s.id] = i; });
+  var html = BOT_DB.map(function (b) {
+    var L = b.logik ? CONFIG.BOTS[b.logik] : null, i = byStory[b.id];
+    var wann = i === undefined ? '<span class="leer">noch nicht im Story-Modus</span>' : i === 0 ? 'Zu Beginn (erster Gegner)' : 'Nach dem Sieg gegen ' + esc(STORY[i - 1].name);
+    var logik = '<span class="leer">leer (noch keine Logik)</span>';
+    if (L) {
+      var kosten = 0;
+      var welle = L.attack.map(function (a) { return a.buy.map(function (x) { kosten += preis(x[0]) * x[1]; return '<span>' + a.after + ' s: ' + x[1] + '× ' + esc(name(x[0])) + '</span>'; }).join(''); }).join('');
+      logik = 'CONFIG.BOTS.' + b.logik + '<dl>' +
+        '<dt>Bauern</dt><dd>höchstens ' + L.farmers + '</dd>' +
+        '<dt>Mauer</dt><dd>ab ' + L.wallGold + ' Gold' + (L.wallStage ? ', bis Stufe ' + L.wallStage : '') + (L.repairAt ? ', repariert ab ' + L.repairAt + ' Leben' : ', repariert nie') + (L.towerSiege ? ', Belagerungsplatz: ' + esc(name(L.towerSiege)) : '') + '</dd>' +
+        '<dt>Jagd</dt><dd>nach ' + L.huntLead + ' s Bauern-Vorsprung: ' + L.hunt.map(function (x) { return x[1] + '× ' + esc(name(x[0])); }).join(', ') + ' (Pause ' + L.huntEvery + ' s)</dd>' +
+        '<dt>Angriff</dt><dd>ab ' + L.attackGold + ' Gold, Welle kostet ' + kosten + ' Gold<div class="welle">' + welle + '</div></dd>' +
+        '<dt>Verteidigung</dt><dd>' + L.defPool.map(name).map(esc).join(', ') + ' (+' + L.defPlus + ' mehr als du)</dd></dl>' +
+        '<details><summary>Ganze Logik anzeigen</summary><pre>' + esc(JSON.stringify(L, null, 1)) + '</pre></details>';
+    }
+    return '<section class="bot" data-spiel="' + (L && i !== undefined ? 1 : 0) + '" data-leer="' + (L ? 0 : 1) + '">' +
+      '<div class="bild"><canvas class="gross" data-k="' + b.koenig + '"></canvas><div class="knoten"><canvas data-k="' + b.koenig + '" data-s="0.32"></canvas></div><small>Bild auf der Story-Karte</small></div>' +
+      '<div class="info"><div class="kopf"><b>' + esc(b.name) + '</b>' + (L && i !== undefined ? '<span class="tag ja">im Spiel</span>' : '<span class="tag nein">noch nicht im Spiel</span>') + '</div><dl>' +
+      '<dt>ID</dt><dd>' + b.id + '</dd>' +
+      '<dt>König</dt><dd>' + b.koenig + ' (wird durch einen Sieg freigeschaltet)</dd>' +
+      '<dt>Platz</dt><dd>' + (b.platz ? b.platz + (b.karte ? ' (Karte: ' + b.karte.x + ' % / ' + b.karte.y + ' %)' : '') : '<span class="leer">leer</span>') + '</dd>' +
+      '<dt>Wann im Story-Modus</dt><dd>' + wann + '</dd>' +
+      '<dt>Bot-Logik</dt><dd>' + logik + '</dd></dl></div></section>';
+  }).join('');
+  document.getElementById('liste').innerHTML = html;
+  document.getElementById('spieler').innerHTML = KOENIG_SPIELER.map(function (k) { return '<div class="sk"><canvas data-k="' + k.id + '" data-t="0"></canvas><div><b>' + esc(k.name) + '</b><br>' + k.id + '</div></div>'; }).join('');
+  document.getElementById('stand').textContent = STAND;
+  function malen() { Array.prototype.forEach.call(document.querySelectorAll('canvas[data-k]'), function (cv) { bild(cv, cv.getAttribute('data-k'), cv.hasAttribute('data-t') ? 0 : 1, +cv.getAttribute('data-s') || 0.3); }); }
+  malen(); window.addEventListener('resize', malen);
+  document.querySelectorAll('.filter button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.getAttribute('data-f');
+      document.querySelectorAll('.filter button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      document.querySelectorAll('.bot').forEach(function (s) { s.hidden = f === 'spiel' ? s.getAttribute('data-spiel') !== '1' : f === 'leer' ? s.getAttribute('data-leer') !== '1' : false; });
+    });
+  });
+})();
+</script>
+</body>
+</html>

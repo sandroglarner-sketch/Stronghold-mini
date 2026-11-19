@@ -8,6 +8,10 @@
   function frame(ts) {
     var rdt = Math.min(0.25, (ts - last) / 1000 || 0), dt = Math.min(0.05, rdt);
     last = ts;
+    if (intro.t > 0 && state === 'playing') { // Namen zu Beginn: Spiel steht noch
+      intro.t = Math.max(0, intro.t - rdt); updateEffects(dt); render(); zeichneIntro(); syncUi(); syncFsBar();
+      requestAnimationFrame(frame); return;
+    }
     if (pvp.on && state === 'playing') { for (var dk = 0; dk < deploys.length; dk++) deploys[dk].t += rdt; pvpFrame(rdt); updateEffects(dt); }
     else if (state === 'playing') {
       for (var dj = 0; dj < deploys.length; dj++) { // offline: fällige Käufe ausführen (Echtzeit, unabhängig vom Tutorial-Zeitlupentempo)

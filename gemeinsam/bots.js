@@ -101,7 +101,7 @@
     ai.steps = [];
   }
 
-  // ---------- Gegner «Bandit» ----------
+  // ---------- Gegner «Der Bandit» ----------
   function planCost(list) { return list.reduce(function (a, b) { return a + CONFIG.units[b[0]].cost * b[1]; }, 0); }
   function botUpdate(dt) {
     var R = CONFIG.BOTS[botType], i, j, st;

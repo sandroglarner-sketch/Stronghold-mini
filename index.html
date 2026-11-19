@@ -248,12 +248,15 @@
   .storykopf .ghost { height: 40px; background: var(--panel); border-radius: 10px; font-weight: 600; }
   .storykopf b { padding: 7px 14px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); font-family: var(--display); font-size: 1.05rem; }
   .storyleer { width: 80px; }
-  .sknoten { position: absolute; transform: translate(-50%, -50%); width: 58px; height: 58px; border-radius: 50%; border: 4px solid; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
-  .sknoten.besiegt { background: var(--panel); border-color: #1d7a3a; color: #1d7a3a; }
-  .sknoten.offen { background: var(--foe); border-color: #8f2a21; color: #fff; }
+  .sknoten { position: absolute; transform: translate(-50%, -50%); width: 66px; height: 66px; overflow: visible; border-radius: 50%; border: 4px solid; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
+  .sknoten canvas { width: 100%; height: 100%; border-radius: 50%; display: block; }
+  .sknoten.besiegt { background: #e3f1e5; border-color: #1d7a3a; color: #1d7a3a; }
+  .sknoten.offen { background: #f7e3df; border-color: var(--foe); color: #fff; }
   .sknoten.gesperrt { background: #6e787b; border-color: #4b5357; color: #fff; }
+  .sknoten i { position: absolute; right: -6px; bottom: -6px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+  .sknoten.besiegt i { background: #1d7a3a; } .sknoten.gesperrt i { background: #4b5357; }
   .sknoten.sel { box-shadow: 0 0 0 5px rgba(255,255,255,0.85); }
-  .sname { position: absolute; transform: translateX(-50%); text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
+  .sname { position: absolute; transform: translateX(-50%); margin-top: 4px; text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
   .sname b { font-size: 0.9rem; display: block; }
   .sfigur { position: absolute; transform: translate(-50%, -100%); width: 44px; height: 44px; border-radius: 50%; background: var(--me); border: 3px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
   .storykarte { position: absolute; z-index: 2; transform: translateY(-50%); padding: 10px 12px; border-radius: 12px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.3); display: grid; gap: 6px; min-width: 150px; max-width: 230px; }
@@ -263,6 +266,26 @@
   .storykarte b { font-family: var(--display); font-size: 1.05rem; position: relative; }
   .storykarte .primary { margin: 0; position: relative; white-space: normal; }
   .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
+  /* Königswahl: kleineres Fenster wie das Einheitenbuch */
+  .ovkoenig canvas { width: 30px; height: 30px; margin: 0 -4px 0 -6px; }
+  .koenigwahl { position: absolute; top: 7%; left: 12%; right: 12%; bottom: 64px; z-index: 8; display: flex; flex-direction: column; gap: 8px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.28); padding: 10px 12px; box-sizing: border-box; overflow: hidden; }
+  .koenigwahl[hidden] { display: none; }
+  .kwkopf { display: flex; align-items: center; gap: 10px; }
+  .kwkopf b { font-family: var(--display); font-size: 1.15rem; white-space: nowrap; }
+  .kwinfo { flex: 1; font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+  .kwzu { position: static; flex: none; }
+  .kwgrid { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; align-content: start; }
+  .kwkarte { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 6px 6px 8px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); color: var(--fg); text-align: center; cursor: pointer; font: inherit; }
+  .kwkarte canvas { width: 100%; height: 64px; border-radius: 8px; background: color-mix(in srgb, var(--grass-a) 70%, var(--panel)); }
+  .kwkarte b { font-size: 0.8rem; line-height: 1.2; }
+  .kwkarte span { font-size: 0.7rem; color: var(--muted); line-height: 1.2; }
+  .kwkarte.sel { border-color: var(--me); box-shadow: 0 0 0 2px color-mix(in srgb, var(--me) 30%, transparent); }
+  .kwkarte.sel span { color: var(--me); font-weight: 700; }
+  .kwkarte.zu { cursor: default; opacity: 0.75; }
+  html.phone .koenigwahl { top: 4px; left: 6%; right: 6%; bottom: calc(var(--uh, 60px) / 2 + 6px); }
+  html.phone .kwgrid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  html.phone .kwkarte canvas { height: 48px; }
+  html.phone .kwinfo { display: none; }
   /* Freunde */
   .freunde { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 6; background: var(--panel); box-shadow: -8px 0 24px rgba(23, 32, 35, 0.25); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 44px; box-sizing: border-box; overflow-y: auto; border-radius: 0 10px 10px 0; }
   .freunde[hidden] { display: none; }
@@ -664,6 +687,7 @@
       <div class="ovtop">
         <button class="ghost ovbook" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Einheitenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
         <span class="ovright">
+          <button class="ghost ovkoenig" id="koenigBtn" type="button" title="Dein König: wähle sein Aussehen"><canvas id="koenigIcon" width="30" height="30" aria-hidden="true"></canvas><span>König</span></button>
           <button class="ghost ovfr" id="freundeBtn" type="button" title="Freunde: einladen, herausfordern, zuschauen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freunde</span><span class="ovbadge" id="freundeZahl" hidden>0</span></button>
           <button class="ghost ovkonto" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
         </span>
@@ -678,10 +702,10 @@
       <div class="ovrow">
         <span class="choice" id="ovChoice" hidden>
           <select id="botType" aria-label="Gegner">
-            <option value="bauern" selected>Gegner: Bandit</option>
+            <option value="bauern" selected>Gegner: Der Bandit</option>
             <option value="prinz">Gegner: Kleiner Prinz</option>
-            <option value="feldherr">Gegner: Feldherr</option>
-            <option value="baron">Gegner: Baron</option>
+            <option value="feldherr">Gegner: Der Feldherr</option>
+            <option value="baron">Gegner: Baron Rabenstein</option>
           </select>
         </span>
         <button class="primary" id="ovBtn" type="button">Spiel starten</button>
@@ -701,6 +725,10 @@
       <div class="storykopf"><button class="ghost" id="storyZu" type="button">‹ Menü</button><b id="storyTitel">Story-Modus</b><span class="storyleer"></span></div>
       <div id="storyKnoten"></div>
       <div class="storykarte" id="storyKarte"></div>
+    </div>
+    <div class="koenigwahl" id="koenigWahl" hidden role="dialog" aria-label="Dein König">
+      <div class="kwkopf"><b>Dein König</b><span class="kwinfo">Besiege einen Gegner im Story-Modus, um seinen König freizuschalten.</span><button class="kontox kwzu" id="koenigZu" type="button" aria-label="Schliessen">✕</button></div>
+      <div class="kwgrid" id="koenigGrid"></div>
     </div>
     <div class="freunde" id="freunde" hidden role="dialog" aria-label="Freunde">
       <div class="frkopf"><b>Freunde</b><button class="kontox frzu" id="freundeZu" type="button" aria-label="Schliessen">✕</button></div>
@@ -782,7 +810,7 @@
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
     AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 40 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
-    // Gegner «Bandit» (Zahlen in BOTS.bauern):
+    // Gegner «Der Bandit» (Zahlen in BOTS.bauern):
     // farmers = höchstens so viele Bauern; huntLead = so viele Sekunden lang musst du mehr Bauern haben, bis die Jagd kommt; hunt = Jagdtrupp, huntEvery = Pause zwischen zwei Jagden;
     // wallGold = so viel Gold, dann baut er eine Mauer (repairAt 0 = er repariert nie, baut sie aber neu), wallClear = nur, solange kein Gegner in seiner Spielfeldhälfte ist;
     // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
@@ -794,20 +822,20 @@
                 attackGold: 130, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Kleiner Prinz»: wie der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
+      // «Kleiner Prinz»: wie Der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) mit Reparatur ab 60 Leben,
       prinz: { farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 3, wallClear: true,
                attackGold: 180, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
                defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
+      // «Der Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
       feldherr: { farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
                wallGold: 60, wallUnits: 0, repairAt: 60, wallStage: 2, wallClear: true,
                attackGold: 210, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['catapult', 1], ['ram', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 13, buy: [['rider', 4]] }],
                defPlus: 1, defPool: ['archer', 'spear', 'rider'], defMage: 99, noOutput: 10 },
-      // «Baron»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 5 (die Türme besetzt er wie alle Gegner komplett: je 3 Bogenschützen und auf dem Belagerungsplatz ein Trebuchet, towerSiege),
+      // «Baron Rabenstein»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 5 (die Türme besetzt er wie alle Gegner komplett: je 3 Bogenschützen und auf dem Belagerungsplatz ein Trebuchet, towerSiege),
       // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
       // verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern, greift bei 230 Gold an
       baron: { farmers: 9, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
@@ -892,13 +920,86 @@
   // Konto (Supabase): öffentliche Projekt-Adresse und öffentlicher Schlüssel («anon/publishable», darf im Spiel stehen).
   // Leer = Kontofunktion aus (dann ist auch nichts gesperrt).
   var KONTO = { url: 'https://odxpdyrwtvgicntbjlrh.supabase.co', key: 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn' };
-  // Story-Modus: Gegner in dieser Reihenfolge; den nächsten schaltet frei, wer den aktuellen besiegt. x/y = Platz auf der Karte (Prozent). Absichtlich keine Beschreibung: man soll nicht wissen, wie der Bot spielt
-  var STORY = [
-    { bot: 'bauern', name: 'Bandit', x: 13, y: 73 },
-    { bot: 'prinz', name: 'Kleiner Prinz', x: 34, y: 47 },
-    { bot: 'feldherr', name: 'Feldherr', x: 56, y: 69 },
-    { bot: 'baron', name: 'Baron', x: 80, y: 40 }
+  // Königs-Optiken (Datenbank, Teil 1): id -> Aussehen. Gezeichnet von koenigMalen() in spiel/koenig-optik.js (von oben, Blick nach rechts).
+  // krone: reif zacken diadem hoch helm kapuze turban lorbeer hoerner pelz wolf spitzhut mitra eis federn pilz dreispitz strohhut topf; kf = Kronenfarbe
+  // umhang: Farbe oder 'team' (= Teamfarbe abgedunkelt, wie der Standard-König); muster: hermelin streifen kreuz punkte sterne blaetter flicken muenzen zacken schuppen
+  // ruestung, haut, haar (leer = keine Haare): Farben; bart: kurz voll lang spitz schnauz stoppel zopf; waffe: zweihaender schwert saebel axt kolben speer zepter forke holzschwert; wf = Waffenfarbe
+  // Der Saum des Umhangs ist immer in der Teamfarbe (blau/rot), damit die Seiten erkennbar bleiben. Die Waffe ist nur Aussehen.
+  var KOENIGE = {
+    standard: {krone: 'reif', kf: '#d4a017', umhang: 'team', muster: '', ruestung: '#7d8790', haut: '#d9a066', haar: '', bart: '', waffe: 'zweihaender', wf: '#e3eaec'},  // Der heutige König
+    loewenherz: {krone: 'zacken', kf: '#e2b22c', umhang: '#8a2432', muster: 'hermelin', ruestung: '#c9a54a', haut: '#e0ac7a', haar: '#c77d2a', bart: 'voll', waffe: 'zweihaender', wf: '#f1e4b8'},  // Goldrüstung, Hermelinkragen, rote Mähne
+    jungkoenig: {krone: 'diadem', kf: '#d9dde2', umhang: '#2c5d55', muster: 'streifen', ruestung: '#a7b4bd', haut: '#f0c29a', haar: '#3b2a1c', bart: '', waffe: 'schwert', wf: '#e3eaec'},  // Schlankes Silberdiadem, kein Bart
+    waldkoenig: {krone: 'lorbeer', kf: '#4f8a3a', umhang: '#4a5a2a', muster: 'blaetter', ruestung: '#7a5a3a', haut: '#c98b5e', haar: '#6b4a2b', bart: 'kurz', waffe: 'axt', wf: '#cfd6d8'},  // Blätterkranz, Lederrüstung, Axt
+    strohkoenig: {krone: 'strohhut', kf: '#e6c35c', umhang: '#7a8a3a', muster: 'flicken', ruestung: '#a07a4a', haut: '#e2a878', haar: '#b07a3a', bart: 'stoppel', waffe: 'forke', wf: '#9aa0a4'},  // Strohhut statt Krone, Heugabel. Ganz zum Anfang, noch vor dem Banditen
+    tollpatsch: {krone: 'topf', kf: '#9aa3aa', umhang: '#b0603a', muster: 'punkte', ruestung: '#c9b48a', haut: '#f2c49c', haar: '#d9a441', bart: '', waffe: 'holzschwert', wf: '#c08a4a'},  // Kochtopf als Helm, Holzschwert
+    bandit: {krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93'},  // Kapuze statt Krone, geflickter Umhang
+    prinz: {krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec'},  // Schmaler Goldreif, Sternenumhang
+    feldherr: {krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2'},  // Eisenhelm mit Goldrand, Feldzeichen
+    rabenstein: {krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017'},  // Hohe Krone, Hermelin, Zepter
+    raubritterkuno: {krone: 'hoerner', kf: '#8a8f93', umhang: '#3b2f2a', muster: 'flicken', ruestung: '#55595c', haut: '#c98d5e', haar: '#2b2118', bart: 'voll', waffe: 'axt', wf: '#b9c0c4'},  // Hörnerhelm, schwere Axt
+    graefineisenhand: {krone: 'diadem', kf: '#c0c7cc', umhang: '#5a2232', muster: 'streifen', ruestung: '#9aa6ae', haut: '#efc4a0', haar: '#2d1d14', bart: '', waffe: 'schwert', wf: '#e3eaec'},  // Silberdiadem, Weinrot
+    baerenfuerst: {krone: 'pelz', kf: '#6b4a2b', umhang: '#5b3d24', muster: 'hermelin', ruestung: '#6e5a44', haut: '#d69d6c', haar: '#4a3222', bart: 'voll', waffe: 'kolben', wf: '#8a8f93'},  // Bärenfell auf dem Kopf
+    herzognebelwald: {krone: 'lorbeer', kf: '#9fb59a', umhang: '#4d5b5f', muster: 'blaetter', ruestung: '#7f8b8a', haut: '#dcae86', haar: '#c8ccc9', bart: 'lang', waffe: 'speer', wf: '#d6dde0'},  // Grauer Kranz, langer weisser Bart
+    sumpfhexe: {krone: 'spitzhut', kf: '#3f4f2a', umhang: '#2f3d22', muster: 'punkte', ruestung: '#4e5a3a', haut: '#a7c08a', haar: '#2a2a2a', bart: '', waffe: 'zepter', wf: '#7bd17a'},  // Spitzhut, giftgrüner Stab
+    koenigrotbart: {krone: 'zacken', kf: '#d4a017', umhang: '#a3271f', muster: 'hermelin', ruestung: '#7d8790', haut: '#e2ac7c', haar: '#b8401c', bart: 'lang', waffe: 'zweihaender', wf: '#e3eaec'},  // Klassische Zackenkrone, roter Bart
+    markgrafmoorstein: {krone: 'helm', kf: '#7a6a4a', umhang: '#4a4136', muster: 'kreuz', ruestung: '#6a6c66', haut: '#cf9a70', haar: '', bart: 'spitz', waffe: 'speer', wf: '#c6cdd0'},  // Grauer Topfhelm
+    wolfsjarl: {krone: 'wolf', kf: '#8d939a', umhang: '#36414a', muster: 'streifen', ruestung: '#5c656c', haut: '#e6b894', haar: '#d9c27a', bart: 'zopf', waffe: 'axt', wf: '#cfd6d8'},  // Wolfsfell, Zopfbart
+    kalifsandsturm: {krone: 'turban', kf: '#e9dfc4', umhang: '#c08a2e', muster: 'streifen', ruestung: '#a88a5a', haut: '#b57a4e', haar: '', bart: 'spitz', waffe: 'saebel', wf: '#e3eaec'},  // Turban mit Juwel, Krummsäbel
+    fuerstbischofgerold: {krone: 'mitra', kf: '#f1ece0', umhang: '#6d2a6a', muster: 'kreuz', ruestung: '#c9c2b0', haut: '#ecc09a', haar: '', bart: '', waffe: 'zepter', wf: '#d4a017'},  // Bischofsmütze, Goldstab
+    schwarzeritter: {krone: 'helm', kf: '#2a2a2e', umhang: '#1c1c20', muster: '', ruestung: '#33363a', haut: '#c98d5e', haar: '', bart: '', waffe: 'zweihaender', wf: '#6a6f75'},  // Alles schwarz, dunkle Klinge
+    zarinfrostmantel: {krone: 'eis', kf: '#9ad3f0', umhang: '#dfeaf2', muster: 'hermelin', ruestung: '#a9c2d1', haut: '#f3d2b8', haar: '#f2f2f2', bart: '', waffe: 'speer', wf: '#bfe6fa'},  // Eiskrone, weisser Mantel
+    junkerhabgier: {krone: 'hoch', kf: '#e5c04a', umhang: '#2e6a3a', muster: 'muenzen', ruestung: '#c9a54a', haut: '#f0bf96', haar: '#5a3a1e', bart: 'schnauz', waffe: 'zepter', wf: '#e5c04a'},  // Goldrüstung voller Münzen
+    vogtgrimmbart: {krone: 'reif', kf: '#8a7a5a', umhang: '#4a3f33', muster: 'kreuz', ruestung: '#6e7377', haut: '#d19c70', haar: '#7a7a7a', bart: 'voll', waffe: 'kolben', wf: '#8a8f93'},  // Eisenreif, grauer Vollbart
+    kaiseringoldfeder: {krone: 'federn', kf: '#e8b830', umhang: '#e0b23a', muster: 'sterne', ruestung: '#d9c38a', haut: '#e9bb90', haar: '#2b1b10', bart: '', waffe: 'schwert', wf: '#f1e4b8'},  // Federkrone, ganz in Gold
+    pilzkoenig: {krone: 'pilz', kf: '#c8382c', umhang: '#7a5a3a', muster: 'punkte', ruestung: '#a8946a', haut: '#e8c9a0', haar: '', bart: 'lang', waffe: 'zepter', wf: '#c8382c'},  // Fliegenpilz als Hut
+    admiralsalzwind: {krone: 'dreispitz', kf: '#1f2a40', umhang: '#24406a', muster: 'streifen', ruestung: '#c9b07a', haut: '#d79f72', haar: '#e2e2e2', bart: 'schnauz', waffe: 'saebel', wf: '#e3eaec'},  // Dreispitz, Marineblau
+    khansteppensturm: {krone: 'pelz', kf: '#8a5a2e', umhang: '#7a3a22', muster: 'zacken', ruestung: '#8a6a44', haut: '#c78a58', haar: '#1e1a16', bart: 'schnauz', waffe: 'saebel', wf: '#d6dde0'},  // Pelzmütze, Krummsäbel
+    drachenkoenig: {krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a'},  // Drachenhörner, glühende Klinge
+    schattenkoenigin: {krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0'},  // Violette Krone, Sternenmantel
+  };
+  // Eigene Könige, die man immer wählen kann (Annahme 19.11.); alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
+  var KOENIG_SPIELER = [
+    { id: 'standard', name: 'Standard' }, { id: 'loewenherz', name: 'Löwenherz' }, { id: 'jungkoenig', name: 'Jungkönig' }, { id: 'waldkoenig', name: 'Waldkönig' }
   ];
+  // Bot-Datenbank (Teil 2): alle Bots mit Name, König (Optik aus KOENIGE, auch Bild auf der Story-Karte), Story-Platz und Logik.
+  // platz = Reihenfolge im Story-Modus (1 = zuerst; null = noch nicht im Spiel); karte = Lage des Kreises auf der Story-Karte in Prozent;
+  // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
+  // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
+  var BOT_DB = [
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 1, karte: { x: 13, y: 73 }, logik: 'bauern' },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 2, karte: { x: 34, y: 47 }, logik: 'prinz' },
+    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 3, karte: { x: 56, y: 69 }, logik: 'feldherr' },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 4, karte: { x: 80, y: 40 }, logik: 'baron' },
+    // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
+    { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, karte: null, logik: null },
+    { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: null, karte: null, logik: null },
+    // weitere Bots, noch ohne Logik
+    { id: 'raubritterkuno', name: 'Raubritter Kuno', koenig: 'raubritterkuno', platz: null, karte: null, logik: null },
+    { id: 'graefineisenhand', name: 'Gräfin Eisenhand', koenig: 'graefineisenhand', platz: null, karte: null, logik: null },
+    { id: 'baerenfuerst', name: 'Der Bärenfürst', koenig: 'baerenfuerst', platz: null, karte: null, logik: null },
+    { id: 'herzognebelwald', name: 'Herzog Nebelwald', koenig: 'herzognebelwald', platz: null, karte: null, logik: null },
+    { id: 'sumpfhexe', name: 'Die Sumpfhexe', koenig: 'sumpfhexe', platz: null, karte: null, logik: null },
+    { id: 'koenigrotbart', name: 'König Rotbart', koenig: 'koenigrotbart', platz: null, karte: null, logik: null },
+    { id: 'markgrafmoorstein', name: 'Markgraf Moorstein', koenig: 'markgrafmoorstein', platz: null, karte: null, logik: null },
+    { id: 'wolfsjarl', name: 'Der Wolfsjarl', koenig: 'wolfsjarl', platz: null, karte: null, logik: null },
+    { id: 'kalifsandsturm', name: 'Kalif Sandsturm', koenig: 'kalifsandsturm', platz: null, karte: null, logik: null },
+    { id: 'fuerstbischofgerold', name: 'Fürstbischof Gerold', koenig: 'fuerstbischofgerold', platz: null, karte: null, logik: null },
+    { id: 'schwarzeritter', name: 'Der Schwarze Ritter', koenig: 'schwarzeritter', platz: null, karte: null, logik: null },
+    { id: 'zarinfrostmantel', name: 'Zarin Frostmantel', koenig: 'zarinfrostmantel', platz: null, karte: null, logik: null },
+    { id: 'junkerhabgier', name: 'Junker Habgier', koenig: 'junkerhabgier', platz: null, karte: null, logik: null },
+    { id: 'vogtgrimmbart', name: 'Vogt Grimmbart', koenig: 'vogtgrimmbart', platz: null, karte: null, logik: null },
+    { id: 'kaiseringoldfeder', name: 'Kaiserin Goldfeder', koenig: 'kaiseringoldfeder', platz: null, karte: null, logik: null },
+    { id: 'pilzkoenig', name: 'Der Pilzkönig', koenig: 'pilzkoenig', platz: null, karte: null, logik: null },
+    { id: 'admiralsalzwind', name: 'Admiral Salzwind', koenig: 'admiralsalzwind', platz: null, karte: null, logik: null },
+    { id: 'khansteppensturm', name: 'Khan Steppensturm', koenig: 'khansteppensturm', platz: null, karte: null, logik: null },
+    { id: 'drachenkoenig', name: 'Der Drachenkönig', koenig: 'drachenkoenig', platz: null, karte: null, logik: null },
+    { id: 'schattenkoenigin', name: 'Die Schattenkönigin', koenig: 'schattenkoenigin', platz: null, karte: null, logik: null }
+  ];
+  // Story-Modus: alle Bots mit Platz und Logik, nach Platz sortiert (bot = Logik-Schlüssel, x/y = Kartenlage)
+  var STORY = BOT_DB.filter(function (b) { return b.platz && b.logik; }).sort(function (a, b) { return a.platz - b.platz; })
+    .map(function (b) { return { id: b.id, bot: b.logik, name: b.name, koenig: b.koenig, x: b.karte.x, y: b.karte.y }; });
+  // Name und König eines Bots aus seinem Logik-Schlüssel (für Sandbox, Tutorial usw.)
+  function botEintrag(logik) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].logik === logik) return BOT_DB[i]; return { name: 'Gegner', koenig: 'standard' }; }
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
@@ -919,7 +1020,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '9544b80c17'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '1f59bba0c8'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1062,6 +1163,154 @@
       c.lineWidth = 2;
       c.beginPath(); c.ellipse(sx, sy, 9 + rnd() * 6, 6 + rnd() * 3, rnd(), 0, Math.PI * 2); c.fill(); c.stroke();
     }
+  }
+
+  // ---------- König zeichnen (Optik aus KOENIGE) ----------
+  // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
+  // o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
+  // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
+  var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
+  var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
+  function koenigOptik(id) { return KOENIGE[id] || KOENIGE.standard; }
+  function koenigMalen(c, k, r, teamCol, o) {
+    o = o || {};
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    var std = k.umhang === 'team';
+    var cape = function () { c.beginPath(); c.moveTo(-r * 0.1, -r * 0.75); c.lineTo(-r * 1.2, -r * 0.95); c.quadraticCurveTo(-r * 1.4, 0, -r * 1.2, r * 0.95); c.lineTo(-r * 0.1, r * 0.75); c.closePath(); };
+    cape();
+    if (std) { c.fillStyle = teamCol; c.fill(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 2; c.stroke(); }
+    else {
+      c.fillStyle = k.umhang; c.fill();
+      c.save(); cape(); c.clip(); kMuster(c, k, r); c.restore();
+      cape(); c.strokeStyle = teamCol; c.lineWidth = Math.max(2, r * 0.16); c.stroke(); // Saum in Teamfarbe
+    }
+    if (k.muster === 'hermelin') {
+      c.fillStyle = '#f4f1ea'; c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(-r * 0.2, 0, r * 0.32, r * 0.95, 0, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#1b1b1b'; [-0.6, -0.2, 0.2, 0.6].forEach(function (t) { c.beginPath(); c.arc(-r * 0.22, r * t, r * 0.05, 0, 7); c.fill(); });
+    }
+    c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
+    c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
+    if (o.bogen) kBogen(c, k, r, o);
+    else { c.save(); c.translate(r * 0.45, 0); c.rotate(o.rot || 0); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); }
+    if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
+    c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
+    if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.36, Math.PI * 0.55, Math.PI * 1.45); c.fill(); }
+    kBart(c, k, r);
+    kKrone(c, k, r);
+    c.restore();
+  }
+  function kBogen(c, k, r, o) { // Bogen mit aufgelegtem Pfeil (wie bisher)
+    var str = o.str === undefined ? 0.5 : o.str;
+    c.strokeStyle = KHOLZ; c.lineWidth = Math.max(3, r * 0.22);
+    c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * 1.15); c.stroke();
+    var kmx = str * r;
+    c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.lineTo(kmx, (o.vib || 0) * r); c.lineTo(r * 0.95, r * 1.15); c.stroke();
+    if (o.arrow > 0) {
+      c.globalAlpha = o.arrow;
+      c.strokeStyle = KHOLZ; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(kmx, 0); c.lineTo(kmx + r * 1.1, 0); c.stroke();
+      c.fillStyle = KSTAHL; c.beginPath(); c.moveTo(kmx + r * 1.4, 0); c.lineTo(kmx + r * 1.0, -r * 0.14); c.lineTo(kmx + r * 1.0, r * 0.14); c.closePath(); c.fill();
+      c.globalAlpha = 1;
+    }
+    c.fillStyle = k.haut;
+    c.beginPath(); c.arc(r * 0.95, 0, r * 0.14, 0, Math.PI * 2); c.arc(Math.min(kmx, r * 0.5), 0, r * 0.14, 0, Math.PI * 2); c.fill();
+  }
+  function kMuster(c, k, r) {
+    var m = k.muster, i, j;
+    c.fillStyle = 'rgba(255,255,255,0.22)'; c.strokeStyle = 'rgba(255,255,255,0.28)'; c.lineWidth = Math.max(1.5, r * 0.09);
+    if (m === 'streifen') for (i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(-r * 1.5, r * 0.38 * i); c.lineTo(0, r * 0.38 * i); c.stroke(); }
+    if (m === 'kreuz') { c.lineWidth = r * 0.16; c.beginPath(); c.moveTo(-r * 0.65, -r * 0.5); c.lineTo(-r * 0.65, r * 0.5); c.moveTo(-r * 1.05, 0); c.lineTo(-r * 0.25, 0); c.stroke(); }
+    if (m === 'punkte') for (i = 0; i < 9; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 3) * 0.32), r * (-0.6 + Math.floor(i / 3) * 0.6), r * 0.08, 0, 7); c.fill(); }
+    if (m === 'sterne') { c.fillStyle = 'rgba(255,240,180,0.8)'; for (i = 0; i < 7; i++) { var sx = -r * (0.35 + ((i * 37) % 9) / 10), sy = r * (-0.75 + ((i * 53) % 15) / 10); kStern(c, sx, sy, r * 0.09); } }
+    if (m === 'blaetter') { c.fillStyle = 'rgba(160,210,110,0.45)'; for (i = 0; i < 6; i++) { c.beginPath(); c.ellipse(-r * (0.45 + (i % 2) * 0.45), r * (-0.65 + Math.floor(i / 2) * 0.65), r * 0.16, r * 0.08, 0.6, 0, 7); c.fill(); } }
+    if (m === 'flicken') { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(-r * 0.95, -r * 0.55, r * 0.35, r * 0.3); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(-r * 0.7, r * 0.2, r * 0.3, r * 0.35); }
+    if (m === 'muenzen') { c.fillStyle = '#e5c04a'; for (i = 0; i < 6; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 2) * 0.5), r * (-0.6 + Math.floor(i / 2) * 0.6), r * 0.1, 0, 7); c.fill(); } }
+    if (m === 'zacken') { c.beginPath(); for (i = 0; i <= 8; i++) c.lineTo(-r * 0.55 - (i % 2) * r * 0.25, -r + i * r * 0.25); c.stroke(); }
+    if (m === 'schuppen') { c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; for (i = 0; i < 4; i++) for (j = -3; j <= 3; j++) { c.beginPath(); c.arc(-r * (0.3 + i * 0.28), r * j * 0.28 + (i % 2) * r * 0.14, r * 0.14, Math.PI * 0.5, Math.PI * 1.5); c.stroke(); } }
+  }
+  function kStern(c, x, y, s) { c.beginPath(); for (var i = 0; i < 10; i++) { var a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? s * 0.45 : s; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
+  function kHand(c, x, y, r, f) { c.fillStyle = f || '#d9a066'; c.beginPath(); c.arc(x, y, r * 0.14, 0, 7); c.fill(); }
+  function kWaffe(c, k, r) {
+    var w = k.waffe, s = 'rgba(0,0,0,0.5)';
+    c.lineWidth = 1.5; c.strokeStyle = s;
+    if (w === 'zweihaender' || w === 'schwert') {
+      var L = w === 'zweihaender' ? 3.5 : 2.6;
+      c.fillStyle = k.wf; c.beginPath(); c.moveTo(r * L, 0); c.lineTo(r * (L - 0.4), -r * 0.2); c.lineTo(r * 0.9, -r * 0.2); c.lineTo(r * 0.9, r * 0.2); c.lineTo(r * (L - 0.4), r * 0.2); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.22); c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
+      c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      kHand(c, r * 0.45, -r * 0.13, r, k.haut); kHand(c, r * 0.7, r * 0.13, r, k.haut);
+    } else if (w === 'forke') {
+      c.strokeStyle = '#8a6a3a'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.1, r * 0.3); c.lineTo(r * 2.9, r * 0.3); c.stroke();
+      c.strokeStyle = k.wf; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(r * 2.9, r * 0.0); c.lineTo(r * 2.9, r * 0.6); [0.0, 0.3, 0.6].forEach(function (y) { c.moveTo(r * 2.9, r * y); c.lineTo(r * 3.5, r * y); }); c.stroke();
+      kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
+    } else if (w === 'holzschwert') {
+      c.fillStyle = k.wf; c.strokeStyle = 'rgba(80,50,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 2.3, 0); c.lineTo(r * 2.1, -r * 0.18); c.lineTo(r * 0.9, -r * 0.18); c.lineTo(r * 0.9, r * 0.18); c.lineTo(r * 2.1, r * 0.18); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#7a5428'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.85, -r * 0.45); c.lineTo(r * 0.85, r * 0.45); c.stroke(); c.beginPath(); c.moveTo(r * 0.35, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      kHand(c, r * 0.6, 0, r, k.haut);
+    } else if (w === 'saebel') {
+      c.fillStyle = k.wf; c.beginPath(); c.moveTo(r * 0.9, -r * 0.18); c.quadraticCurveTo(r * 2.2, -r * 0.3, r * 2.9, r * 0.35); c.quadraticCurveTo(r * 2.1, r * 0.1, r * 0.9, r * 0.18); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.85, -r * 0.45); c.lineTo(r * 0.85, r * 0.45); c.stroke();
+      c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.35, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      kHand(c, r * 0.6, 0, r, k.haut);
+    } else if (w === 'axt') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 2.7, 0); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 2.2, -r * 0.1); c.quadraticCurveTo(r * 2.4, -r * 0.9, r * 2.9, -r * 0.85); c.quadraticCurveTo(r * 2.75, -r * 0.4, r * 2.75, -r * 0.1); c.closePath(); c.fill(); c.stroke();
+      kHand(c, r * 0.45, 0, r, k.haut); kHand(c, r * 0.95, 0, r, k.haut);
+    } else if (w === 'kolben') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.3, 0); c.lineTo(r * 2.0, 0); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.arc(r * 2.15, 0, r * 0.38, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#5a5f63'; for (var i = 0; i < 6; i++) { var a = i * Math.PI / 3; c.beginPath(); c.arc(r * 2.15 + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42, r * 0.09, 0, 7); c.fill(); }
+      kHand(c, r * 0.6, 0, r, k.haut);
+    } else if (w === 'speer') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.2, r * 0.3); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.moveTo(r * 3.8, r * 0.3); c.lineTo(r * 3.15, r * 0.05); c.lineTo(r * 3.15, r * 0.55); c.closePath(); c.fill(); c.stroke();
+      kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
+    } else if (w === 'zepter') {
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.18); c.beginPath(); c.moveTo(r * 0.3, r * 0.15); c.lineTo(r * 1.9, r * 0.15); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.arc(r * 2.05, r * 0.15, r * 0.3, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.arc(r * 1.98, r * 0.06, r * 0.1, 0, 7); c.fill();
+      kHand(c, r * 0.6, r * 0.15, r, k.haut);
+    }
+  }
+  function kBart(c, k, r) {
+    var b = k.bart, col = k.haar || '#6b4a2b';
+    if (!b) return;
+    c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1;
+    if (b === 'stoppel') { c.fillStyle = 'rgba(60,40,30,0.35)'; c.beginPath(); c.arc(r * 0.12, 0, r * 0.38, -1.1, 1.1); c.lineTo(r * 0.2, 0); c.closePath(); c.fill(); return; }
+    if (b === 'schnauz') { c.beginPath(); c.ellipse(r * 0.38, -r * 0.14, r * 0.08, r * 0.2, 0.3, 0, 7); c.ellipse(r * 0.38, r * 0.14, r * 0.08, r * 0.2, -0.3, 0, 7); c.fill(); return; }
+    var len = b === 'kurz' ? 0.55 : b === 'spitz' ? 0.75 : b === 'voll' ? 0.7 : 0.95;
+    c.beginPath(); c.moveTo(r * 0.25, -r * 0.33);
+    if (b === 'spitz') { c.lineTo(r * len, 0); }
+    else c.quadraticCurveTo(r * len, -r * 0.3, r * len, 0), c.quadraticCurveTo(r * len, r * 0.3, r * 0.25, r * 0.33);
+    c.lineTo(r * 0.25, r * 0.33); c.closePath(); c.fill(); c.stroke();
+    if (b === 'zopf') { c.fillStyle = col; c.beginPath(); c.arc(r * 0.62, -r * 0.12, r * 0.09, 0, 7); c.arc(r * 0.62, r * 0.12, r * 0.09, 0, 7); c.fill(); c.strokeStyle = '#a0a6ab'; c.lineWidth = 2; c.beginPath(); c.moveTo(r * 0.55, -r * 0.2); c.lineTo(r * 0.55, r * 0.2); c.stroke(); }
+  }
+  function kKrone(c, k, r) {
+    var t = k.krone, f = k.kf, cx = r * 0.05, i, a;
+    var ring = function (col, w) { c.strokeStyle = col; c.lineWidth = Math.max(2, r * (w || 0.1)); c.beginPath(); c.arc(cx, 0, r * 0.38, -2.2, 2.2); c.stroke(); };
+    var kugel = function (col, rad) { c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx - r * 0.02, 0, r * rad, 0, 7); c.fill(); c.stroke(); };
+    if (t === 'reif') ring(f);
+    else if (t === 'zacken') { c.fillStyle = f; for (i = 0; i < 7; i++) { a = i / 7 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a - 0.22) * r * 0.36, Math.sin(a - 0.22) * r * 0.36); c.lineTo(cx + Math.cos(a) * r * 0.58, Math.sin(a) * r * 0.58); c.lineTo(cx + Math.cos(a + 0.22) * r * 0.36, Math.sin(a + 0.22) * r * 0.36); c.fill(); } c.strokeStyle = f; c.lineWidth = r * 0.12; c.beginPath(); c.arc(cx, 0, r * 0.36, 0, 7); c.stroke(); c.fillStyle = '#c0392b'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.07, 0, 7); c.fill(); }
+    else if (t === 'diadem') { ring(f, 0.07); c.fillStyle = '#5aa9e6'; c.beginPath(); c.arc(cx + r * 0.38, 0, r * 0.09, 0, 7); c.fill(); }
+    else if (t === 'hoch') { kugel('#8a1f2a', 0.36); c.strokeStyle = f; c.lineWidth = r * 0.13; c.beginPath(); c.arc(cx, 0, r * 0.36, 0, 7); c.stroke(); c.lineWidth = r * 0.07; c.beginPath(); c.moveTo(cx - r * 0.34, 0); c.lineTo(cx + r * 0.34, 0); c.moveTo(cx, -r * 0.34); c.lineTo(cx, r * 0.34); c.stroke(); c.fillStyle = f; c.beginPath(); c.arc(cx, 0, r * 0.1, 0, 7); c.fill(); }
+    else if (t === 'helm') { kugel(k.kf === '#2a2a2e' ? '#3a3d42' : '#8d9399', 0.44); c.strokeStyle = f; c.lineWidth = r * 0.08; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = r * 0.07; c.beginPath(); c.moveTo(cx + r * 0.3, -r * 0.18); c.lineTo(cx + r * 0.3, r * 0.18); c.stroke(); }
+    else if (t === 'kapuze') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx - r * 0.05, 0, r * 0.47, Math.PI * 0.35, Math.PI * 1.65); c.quadraticCurveTo(cx + r * 0.2, 0, cx + Math.cos(Math.PI * 0.35) * r * 0.47 - r * 0.05, Math.sin(Math.PI * 0.35) * r * 0.47); c.fill(); c.stroke(); }
+    else if (t === 'turban') { kugel(f, 0.44); c.strokeStyle = 'rgba(0,0,0,0.15)'; c.lineWidth = r * 0.06; for (i = 1; i <= 3; i++) { c.beginPath(); c.arc(cx, 0, r * 0.11 * i, 0, 7); c.stroke(); } c.fillStyle = '#1f8a5a'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.09, 0, 7); c.fill(); c.fillStyle = '#d4a017'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.04, 0, 7); c.fill(); }
+    else if (t === 'lorbeer') { c.fillStyle = f; for (i = 0; i < 12; i++) { a = -2.4 + i / 11 * 4.8; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4, r * 0.13, r * 0.06, a + 1.2, 0, 7); c.fill(); } }
+    else if (t === 'hoerner') { kugel(f, 0.4); c.fillStyle = '#efe6cf'; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx - r * 0.1, s * r * 0.3); c.quadraticCurveTo(cx - r * 0.2, s * r * 0.85, cx + r * 0.35, s * r * 0.95); c.quadraticCurveTo(cx + r * 0.05, s * r * 0.6, cx + r * 0.15, s * r * 0.3); c.closePath(); c.fill(); c.stroke(); }); }
+    else if (t === 'pelz' || t === 'wolf') { kugel(f, 0.47); c.fillStyle = 'rgba(0,0,0,0.15)'; for (i = 0; i < 8; i++) { a = i / 8 * 7; c.beginPath(); c.arc(cx + Math.cos(a) * r * 0.3, Math.sin(a) * r * 0.3, r * 0.08, 0, 7); c.fill(); } if (t === 'wolf') { c.fillStyle = f; [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx + r * 0.2, s * r * 0.25); c.lineTo(cx + r * 0.55, s * r * 0.5); c.lineTo(cx + r * 0.05, s * r * 0.45); c.fill(); }); c.fillStyle = '#2a2a2a'; c.beginPath(); c.arc(cx + r * 0.46, 0, r * 0.07, 0, 7); c.fill(); } }
+    else if (t === 'spitzhut') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(cx - r * 0.05, 0, r * 0.62, r * 0.62, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(cx - r * 0.1, r * 0.05, r * 0.3, 0, 7); c.fill(); c.fillStyle = f; c.beginPath(); c.arc(cx - r * 0.18, r * 0.1, r * 0.13, 0, 7); c.fill(); }
+    else if (t === 'mitra') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(cx, 0, r * 0.3, r * 0.44, 0, 0, 7); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.08; c.beginPath(); c.moveTo(cx, -r * 0.42); c.lineTo(cx, r * 0.42); c.stroke(); }
+    else if (t === 'eis') { c.fillStyle = f; c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1; for (i = 0; i < 8; i++) { a = i / 8 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a - 0.18) * r * 0.34, Math.sin(a - 0.18) * r * 0.34); c.lineTo(cx + Math.cos(a) * r * (i % 2 ? 0.55 : 0.7), Math.sin(a) * r * (i % 2 ? 0.55 : 0.7)); c.lineTo(cx + Math.cos(a + 0.18) * r * 0.34, Math.sin(a + 0.18) * r * 0.34); c.fill(); c.stroke(); } c.strokeStyle = f; c.lineWidth = r * 0.1; c.beginPath(); c.arc(cx, 0, r * 0.35, 0, 7); c.stroke(); }
+    else if (t === 'federn') { ring(f, 0.12); var fc = ['#c0392b', '#e8b830', '#2a64b8', '#1f8a5a', '#e8b830']; for (i = 0; i < 5; i++) { a = Math.PI + (i - 2) * 0.35; c.fillStyle = fc[i]; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.32, r * 0.1, a, 0, 7); c.fill(); } }
+    else if (t === 'pilz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; [[0, 0, 0.14], [0.35, -0.3, 0.1], [-0.3, 0.32, 0.12], [0.3, 0.35, 0.09], [-0.35, -0.3, 0.1]].forEach(function (p) { c.beginPath(); c.arc(cx + p[0] * r, p[1] * r, p[2] * r, 0, 7); c.fill(); }); }
+    else if (t === 'strohhut') { c.fillStyle = f; c.strokeStyle = 'rgba(120,80,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.75, 0, 7); c.fill(); c.stroke(); c.strokeStyle = 'rgba(150,100,30,0.45)'; c.lineWidth = 1; for (i = 0; i < 12; i++) { a = i / 12 * 7; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42); c.lineTo(cx + Math.cos(a) * r * 0.74, Math.sin(a) * r * 0.74); c.stroke(); } c.fillStyle = '#d9b14a'; c.beginPath(); c.arc(cx, 0, r * 0.4, 0, 7); c.fill(); c.strokeStyle = '#a0402a'; c.lineWidth = r * 0.09; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); }
+    else if (t === 'topf') { kugel(f, 0.46); c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(cx - r * 0.12, -r * 0.12, r * 0.15, 0, 7); c.fill(); c.strokeStyle = '#4a4f54'; c.lineWidth = r * 0.12; c.beginPath(); c.moveTo(cx - r * 0.05, -r * 0.45); c.lineTo(cx - r * 0.05, -r * 0.8); c.stroke(); c.fillStyle = '#4a4f54'; c.beginPath(); c.arc(cx, 0, r * 0.08, 0, 7); c.fill(); }
+    else if (t === 'dreispitz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx + r * 0.55, 0); c.lineTo(cx - r * 0.45, -r * 0.6); c.lineTo(cx - r * 0.45, r * 0.6); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.06; c.stroke(); }
   }
 
   // ---------- Akustik ----------
@@ -1647,7 +1896,7 @@
     ai.steps = [];
   }
 
-  // ---------- Gegner «Bandit» ----------
+  // ---------- Gegner «Der Bandit» ----------
   function planCost(list) { return list.reduce(function (a, b) { return a + CONFIG.units[b[0]].cost * b[1]; }, 0); }
   function botUpdate(dt) {
     var R = CONFIG.BOTS[botType], i, j, st;
@@ -2563,48 +2812,8 @@
         c.globalAlpha = 1;
       }
     } else if (type === 'king' || type === 'kingbow') {
-      // König von oben: Umhang in Teamfarbe, Rüstung, Krone; mit Bogen (auf der Burg) oder großem Zweihänder (ohne Burg)
-      var gold1 = '#d4a017';
-      c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 2; // Umhang: schmal, gedeckt (Teamfarbe nur als Tönung)
-      c.beginPath(); c.moveTo(-r * 0.1, -r * 0.75); c.lineTo(-r * 1.2, -r * 0.95); c.quadraticCurveTo(-r * 1.4, 0, -r * 1.2, r * 0.95); c.lineTo(-r * 0.1, r * 0.75); c.closePath();
-      c.fillStyle = col; c.fill(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); c.stroke(); // Umhang: Teamfarbe, etwas abgedunkelt
-      c.fillStyle = '#7d8790'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
-      c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-      if (type === 'king') {
-        // Zweihänder: langes Blatt nach vorn, goldene Parierstange, beide Hände am Griff (Hieb: dreht um die Hände)
-        c.save(); c.translate(r * 0.45, 0); c.rotate(A.rot); c.translate(-r * 0.45, 0);
-        c.fillStyle = P.steel; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
-        c.beginPath(); c.moveTo(r * 3.5, 0); c.lineTo(r * 3.1, -r * 0.2); c.lineTo(r * 0.9, -r * 0.2); c.lineTo(r * 0.9, r * 0.2); c.lineTo(r * 3.1, r * 0.2); c.closePath(); c.fill(); c.stroke();
-        c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 1.0, 0); c.lineTo(r * 3.2, 0); c.stroke();
-        c.strokeStyle = gold1; c.lineWidth = Math.max(3, r * 0.22);
-        c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
-        c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2);
-        c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
-        c.fillStyle = '#d9a066';
-        c.beginPath(); c.arc(r * 0.45, -r * 0.13, r * 0.14, 0, Math.PI * 2); c.arc(r * 0.7, r * 0.13, r * 0.14, 0, Math.PI * 2); c.fill();
-        c.restore();
-      } else {
-        // Bogen mit aufgelegtem Pfeil
-        c.strokeStyle = P.wood; c.lineWidth = Math.max(3, r * 0.22);
-        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * 1.15); c.stroke();
-        var kmx = A.str * r; // Sehne: Ruhe 0.5r, voll gespannt 0.05r, nach dem Schuss gerade (0.95r) und schwingend
-        c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.5;
-        c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.lineTo(kmx, A.vib * r); c.lineTo(r * 0.95, r * 1.15); c.stroke();
-        if (A.arrow > 0) {
-          c.globalAlpha = A.arrow;
-          c.strokeStyle = P.wood; c.lineWidth = 2;
-          c.beginPath(); c.moveTo(kmx, 0); c.lineTo(kmx + r * 1.1, 0); c.stroke();
-          c.fillStyle = P.steel; c.beginPath(); c.moveTo(kmx + r * 1.4, 0); c.lineTo(kmx + r * 1.0, -r * 0.14); c.lineTo(kmx + r * 1.0, r * 0.14); c.closePath(); c.fill();
-          c.globalAlpha = 1;
-        }
-        c.fillStyle = '#d9a066';
-        c.beginPath(); c.arc(r * 0.95, 0, r * 0.14, 0, Math.PI * 2); c.arc(Math.min(kmx, r * 0.5), 0, r * 0.14, 0, Math.PI * 2); c.fill();
-      }
-      // Kopf mit goldener Krone
-      c.fillStyle = '#d9a066'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
-      c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.strokeStyle = gold1; c.lineWidth = Math.max(2, r * 0.1); // runder Kopf, nur ein schmaler Kronreif
-      c.beginPath(); c.arc(r * 0.05, 0, r * 0.38, -2.2, 2.2); c.stroke();
+      // König von oben in der gewählten Optik (koenigTeam[team], siehe spiel/koenig-optik.js): mit Bogen (auf der Burg) oder seiner Waffe (ohne Burg)
+      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
     } else if (type === 'sword') {
       // Schwertkämpfer: einfacher grauer Eisenhelm mit dunklem Rand (anders als der Ritter), runder Holzschild mit Eisenrand und Buckel, Schwert
       c.fillStyle = '#8d9399';
@@ -3760,7 +3969,10 @@
     state = 'playing';
     jingle('start');
     overlay.hidden = true;
-    $('story').hidden = true; $('freunde').hidden = true;
+    $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true;
+    koenigTeam = [meinKoenig(), botEintrag(botType).koenig]; // Aussehen der beiden Könige
+    intro.t = 0;
+    if (spielArt === 'story' && !tut.on) startIntro(meinName(), STORY[storyIdx].name); // auch bei «Nochmal»
     openBook(false);
     applyDeck();
     pauseBtn.textContent = 'Pause';
@@ -4160,7 +4372,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig() }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   // Der Server hat eine neuere Spielversion: Seite neu laden (nicht mitten in einer Partie; höchstens einmal pro Version)
   var neueVersion = '';
   function veraltet(v) {
@@ -4201,7 +4413,7 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
     else sozialMsg(m);
@@ -4220,6 +4432,9 @@
     applyDeck();
     pauseBtn.hidden = true;
     ui.gm = ui.gf = ui.sec = ui.inc = -1; ui.cdown = -1;
+    koenigTeam = Array.isArray(pvp.koenige) ? [String(pvp.koenige[0]), String(pvp.koenige[1])] : ['standard', 'standard'];
+    intro.t = 0; spielArt = 'pvp';
+    startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot');
     pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
     for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
   }
@@ -4328,7 +4543,7 @@
   }
 
   function tryBuy(type, el) {
-    if (state !== 'playing') return;
+    if (state !== 'playing' || intro.t > 0) return; // während der Namen noch nichts kaufen
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
     if (unitLocked(type)) return; // braucht ein Konto
     if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
@@ -4370,7 +4585,7 @@
     pauseBtn.hidden = false;
     $('menuBtn').hidden = true;
     sandBtn.hidden = !tester;
-    applyDeck(); menuAktuell();
+    applyDeck(); menuAktuell(); menuKoenig();
     sozialStatus('menu');
   }
   function menuAktuell() {
@@ -4404,13 +4619,14 @@
     var n = storyStand(), h = '';
     $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length;
     STORY.forEach(function (g, i) {
-      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? ICON.burg : ICON.schloss;
-      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '">' + SVG(ic, 'currentColor', 26) + '</button>' +
-        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 34px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
+      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? '' : ICON.schloss;
+      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '"><canvas data-bild="' + g.koenig + '"' + (cls === 'gesperrt' ? ' data-grau="1"' : '') + '></canvas>' + (ic ? '<i>' + SVG(ic, '#ffffff', 14) + '</i>' : '') + '</button>' +
+        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
-    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 34px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
     $('storyKnoten').innerHTML = h;
+    Array.prototype.forEach.call($('storyKnoten').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 1, cv.hasAttribute('data-grau')); }); // Bild: König des Bots
     // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
     var k = $('storyKarte');
     if (storySel < 0) { k.hidden = true; return; }
@@ -4453,7 +4669,7 @@
     var tk = konto.token || null;
     if (!force && tk === sozial.lastToken) return;
     sozial.lastToken = tk;
-    pvpSend({ k: 'hallo', token: tk, v: VERSION });
+    pvpSend({ k: 'hallo', token: tk, v: VERSION, koenig: meinKoenig() });
   }
   function sozialStatus(s, info) { if (ONLINE) pvpSend({ k: 'status', s: s, info: info || '' }); }
   function freundeHolen() { if (ONLINE && konto.user) pvpSend({ k: 'freunde' }); }
@@ -4511,7 +4727,9 @@
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
     pvp.namen = m.namen || ['', ''];
+    pvp.koenige = m.koenige;
     startPvp(0, m.seed | 0);
+    intro.t = 0; // Zuschauer: ohne Namens-Einblendung, gleich nachrechnen
     pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0;
     document.documentElement.classList.remove('guest');
     document.documentElement.classList.add('zuschauer');
@@ -4584,6 +4802,88 @@
   window.addEventListener('resize', function () { if (!$('augen').hidden) augenPlatz(); });
   sandBtn.hidden = !tester;
   menuAktuell();
+  // ---------- Königswahl, Königsbilder, Namen zu Beginn (19.11.) ----------
+  // Frei: die eigenen Könige (KOENIG_SPIELER) und der König jedes besiegten Story-Bots; im Tester-Modus alle.
+  function koenigFrei(id) {
+    if (tester) return !!KOENIGE[id];
+    for (var i = 0; i < KOENIG_SPIELER.length; i++) if (KOENIG_SPIELER[i].id === id) return true;
+    var n = storyStand();
+    for (var j = 0; j < n && j < STORY.length; j++) if (STORY[j].koenig === id) return true;
+    return false;
+  }
+  function meinKoenig() {
+    var id = 'standard'; try { id = localStorage.getItem('stronghold-koenig') || 'standard'; } catch (e) {}
+    return KOENIGE[id] && koenigFrei(id) ? id : 'standard';
+  }
+  function meinName() { return sozial && sozial.ich ? sozial.ich.name : konto.user ? konto.user.split('@')[0] : 'Du'; }
+  // Bild eines Königs in ein Canvas (Körper mittig, Waffe ragt nach rechts)
+  function koenigBild(cv, id, team, grau) {
+    if (!cv.getAttribute('data-w')) { cv.setAttribute('data-w', cv.clientWidth || cv.width); cv.setAttribute('data-h', cv.clientHeight || cv.height); }
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || +cv.getAttribute('data-w'), h = cv.clientHeight || +cv.getAttribute('data-h');
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    var r = Math.min(h * 0.3, w * 0.2);
+    c.save(); c.translate(w * 0.4, h / 2);
+    if (grau) c.filter = 'grayscale(1) brightness(0.75)';
+    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, {});
+    c.restore();
+  }
+  // Name eines Königs für die Auswahl
+  function koenigName(id) {
+    for (var i = 0; i < KOENIG_SPIELER.length; i++) if (KOENIG_SPIELER[i].id === id) return KOENIG_SPIELER[i].name;
+    for (var j = 0; j < BOT_DB.length; j++) if (BOT_DB[j].koenig === id) return BOT_DB[j].name;
+    return id;
+  }
+  function menuKoenig() { koenigBild($('koenigIcon'), meinKoenig(), 0); }
+
+  // ----- Fenster «Dein König» -----
+  function koenigListe() {
+    var l = KOENIG_SPIELER.map(function (k) { return { id: k.id, frei: true, txt: 'Immer frei' }; });
+    STORY.forEach(function (s, i) { l.push({ id: s.koenig, frei: koenigFrei(s.koenig), txt: koenigFrei(s.koenig) ? 'Freigeschaltet' : 'Besiege ' + s.name }); });
+    if (tester) BOT_DB.forEach(function (b) { if (!l.some(function (x) { return x.id === b.koenig; })) l.push({ id: b.koenig, frei: true, txt: 'Tester-Modus (Bot noch nicht im Spiel)' }); });
+    return l;
+  }
+  function koenigWahlOpen(on) {
+    $('koenigWahl').hidden = !on;
+    if (!on) return;
+    var akt = meinKoenig();
+    $('koenigGrid').innerHTML = koenigListe().map(function (k) {
+      return '<button type="button" class="kwkarte' + (k.id === akt ? ' sel' : '') + (k.frei ? '' : ' zu') + '" data-k="' + k.id + '"' + (k.frei ? '' : ' aria-disabled="true"') + '>' +
+        '<canvas data-bild="' + k.id + '"' + (k.frei ? '' : ' data-grau="1"') + '></canvas><b>' + esc(koenigName(k.id)) + '</b><span>' + (k.id === akt ? '✓ Ausgewählt' : (k.frei ? '' : '🔒 ') + esc(k.txt)) + '</span></button>';
+    }).join('');
+    Array.prototype.forEach.call($('koenigGrid').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 0, cv.hasAttribute('data-grau')); });
+  }
+  $('koenigBtn').addEventListener('click', function () { koenigWahlOpen(true); });
+  $('koenigZu').addEventListener('click', function () { koenigWahlOpen(false); });
+  $('koenigGrid').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-k]') : null; if (!b || b.classList.contains('zu')) return;
+    try { localStorage.setItem('stronghold-koenig', b.getAttribute('data-k')); } catch (x) {}
+    pvpSend({ k: 'koenig', id: meinKoenig() });
+    koenigWahlOpen(true); menuKoenig();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('koenigWahl').hidden) koenigWahlOpen(false); });
+
+  // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg, fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
+  var intro = { t: 0, namen: ['', ''] }, INTRO = 2.3;
+  function startIntro(n0, n1) { intro.namen = [n0, n1]; intro.t = INTRO; }
+  function zeichneIntro() {
+    var e = INTRO - intro.t, ein = Math.min(1, e / 0.25), flug = Math.max(0, Math.min(1, (e - 1.35) / 0.8)), f = flug * flug * (3 - 2 * flug);
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.globalAlpha = 0.25 * ein * (1 - f); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W * T, H * T);
+    for (var t = 0; t < 2; t++) {
+      var b = bases[t], zx = (b.x1 + b.x2) / 2 * T, zy = b.y1 * T - 18, sx = W * T * (t === 0 ? 0.28 : 0.72), sy = H * T * 0.45;
+      var x = sx + (zx - sx) * f, y = sy + (zy - sy) * f, s = 1 - 0.7 * f;
+      ctx.globalAlpha = ein * (1 - flug * flug);
+      ctx.font = '700 ' + Math.round(46 * s) + 'px "Space Grotesk", system-ui, sans-serif';
+      ctx.lineWidth = 8 * s; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.strokeText(intro.namen[t], x, y);
+      ctx.fillStyle = t === 0 ? P.me : P.foe; ctx.fillText(intro.namen[t], x, y);
+    }
+    ctx.globalAlpha = ein * (1 - Math.min(1, flug * 3));
+    ctx.font = '600 26px "Space Grotesk", system-ui, sans-serif'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.strokeText('gegen', W * T / 2, H * T * 0.45); ctx.fillStyle = '#2b3437'; ctx.fillText('gegen', W * T / 2, H * T * 0.45);
+    ctx.restore();
+  }
+  menuKoenig();
   // ---------- Werte-Karte: lange auf einen Einheiten-Knopf drücken ----------
   var SPECIAL = {
     farmer: 'Bringt alle 5 s +1 Gold, sobald er an seinem Platz steht.',
@@ -4771,6 +5071,10 @@
   function frame(ts) {
     var rdt = Math.min(0.25, (ts - last) / 1000 || 0), dt = Math.min(0.05, rdt);
     last = ts;
+    if (intro.t > 0 && state === 'playing') { // Namen zu Beginn: Spiel steht noch
+      intro.t = Math.max(0, intro.t - rdt); updateEffects(dt); render(); zeichneIntro(); syncUi(); syncFsBar();
+      requestAnimationFrame(frame); return;
+    }
     if (pvp.on && state === 'playing') { for (var dk = 0; dk < deploys.length; dk++) deploys[dk].t += rdt; pvpFrame(rdt); updateEffects(dt); }
     else if (state === 'playing') {
       for (var dj = 0; dj < deploys.length; dj++) { // offline: fällige Käufe ausführen (Echtzeit, unabhängig vom Tutorial-Zeitlupentempo)

@@ -345,7 +345,10 @@
     state = 'playing';
     jingle('start');
     overlay.hidden = true;
-    $('story').hidden = true; $('freunde').hidden = true;
+    $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true;
+    koenigTeam = [meinKoenig(), botEintrag(botType).koenig]; // Aussehen der beiden Könige
+    intro.t = 0;
+    if (spielArt === 'story' && !tut.on) startIntro(meinName(), STORY[storyIdx].name); // auch bei «Nochmal»
     openBook(false);
     applyDeck();
     pauseBtn.textContent = 'Pause';

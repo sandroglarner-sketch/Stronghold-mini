@@ -19,7 +19,7 @@
     pauseBtn.hidden = false;
     $('menuBtn').hidden = true;
     sandBtn.hidden = !tester;
-    applyDeck(); menuAktuell();
+    applyDeck(); menuAktuell(); menuKoenig();
     sozialStatus('menu');
   }
   function menuAktuell() {
@@ -53,13 +53,14 @@
     var n = storyStand(), h = '';
     $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length;
     STORY.forEach(function (g, i) {
-      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? ICON.burg : ICON.schloss;
-      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '">' + SVG(ic, 'currentColor', 26) + '</button>' +
-        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 34px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
+      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? '' : ICON.schloss;
+      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '"><canvas data-bild="' + g.koenig + '"' + (cls === 'gesperrt' ? ' data-grau="1"' : '') + '></canvas>' + (ic ? '<i>' + SVG(ic, '#ffffff', 14) + '</i>' : '') + '</button>' +
+        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
-    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 34px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
     $('storyKnoten').innerHTML = h;
+    Array.prototype.forEach.call($('storyKnoten').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 1, cv.hasAttribute('data-grau')); }); // Bild: König des Bots
     // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
     var k = $('storyKarte');
     if (storySel < 0) { k.hidden = true; return; }
@@ -102,7 +103,7 @@
     var tk = konto.token || null;
     if (!force && tk === sozial.lastToken) return;
     sozial.lastToken = tk;
-    pvpSend({ k: 'hallo', token: tk, v: VERSION });
+    pvpSend({ k: 'hallo', token: tk, v: VERSION, koenig: meinKoenig() });
   }
   function sozialStatus(s, info) { if (ONLINE) pvpSend({ k: 'status', s: s, info: info || '' }); }
   function freundeHolen() { if (ONLINE && konto.user) pvpSend({ k: 'freunde' }); }
@@ -160,7 +161,9 @@
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
     pvp.namen = m.namen || ['', ''];
+    pvp.koenige = m.koenige;
     startPvp(0, m.seed | 0);
+    intro.t = 0; // Zuschauer: ohne Namens-Einblendung, gleich nachrechnen
     pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0;
     document.documentElement.classList.remove('guest');
     document.documentElement.classList.add('zuschauer');

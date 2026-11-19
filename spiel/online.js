@@ -33,7 +33,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig() }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   // Der Server hat eine neuere Spielversion: Seite neu laden (nicht mitten in einer Partie; höchstens einmal pro Version)
   var neueVersion = '';
   function veraltet(v) {
@@ -74,7 +74,7 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
     else sozialMsg(m);
@@ -93,6 +93,9 @@
     applyDeck();
     pauseBtn.hidden = true;
     ui.gm = ui.gf = ui.sec = ui.inc = -1; ui.cdown = -1;
+    koenigTeam = Array.isArray(pvp.koenige) ? [String(pvp.koenige[0]), String(pvp.koenige[1])] : ['standard', 'standard'];
+    intro.t = 0; spielArt = 'pvp';
+    startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot');
     pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
     for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
   }
@@ -201,7 +204,7 @@
   }
 
   function tryBuy(type, el) {
-    if (state !== 'playing') return;
+    if (state !== 'playing' || intro.t > 0) return; // während der Namen noch nichts kaufen
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
     if (unitLocked(type)) return; // braucht ein Konto
     if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
