@@ -24,7 +24,8 @@
   .card b { font-size: 1.05rem; }
   .card .look { font-size: 0.85rem; color: var(--muted); }
   .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 6px; vertical-align: 2px; }
-  .tag.alt { background: #e4ecf8; color: #1f4f94; } .tag.neu { background: #fbe9e7; color: #9b2c22; } .tag.sp { background: #e3f1e5; color: #1d6a33; }
+  .tag.alt { background: #e4ecf8; color: #1f4f94; } .tag.neu { background: #fbe9e7; color: #9b2c22; } .tag.sp { background: #e3f1e5; color: #1d6a33; } .tag.anf { background: #fdf3d6; color: #7a5a00; }
+  .namen { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 6px; font-size: 0.8rem; } .namen > span { color: var(--muted); font-weight: 600; } .namen i { font-style: normal; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); }
   @media (prefers-color-scheme: dark) { .tag.alt { background: #1d3150; color: #a9c8f5; } .tag.neu { background: #47201c; color: #ffb3a8; } .tag.sp { background: #17351f; color: #a6dcb3; } }
   .note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 14px; font-size: 0.9rem; }
   .note ul { margin: 6px 0 0; padding-left: 20px; }
@@ -40,7 +41,7 @@
 <body>
 <main>
   <h1>Bots und Königs-Optiken</h1>
-  <p class="lead">Vorschläge: 20 neue Bot-Namen mit je einer eigenen Königs-Optik, Optiken für die 4 bestehenden Bots und 3 Alternativen für deinen eigenen König. Idee: Wer einen Bot besiegt, schaltet dessen König frei und kann ihn im Menü neben dem Deck auswählen.</p>
+  <p class="lead">Vorschläge: 20 neue Bot-Namen mit je einer eigenen Königs-Optik, 2 Anfänger-Bots, neue Namen und Optiken für die 4 bestehenden Bots und 3 Alternativen für deinen eigenen König. Idee: Wer einen Bot besiegt, schaltet dessen König frei und kann ihn im Menü neben dem Deck auswählen.</p>
   <div class="tabs" role="group" aria-label="Ansicht">
     <button type="button" data-team="foe" aria-pressed="true">Als Gegner (rot)</button>
     <button type="button" data-team="me" aria-pressed="false">Als eigener König (blau)</button>
@@ -50,7 +51,12 @@
   <h2>Dein König: Standard und 3 Alternativen</h2>
   <div class="grid" id="gSpieler"></div>
 
-  <h2>Die 4 bestehenden Bots</h2>
+  <h2>2 Anfänger-Bots (neu)</h2>
+  <p class="lead">Leichte Gegner für den Einstieg, zum Beispiel vor dem heutigen Bandit.</p>
+  <div class="grid" id="gAnf"></div>
+
+  <h2>Die 4 bestehenden Bots, mit neuen Namensvorschlägen</h2>
+  <p class="lead">Je drei Vorschläge im Stil der neuen Namen (Titel + Name). Der heutige Name steht gross.</p>
   <div class="grid" id="gAlt"></div>
 
   <h2>20 neue Bots</h2>
@@ -72,10 +78,10 @@
     { nr: 'A3', name: 'Waldkönig', art: 'spieler', krone: 'lorbeer', kf: '#4f8a3a', umhang: '#4a5a2a', muster: 'blaetter', ruestung: '#7a5a3a', haut: '#c98b5e', haar: '#6b4a2b', bart: 'kurz', waffe: 'axt', wf: '#cfd6d8', text: 'Blätterkranz, Lederrüstung, Axt' }
   ];
   var ALT = [
-    { nr: 'B1', name: 'Bandit', art: 'alt', krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93', text: 'Kapuze statt Krone, geflickter Umhang' },
-    { nr: 'B2', name: 'Kleiner Prinz', art: 'alt', krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec', text: 'Schmaler Goldreif, Sternenumhang' },
-    { nr: 'B3', name: 'Feldherr', art: 'alt', krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2', text: 'Eisenhelm mit Goldrand, Feldzeichen' },
-    { nr: 'B4', name: 'Baron', art: 'alt', krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017', text: 'Hohe Krone, Hermelin, Zepter' }
+    { nr: 'B1', name: 'Bandit', neu: ['Strauchdieb Fritz', 'Wegelagerer Rattenzahn', 'Der Waldräuber'], art: 'alt', krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93', text: 'Kapuze statt Krone, geflickter Umhang' },
+    { nr: 'B2', name: 'Kleiner Prinz', neu: ['Prinz Milchzahn', 'Prinzchen Rosenwang', 'Erbprinz Zappelfuss'], art: 'alt', krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec', text: 'Schmaler Goldreif, Sternenumhang' },
+    { nr: 'B3', name: 'Feldherr', neu: ['Feldmarschall Eisenfaust', 'Hauptmann Hagen', 'General Grimmwald'], art: 'alt', krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2', text: 'Eisenhelm mit Goldrand, Feldzeichen' },
+    { nr: 'B4', name: 'Baron', neu: ['Baron von Trutzberg', 'Baron Rabenstein', 'Freiherr Goldzahn'], art: 'alt', krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017', text: 'Hohe Krone, Hermelin, Zepter' }
   ];
   var NEU = [
     { name: 'Raubritter Kuno', krone: 'hoerner', kf: '#8a8f93', umhang: '#3b2f2a', muster: 'flicken', ruestung: '#55595c', haut: '#c98d5e', haar: '#2b2118', bart: 'voll', waffe: 'axt', wf: '#b9c0c4', text: 'Hörnerhelm, schwere Axt' },
@@ -99,8 +105,12 @@
     { name: 'Der Drachenkönig', krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a', text: 'Drachenhörner, glühende Klinge' },
     { name: 'Die Schattenkönigin', krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0', text: 'Violette Krone, Sternenmantel' }
   ];
+  var ANF = [
+    { nr: 'N1', name: 'Bauer Hannes, der Strohkönig', art: 'anf', krone: 'strohhut', kf: '#e6c35c', umhang: '#7a8a3a', muster: 'flicken', ruestung: '#a07a4a', haut: '#e2a878', haar: '#b07a3a', bart: 'stoppel', waffe: 'forke', wf: '#9aa0a4', text: 'Strohhut statt Krone, Heugabel. Ganz zum Anfang, noch vor dem Banditen' },
+    { nr: 'N2', name: 'Knappe Tollpatsch', art: 'anf', krone: 'topf', kf: '#9aa3aa', umhang: '#b0603a', muster: 'punkte', ruestung: '#c9b48a', haut: '#f2c49c', haar: '#d9a441', bart: '', waffe: 'holzschwert', wf: '#c08a4a', text: 'Kochtopf als Helm, Holzschwert' }
+  ];
   NEU.forEach(function (k, i) { k.nr = String(i + 1); k.art = 'neu'; });
-  var ALLE = SP.concat(ALT, NEU);
+  var ALLE = SP.concat(ANF, ALT, NEU);
   var TEAM = { me: '#2a64b8', foe: '#c23a2e' }, team = 'foe';
 
   // ---------- König von oben (gleicher Stil wie im Spiel: Blick nach rechts) ----------
@@ -157,6 +167,14 @@
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.22); c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
       c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
       hand(c, r * 0.45, -r * 0.13, r); hand(c, r * 0.7, r * 0.13, r);
+    } else if (w === 'forke') {
+      c.strokeStyle = '#8a6a3a'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.1, r * 0.3); c.lineTo(r * 2.9, r * 0.3); c.stroke();
+      c.strokeStyle = k.wf; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(r * 2.9, r * 0.0); c.lineTo(r * 2.9, r * 0.6); [0.0, 0.3, 0.6].forEach(function (y) { c.moveTo(r * 2.9, r * y); c.lineTo(r * 3.5, r * y); }); c.stroke();
+      hand(c, r * 0.5, r * 0.3, r); hand(c, r * 1.0, r * 0.3, r);
+    } else if (w === 'holzschwert') {
+      c.fillStyle = k.wf; c.strokeStyle = 'rgba(80,50,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 2.3, 0); c.lineTo(r * 2.1, -r * 0.18); c.lineTo(r * 0.9, -r * 0.18); c.lineTo(r * 0.9, r * 0.18); c.lineTo(r * 2.1, r * 0.18); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#7a5428'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.85, -r * 0.45); c.lineTo(r * 0.85, r * 0.45); c.stroke(); c.beginPath(); c.moveTo(r * 0.35, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      hand(c, r * 0.6, 0, r);
     } else if (w === 'saebel') {
       c.fillStyle = k.wf; c.beginPath(); c.moveTo(r * 0.9, -r * 0.18); c.quadraticCurveTo(r * 2.2, -r * 0.3, r * 2.9, r * 0.35); c.quadraticCurveTo(r * 2.1, r * 0.1, r * 0.9, r * 0.18); c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.85, -r * 0.45); c.lineTo(r * 0.85, r * 0.45); c.stroke();
@@ -214,11 +232,13 @@
     else if (t === 'eis') { c.fillStyle = f; c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1; for (i = 0; i < 8; i++) { a = i / 8 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a - 0.18) * r * 0.34, Math.sin(a - 0.18) * r * 0.34); c.lineTo(cx + Math.cos(a) * r * (i % 2 ? 0.55 : 0.7), Math.sin(a) * r * (i % 2 ? 0.55 : 0.7)); c.lineTo(cx + Math.cos(a + 0.18) * r * 0.34, Math.sin(a + 0.18) * r * 0.34); c.fill(); c.stroke(); } c.strokeStyle = f; c.lineWidth = r * 0.1; c.beginPath(); c.arc(cx, 0, r * 0.35, 0, 7); c.stroke(); }
     else if (t === 'federn') { ring(f, 0.12); var fc = ['#c0392b', '#e8b830', '#2a64b8', '#1f8a5a', '#e8b830']; for (i = 0; i < 5; i++) { a = Math.PI + (i - 2) * 0.35; c.fillStyle = fc[i]; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.32, r * 0.1, a, 0, 7); c.fill(); } }
     else if (t === 'pilz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; [[0, 0, 0.14], [0.35, -0.3, 0.1], [-0.3, 0.32, 0.12], [0.3, 0.35, 0.09], [-0.35, -0.3, 0.1]].forEach(function (p) { c.beginPath(); c.arc(cx + p[0] * r, p[1] * r, p[2] * r, 0, 7); c.fill(); }); }
+    else if (t === 'strohhut') { c.fillStyle = f; c.strokeStyle = 'rgba(120,80,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.75, 0, 7); c.fill(); c.stroke(); c.strokeStyle = 'rgba(150,100,30,0.45)'; c.lineWidth = 1; for (i = 0; i < 12; i++) { a = i / 12 * 7; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42); c.lineTo(cx + Math.cos(a) * r * 0.74, Math.sin(a) * r * 0.74); c.stroke(); } c.fillStyle = '#d9b14a'; c.beginPath(); c.arc(cx, 0, r * 0.4, 0, 7); c.fill(); c.strokeStyle = '#a0402a'; c.lineWidth = r * 0.09; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); }
+    else if (t === 'topf') { kugel(f, 0.46); c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(cx - r * 0.12, -r * 0.12, r * 0.15, 0, 7); c.fill(); c.strokeStyle = '#4a4f54'; c.lineWidth = r * 0.12; c.beginPath(); c.moveTo(cx - r * 0.05, -r * 0.45); c.lineTo(cx - r * 0.05, -r * 0.8); c.stroke(); c.fillStyle = '#4a4f54'; c.beginPath(); c.arc(cx, 0, r * 0.08, 0, 7); c.fill(); }
     else if (t === 'dreispitz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx + r * 0.55, 0); c.lineTo(cx - r * 0.45, -r * 0.6); c.lineTo(cx - r * 0.45, r * 0.6); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.06; c.stroke(); }
   }
 
   // ---------- Karten ----------
-  var LABEL = { reif: 'Goldreif', zacken: 'Zackenkrone', diadem: 'Diadem', hoch: 'Hohe Krone', helm: 'Helm', kapuze: 'Kapuze', turban: 'Turban', lorbeer: 'Kranz', hoerner: 'Hörnerhelm', pelz: 'Pelzmütze', wolf: 'Wolfsfell', spitzhut: 'Spitzhut', mitra: 'Mitra', eis: 'Eiskrone', federn: 'Federkrone', pilz: 'Pilzhut', dreispitz: 'Dreispitz',
+  var LABEL = { reif: 'Goldreif', zacken: 'Zackenkrone', diadem: 'Diadem', hoch: 'Hohe Krone', helm: 'Helm', kapuze: 'Kapuze', turban: 'Turban', lorbeer: 'Kranz', hoerner: 'Hörnerhelm', pelz: 'Pelzmütze', wolf: 'Wolfsfell', spitzhut: 'Spitzhut', strohhut: 'Strohhut', topf: 'Kochtopf', forke: 'Heugabel', holzschwert: 'Holzschwert', mitra: 'Mitra', eis: 'Eiskrone', federn: 'Federkrone', pilz: 'Pilzhut', dreispitz: 'Dreispitz',
     zweihaender: 'Zweihänder', schwert: 'Schwert', saebel: 'Säbel', axt: 'Axt', kolben: 'Streitkolben', speer: 'Speer', zepter: 'Zepter',
     voll: 'Vollbart', kurz: 'kurzer Bart', lang: 'langer Bart', spitz: 'Spitzbart', schnauz: 'Schnauz', stoppel: 'Stoppeln', zopf: 'Zopfbart',
     hermelin: 'Hermelin', streifen: 'Streifen', kreuz: 'Kreuz', punkte: 'Punkte', sterne: 'Sterne', blaetter: 'Blätter', flicken: 'Flicken', muenzen: 'Münzen', zacken_m: 'Zacken', schuppen: 'Schuppen' };
@@ -237,21 +257,21 @@
   }
   function karte(k) {
     var d = document.createElement('div'); d.className = 'card';
-    var tag = k.art === 'spieler' ? (k.nr === 'S' ? '<span class="tag sp">heute</span>' : '<span class="tag sp">dein König</span>') : k.art === 'alt' ? '<span class="tag alt">bestehender Bot</span>' : '<span class="tag neu">neu</span>';
-    d.innerHTML = '<canvas aria-label="König ' + k.name + '"></canvas><div class="body"><span class="nr">' + (k.art === 'neu' ? 'Vorschlag ' + k.nr : k.nr) + '</span><b>' + k.name + tag + '</b><span class="look">' + k.text + '</span></div>';
+    var tag = k.art === 'spieler' ? (k.nr === 'S' ? '<span class="tag sp">heute</span>' : '<span class="tag sp">dein König</span>') : k.art === 'anf' ? '<span class="tag anf">Anfänger</span>' : k.art === 'alt' ? '<span class="tag alt">bestehender Bot</span>' : '<span class="tag neu">neu</span>';
+    d.innerHTML = '<canvas aria-label="König ' + k.name + '"></canvas><div class="body"><span class="nr">' + (k.art === 'neu' ? 'Vorschlag ' + k.nr : k.nr) + '</span><b>' + k.name + tag + '</b><span class="look">' + k.text + '</span>' + (k.neu ? '<span class="namen"><span>Neuer Name:</span>' + k.neu.map(function (n) { return '<i>' + n + '</i>'; }).join('') + '</span>' : '') + '</div>';
     return d;
   }
   function aufbauen() {
-    [['gSpieler', SP], ['gAlt', ALT], ['gNeu', NEU]].forEach(function (g) { var el = document.getElementById(g[0]); g[1].forEach(function (k) { var d = karte(k); el.appendChild(d); k._cv = d.querySelector('canvas'); }); });
+    [['gSpieler', SP], ['gAnf', ANF], ['gAlt', ALT], ['gNeu', NEU]].forEach(function (g) { var el = document.getElementById(g[0]); g[1].forEach(function (k) { var d = karte(k); el.appendChild(d); k._cv = d.querySelector('canvas'); }); });
     malen();
     var tb = document.querySelector('#tab tbody');
     ALLE.forEach(function (k) {
       var um = k.umhang === 'team' ? 'Teamfarbe' : '<span class="sw" style="background:' + k.umhang + '"></span>' + k.umhang;
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + k.nr + '</td><td><b>' + k.name + '</b></td><td>' + ({ spieler: 'Spieler', alt: 'Bot (bestehend)', neu: 'Bot (neu)' })[k.art] + '</td><td><span class="sw" style="background:' + k.kf + '"></span>' + lab(k.krone) + '</td><td>' + um + '</td><td><span class="sw" style="background:' + k.ruestung + '"></span>' + k.ruestung + '</td><td><span class="sw" style="background:' + k.haut + '"></span>' + (k.bart ? lab(k.bart) : 'kein Bart') + '</td><td>' + lab(k.waffe) + '</td><td>' + lab(k.muster, 1) + '</td>';
+      tr.innerHTML = '<td>' + k.nr + '</td><td><b>' + k.name + '</b>' + (k.neu ? '<br><span style="color:var(--muted)">' + k.neu.join(' · ') + '</span>' : '') + '</td><td>' + ({ spieler: 'Spieler', anf: 'Bot (Anfänger)', alt: 'Bot (bestehend)', neu: 'Bot (neu)' })[k.art] + '</td><td><span class="sw" style="background:' + k.kf + '"></span>' + lab(k.krone) + '</td><td>' + um + '</td><td><span class="sw" style="background:' + k.ruestung + '"></span>' + k.ruestung + '</td><td><span class="sw" style="background:' + k.haut + '"></span>' + (k.bart ? lab(k.bart) : 'kein Bart') + '</td><td>' + lab(k.waffe) + '</td><td>' + lab(k.muster, 1) + '</td>';
       tb.appendChild(tr);
     });
-    var daten = ALLE.map(function (k) { var o = {}; ['nr', 'name', 'art', 'krone', 'kf', 'umhang', 'muster', 'ruestung', 'haut', 'haar', 'bart', 'waffe', 'wf'].forEach(function (f) { o[f] = k[f]; }); return o; });
+    var daten = ALLE.map(function (k) { var o = {}; ['nr', 'name', 'neu', 'art', 'krone', 'kf', 'umhang', 'muster', 'ruestung', 'haut', 'haar', 'bart', 'waffe', 'wf'].forEach(function (f) { o[f] = k[f]; }); return o; });
     var txt = '// Königs-Optiken: Saum des Umhangs immer in Teamfarbe\nvar KOENIGE = [\n' + daten.map(function (o) { return '  ' + JSON.stringify(o); }).join(',\n') + '\n];';
     document.getElementById('json').textContent = txt;
     document.getElementById('copy').addEventListener('click', function () {
