@@ -28,6 +28,9 @@
   var ME = 0; // welches Team du bist (0 = links/blau, 1 = rechts/rot im Online-Spiel)
   var pvp = { on: false, me: 0, ws: null, searching: false, ended: false, tick: 0, acc: 0, alpha: 0, inbox: {}, sent: {}, pending: [], hashes: {}, remoteHash: {}, stall: 0 };
   var sandbox = false, sandBtn = $('sandBtn');
+  // Tester-Modus (19.11.): nur ausserhalb der Online-Seite (Claude-Artifact). Zeigt die Sandbox und schaltet alle Einheiten und Gegner frei.
+  var tester = false;
+  try { tester = !ONLINE && localStorage.getItem('stronghold-tester') === '1'; } catch (err) {}
   var tut = { on: false, i: 0, avail: [], bought: {}, script: [], si: 0, rt: 0, st: 0, boxOpen: false };
   var overlay = $('overlay'), ovTitle = $('ovTitle'), ovText = $('ovText'), ovBtn = $('ovBtn');
   var COIN_SVG = '<svg class="coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="#c98a12"/><circle cx="10" cy="10" r="7.4" fill="#f5c542"/><circle cx="10" cy="10" r="4.8" fill="none" stroke="#d9a21f" stroke-width="1.5"/><path d="M5.6 8.2A4.8 4.8 0 0 1 8.4 5.5" fill="none" stroke="#fff3c4" stroke-width="1.6" stroke-linecap="round"/></svg>';

@@ -8,7 +8,7 @@
   function kontoAn() { return !!KONTO.url; }
   function unitLocked(t) {
     var d = CONFIG.units[t], k = konto || {};
-    if (!d || !kontoAn()) return false;
+    if (!d || !kontoAn() || tester) return false; // Tester-Modus: alles frei
     if (d.account && !k.user) return true;
     if (d.invite && ONLINE && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // im Artifact (ohne Server) nicht gesperrt
     return false;
@@ -199,6 +199,18 @@
     }).catch(function () {}); // ohne Netz: beim nächsten Mal nochmals
   }
   $('kontoBtn').addEventListener('click', function () { kontoOpen(true); });
+  // Tester-Modus ein/aus (Knopf oben, nur ausserhalb der Online-Seite)
+  function testerSync() {
+    var b = $('testerBtn'); b.hidden = ONLINE; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
+    b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
+    if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester || overlay.hidden || $('ovChoice').hidden;
+  }
+  $('testerBtn').addEventListener('click', function () {
+    tester = !tester;
+    try { localStorage.setItem('stronghold-tester', tester ? '1' : '0'); } catch (e) {}
+    testerSync(); kontoChanged();
+  });
+  testerSync();
   $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
   $('kontoForm').addEventListener('submit', kontoLogin);
   $('kontoReg').addEventListener('click', kontoRegister);

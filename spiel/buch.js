@@ -241,9 +241,10 @@
 
   function showOverlay(title, text, btnText, withChoice) {
     $('ovChoice').hidden = withChoice === false;
-    sandBtn.hidden = withChoice === false || (state === 'paused');
-    $('tutBtn').hidden = sandBtn.hidden;
-    $('pvpBtn').hidden = sandBtn.hidden || !ONLINE;
+    var ohneWahl = withChoice === false || (state === 'paused');
+    sandBtn.hidden = ohneWahl || !tester; // Sandbox nur im Tester-Modus
+    $('tutBtn').hidden = ohneWahl;
+    $('pvpBtn').hidden = ohneWahl || !ONLINE;
     ovTitle.textContent = title;
     ovText.textContent = text;
     ovBtn.textContent = btnText;

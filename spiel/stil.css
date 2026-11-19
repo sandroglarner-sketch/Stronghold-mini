@@ -196,6 +196,7 @@
     font-size: 0.85rem;
   }
 
+  #testerBtn.on { border-color: #c27c0e; color: #c27c0e; font-weight: 600; }
   .konto {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
     display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
