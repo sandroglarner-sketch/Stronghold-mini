@@ -468,11 +468,12 @@
         ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
       if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
+      if (u.type === 'king') kZust[u.team] = { zieh: u.bogenT || 0, nah: u.waffeZ || 0 }; // was der König gerade in der Hand hat
       if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
         var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
-        // alle 10 s kratzt er sich kurz am Kopf (nur Darstellung, solange der Bogen verstaut ist; Team 1 um 3,7 s versetzt)
-        var kz = (clock + u.team * 3.7) % 10;
-        kKratz[u.team] = kz < 1.2 && !(u.bogenT > 0) ? kz / 1.2 : 0;
+        // alle 15 s kratzt er sich am Kopf (nur Darstellung, 2,4 s = halbes Tempo, nur mit leeren Händen; Team 1 um 5,3 s versetzt)
+        var kz = (clock + u.team * 5.3) % KRATZ.alle;
+        kKratz[u.team] = kz < KRATZ.dauer && !(u.bogenT > 0) && !(u.waffeZ > 0) ? kz / KRATZ.dauer : 0;
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);

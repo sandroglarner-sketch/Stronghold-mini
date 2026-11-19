@@ -12,7 +12,8 @@
     FARMER_EDGE: 2,   // so nah am Spielfeldrand darf sich kein Bauer niederlassen
     BASE_ATK: 2,
     BASE_RANGE: 5, // Reichweite des Königs auf der Burg (seit 19.11. wieder 5)
-    KING_BOW: { draw: 1, stow: 0.8 }, // Sekunden: Bogen hervorholen, sobald ein Gegner in Reichweite ist (erst dann Schuss), und wieder verstauen
+    KING_BOW: { draw: 1, stow: 0.8 },
+    KING_SWAP: { time: 1.8, bow: 0.8, stow: 1 }, // Burg kaputt: in time s Bogen versorgen (erste bow s) und Nahkampfwaffe hervorholen, so lange kein Kampf; zurück auf der Burg: Waffe in stow s versorgen // Sekunden: Bogen hervorholen, sobald ein Gegner in Reichweite ist (erst dann Schuss), und wieder verstauen
     BASE_CD: 1,
     BASE_DELAY: 0.5, // Flugzeit des Kasernenpfeils in Sekunden
     // Computergegner: bekommt wie du 10 Gold pro Auszahlung (ohne Bauernbonus). 

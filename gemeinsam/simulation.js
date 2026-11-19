@@ -111,6 +111,7 @@
           if (kb.down) u.inCastle = false;
           else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
             u.x = kcx; u.y = kcy;
+            if (u.waffeZ > 0) { u.waffeZ = Math.max(0, u.waffeZ - dt / CONFIG.KING_SWAP.stow); continue; } // zurück auf der Burg: erst die Nahkampfwaffe versorgen
             u.ready = u.aimT !== undefined && clock - u.aimT < CONFIG.BASE_CD + 0.3; // schießt gerade: nächsten Pfeil schon spannen (Animation)
             // Gegner in Reichweite? Dann Bogen hervorholen (KING_BOW.draw s), erst danach schießen; sonst Bogen wieder verstauen (KING_BOW.stow s)
             var vic = null, vd = 1e9;
@@ -132,9 +133,18 @@
             continue;
           }
         }
-        if (!kb.down) { // Burg steht wieder (ab 1 Leben): sofort zurück, oben wird er wieder zum Fernkämpfer
+        if (!u.draussen) { u.draussen = true; u.wechselT = CONFIG.KING_SWAP.time; } // Burg kaputt: Bogen versorgen, Nahkampfwaffe hervorholen
+        if (u.wechselT > 0) { // solange steht er und kämpft nicht
+          u.wechselT = Math.max(0, u.wechselT - dt);
+          var kwt = CONFIG.KING_SWAP.time - u.wechselT;
+          u.bogenT = Math.max(0, (u.bogenT || 0) - dt / CONFIG.KING_SWAP.bow);
+          u.waffeZ = kwt < CONFIG.KING_SWAP.bow ? 0 : Math.min(1, (kwt - CONFIG.KING_SWAP.bow) / (CONFIG.KING_SWAP.time - CONFIG.KING_SWAP.bow));
+          if (u.wechselT <= 0) { u.waffeZ = 1; u.bogenT = 0; }
+          continue;
+        }
+        if (!kb.down) { // Burg steht wieder (ab 1 Leben): sofort zurück (Waffe bleibt in der Hand), oben versorgt er sie und wird wieder zum Fernkämpfer
           kdx = kcx - u.x; kdy = kcy - u.y; kdl = hyp(kdx, kdy);
-          if (kdl <= 0.15) { u.inCastle = true; u.x = kcx; u.y = kcy; }
+          if (kdl <= 0.15) { u.inCastle = true; u.draussen = false; u.x = kcx; u.y = kcy; }
           else { var krs = Math.min(spd * dt, kdl); u.x += kdx / kdl * krs; u.y += kdy / kdl * krs; if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1; }
           continue;
         }

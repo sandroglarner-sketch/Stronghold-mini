@@ -3,6 +3,8 @@
   // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
+  var kZust = [null, null]; // je Team im Spiel: { zieh: Bogen 0..1, nah: Nahkampfwaffe 0..1 }, gesetzt in zeichnen.js
+  var KRATZ = { alle: 15, dauer: 2.4 }; // Kopfkratzen: alle 15 s, dauert 2,4 s (halbes Tempo)
   var kKratz = [0, 0]; // Kopfkratzen in der Burg je Team (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
   var KSCHRAEG = -0.5; // Nahkampfwaffe schräg nach vorn gehalten (Bogenmass)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
@@ -27,10 +29,12 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    var kratzt = o.kratz > 0 && o.bogen && !(o.zieh > 0);
-    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r, kratzt); // Bild bzw. in der Burg ohne Gegner: leere Hände
-    else if (o.bogen) kBogen(c, k, r, o);
-    else { c.save(); c.translate(r * 0.45, 0); c.rotate(KSCHRAEG + (o.rot || 0)); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); } // Nahkampfwaffe immer etwas schräg
+    // Was hält er? nah = Nahkampfwaffe hervorgeholt (0..1), zieh = Bogen hervorgeholt (0..1); beides 0 = leere Hände
+    var nah = o.ohneWaffe ? 0 : o.nah !== undefined ? o.nah : (o.bogen ? 0 : 1), zieh = o.ohneWaffe ? 0 : o.bogen ? (o.zieh === undefined ? 1 : o.zieh) : 0;
+    var kratzt = o.kratz > 0 && !(nah > 0) && !(zieh > 0);
+    if (nah > 0) kNah(c, k, r, o, nah);
+    else if (zieh > 0) kBogen(c, k, r, o);
+    else kRuhe(c, k, r, kratzt); // leere Hände
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
     c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
     c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -77,6 +81,16 @@
     var gx = r * 0.95 - r * 1.7 * (1 - ee), gy = r * 0.15 * (1 - ee);
     kHand(c, lerpK(r * KRUHE[1][0], gx, ee), lerpK(r * KRUHE[1][1], gy, ee), r, k.haut);
     kHand(c, lerpK(r * KRUHE[0][0], Math.min(kmx, r * 0.5), ee), lerpK(r * KRUHE[0][1], 0, ee), r, k.haut);
+  }
+  // Nahkampfwaffe hervorholen (e 0..1): kommt wie der Bogen vom Rücken nach vorn, dann immer etwas schräg; o.rot = Hieb
+  function kNah(c, k, r, o, e) {
+    var ee = e * e * (3 - 2 * e);
+    c.save();
+    c.globalAlpha *= Math.min(1, e * 4);
+    c.translate(r * 0.45, 0); c.translate(-r * 1.2 * (1 - ee), r * 0.2 * (1 - ee)); c.rotate(KSCHRAEG + 1.9 * (1 - ee) + (e >= 1 ? (o.rot || 0) : 0)); c.translate(-r * 0.45, 0);
+    kWaffe(c, k, r);
+    c.restore();
+    if (e < 1) kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); // die freie Hand bleibt am Körper, bis die Waffe vorne ist
   }
   function lerpK(a, b, t) { return a + (b - a) * t; }
   function kMuster(c, k, r) {
