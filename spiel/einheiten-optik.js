@@ -400,8 +400,8 @@
       if (A.glow > 0) { c.strokeStyle = 'rgba(200,170,255,' + (0.8 * A.glow) + ')'; c.lineWidth = 1.5; for (var mi = 0; mi < 5; mi++) { var ma = mi * 1.257 + A.spin; c.beginPath(); c.moveTo(r * 1.65 + Math.cos(ma) * r * 0.75, r * 0.6 + Math.sin(ma) * r * 0.75); c.lineTo(r * 1.65 + Math.cos(ma) * r * 1.05, r * 0.6 + Math.sin(ma) * r * 1.05); c.stroke(); } }
       c.restore();
     } else if (type === 'schmiede') {
-      // Schmiede von oben mit Holzdach; je höher die Stufe, desto mächtiger: 1 = Holzhütte, 2 = Steinhaus mit Eckbalken, Fass und Banner, 3 = Werkstein mit Eckpfeilern,
-      // Kupferfirst, zwei Essen, zwei Banner und Waffenständer. Vorne (nx/ny, zur Mitte/zum Weg) Amboss und Schmied (so gross wie ein Bauer).
+      // Schmiede von oben (man sieht nur das Dach): 1 = Strohdach, kleine Lehm-Esse, Wimpel; 2 = Holzdach, Stein-Esse, Banner, Fass; 3 = Steindach (Schiefer) mit
+      // Goldspitzen am First, zwei Essen, zwei Banner, Waffenständer. Vorne (nx/ny, zur Mitte/zum Weg) Amboss und Schmied (so gross wie ein Bauer).
       // settled = { bau 0..1, stufe, phase (Sekunden im 5-s-Takt, -1 = im Bau), nx, ny } im Spiel, sonst (Buch/Knopf) Stufe 1 ohne Schmied
       var SG = CONFIG.units.schmiede.gebaeude, sw = r * SG.w / CONFIG.units.schmiede.r, sh = r * SG.h / CONFIG.units.schmiede.r;
       var Z = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1 }, now = performance.now() / 1000, L = Math.max(1, Math.min(3, Z.stufe || 1));
@@ -413,29 +413,41 @@
         c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.stroke(); c.setLineDash([]);
         c.beginPath(); c.moveTo(-sw / 2, -sh / 2); c.lineTo(sw / 2, sh / 2); c.moveTo(-sw / 2, sh / 2); c.lineTo(sw / 2, -sh / 2); c.stroke();
       } else {
-        var ins = L === 1 ? 0.1 : 0, hw = sw / 2 * (1 - ins), hh = sh / 2 * (1 - ins); // Stufe 1 etwas kleiner
-        // Mauern
-        c.fillStyle = L === 1 ? '#9a7a52' : L === 2 ? '#9c9488' : '#bdb6aa'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
-        rr(c, -hw, -hh, 2 * hw, 2 * hh, L === 3 ? 2 : 3); c.fill(); c.stroke();
-        if (L === 3) { c.fillStyle = '#8f887c'; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { rr(c, q[0] * hw - r * 0.16, q[1] * hh - r * 0.16, r * 0.32, r * 0.32, 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); }); } // Eckpfeiler
-        // Holzdach (Bretter quer zum First), Dachüberstand ab Stufe 2
-        if (L >= 2) { // Mauersteine sichtbar am Rand
-          c.strokeStyle = 'rgba(0,0,0,' + (L === 3 ? 0.35 : 0.28) + ')'; c.lineWidth = 1;
-          for (var mx = -hw + r * 0.22; mx < hw; mx += r * 0.28) { c.beginPath(); c.moveTo(mx, -hh); c.lineTo(mx, -hh + r * 0.17); c.moveTo(mx + r * 0.14, hh); c.lineTo(mx + r * 0.14, hh - r * 0.17); c.stroke(); }
+        var ins = L === 1 ? 0.08 : 0, hw = sw / 2 * (1 - ins), hh = sh / 2 * (1 - ins); // Stufe 1 etwas kleiner
+        // Von oben sieht man nur das Dach: Stufe 1 Stroh, Stufe 2 Holz, Stufe 3 Stein (Schiefer)
+        var rx0 = -hw, ry0 = -hh, rw = 2 * hw, rh = 2 * hh, k;
+        c.save(); rr(c, rx0, ry0, rw, rh, L === 1 ? r * 0.18 : 3); c.clip();
+        if (L === 1) { // Strohdach: gelblich, viele kurze Halme, ausgefranster Rand
+          c.fillStyle = '#d6b25a'; c.fillRect(rx0, ry0, rw, rh);
+          c.strokeStyle = 'rgba(140,100,40,0.55)'; c.lineWidth = 1;
+          for (k = 0; k < 70; k++) { var hx = rx0 + ((k * 37) % 100) / 100 * rw, hy = ry0 + ((k * 61) % 100) / 100 * rh, hl = r * (0.15 + ((k * 13) % 7) / 30); c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx + ((k % 3) - 1) * r * 0.03, hy + (hy < 0 ? -hl : hl)); c.stroke(); }
+          c.fillStyle = 'rgba(0,0,0,0.16)'; c.fillRect(rx0, 0, rw, rh / 2);
+          c.strokeStyle = '#a07a30'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(rx0, 0); c.lineTo(rx0 + rw, 0); c.stroke(); // First aus gebundenem Stroh
+        } else if (L === 2) { // Holzdach: Bretter quer zum First, Traufbalken
+          c.fillStyle = '#7a4f26'; c.fillRect(rx0, ry0, rw, rh);
+          c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(rx0, 0, rw, rh / 2);
+          c.strokeStyle = 'rgba(0,0,0,0.32)'; c.lineWidth = 1;
+          for (k = 1; k < 9; k++) { var px2 = rx0 + rw * k / 9; c.beginPath(); c.moveTo(px2, ry0); c.lineTo(px2, ry0 + rh); c.stroke(); }
+          c.strokeStyle = '#3e2a16'; c.lineWidth = Math.max(2, r * 0.13); c.beginPath(); c.moveTo(rx0, 0); c.lineTo(rx0 + rw, 0); c.stroke();
+        } else { // Steindach: Schieferplatten in versetzten Reihen, Firststeine mit Goldspitzen
+          c.fillStyle = '#7d8590'; c.fillRect(rx0, ry0, rw, rh);
+          c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1;
+          var tr = r * 0.2, tc = r * 0.28;
+          for (var ty = 0; ty < rh / 2; ty += tr) for (var sd2 = -1; sd2 <= 1; sd2 += 2) {
+            var yy = sd2 < 0 ? -ty - tr : ty; c.beginPath(); c.moveTo(rx0, yy); c.lineTo(rx0 + rw, yy); c.stroke();
+            for (var tx2 = rx0 + ((Math.round(ty / tr) % 2) ? tc / 2 : 0); tx2 < rx0 + rw; tx2 += tc) { c.beginPath(); c.moveTo(tx2, yy); c.lineTo(tx2, yy + tr); c.stroke(); }
+          }
+          c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(rx0, 0, rw, rh / 2);
+          c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(rx0, ry0, rw, rh / 2 * 0.35);
         }
-        var ov = L === 1 ? r * 0.1 : r * 0.17, rx0 = -hw + ov, ry0 = -hh + ov, rw = 2 * (hw - ov), rh = 2 * (hh - ov);
-        var holz = L === 1 ? '#8a5a2b' : L === 2 ? '#7a4f26' : '#6b4423';
-        c.fillStyle = holz; rr(c, rx0, ry0, rw, rh, 2); c.fill();
-        c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(rx0, 0, rw, rh / 2); // Schattenseite
-        c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1;
-        var nb = L === 1 ? 6 : L === 2 ? 8 : 10; for (var pb = 1; pb < nb; pb++) { var px2 = rx0 + rw * pb / nb; c.beginPath(); c.moveTo(px2, ry0); c.lineTo(px2, ry0 + rh); c.stroke(); } // Bretter
-        c.strokeStyle = L === 3 ? '#d9a441' : '#4a3018'; c.lineWidth = Math.max(2, r * (L === 1 ? 0.08 : 0.13)); c.beginPath(); c.moveTo(rx0, 0); c.lineTo(rx0 + rw, 0); c.stroke(); // First (Stufe 3: Kupfer)
-        if (L >= 2) { c.strokeStyle = '#3e2a16'; c.lineWidth = Math.max(1.5, r * 0.08); rr(c, rx0, ry0, rw, rh, 2); c.stroke(); } // Traufbalken
+        c.restore();
+        c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2; rr(c, rx0, ry0, rw, rh, L === 1 ? r * 0.18 : 3); c.stroke();
+        if (L === 3) { c.strokeStyle = '#4e555e'; c.lineWidth = Math.max(3, r * 0.16); c.beginPath(); c.moveTo(rx0, 0); c.lineTo(rx0 + rw, 0); c.stroke(); c.fillStyle = '#e2b13c'; [rx0 + r * 0.1, rx0 + rw - r * 0.1].forEach(function (gx) { c.beginPath(); c.arc(gx, 0, r * 0.1, 0, Math.PI * 2); c.fill(); }); }
         // Essen (Schornsteine): Stufe 3 zwei
         var drin = Z.phase < 0.5 || Z.phase >= 4.5, glut = drin && Z.phase >= 0 ? 0.6 + 0.4 * Math.sin(now * 12) : 0.25;
         (L === 3 ? [-0.3, 0.3] : [-0.28]).forEach(function (fx, ei) {
           var ex = sw * fx, ey = -sh * 0.2 + (ei ? sh * 0.4 : 0), es = r * (L === 1 ? 0.32 : 0.42);
-          c.fillStyle = L === 1 ? '#5a4a3a' : '#6e665c'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.fillRect(ex - es / 2, ey - es / 2, es, es); c.strokeRect(ex - es / 2, ey - es / 2, es, es);
+          c.fillStyle = L === 1 ? '#8a5a3a' : L === 2 ? '#6e665c' : '#5a5f66'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.fillRect(ex - es / 2, ey - es / 2, es, es); c.strokeRect(ex - es / 2, ey - es / 2, es, es);
           c.fillStyle = 'rgba(255,' + Math.round(120 + 60 * glut) + ',40,' + (0.5 + 0.5 * glut) + ')'; c.fillRect(ex - es * 0.28, ey - es * 0.28, es * 0.56, es * 0.56);
           for (var sk = 0; sk < (drin ? 4 : 2); sk++) { var spp = ((now * 0.6 + sk / 4 + ei * 0.37) % 1); c.fillStyle = 'rgba(90,90,90,' + (0.45 * (1 - spp)) + ')'; c.beginPath(); c.arc(ex - spp * r * 0.5, ey - spp * r * 1.1, r * (0.12 + spp * 0.22), 0, Math.PI * 2); c.fill(); }
         });
@@ -464,7 +476,7 @@
           c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-sw / 2, -sh / 2 - 9, sw, 4); c.fillStyle = '#c98a12'; c.fillRect(-sw / 2, -sh / 2 - 9, sw * Z.bau, 4);
         }
         if (Z.phase >= 0) { // Amboss und Schmied vor dem Gebäude
-          var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * hw + Math.abs(vy) * hh, sm = r * CONFIG.units.farmer.r / CONFIG.units.schmiede.r; // sm = Radius wie ein Bauer
+          var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * hw + Math.abs(vy) * hh, sm = r * CONFIG.units.farmer.r / CONFIG.units.schmiede.r * 1.05; // sm = Radius wie ein Bauer (5 % grösser wirkt gleich gross)
           var ax = vx * (ext + r * 0.45), ay = vy * (ext + r * 0.45), qx = -vy, qy = vx;
           var tx0 = vx * ext, ty0 = vy * ext, smx = ax + qx * sm * 1.6 + vx * sm * 0.3, smy = ay + qy * sm * 1.6 + vy * sm * 0.3, ph = Z.phase, sa = 1, sx2 = smx, sy2 = smy;
           // Ablauf (5 s): 0–0,5 drin, 0,5–0,75 kommt heraus, 0,75–4,25 schmiedet, 4,25–4,5 geht hinein, 4,5–5 drin, dann Gold

@@ -229,6 +229,8 @@
       var gp = state === 'playing' || state === 'paused' ? preisVon(ME, t) : CONFIG.units[t].cost, gk = gp + '|' + gm;
       if (ui['geb_' + t] === gk) return; ui['geb_' + t] = gk;
       var gc = btns[t].querySelector('.cost'); if (gc) gc.innerHTML = COIN_SVG + (isFinite(gp) ? gp : '–');
+      var gg = state === 'playing' || state === 'paused' ? meinGebaeude(ME, t) : null, nst = Math.min(3, gg ? gg.stufe + (gg.bau ? 0 : 1) : 1); // Bild: nächste Stufe
+      if (ui['gebB_' + t] !== nst) { ui['gebB_' + t] = nst; var ic = icons[t].getContext('2d'), ext = ICON_EXT[t] || [1, 2], span = ext[0] + ext[1], ir = Math.min(24, 78 / span); ic.clearRect(0, 0, 88, 88); drawUnit(ic, t, (88 - span * ir) / 2 + ext[0] * ir, 44, ir, 0, 1, 0, { bau: 1, stufe: nst, phase: -1, nx: 0, ny: 1 }, undefined, 0); }
       btns[t].classList.toggle('poor', gm < gp);
     });
     if (gf !== ui.gf) { goldFoeEl.textContent = gf; ui.gf = gf; }
