@@ -34,7 +34,7 @@
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
-    if (d.karawane) a.push('Geht zum Teich, füllt in ' + d.karawane.fuellen + ' s alle Töpfe mit Wasser und bringt sie zur Burg: <b>+' + d.karawane.gold + ' Gold</b> pro Gang. Dann wieder von vorn. Die 1. kostet ' + d.cost + ' Gold, jede weitere ' + d.karawane.steigt + ' Gold mehr (stirbt eine, sinkt der Preis wieder).');
+    if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>. Kosten steigen mit jeder weiteren Karawane.');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
