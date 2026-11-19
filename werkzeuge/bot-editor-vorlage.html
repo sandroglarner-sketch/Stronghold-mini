@@ -106,10 +106,9 @@
           <div class="feld"><label for="f_huntLead">Jagd nach … s Vorsprung</label><input type="number" id="f_huntLead" data-k="huntLead" min="0" step="1"><small>So lange musst du mehr Bauern haben.</small></div>
           <div class="feld"><label for="f_huntEvery">Pause zwischen Jagden (s)</label><input type="number" id="f_huntEvery" data-k="huntEvery" min="0" step="1"></div>
         </div>
-        <table><thead><tr><th>Jagdtrupp: Einheit</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="huntRows"></tbody></table>
-        <button type="button" class="klein" id="huntAdd" style="margin-top:6px">+ Einheit</button>
-        <table style="margin-top:12px"><thead><tr><th>Später nachschicken: Sekunde</th><th>Einheit</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="laterRows"></tbody></table>
-        <button type="button" class="klein" id="laterAdd" style="margin-top:6px">+ Zeile</button>
+        <table><thead><tr><th>Sekunde</th><th>Einheit (Preis)</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="huntRows"></tbody></table>
+        <button type="button" class="klein" id="huntAdd" style="margin-top:6px">+ Zeile hinzufügen</button>
+        <p class="hilfe" style="margin:6px 0 0">Sekunde 0 = sofort beim Beginn der Jagd, spätere Sekunden kommen nach.</p>
         <div class="summe"><span>Jagd kostet <b id="huntSum">0</b> Gold (er jagt erst, wenn er so viel hat)</span></div>
       </section>
 
@@ -118,7 +117,6 @@
         <div class="felder">
           <div class="feld"><label for="f_wallGold">Mauer ab … Gold</label><input type="number" id="f_wallGold" data-k="wallGold" min="0" step="1"><small>So viel Gold braucht er frei, dann baut er (weiter).</small></div>
           <div class="feld"><label for="f_wallUnits">… und ab so vielen Gegnern</label><input type="number" id="f_wallUnits" data-k="wallUnits" min="0" step="1"><small>Kampfeinheiten, die du mindestens haben musst (0 = egal).</small></div>
-          <div class="feld"><label for="f_repairAt">Repariert ab … Leben</label><input type="number" id="f_repairAt" data-k="repairAt" min="0" step="1"><small>0 = repariert nie, baut sie aber neu.</small></div>
           <div class="feld"><label for="f_wallStage">Ausbau bis Stufe</label><select id="f_wallStage" data-k="wallStage"><option value="0">Keine Mauer</option><option value="1">1 – Mauer ohne Türme</option><option value="2">2 – 2 Schützenplätze</option><option value="3">3 – 4 Schützenplätze</option><option value="4">4 – 6 Schützenplätze</option><option value="5">5 – 6 Schützen- + 2 Belagerungsplätze</option></select></div>
           <div class="feld check"><label><input type="checkbox" id="f_wallClear" data-k="wallClear"> Nur ohne Gegner in seiner Hälfte</label><small>Baut nicht, solange deine Einheiten bei ihm stehen.</small></div>
         </div>
@@ -232,7 +230,7 @@
     $('logik').hidden = !L; $('ohneLogik').hidden = !!L; $('logikWegBtn').hidden = !L;
     $('logikTag').innerHTML = L ? '<span class="tag ja">vorhanden' + (cur.logikKey ? ' · CONFIG.BOTS.' + cur.logikKey : '') + '</span>' : '<span class="tag nein">leer</span>';
     if (L) {
-      ['farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'repairAt', 'attackGold', 'lockSecs', 'defPlus', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
+      ['farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'attackGold', 'lockSecs', 'defPlus', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
       if (L.wallStage === undefined) L.wallStage = 1; // alte Daten: ohne Angabe = Mauer ohne Türme
       $('f_wallStage').value = String(L.wallStage);
       if (!L.turm) { L.turm = {}; var pl = platz(L.wallStage); if (pl.schuetzen) L.turm.archer = pl.schuetzen; if (pl.belagerung) L.turm[L.towerSiege || 'catapult'] = pl.belagerung; delete L.towerSiege; }
@@ -256,18 +254,17 @@
     z.slice().sort(function (a, b) { return a.s - b.s; }).forEach(function (r) { if (!(r.s in m)) { m[r.s] = []; keys.push(r.s); } m[r.s].push([r.t, r.n]); });
     return keys.map(function (k) { return { after: +k, buy: m[k] }; });
   }
-  var rows = { hunt: [], later: [], attack: [] };
+  var rows = { hunt: [], attack: [] };
   function zeilenMalen() {
     var L = cur.logik;
-    rows.hunt = (L.hunt || []).map(function (b) { return { t: b[0], n: b[1] }; });
-    rows.later = flach(L.huntLater); rows.attack = flach(L.attack);
-    tabelle('hunt'); tabelle('later'); tabelle('attack');
+    rows.hunt = (L.hunt || []).map(function (b) { return { s: 0, t: b[0], n: b[1] }; }).concat(flach(L.huntLater)); rows.attack = flach(L.attack);
+    tabelle('hunt'); tabelle('attack');
   }
   function tabelle(art) {
-    var tb = $(art === 'hunt' ? 'huntRows' : art === 'later' ? 'laterRows' : 'attackRows'); tb.innerHTML = '';
+    var tb = $(art === 'hunt' ? 'huntRows' : 'attackRows'); tb.innerHTML = '';
     rows[art].forEach(function (r, i) {
       var tr = document.createElement('tr');
-      tr.innerHTML = (art === 'hunt' ? '' : '<td><input type="number" min="0" step="0.5" value="' + r.s + '" data-f="s" aria-label="Sekunde"></td>') +
+      tr.innerHTML = '<td><input type="number" min="0" step="0.5" value="' + r.s + '" data-f="s" aria-label="Sekunde"></td>' +
         '<td><select data-f="t" aria-label="Einheit"></select></td><td><input type="number" min="1" step="1" value="' + r.n + '" data-f="n" aria-label="Anzahl"></td>' +
         '<td class="kosten">' + preis(r.t) * r.n + ' Gold</td><td><button type="button" class="weg" aria-label="Zeile löschen" title="Löschen">✕</button></td>';
       optUnits(tr.querySelector('select'), r.t);
@@ -279,26 +276,28 @@
   }
   function zurueck(art) { // Tabelle -> Logik
     var L = cur.logik;
-    if (art === 'hunt') L.hunt = rows.hunt.map(function (r) { return [r.t, r.n]; });
-    if (art === 'later') { var g = gruppiert(rows.later); if (g.length) L.huntLater = g; else delete L.huntLater; }
+    if (art === 'hunt') { // Sekunde 0 = Jagdtrupp (hunt), spätere Sekunden = huntLater
+      L.hunt = rows.hunt.filter(function (r) { return !(r.s > 0); }).map(function (r) { return [r.t, r.n]; });
+      var g = gruppiert(rows.hunt.filter(function (r) { return r.s > 0; })); if (g.length) L.huntLater = g; else delete L.huntLater;
+    }
     if (art === 'attack') L.attack = gruppiert(rows.attack);
     geaendert();
   }
   function summen() {
     if (!cur.logik) return;
-    var hs = rows.hunt.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0) + rows.later.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0);
+    var hs = rows.hunt.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0);
     $('huntSum').textContent = hs;
     var as = rows.attack.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0), st = rows.attack.reduce(function (a, r) { return a + staerke(r.t) * r.n; }, 0), sg = +cur.logik.attackGold || 0, d = sg - as;
     $('attSum').textContent = as + ' Gold'; $('attStart').textContent = sg + ' Gold'; $('attStaerke').textContent = st;
     $('attDiff').textContent = (d >= 0 ? '+' : '') + d + ' Gold'; $('attDiff').className = d < 0 ? 'rot' : 'gruen';
   }
-  $('huntAdd').addEventListener('click', function () { rows.hunt.push({ t: 'spear', n: 1 }); tabelle('hunt'); zurueck('hunt'); });
-  $('laterAdd').addEventListener('click', function () { var l = rows.later[rows.later.length - 1]; rows.later.push({ s: l ? l.s + 1 : 3, t: 'archer', n: 1 }); tabelle('later'); zurueck('later'); });
+  $('huntAdd').addEventListener('click', function () { var l = rows.hunt[rows.hunt.length - 1]; rows.hunt.push({ s: l ? l.s + 1 : 0, t: 'spear', n: 1 }); tabelle('hunt'); zurueck('hunt'); });
   $('attackAdd').addEventListener('click', function () { var l = rows.attack[rows.attack.length - 1]; rows.attack.push({ s: l ? l.s + 1 : 0, t: 'spear', n: 1 }); tabelle('attack'); zurueck('attack'); });
   $('attackSort').addEventListener('click', function () { rows.attack.sort(function (a, b) { return a.s - b.s; }); tabelle('attack'); zurueck('attack'); });
 
   // ----- Turmbesatzung -----
-  var WALLD = CONFIG.units.wall.wall, SCHUETZEN = ['archer', 'mage', 'crossbow', 'javelin'], BELAGERUNG = ['catapult', 'baliste', 'trebuchet'];
+  var WALLD = CONFIG.units.wall.wall, SCHUETZEN = [], BELAGERUNG = []; // aus den erlaubten Typen der Turmplätze (neue Einheiten erscheinen von selbst)
+  Object.keys(WALLD.tower.levels).forEach(function (l) { WALLD.tower.levels[l].list.forEach(function (t) { t.slots.forEach(function (sl) { var z = sl.types.indexOf('archer') >= 0 ? SCHUETZEN : BELAGERUNG; sl.types.forEach(function (ty) { if (z.indexOf(ty) < 0) z.push(ty); }); }); }); });
   function platz(stufe) {
     var lv = WALLD.tower.levels[stufe], p = { schuetzen: 0, belagerung: 0 };
     if (lv) lv.list.forEach(function (t) { t.slots.forEach(function (sl) { if (sl.types.indexOf('archer') >= 0) p.schuetzen++; else p.belagerung++; }); });
@@ -407,7 +406,7 @@
     else if (o.logik && !b.logik) l.push('Logik entfernt');
     else if (b.logik) {
       var ks = {}; Object.keys(o.logik).concat(Object.keys(b.logik)).forEach(function (k) { ks[k] = 1; });
-      Object.keys(ks).forEach(function (k) { if (!gleich(k === 'attack' ? gruppiert(flach(o.logik[k])) : o.logik[k], b.logik[k])) l.push(k === 'attack' ? 'Angriffswelle' : k === 'hunt' ? 'Jagdtrupp' : k === 'huntLater' ? 'Jagd später' : k === 'defPool' ? 'Verteidiger' : k === 'turm' ? 'Turmbesatzung: ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k]) : k + ': ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k])); });
+      Object.keys(ks).forEach(function (k) { if (!gleich(k === 'attack' ? gruppiert(flach(o.logik[k])) : o.logik[k], b.logik[k])) l.push(k === 'attack' ? 'Angriffswelle' : k === 'hunt' ? 'Jagd (Sekunde 0)' : k === 'huntLater' ? 'Jagd (spätere Sekunden)' : k === 'defPool' ? 'Verteidiger' : k === 'turm' ? 'Turmbesatzung: ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k]) : k + ': ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k])); });
     }
     if (b.spezial) l.push('Spezialregeln (Text)');
     return l;
@@ -415,7 +414,7 @@
   function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
 
   // ----- Code für das Spiel -----
-  var REIHE = ['farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'repairAt', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
+  var REIHE = ['farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
   function js(v) { return JSON.stringify(v).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
   function logikCode(b) {
     var L = b.logik, teile = [];

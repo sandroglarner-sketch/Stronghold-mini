@@ -50,9 +50,10 @@
     }
     return hp <= CONFIG.AI.weakHp;
   }
-  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss Leben bis zum Höchstwert ihrer Optik (40, 80, 120, 160, 200), wird sie repariert
-  function wallWeak(w) {
-    return !!(w && w.built && (w.stage || 0) >= 1 && WALL.stages[w.stage - 1] - w.hp > CONFIG.AI.wallRepairLoss);
+  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss (40) Leben bis zum Höchstwert der angestrebten Stufe (40, 80, 120, 160, 200), wird sie repariert
+  function wallWeak(w, ziel) {
+    var st = Math.max(w && w.stage || 0, ziel || 1);
+    return !!(w && w.built && WALL.stages[st - 1] - w.hp > CONFIG.AI.wallRepairLoss);
   }
   // Steht ein sichtbarer Gegner in der Spielfeldhälfte des Computers (rechts)?
   function enemyInMyHalf() {
@@ -158,7 +159,7 @@
     }
     // Mauer (keine Einheit, die Sperre gilt hier nicht): ab wallGold Gold, nur ohne Gegner in seiner Hälfte; repariert wird nie, nur neu gebaut
     var aw = walls[1];
-    if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || aw.hp <= R.repairAt || wallWeak(aw) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
+    if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || wallWeak(aw, R.wallStage) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
     if (!free) return;
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
