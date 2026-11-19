@@ -70,7 +70,7 @@
       // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 50 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
       brand: { cat: 'building', name: 'Brandstifterhaus', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 13, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
+               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 14, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
       // Kirche (Typ Gebäude): 120 Gold, 30 Leben (Annahme). Fertig: nochmals kaufen = ein Priester betet 20 s (50 Gold), danach Gunst +1 (Balken über der Kirche).
       // Bei Gunst 5 kommt ein Unwetter über das gegnerische Drittel: jede Sekunde ein Blitz an einer zufälligen Stelle, 20 Schaden im Umkreis 1 an allem vom Gegner
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.

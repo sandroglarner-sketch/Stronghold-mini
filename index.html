@@ -941,7 +941,7 @@
       // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 50 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
       brand: { cat: 'building', name: 'Brandstifterhaus', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 13, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
+               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 14, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
       // Kirche (Typ Gebäude): 120 Gold, 30 Leben (Annahme). Fertig: nochmals kaufen = ein Priester betet 20 s (50 Gold), danach Gunst +1 (Balken über der Kirche).
       // Bei Gunst 5 kommt ein Unwetter über das gegnerische Drittel: jede Sekunde ein Blitz an einer zufälligen Stelle, 20 Schaden im Umkreis 1 an allem vom Gegner
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
@@ -1075,7 +1075,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '7d554c2d3f'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '3291717bef'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2280,7 +2280,7 @@
           }
           if (GD.art === 'brand' && !tut.on) { // Brandstifter: legt in der gegnerischen Burg Feuer, der Gegner verliert Gold
             var bfb = bases[1 - u.team];
-            if (galt < GD.zuenden && u.gT >= GD.zuenden) effects.push({ kind: 'feuer', x: (bfb.x1 + bfb.x2) / 2, y: (bfb.y1 + bfb.y2) / 2, w: bfb.x2 - bfb.x1, h: bfb.y2 - bfb.y1, t: 0, dur: GD.klauen - GD.zuenden + 1.2 });
+            if (galt < GD.zuenden && u.gT >= GD.zuenden) effects.push({ kind: 'feuer', x: (bfb.x1 + bfb.x2) / 2, y: (bfb.y1 + bfb.y2) / 2, w: bfb.x2 - bfb.x1, h: bfb.y2 - bfb.y1, t: 0, dur: GD.klauen - GD.zuenden + 0.5 }); // kurzer, kleiner Brand (1,5 s)
             if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= vb; if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
           }
           if (GD.art === 'kirche') { // Gebet und Unwetter
@@ -3940,9 +3940,9 @@
       } else if (e.kind === 'feuer') { // Brand in der Burg: flackernde Flammen auf dem Dach, Funken und Rauch; blendet ein und aus
         var fa = Math.min(1, k * 6, (1 - k) * 4), fnow = performance.now() / 1000;
         ctx.globalAlpha = fa;
-        for (var fi = 0; fi < 7; fi++) {
-          var fxx = (e.x + (((fi * 53) % 7) / 6 - 0.5) * e.w * 0.75) * T, fyy = (e.y + (((fi * 31) % 5) / 4 - 0.5) * e.h * 0.6) * T, ffr = T * (0.22 + 0.1 * Math.sin(fnow * 9 + fi * 1.7));
-          ctx.fillStyle = 'rgba(70,70,70,0.35)'; ctx.beginPath(); ctx.arc(fxx + Math.sin(fnow + fi) * 4, fyy - T * (0.5 + ((fnow * 0.8 + fi * 0.13) % 1) * 0.8), ffr * 1.2, 0, Math.PI * 2); ctx.fill(); // Rauch
+        for (var fi = 0; fi < 4; fi++) { // kleiner Brand: 4 kleine Flammen nahe der Burgmitte
+          var fxx = (e.x + (((fi * 53) % 7) / 6 - 0.5) * e.w * 0.45) * T, fyy = (e.y + (((fi * 31) % 5) / 4 - 0.5) * e.h * 0.35) * T, ffr = T * (0.12 + 0.05 * Math.sin(fnow * 9 + fi * 1.7));
+          ctx.fillStyle = 'rgba(70,70,70,0.35)'; ctx.beginPath(); ctx.arc(fxx + Math.sin(fnow + fi) * 4, fyy - T * (0.3 + ((fnow * 0.8 + fi * 0.13) % 1) * 0.4), ffr * 1.1, 0, Math.PI * 2); ctx.fill(); // Rauch
           ctx.fillStyle = 'rgba(230,70,20,0.85)'; ctx.beginPath(); ctx.moveTo(fxx - ffr, fyy); ctx.quadraticCurveTo(fxx - ffr * 0.3, fyy - ffr * 2.2, fxx, fyy - ffr * 2.6); ctx.quadraticCurveTo(fxx + ffr * 0.3, fyy - ffr * 2.2, fxx + ffr, fyy); ctx.closePath(); ctx.fill();
           ctx.fillStyle = 'rgba(255,190,50,0.95)'; ctx.beginPath(); ctx.moveTo(fxx - ffr * 0.55, fyy); ctx.quadraticCurveTo(fxx, fyy - ffr * 1.8, fxx + ffr * 0.55, fyy); ctx.closePath(); ctx.fill();
           ctx.fillStyle = '#ffe9a0'; ctx.beginPath(); ctx.arc(fxx + Math.sin(fnow * 7 + fi) * ffr, fyy - ffr * (1 + ((fnow * 2 + fi * 0.3) % 1) * 2), 1.6, 0, Math.PI * 2); ctx.fill(); // Funke
