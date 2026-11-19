@@ -409,7 +409,7 @@
         ctx.globalAlpha = 1;
       } else if (e.kind === 'text') { // +Gold: Zahl mit Münze, steigt auf und blendet aus (Burg gross, Bauer klein)
         ctx.globalAlpha = 1 - k * k;
-        coinText(ctx, e.text, e.x * T, e.y * T - k * 24, 15, P['gold-fill'], P.shade);
+        coinText(ctx, e.text, e.x * T, e.y * T - k * 24, 15, e.rot ? '#e0332a' : P['gold-fill'], P.shade); // rot = Gold verloren (Dieb)
         ctx.globalAlpha = 1;
       }
     }

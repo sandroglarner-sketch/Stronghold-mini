@@ -124,8 +124,8 @@
           var GD = d.gebaeude, galt = u.gT; u.gT += dt;
           if (GD.art === 'dieb' && !tut.on) { // Dieb: klaut in der gegnerischen Burg, liefert in der eigenen ab
             var fb = bases[1 - u.team], ob = bases[u.team];
-            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, t: 0, dur: 1.4 }); }
-            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: (ob.x1 + ob.x2) / 2, y: ob.y1 + 0.9, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; }
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
           }
           if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
@@ -139,8 +139,7 @@
           var tuer = { x: u.x, y: u.y + (ey < u.y ? -1 : 1) * (d.gebaeude.h / 2 + 0.15) };
           var rel = function (p) { return { x: p.x - u.x, y: p.y - u.y }; };
           u.weg = { hin: [tuer, { x: u.x, y: ey }, { x: ecx, y: ey }, { x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }].map(rel),
-                    zur: [{ x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }, { x: ecx, y: ey }, { x: ocx, y: ey }, { x: ocx, y: clamp(ey, eob.y1 + 0.4, eob.y2 - 0.4) }].map(rel),
-                    heim: [{ x: ocx, y: clamp(ey, eob.y1 + 0.4, eob.y2 - 0.4) }, tuer].map(rel) };
+                    zur: [{ x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }, { x: ecx, y: ey }, { x: u.x, y: ey }, tuer].map(rel) }; // direkt zurück ins Haus
         }
         u.settled = { weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;

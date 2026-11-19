@@ -588,7 +588,19 @@
           }
           c.restore();
         };
+        var rund = function (pts) { // Ecken abrunden (Kurven statt Knicke): jede Ecke wird durch einen Bogen ersetzt
+          if (pts.length < 3) return pts;
+          var out = [pts[0]], R0 = 0.7;
+          for (var j = 1; j < pts.length - 1; j++) {
+            var p0 = pts[j - 1], p1 = pts[j], p2 = pts[j + 1], l1 = hyp(p1.x - p0.x, p1.y - p0.y), l2 = hyp(p2.x - p1.x, p2.y - p1.y), rr2 = Math.min(R0, l1 / 2, l2 / 2);
+            if (rr2 < 0.01) { out.push(p1); continue; }
+            var a1 = { x: p1.x - (p1.x - p0.x) / l1 * rr2, y: p1.y - (p1.y - p0.y) / l1 * rr2 }, a3 = { x: p1.x + (p2.x - p1.x) / l2 * rr2, y: p1.y + (p2.y - p1.y) / l2 * rr2 };
+            for (var q = 0; q <= 8; q++) { var tq = q / 8, mq = 1 - tq; out.push({ x: mq * mq * a1.x + 2 * mq * tq * p1.x + tq * tq * a3.x, y: mq * mq * a1.y + 2 * mq * tq * p1.y + tq * tq * a3.y }); }
+          }
+          out.push(pts[pts.length - 1]); return out;
+        };
         var entlang = function (pts, k) { // Punkt und Richtung auf einem Weg (Kacheln, relativ) bei Anteil k
+          pts = rund(pts);
           var L = 0, i, seg = []; for (i = 1; i < pts.length; i++) { var sl = hyp(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); seg.push(sl); L += sl; }
           var dd = Math.max(0, Math.min(1, k)) * L;
           for (i = 1; i < pts.length; i++) { if (dd <= seg[i - 1] || i === pts.length - 1) { var f2 = seg[i - 1] ? Math.min(1, dd / seg[i - 1]) : 0, a2 = pts[i - 1], b2 = pts[i]; return { x: (a2.x + (b2.x - a2.x) * f2) * T, y: (a2.y + (b2.y - a2.y) * f2) * T, ang: Math.atan2(b2.y - a2.y, b2.x - a2.x) }; } dd -= seg[i - 1]; }
@@ -600,11 +612,10 @@
           if (ph2 >= 1 && ph2 < 4) bk2 = (ph2 - 1) / 3; else if (ph2 >= 6 && ph2 < 9) { bk2 = (ph2 - 6) / 3; hin2 = false; }
           if (bk2 >= 0) { var pp = entlang(hin2 ? [tur, burg] : [burg, tur], bk2); figur(pp.x, pp.y, pp.ang, 'bank', Math.min(1, bk2 * 8, (1 - bk2) * 8)); }
         }
-        if (ph2 >= 0 && type === 'dieb' && BZ.weg) { // 0–1 drin, 1–13 hin, 13–15 in der Burg, 15–26 zurück, 26–27 lädt ab, 27–29 heim, 29–30 drin
+        if (ph2 >= 0 && type === 'dieb' && BZ.weg) { // 0–1 drin, 1–13 hin, 13–15 in der gegnerischen Burg, 15–28 direkt zurück ins Haus (mit Sack), 28–30 drin
           var W2 = BZ.weg, dp = null, sack = false, dk = 0;
           if (ph2 >= 1 && ph2 < 13) { dk = (ph2 - 1) / 12; dp = entlang(W2.hin, dk); }
-          else if (ph2 >= 15 && ph2 < 26) { dk = (ph2 - 15) / 11; dp = entlang(W2.zur, dk); sack = true; }
-          else if (ph2 >= 27 && ph2 < 29) { dk = (ph2 - 27) / 2; dp = entlang(W2.heim, dk); }
+          else if (ph2 >= 15 && ph2 < 28) { dk = (ph2 - 15) / 13; dp = entlang(W2.zur, dk); sack = true; }
           if (dp) figur(dp.x, dp.y, dp.ang, 'dieb', (0.05 + 0.45 * (0.5 + 0.5 * Math.sin(bnow * 2.5))) * Math.min(1, dk * 10, (1 - dk) * 10), sack); // Deckkraft 5–50 %
         }
       }

@@ -62,9 +62,9 @@
       bank: { cat: 'building', name: 'Bank', cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
       // Diebeshaus (Typ Gebäude): 50 Gold, 15 Leben; alle 30 s klaut ein Dieb 30 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
-      // entlang in die gegnerische Burg (dort wird geklaut), denselben Weg zurück zur eigenen Burg (dort kommt das Gold an) und wieder ins Haus.
+      // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
       dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-              gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 26.5, stufen: [{ cost: 50, hp: 15, gold: 0 }] } },
+              gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 15, gold: 0 }] } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
