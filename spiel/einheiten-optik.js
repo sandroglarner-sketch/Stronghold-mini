@@ -419,7 +419,7 @@
         c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-sw / 2 + sd, 0); c.lineTo(sw / 2 - sd, 0); c.stroke(); // First
         var ex = -sw * 0.28, ey = -sh * 0.18; // Esse
         c.fillStyle = '#4a4440'; c.fillRect(ex - r * 0.2, ey - r * 0.2, r * 0.4, r * 0.4);
-        var drin = Z.phase >= 3.4, glut = drin ? 0.6 + 0.4 * Math.sin(now * 12) : 0.25;
+        var drin = Z.phase < 0.5 || Z.phase >= 4.5, glut = drin ? 0.6 + 0.4 * Math.sin(now * 12) : 0.25;
         c.fillStyle = 'rgba(255,' + Math.round(120 + 60 * glut) + ',40,' + (0.5 + 0.5 * glut) + ')'; c.fillRect(ex - r * 0.11, ey - r * 0.11, r * 0.22, r * 0.22);
         for (var sk = 0; sk < (drin ? 4 : 2); sk++) { var sp = ((now * 0.6 + sk / 4) % 1); c.fillStyle = 'rgba(90,90,90,' + (0.45 * (1 - sp)) + ')'; c.beginPath(); c.arc(ex - sp * r * 0.5, ey - sp * r * 1.1, r * (0.12 + sp * 0.22), 0, Math.PI * 2); c.fill(); } // Rauch
         for (var sl = 0; sl < (Z.stufe || 1); sl++) { c.fillStyle = '#f0c63a'; c.strokeStyle = '#a77d10'; c.lineWidth = 1; c.beginPath(); c.arc(sw * 0.12 + sl * r * 0.32, -sh * 0.22, r * 0.12, 0, Math.PI * 2); c.fill(); c.stroke(); } // Stufe
@@ -431,19 +431,20 @@
           var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * sw / 2 + Math.abs(vy) * sh / 2;
           var ax = vx * (ext + r * 0.5), ay = vy * (ext + r * 0.5), qx = -vy, qy = vx; // Amboss; quer dazu steht der Schmied
           var tx0 = vx * ext, ty0 = vy * ext, smx = ax + qx * r * 0.5 + vx * r * 0.15, smy = ay + qy * r * 0.5 + vy * r * 0.15, ph = Z.phase, sa = 1, sx2 = smx, sy2 = smy;
-          if (ph < 0.3) { var k1 = ph / 0.3; sx2 = tx0 + (smx - tx0) * k1; sy2 = ty0 + (smy - ty0) * k1; sa = k1; }
-          else if (ph >= 3 && ph < 3.4) { var k2 = (ph - 3) / 0.4; sx2 = smx + (tx0 - smx) * k2; sy2 = smy + (ty0 - smy) * k2; sa = 1 - k2; }
-          else if (ph >= 3.4) sa = 0;
+          // Ablauf (5 s): 0–0,5 drin, 0,5–0,75 kommt heraus, 0,75–4,25 schmiedet, 4,25–4,5 geht hinein, 4,5–5 drin, dann Gold
+          if (ph < 0.5 || ph >= 4.5) sa = 0;
+          else if (ph < 0.75) { var k1 = (ph - 0.5) / 0.25; sx2 = tx0 + (smx - tx0) * k1; sy2 = ty0 + (smy - ty0) * k1; sa = k1; }
+          else if (ph >= 4.25) { var k2 = (ph - 4.25) / 0.25; sx2 = smx + (tx0 - smx) * k2; sy2 = smy + (ty0 - smy) * k2; sa = 1 - k2; }
           c.fillStyle = '#3c3f44'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1; c.save(); c.translate(ax, ay); c.rotate(Math.atan2(qy, qx)); rr(c, -r * 0.3, -r * 0.13, r * 0.6, r * 0.26, 2); c.fill(); c.stroke(); c.restore(); // Amboss
           if (sa > 0) {
             c.save(); c.globalAlpha = sa; c.translate(sx2, sy2); c.rotate(Math.atan2(ay - sy2, ax - sx2));
-            var hk = ph >= 0.3 && ph < 3 ? Math.abs(Math.sin((ph - 0.3) * Math.PI * 2.2)) : 0; // Hammer: hoch und runter
+            var hk = ph >= 0.75 && ph < 4.25 ? Math.abs(Math.sin((ph - 0.75) * Math.PI * 2.2)) : 0; // Hammer: hoch und runter
             c.fillStyle = '#6b4a2b'; c.beginPath(); c.ellipse(0, 0, r * 0.3, r * 0.4, 0, 0, Math.PI * 2); c.fill(); // Schürze
             c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.12); c.beginPath(); c.moveTo(r * 0.1, r * 0.2); c.lineTo(r * (0.35 + 0.25 * (1 - hk)), r * (0.25 - 0.1 * hk)); c.stroke(); // Hammerstiel
             c.fillStyle = '#5c6066'; c.fillRect(r * (0.3 + 0.25 * (1 - hk)), r * (0.13 - 0.1 * hk), r * 0.16, r * 0.22); // Hammerkopf
             c.fillStyle = '#d9a066'; c.beginPath(); c.arc(-r * 0.02, 0, r * 0.2, 0, Math.PI * 2); c.fill(); // Kopf
             c.restore();
-            if (hk < 0.15 && ph >= 0.3 && ph < 3) { c.fillStyle = '#ffd24a'; for (var fk = 0; fk < 4; fk++) { var fa = fk * 1.7 + now * 9; c.beginPath(); c.arc(ax + Math.cos(fa) * r * 0.3, ay + Math.sin(fa) * r * 0.3, r * 0.05, 0, Math.PI * 2); c.fill(); } } // Funken
+            if (hk < 0.15 && ph >= 0.75 && ph < 4.25) { c.fillStyle = '#ffd24a'; for (var fk = 0; fk < 4; fk++) { var fa = fk * 1.7 + now * 9; c.beginPath(); c.arc(ax + Math.cos(fa) * r * 0.3, ay + Math.sin(fa) * r * 0.3, r * 0.05, 0, Math.PI * 2); c.fill(); } } // Funken
           }
         }
       }

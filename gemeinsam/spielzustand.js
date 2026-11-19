@@ -367,9 +367,9 @@
       g.ziel = g.stufe + 1; g.max = G.stufen[g.ziel - 1].hp; g.bau = true;
     } else {
       var frei = gebPlaetze(team); if (!frei.length) return false;
-      var p = frei[Math.floor(simRand() * frei.length)], b = bases[team], cx = clamp(p.x, b.x1, b.x2), cy = clamp(p.y, b.y1, b.y2), nl = hyp(p.x - cx, p.y - cy) || 1;
+      var p = frei[Math.floor(simRand() * frei.length)];
       g = { id: nextId++, team: team, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
-            bau: true, stufe: 0, ziel: 1, gT: 0, nx: (p.x - cx) / nl, ny: (p.y - cy) / nl }; // nx/ny = Vorderseite (weg von der Burg)
+            bau: true, stufe: 0, ziel: 1, gT: 0, nx: 0, ny: p.y < H / 2 ? 1 : -1 }; // nx/ny = Vorderseite: zur Mitte (brauner Weg)
       units.push(g);
     }
     spawn(team, 'worker'); // ein Arbeiter baut (wie an der Mauer)

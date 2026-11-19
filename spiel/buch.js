@@ -2,11 +2,12 @@
   // DECK = gewählte Einheiten (höchstens DECK_MAX, die Mauer zählt nicht). Gespeichert nur im Browser (localStorage 'stronghold-deck').
   // Die Knöpfe zeigen immer die Mauer plus die Deck-Einheiten (im Tutorial alle), Tasten 1–9, 0, Q, E von links nach rechts über die sichtbaren Knöpfe.
   var TUT_TYPES = ['farmer', 'spear', 'archer', 'rider', 'knight', 'ram']; // genau die Einheiten, die das Tutorial braucht: im Tutorial nur diese Knöpfe (plus Mauer)
+  var GEB_MAX = 2; // höchstens so viele Gebäude im Deck (= Gebäudeplätze)
   var DECK_MAX = 10, DECK_START = TUT_TYPES.slice(); // Startauswahl beim ersten Spielen = Tutorial-Einheiten
   var DECK = DECK_START.slice();
   try {
     var dk = JSON.parse(localStorage.getItem('stronghold-deck') || 'null');
-    if (Array.isArray(dk)) { dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0; }).slice(0, DECK_MAX); if (dk.length) DECK = dk; }
+    if (Array.isArray(dk)) { var ngeb = 0; dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0 && !(CONFIG.units[t].cat === 'building' && ++ngeb > 2); }).slice(0, DECK_MAX); if (dk.length) DECK = dk; }
   } catch (err) {}
   function saveDeck() { try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); } catch (err) {} }
   function applyDeck() {
@@ -20,7 +21,7 @@
       if (t === 'wall') ui.wallTitle = info;
     });
   }
-  var CATS = { eco: ['🌾', 'Wirtschaft'], melee: ['🗡️', 'Nahkampfeinheit'], ranged: ['🏹', 'Fernkampfeinheit'], siege: ['🔨', 'Belagerungsmaschine'] };
+  var CATS = { building: ['🏠', 'Gebäude'], eco: ['🌾', 'Wirtschaft'], melee: ['🗡️', 'Nahkampfeinheit'], ranged: ['🏹', 'Fernkampfeinheit'], siege: ['🔨', 'Belagerungsmaschine'] };
   function cardCat(d) { return CATS[d.cat] || (d.range > 1.5 ? CATS.ranged : CATS.melee); }
   function fmtN(v) { return String(v).replace('.', ','); }
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
@@ -162,6 +163,7 @@
     if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = lockText(t); return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
+    else if (CONFIG.units[t].cat === 'building' && DECK.filter(function (x) { return CONFIG.units[x].cat === 'building'; }).length >= GEB_MAX) msg = 'Nur maximal ' + GEB_MAX + ' Gebäude erlaubt';
     else DECK.push(t);
     $('bookMsg').textContent = msg;
     saveDeck(); applyDeck(); fillPage($('bookPage'));
