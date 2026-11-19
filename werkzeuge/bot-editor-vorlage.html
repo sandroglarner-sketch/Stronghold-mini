@@ -104,13 +104,22 @@
         <h2>Wirtschaft</h2>
         <div class="felder">
           <div class="feld"><label>Grundeinkommen</label><div class="zeile"><input type="number" id="f_income" data-k="income" min="0" step="1"> Gold alle <input type="number" id="f_incomeEvery" data-k="incomeEvery" min="0.5" step="0.5"> s</div><small>Standard wie der Spieler: 10 Gold alle 5 s.</small></div>
+          <div class="feld"><label for="f_karawanen">Karawanen (anstreben)</label><input type="number" id="f_karawanen" data-k="karawanen" min="0" step="1"><small>So viele Karawanen kauft er, solange du nicht mehr Kampfeinheiten hast. Preis steigt mit jeder (5, 10, 15 …).</small></div>
           <div class="feld"><label for="f_farmers">Bauern (höchstens)</label><input type="number" id="f_farmers" data-k="farmers" min="0" step="1"><small>Er baut Bauern bis zu dieser Zahl, solange du nicht mehr Kampfeinheiten hast.</small></div>
         </div>
       </section>
 
       <section class="karte">
+        <h2>Gebäude</h2>
+        <p class="hilfe">Jede Zeile ist ein Kauf. Die 1. Zeile eines Gebäudes baut es, die 2. baut Stufe 2 aus (Schmiede), bei der Kirche ist jede weitere Zeile ein Gebet. Er kauft jede Zeile, sobald er so viel Gold frei hat; die Zeilen desselben Gebäudes kommen der Reihe nach. Wird ein Gebäude zerstört, baut er es neu. Es gibt nur 2 Gebäudeplätze.</p>
+        <table><thead><tr><th>Gebäude (Preis)</th><th>ab … Gold</th><th>Kauf</th><th></th></tr></thead><tbody id="gebRows"></tbody></table>
+        <button type="button" class="klein" id="gebAdd" style="margin-top:6px">+ Zeile hinzufügen</button>
+        <div class="summe" id="gebSumme"></div>
+      </section>
+
+      <section class="karte">
         <h2>Jagd</h2>
-        <p class="hilfe">Hast du länger mehr Bauern als er, schickt er einen Jagdtrupp.</p>
+        <p class="hilfe">Hast du länger mehr Bauern als er, schickt er einen Jagdtrupp. Eine Karawane zählt dabei wie 2 Bauern.</p>
         <div class="felder">
           <div class="feld"><label for="f_huntLead">Jagd nach … s Vorsprung</label><input type="number" id="f_huntLead" data-k="huntLead" min="0" step="1"><small>So lange musst du mehr Bauern haben.</small></div>
           <div class="feld"><label for="f_huntEvery">Pause zwischen Jagden (s)</label><input type="number" id="f_huntEvery" data-k="huntEvery" min="0" step="1"></div>
@@ -186,7 +195,10 @@
 /*DATEN*/
   var P = { me: '#2a64b8', foe: '#c23a2e' };
   var $ = function (id) { return document.getElementById(id); };
-  var KAUF = Object.keys(CONFIG.units).filter(function (t) { var u = CONFIG.units[t]; return !u.hidden && u.cost > 0 && t !== 'wall' && t !== 'farmer'; });
+  var KAUF = Object.keys(CONFIG.units).filter(function (t) { var u = CONFIG.units[t]; return !u.hidden && u.cost > 0 && t !== 'wall' && t !== 'farmer' && !u.gebaeude && !u.karawane; }); // Einheiten für Jagd, Angriff, Verteidigung
+  var GEB = Object.keys(CONFIG.units).filter(function (t) { return !!CONFIG.units[t].gebaeude; }); // Gebäude
+  function gebPreis(t, n) { var G = CONFIG.units[t].gebaeude; if (G.gebet && n > 1) return G.gebet.cost; var st = G.stufen[n - 1]; return st ? st.cost : null; } // Preis des n-ten Kaufs
+  function gebKaufText(t, n) { var G = CONFIG.units[t].gebaeude; if (n === 1) return 'Bau'; if (G.gebet) return n - 1 <= G.gunstMax ? (n - 1) + '. Gebet' : 'zu viel'; return G.stufen[n - 1] ? 'Stufe ' + n : 'zu viel'; }
   function uName(t) { var u = CONFIG.units[t]; return u ? u.name : t; }
   function preis(t) { var u = CONFIG.units[t]; return u ? u.cost : 0; }
   function staerke(t) { var u = CONFIG.units[t]; return u && u.staerke !== undefined ? u.staerke : 1; }
@@ -239,13 +251,13 @@
     $('logik').hidden = !L; $('ohneLogik').hidden = !!L; $('logikWegBtn').hidden = !L;
     $('logikTag').innerHTML = L ? '<span class="tag ja">vorhanden' + (cur.logikKey ? ' · CONFIG.BOTS.' + cur.logikKey : '') + '</span>' : '<span class="tag nein">leer</span>';
     if (L) {
-      ['income', 'incomeEvery', 'farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'attackGold', 'lockSecs', 'defPlus', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
+      ['income', 'incomeEvery', 'karawanen', 'farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'attackGold', 'lockSecs', 'defPlus', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
       if (L.wallStage === undefined) L.wallStage = 1; // alte Daten: ohne Angabe = Mauer ohne Türme
       $('f_wallStage').value = String(L.wallStage);
       if (!L.turm) { L.turm = {}; var pl = platz(L.wallStage); if (pl.schuetzen) L.turm.archer = pl.schuetzen; if (pl.belagerung) L.turm[L.towerSiege || 'catapult'] = pl.belagerung; delete L.towerSiege; }
       turmMalen(); spezialAlt();
       $('f_wallClear').checked = !!L.wallClear;
-      zeilenMalen(); poolMalen();
+      zeilenMalen(); poolMalen(); gebMalen();
     }
     markieren(); ausgabe();
   }
@@ -358,6 +370,23 @@
     Object.keys(L).forEach(function (k) { if (SPEZIAL_TEXT[k]) { var t = SPEZIAL_TEXT[k](L[k]); if (t) l.push(t + ' (' + k + ': ' + L[k] + ')'); } else if (REIHE.indexOf(k) < 0) l.push(k + ': ' + JSON.stringify(L[k])); });
     $('spezialAlt').innerHTML = l.length ? '<li><b>Schon eingebaut:</b></li>' + l.map(function (x) { return '<li>' + x.replace(/</g, '&lt;') + '</li>'; }).join('') : '';
   }
+  function gebMalen() { // Gebäude-Tabelle
+    var L = cur.logik, tb = $('gebRows'), n = {}; if (!L.gebaeude) L.gebaeude = [];
+    tb.innerHTML = '';
+    L.gebaeude.forEach(function (g, i) {
+      var k = n[g.type] = (n[g.type] || 0) + 1, pr = gebPreis(g.type, k), tr = document.createElement('tr');
+      tr.innerHTML = '<td><select data-g="type" aria-label="Gebäude">' + GEB.map(function (t) { return '<option value="' + t + '"' + (t === g.type ? ' selected' : '') + '>' + uName(t) + ' (' + preis(t) + ')</option>'; }).join('') + '</select></td>' +
+        '<td><input type="number" min="0" step="1" value="' + (g.gold || 0) + '" data-g="gold" aria-label="ab Gold"></td>' +
+        '<td class="kosten' + (pr === null ? ' rot' : '') + '">' + gebKaufText(g.type, k) + (pr !== null ? ' · ' + pr + ' Gold' : '') + '</td><td><button type="button" class="weg" aria-label="Zeile löschen" title="Löschen">✕</button></td>';
+      tr.addEventListener('change', function (e) { var f = e.target.getAttribute('data-g'); if (!f) return; g[f] = f === 'type' ? e.target.value : Math.max(0, +e.target.value || 0); gebMalen(); geaendert(); });
+      tr.querySelector('.weg').addEventListener('click', function () { L.gebaeude.splice(i, 1); if (!L.gebaeude.length) delete L.gebaeude; gebMalen(); geaendert(); });
+      tb.appendChild(tr);
+    });
+    var arten = Object.keys(n).length;
+    $('gebSumme').innerHTML = L.gebaeude.length ? '<span>Verschiedene Gebäude: <b class="' + (arten > 2 ? 'rot' : '') + '">' + arten + ' von 2</b></span>' + (arten > 2 ? '<span class="rot">Nur 2 Gebäudeplätze: weitere werden nie gebaut.</span>' : '') : '<span>Keine Gebäude.</span>';
+    if (!L.gebaeude.length) delete L.gebaeude;
+  }
+  $('gebAdd').addEventListener('click', function () { var L = cur.logik; if (!L.gebaeude) L.gebaeude = []; var l = L.gebaeude[L.gebaeude.length - 1]; L.gebaeude.push({ type: l ? l.type : 'schmiede', gold: l ? l.gold : 60 }); gebMalen(); geaendert(); });
   function poolMalen() {
     var L = cur.logik, h = '';
     KAUF.forEach(function (t) { var an = L.defPool.indexOf(t) >= 0; h += '<label class="' + (an ? 'an' : '') + '"><input type="checkbox" value="' + t + '"' + (an ? ' checked' : '') + '>' + uName(t) + ' <span class="status">(' + preis(t) + ' · St. ' + staerke(t) + ')</span></label>'; });
@@ -450,7 +479,7 @@
   function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
 
   // ----- Code für das Spiel -----
-  var REIHE = ['income', 'incomeEvery', 'farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
+  var REIHE = ['income', 'incomeEvery', 'farmers', 'karawanen', 'gebaeude', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
   function js(v) { return JSON.stringify(v).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
   function logikCode(b) {
     var L = b.logik, teile = [];

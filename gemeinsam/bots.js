@@ -13,12 +13,20 @@
     var ok = types.filter(function (t) { return CONFIG.units[t].cost <= budget; });
     return ok.length ? pick(ok) : null;
   }
-  function countFarmers(team) {
+  function countFarmers(team, jagd) { // jagd: für den Jagd-Vorsprung zählt eine Karawane wie 2 Bauern
     var n = 0;
     for (var i = 0; i < units.length; i++) {
-      if (units[i].team === team && (units[i].type === 'farmer' || units[i].type === 'karawane') && units[i].hp > 0) n++; // Karawane zählt (für die Jagd) wie ein Bauer
+      if (units[i].team !== team || units[i].hp <= 0) continue;
+      if (units[i].type === 'farmer') n++; else if (jagd && units[i].type === 'karawane') n += 2;
     }
     return n;
+  }
+  function countType(team, type) { var n = 0; for (var i = 0; i < units.length; i++) if (units[i].team === team && units[i].type === type && units[i].hp > 0) n++; return n; }
+  // Wie oft ein Gebäude schon gekauft ist: Bau und Ausbaustufen (auch im Bau), bei der Kirche zusätzlich jedes Gebet (fertig oder laufend); zerstört = 0
+  function gebKaeufe(team, type) {
+    var g = meinGebaeude(team, type); if (!g) return 0;
+    if (CONFIG.units[type].gebaeude.gebet) return 1 + (g.gunst || 0) + (g.gebetT > 0 ? 1 : 0);
+    return g.bau ? g.ziel : g.stufe;
   }
   // Gold, das für die zweite Welle des Angriffs zurückgelegt ist
   function reserved() {
@@ -108,7 +116,7 @@
     ai.defCool = Math.max(0, ai.defCool - dt);   // Sperre für Einheitenkäufe nach einer Verteidigung
     ai.huntCool = Math.max(0, ai.huntCool - dt);
     ai.towerCool = Math.max(0, ai.towerCool - dt);
-    if (countFarmers(0) > countFarmers(1)) ai.leadT += dt; else ai.leadT = 0; // so lange hast du schon mehr Bauern
+    if (countFarmers(0, true) > countFarmers(1, true)) ai.leadT += dt; else ai.leadT = 0; // so lange hast du schon mehr Bauern
     // Zeitversetzte Käufe (Jagd, Verteidigung), immer pünktlich
     while (ai.queue.length && clock >= ai.queue[0].at) {
       st = ai.queue.shift();
@@ -160,11 +168,24 @@
     // Mauer (keine Einheit, die Sperre gilt hier nicht): ab wallGold Gold, nur ohne Gegner in seiner Hälfte; repariert wird nie, nur neu gebaut
     var aw = walls[1];
     if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || wallWeak(aw, R.wallStage) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
+    // Gebäude (keine Einheit, die Sperre gilt nicht): R.gebaeude = Liste von Käufen { type, gold } in Reihenfolge; die n-te Zeile eines Gebäudes ist sein n-ter Kauf
+    // (1. = Bau, 2. = Stufe 2 …, bei der Kirche jede weitere Zeile = ein Gebet). Gekauft wird der nächste fällige Kauf, sobald er so viel Gold frei hat; wird ein Gebäude zerstört, baut er es wieder.
+    if (R.gebaeude && R.gebaeude.length && !bases[1].down) {
+      var gn = {};
+      for (i = 0; i < R.gebaeude.length; i++) {
+        var ge = R.gebaeude[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
+        if (!CONFIG.units[ge.type] || gk !== gebKaeufe(1, ge.type) + 1) continue;
+        if (spendable() >= Math.max(ge.gold || 0, preisVon(1, ge.type))) { buy(1, ge.type); break; }
+      }
+    }
     if (!free) return;
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
     var guard = 0;
     while (guard++ < 3 && countFarmers(1) < R.farmers && countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
+    // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
+    guard = 0;
+    while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
