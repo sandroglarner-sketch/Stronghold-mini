@@ -244,7 +244,7 @@
     var ohneWahl = withChoice === false || (state === 'paused');
     sandBtn.hidden = ohneWahl || !tester; // Sandbox nur im Tester-Modus
     $('tutBtn').hidden = ohneWahl;
-    $('pvpBtn').hidden = ohneWahl || !ONLINE;
+    $('pvpBtn').hidden = ohneWahl; // auch im Artifact sichtbar (dort nur Hinweis), damit es aussieht wie online
     ovTitle.textContent = title;
     ovText.textContent = text;
     ovBtn.textContent = btnText;

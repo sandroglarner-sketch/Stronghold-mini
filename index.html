@@ -784,7 +784,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '3accc91199'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '79d1fa0a15'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3524,7 +3524,7 @@
     var ohneWahl = withChoice === false || (state === 'paused');
     sandBtn.hidden = ohneWahl || !tester; // Sandbox nur im Tester-Modus
     $('tutBtn').hidden = ohneWahl;
-    $('pvpBtn').hidden = ohneWahl || !ONLINE;
+    $('pvpBtn').hidden = ohneWahl; // auch im Artifact sichtbar (dort nur Hinweis), damit es aussieht wie online
     ovTitle.textContent = title;
     ovText.textContent = text;
     ovBtn.textContent = btnText;
@@ -3632,7 +3632,7 @@
     var d = CONFIG.units[t], k = konto || {};
     if (!d || !kontoAn() || tester) return false; // Tester-Modus: alles frei
     if (d.account && !k.user) return true;
-    if (d.invite && ONLINE && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // im Artifact (ohne Server) nicht gesperrt
+    if (d.invite && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // auch im Artifact gesperrt (wie online), frei nur im Tester-Modus
     return false;
   }
   function lockText(t) {
@@ -3680,7 +3680,7 @@
   function kontoChanged() {
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
-    $('inviteBtn').hidden = !(kontoAn() && ONLINE);
+    $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
     kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -3794,6 +3794,7 @@
     });
   }
   $('inviteBtn').addEventListener('click', function () {
+    if (!ONLINE) { kontoOpen(true); kontoMsg('Einladen geht nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'); return; }
     if (!konto.user) { kontoOpen(true); kontoMsg('Melde dich zuerst an (gratis). Dann bekommst du deinen Einladungslink.', true); return; }
     teilen();
   });
@@ -3978,7 +3979,8 @@
   // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
   // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
   var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
-  if (ONLINE) { $('pvpBtn').hidden = false; presenceOpen(); }
+  $('pvpBtn').hidden = false;
+  if (ONLINE) presenceOpen();
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
   function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
@@ -4150,7 +4152,10 @@
     render();
     for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
   }
-  $('pvpBtn').addEventListener('click', pvpSearch);
+  $('pvpBtn').addEventListener('click', function () {
+    if (!ONLINE) { ovText.textContent = 'Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'; return; }
+    pvpSearch();
+  });
 
   function setPaused(p) {
     if (pvp.on) return; // Online gibt es keine Pause

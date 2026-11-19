@@ -3,7 +3,8 @@
   // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
   // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
   var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
-  if (ONLINE) { $('pvpBtn').hidden = false; presenceOpen(); }
+  $('pvpBtn').hidden = false;
+  if (ONLINE) presenceOpen();
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
   function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
@@ -175,7 +176,10 @@
     render();
     for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
   }
-  $('pvpBtn').addEventListener('click', pvpSearch);
+  $('pvpBtn').addEventListener('click', function () {
+    if (!ONLINE) { ovText.textContent = 'Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'; return; }
+    pvpSearch();
+  });
 
   function setPaused(p) {
     if (pvp.on) return; // Online gibt es keine Pause

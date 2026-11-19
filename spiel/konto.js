@@ -10,7 +10,7 @@
     var d = CONFIG.units[t], k = konto || {};
     if (!d || !kontoAn() || tester) return false; // Tester-Modus: alles frei
     if (d.account && !k.user) return true;
-    if (d.invite && ONLINE && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // im Artifact (ohne Server) nicht gesperrt
+    if (d.invite && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // auch im Artifact gesperrt (wie online), frei nur im Tester-Modus
     return false;
   }
   function lockText(t) {
@@ -58,7 +58,7 @@
   function kontoChanged() {
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
-    $('inviteBtn').hidden = !(kontoAn() && ONLINE);
+    $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
     kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -172,6 +172,7 @@
     });
   }
   $('inviteBtn').addEventListener('click', function () {
+    if (!ONLINE) { kontoOpen(true); kontoMsg('Einladen geht nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'); return; }
     if (!konto.user) { kontoOpen(true); kontoMsg('Melde dich zuerst an (gratis). Dann bekommst du deinen Einladungslink.', true); return; }
     teilen();
   });
