@@ -18,10 +18,10 @@
     var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || +cv.getAttribute('data-w'), h = cv.clientHeight || +cv.getAttribute('data-h');
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
-    var r = Math.min(h * 0.3, w * 0.2);
-    c.save(); c.translate(w * 0.4, h / 2);
+    var r = Math.min(h * 0.4, w * 0.3);
+    c.save(); c.translate(w / 2 + r * 0.4, h / 2); // ohne Waffe: Körper mittig
     if (grau) c.filter = 'grayscale(1) brightness(0.75)';
-    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, {});
+    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, { ohneWaffe: true });
     c.restore();
   }
   // Name eines Königs für die Auswahl

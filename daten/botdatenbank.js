@@ -7,6 +7,10 @@
     { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 2, karte: { x: 34, y: 47 }, logik: 'prinz' },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 3, karte: { x: 56, y: 69 }, logik: 'feldherr' },
     { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 4, karte: { x: 80, y: 40 }, logik: 'baron' },
+    // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
+    { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, karte: null, logik: null },
+    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, karte: null, logik: null },
+    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: null, karte: null, logik: null },
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, karte: null, logik: null },
     { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: null, karte: null, logik: null },

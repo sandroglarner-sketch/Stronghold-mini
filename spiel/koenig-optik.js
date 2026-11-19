@@ -1,6 +1,6 @@
   // ---------- König zeichnen (Optik aus KOENIGE) ----------
   // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
-  // o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
+  // o.ohneWaffe = nur der König (für Bilder); o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
@@ -25,7 +25,8 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    if (o.bogen) kBogen(c, k, r, o);
+    if (o.ohneWaffe) { /* Bild (Auswahl, Karte, Datenbank): ohne Waffe */ }
+    else if (o.bogen) kBogen(c, k, r, o);
     else { c.save(); c.translate(r * 0.45, 0); c.rotate(o.rot || 0); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); }
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
     c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;

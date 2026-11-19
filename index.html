@@ -258,7 +258,8 @@
   .sknoten.sel { box-shadow: 0 0 0 5px rgba(255,255,255,0.85); }
   .sname { position: absolute; transform: translateX(-50%); margin-top: 4px; text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
   .sname b { font-size: 0.9rem; display: block; }
-  .sfigur { position: absolute; transform: translate(-50%, -100%); width: 44px; height: 44px; border-radius: 50%; background: var(--me); border: 3px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
+  .sfigur { position: absolute; transform: translate(-50%, -100%); width: 50px; height: 50px; border-radius: 50%; background: #dbe7f7; border: 4px solid var(--me); box-sizing: border-box; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
+  .sfigur canvas { width: 100%; height: 100%; display: block; }
   .storykarte { position: absolute; z-index: 2; transform: translateY(-50%); padding: 10px 12px; border-radius: 12px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.3); display: grid; gap: 6px; min-width: 150px; max-width: 230px; }
   .storykarte[hidden] { display: none; }
   .storykarte::before { content: ''; position: absolute; top: 50%; left: -7px; width: 14px; height: 14px; background: var(--panel); transform: translateY(-50%) rotate(45deg); }
@@ -267,7 +268,8 @@
   .storykarte .primary { margin: 0; position: relative; white-space: normal; }
   .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
   /* Königswahl: kleineres Fenster wie das Einheitenbuch */
-  .ovkoenig canvas { width: 30px; height: 30px; margin: 0 -4px 0 -6px; }
+  .ovleft { display: flex; gap: 8px; align-items: center; }
+  .ovkoenig canvas { width: 30px; height: 30px; margin: 0 -2px 0 -6px; }
   .koenigwahl { position: absolute; top: 7%; left: 12%; right: 12%; bottom: 64px; z-index: 8; display: flex; flex-direction: column; gap: 8px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.28); padding: 10px 12px; box-sizing: border-box; overflow: hidden; }
   .koenigwahl[hidden] { display: none; }
   .kwkopf { display: flex; align-items: center; gap: 10px; }
@@ -685,9 +687,11 @@
     <div class="units" id="units"></div>
     <div class="overlay menu" id="overlay">
       <div class="ovtop">
+        <span class="ovleft">
         <button class="ghost ovbook" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Einheitenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
-        <span class="ovright">
           <button class="ghost ovkoenig" id="koenigBtn" type="button" title="Dein König: wähle sein Aussehen"><canvas id="koenigIcon" width="30" height="30" aria-hidden="true"></canvas><span>König</span></button>
+        </span>
+        <span class="ovright">
           <button class="ghost ovfr" id="freundeBtn" type="button" title="Freunde: einladen, herausfordern, zuschauen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freunde</span><span class="ovbadge" id="freundeZahl" hidden>0</span></button>
           <button class="ghost ovkonto" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
         </span>
@@ -957,10 +961,8 @@
     drachenkoenig: {krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a'},  // Drachenhörner, glühende Klinge
     schattenkoenigin: {krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0'},  // Violette Krone, Sternenmantel
   };
-  // Eigene Könige, die man immer wählen kann (Annahme 19.11.); alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
-  var KOENIG_SPIELER = [
-    { id: 'standard', name: 'Standard' }, { id: 'loewenherz', name: 'Löwenherz' }, { id: 'jungkoenig', name: 'Jungkönig' }, { id: 'waldkoenig', name: 'Waldkönig' }
-  ];
+  // Zu Beginn hat der Spieler nur den Standard-König; alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
+  var KOENIG_SPIELER = [{ id: 'standard', name: 'Standard' }];
   // Bot-Datenbank (Teil 2): alle Bots mit Name, König (Optik aus KOENIGE, auch Bild auf der Story-Karte), Story-Platz und Logik.
   // platz = Reihenfolge im Story-Modus (1 = zuerst; null = noch nicht im Spiel); karte = Lage des Kreises auf der Story-Karte in Prozent;
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
@@ -970,6 +972,10 @@
     { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 2, karte: { x: 34, y: 47 }, logik: 'prinz' },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 3, karte: { x: 56, y: 69 }, logik: 'feldherr' },
     { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 4, karte: { x: 80, y: 40 }, logik: 'baron' },
+    // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
+    { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, karte: null, logik: null },
+    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, karte: null, logik: null },
+    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: null, karte: null, logik: null },
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, karte: null, logik: null },
     { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: null, karte: null, logik: null },
@@ -1020,7 +1026,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '1f59bba0c8'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'ba68ed9d9c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1167,7 +1173,7 @@
 
   // ---------- König zeichnen (Optik aus KOENIGE) ----------
   // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
-  // o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
+  // o.ohneWaffe = nur der König (für Bilder); o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
@@ -1192,7 +1198,8 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    if (o.bogen) kBogen(c, k, r, o);
+    if (o.ohneWaffe) { /* Bild (Auswahl, Karte, Datenbank): ohne Waffe */ }
+    else if (o.bogen) kBogen(c, k, r, o);
     else { c.save(); c.translate(r * 0.45, 0); c.rotate(o.rot || 0); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); }
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
     c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
@@ -4624,8 +4631,9 @@
         '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
-    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 34px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 36px)"><canvas data-mein="1"></canvas></div>'; // dein König im blauen Kreis
     $('storyKnoten').innerHTML = h;
+    var mk = $('storyKnoten').querySelector('canvas[data-mein]'); if (mk) koenigBild(mk, meinKoenig(), 0);
     Array.prototype.forEach.call($('storyKnoten').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 1, cv.hasAttribute('data-grau')); }); // Bild: König des Bots
     // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
     var k = $('storyKarte');
@@ -4822,10 +4830,10 @@
     var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || +cv.getAttribute('data-w'), h = cv.clientHeight || +cv.getAttribute('data-h');
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
-    var r = Math.min(h * 0.3, w * 0.2);
-    c.save(); c.translate(w * 0.4, h / 2);
+    var r = Math.min(h * 0.4, w * 0.3);
+    c.save(); c.translate(w / 2 + r * 0.4, h / 2); // ohne Waffe: Körper mittig
     if (grau) c.filter = 'grayscale(1) brightness(0.75)';
-    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, {});
+    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, { ohneWaffe: true });
     c.restore();
   }
   // Name eines Königs für die Auswahl

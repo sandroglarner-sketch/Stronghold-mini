@@ -58,8 +58,9 @@
         '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
-    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 34px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 36px)"><canvas data-mein="1"></canvas></div>'; // dein König im blauen Kreis
     $('storyKnoten').innerHTML = h;
+    var mk = $('storyKnoten').querySelector('canvas[data-mein]'); if (mk) koenigBild(mk, meinKoenig(), 0);
     Array.prototype.forEach.call($('storyKnoten').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 1, cv.hasAttribute('data-grau')); }); // Bild: König des Bots
     // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
     var k = $('storyKarte');

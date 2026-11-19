@@ -35,7 +35,5 @@
     drachenkoenig: {krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a'},  // Drachenhörner, glühende Klinge
     schattenkoenigin: {krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0'},  // Violette Krone, Sternenmantel
   };
-  // Eigene Könige, die man immer wählen kann (Annahme 19.11.); alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
-  var KOENIG_SPIELER = [
-    { id: 'standard', name: 'Standard' }, { id: 'loewenherz', name: 'Löwenherz' }, { id: 'jungkoenig', name: 'Jungkönig' }, { id: 'waldkoenig', name: 'Waldkönig' }
-  ];
+  // Zu Beginn hat der Spieler nur den Standard-König; alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
+  var KOENIG_SPIELER = [{ id: 'standard', name: 'Standard' }];

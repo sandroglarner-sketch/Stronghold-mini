@@ -55,7 +55,7 @@
     <button type="button" data-f="leer" aria-pressed="false">Ohne Logik</button>
   </div>
   <div id="liste"></div>
-  <h2>Könige des Spielers (immer frei)</h2>
+  <h2>König des Spielers zu Beginn</h2>
   <div class="spieler" id="spieler"></div>
 </main>
 <script>
@@ -66,8 +66,8 @@
     var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
     cv.width = w * dpr; cv.height = h * dpr;
     var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var r = Math.min(h * (scale || 0.3), w * 0.2);
-    c.translate(w * 0.4, h / 2); koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, {});
+    var r = Math.min(h * (scale || 0.3), w * 0.3);
+    c.translate(w / 2 + r * 0.4, h / 2); koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, { ohneWaffe: true });
   }
   function name(t) { var u = CONFIG.units[t]; return u ? (u.name || t) : t; }
   function preis(t) { var u = CONFIG.units[t]; return u ? u.cost : 0; }
@@ -89,7 +89,7 @@
         '<details><summary>Ganze Logik anzeigen</summary><pre>' + esc(JSON.stringify(L, null, 1)) + '</pre></details>';
     }
     return '<section class="bot" data-spiel="' + (L && i !== undefined ? 1 : 0) + '" data-leer="' + (L ? 0 : 1) + '">' +
-      '<div class="bild"><canvas class="gross" data-k="' + b.koenig + '"></canvas><div class="knoten"><canvas data-k="' + b.koenig + '" data-s="0.32"></canvas></div><small>Bild auf der Story-Karte</small></div>' +
+      '<div class="bild"><canvas class="gross" data-k="' + b.koenig + '"></canvas><div class="knoten"><canvas data-k="' + b.koenig + '" data-s="0.38"></canvas></div><small>Bild auf der Story-Karte</small></div>' +
       '<div class="info"><div class="kopf"><b>' + esc(b.name) + '</b>' + (L && i !== undefined ? '<span class="tag ja">im Spiel</span>' : '<span class="tag nein">noch nicht im Spiel</span>') + '</div><dl>' +
       '<dt>ID</dt><dd>' + b.id + '</dd>' +
       '<dt>König</dt><dd>' + b.koenig + ' (wird durch einen Sieg freigeschaltet)</dd>' +
