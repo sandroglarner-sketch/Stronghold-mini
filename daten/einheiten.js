@@ -57,9 +57,9 @@
       // Gebäude, ist 2 s drin, dann gibt es das Gold); heilt wie die Mauer (WALL.heal). Kann angegriffen werden; Bauern weichen an ihren Rand aus. passive = zählt nicht als Kampfeinheit.
       schmiede: { cat: 'building', name: 'Schmiede', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                   gebaeude: { w: 1.2, h: 1.0, alle: 5, stufen: [{ cost: 40, hp: 10, gold: 5 }, { cost: 80, hp: 10, gold: 10 }, { cost: 120, hp: 10, gold: 15 }] } },
-      // Adelshaus (Typ Gebäude): eine Stufe; 100 Gold, 20 Leben, alle 30 s Gold: zuerst 10, jedes Mal 10 mehr (10, 20, 30 …). Darstellung: 2 s drin, ein Adliger geht langsam in die Burg, bleibt 5 s, geht zurück, 2 s drin.
+      // Adelshaus (Typ Gebäude): eine Stufe; 100 Gold, 20 Leben, alle 15 s Gold: zuerst 5, jedes Mal 5 mehr (5, 10, 15 …). Darstellung: 1 s drin, ein Adliger geht in die Burg, bleibt 3 s, geht zurück; sobald er wieder drin ist, kommt die Auszahlung.
       adel: { cat: 'building', name: 'Adelshaus', cost: 100, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-              gebaeude: { w: 1.2, h: 1.0, alle: 30, steigt: 10, stufen: [{ cost: 100, hp: 20, gold: 10 }] } }, // 1. Auszahlung 10 Gold, jede weitere 10 mehr
+              gebaeude: { w: 1.2, h: 1.0, alle: 15, steigt: 5, stufen: [{ cost: 100, hp: 20, gold: 5 }] } }, // 1. Auszahlung 5 Gold, jede weitere 5 mehr
       // Bank (Typ Gebäude): 80 Gold, 20 Leben; alle 10 s +10 % deines Goldes (aufgerundet). Ein Geschäftsmann geht zum König (2 s), zurück, 1 s in der Bank.
       bank: { cat: 'building', name: 'Bank', account: true, cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
