@@ -54,6 +54,12 @@
   .status { font-size: 0.8rem; color: var(--muted); }
   .ohne { padding: 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); }
   .ohne[hidden], [hidden] { display: none !important; }
+  .reihe { margin: 4px 0 0; padding-left: 0; list-style: none; display: grid; gap: 3px; font-size: 0.85rem; }
+  .reihe li { display: flex; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); }
+  .reihe li.ich { background: var(--chg); border-color: #d9b44a; font-weight: 600; }
+  .reihe .nr { width: 2.2em; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .reihe .info { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+  .reihe .info.rueckt { color: #9a6a00; font-weight: 600; }
   .tag { font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; margin-left: 6px; }
   .tag.ja { background: #e3f1e5; color: #1d6a33; } .tag.nein { background: #eceff1; color: #5d686c; }
 </style>
@@ -75,8 +81,11 @@
         <div class="feld"><label for="f_name">Name</label><input type="text" id="f_name" data-k="name"><small>So heisst er im Spiel, z. B. «Der Bandit».</small></div>
         <div class="feld"><label for="f_id">ID</label><input type="text" id="f_id" data-k="id"><small>Interner Name, nur Kleinbuchstaben und Zahlen.</small></div>
         <div class="feld"><label for="f_koenig">König</label><div class="koenigwahl"><canvas id="koenigBild" width="72" height="72"></canvas><select id="f_koenig" data-k="koenig"></select></div><small>Aussehen des Königs; ein Sieg schaltet ihn für den Spieler frei.</small></div>
-        <div class="feld"><label for="f_platz">Platz im Story-Modus</label><input type="number" id="f_platz" data-k="platz" min="1" step="1" placeholder="leer"><small>Reihenfolge (1 = erster Gegner). Leer = noch nicht in der Story. Die Lage auf der Karte ergibt sich von selbst (4 pro Seite).</small></div>
+        <div class="feld"><label for="f_platz">Platz im Story-Modus</label><select id="f_platz" data-k="platz"></select><small>Der Bot wird an dieser Stelle eingefügt; alle Bots ab dort rücken einen Platz nach hinten (siehe Story-Reihenfolge unten). Die Lage auf der Karte ergibt sich von selbst (4 pro Seite).</small></div>
       </div>
+      <h2 style="margin-top:14px">Story-Reihenfolge</h2>
+      <p class="hilfe">So sieht die Reihenfolge mit deiner Einstellung aus. Gelb = dieser Bot, «rückt nach» = sein Platz ändert sich dadurch. Bots ohne Logik zählen mit, erscheinen im Spiel aber erst, wenn sie Logik haben.</p>
+      <ol class="reihe" id="reihe"></ol>
     </section>
 
     <section class="karte">
@@ -221,7 +230,7 @@
     sel.innerHTML = h;
   }
   function fuellen() {
-    $('f_name').value = cur.name; $('f_id').value = cur.id; $('f_platz').value = cur.platz;
+    $('f_name').value = cur.name; $('f_id').value = cur.id; platzOptionen();
     $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
     $('f_spezial').value = cur.spezial || '';
     $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
@@ -239,6 +248,32 @@
       zeilenMalen(); poolMalen();
     }
     markieren(); ausgabe();
+  }
+  // ----- Story-Reihenfolge: andere Bots mit Platz (Entwürfe zählen), der bearbeitete Bot wird an seinem Platz eingefügt -----
+  function andere() { return alleIds().filter(function (id) { return id !== akt && bot(id).platz; }).map(function (id) { return bot(id); }).sort(function (a, b) { return a.platz - b.platz; }); }
+  function reihenfolge() {
+    var l = andere().slice();
+    if (cur.platz) l.splice(Math.min(cur.platz - 1, l.length), 0, cur);
+    return l.map(function (b, i) { return { b: b, neu: i + 1, alt: b === cur ? (ORIG[akt] ? ORIG[akt].platz : '') : b.platz }; });
+  }
+  function platzOptionen() {
+    var a = andere(), h = '<option value="">nicht im Story-Modus</option>';
+    for (var i = 0; i <= a.length; i++) h += '<option value="' + (i + 1) + '">Platz ' + (i + 1) + (i < a.length ? ' – vor «' + a[i].name + '»' : ' – am Ende') + '</option>';
+    $('f_platz').innerHTML = h; $('f_platz').value = cur.platz ? String(Math.min(cur.platz, a.length + 1)) : '';
+    reiheMalen();
+  }
+  function reiheMalen() {
+    var r = reihenfolge();
+    $('reihe').innerHTML = r.length ? r.map(function (x) {
+      var ich = x.b === cur, info = ich ? (x.alt ? (x.alt !== x.neu ? 'vorher Platz ' + x.alt : 'unverändert') : 'neu in der Story') : (x.alt !== x.neu ? 'rückt nach: Platz ' + x.alt + ' → ' + x.neu : '');
+      return '<li class="' + (ich ? 'ich' : '') + '"><span class="nr">' + x.neu + '.</span>' + x.b.name + (x.b.logik ? '' : ' <span class="tag nein">ohne Logik</span>') + '<span class="info' + (!ich && info ? ' rueckt' : '') + '">' + info + '</span></li>';
+    }).join('') : '<li>Noch kein Bot in der Story.</li>';
+    if (!cur.platz && ORIG[akt] && ORIG[akt].platz) $('reihe').insertAdjacentHTML('afterbegin', '<li class="ich">«' + cur.name + '» wird aus der Story entfernt; die Bots danach rücken einen Platz nach vorn.</li>');
+  }
+  function reiheText() {
+    var r = reihenfolge(), verschoben = r.filter(function (x) { return x.b !== cur && x.alt !== x.neu; });
+    if (!verschoben.length && String(cur.platz) === String(ORIG[akt] ? ORIG[akt].platz : '')) return '';
+    return '\nStory-Reihenfolge danach: ' + r.map(function (x) { return x.neu + ' ' + x.b.name; }).join(', ') + (verschoben.length ? '\nDadurch verschoben: ' + verschoben.map(function (x) { return x.b.name + ' ' + x.alt + ' → ' + x.neu; }).join(', ') : '');
   }
   function koenigLabel(k) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].koenig === k) return BOT_DB[i].name; for (var j = 0; j < KOENIG_SPIELER.length; j++) if (KOENIG_SPIELER[j].id === k) return KOENIG_SPIELER[j].name + ' (Spieler)'; return k; }
   function koenigZeigen() {
@@ -344,6 +379,8 @@
       if (k === 'id') { v = String(v).toLowerCase().replace(/[^a-z0-9]/g, ''); if (cur.neu) cur.logikKey = v; }
       cur[k] = (k === 'platz') ? (v === '' ? '' : +v) : v;
       if (k === 'koenig') koenigZeigen();
+      if (k === 'platz') reiheMalen();
+      if (k === 'name') reiheMalen();
     } else if (cur.logik) {
       var L = cur.logik;
       if (k === 'wallClear') L.wallClear = !!v;
@@ -428,7 +465,7 @@
   function text(b) {
     var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;
     return 'Bot «' + b.name + '» (' + b.id + ')' + (a.length ? ': ' + a.join('; ') : ': unverändert') + (b.logik ? '\nAngriffswelle ' + wk + ' Gold (Start ab ' + b.logik.attackGold + ' Gold)' : '') +
-      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '') + (b.spezial ? '\nSpezialregeln (bitte einbauen):\n' + b.spezial : '');
+      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '') + (b.spezial ? '\nSpezialregeln (bitte einbauen):\n' + b.spezial : '') + (b === cur ? reiheText() : '');
   }
   function ausgabe() {
     var a = aenderungen(cur);
