@@ -170,7 +170,7 @@
     if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || wallWeak(aw, R.wallStage) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
     // Gebäude (keine Einheit, die Sperre gilt nicht): R.gebaeude = Liste von Käufen { type, gold } in Reihenfolge; die n-te Zeile eines Gebäudes ist sein n-ter Kauf
     // (1. = Bau, 2. = Stufe 2 …, bei der Kirche jede weitere Zeile = ein Gebet). Gekauft wird der nächste fällige Kauf, sobald er so viel Gold frei hat; wird ein Gebäude zerstört, baut er es wieder.
-    if (R.gebaeude && R.gebaeude.length && !bases[1].down) {
+    if (R.gebaeude && R.gebaeude.length && !bases[1].down && !enemyInMyHalf()) { // nur ohne gegnerische Einheit in seiner Spielfeldhälfte
       var gn = {};
       for (i = 0; i < R.gebaeude.length; i++) {
         var ge = R.gebaeude[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;

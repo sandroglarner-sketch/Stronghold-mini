@@ -838,7 +838,7 @@
     // defPlus kann auch negativ sein (verteidigt dann mit weniger Stärke als dein Angriff);
     // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
     // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (Stärkewert deiner Einheiten abzüglich seiner Turmbesatzung) plus so viel Stärke mehr als du hast (Stärkewert: CONFIG.units[..].staerke),
-    // karawanen = so viele Karawanen strebt er an (wie die Bauern); gebaeude = Gebäudekäufe in Reihenfolge [{ type, gold }]: die n-te Zeile eines Gebäudes ist sein n-ter Kauf (Bau, Ausbaustufe, bei der Kirche ein Gebet), gekauft ab so viel freiem Gold;
+    // karawanen = so viele Karawanen strebt er an (wie die Bauern); gebaeude = Gebäudekäufe in Reihenfolge [{ type, gold }]: die n-te Zeile eines Gebäudes ist sein n-ter Kauf (Bau, Ausbaustufe, bei der Kirche ein Gebet), gekauft ab so viel freiem Gold und nur ohne gegnerische Einheit in seiner Spielfeldhälfte;
     // eine Karawane zählt wie 2 Bauern (für die Jagd und für seine Bauern-Obergrenze farmers);
     // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
   CONFIG.BOTS = {
@@ -1077,7 +1077,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '0df1073787'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '3375e94abf'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2121,7 +2121,7 @@
     if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || wallWeak(aw, R.wallStage) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
     // Gebäude (keine Einheit, die Sperre gilt nicht): R.gebaeude = Liste von Käufen { type, gold } in Reihenfolge; die n-te Zeile eines Gebäudes ist sein n-ter Kauf
     // (1. = Bau, 2. = Stufe 2 …, bei der Kirche jede weitere Zeile = ein Gebet). Gekauft wird der nächste fällige Kauf, sobald er so viel Gold frei hat; wird ein Gebäude zerstört, baut er es wieder.
-    if (R.gebaeude && R.gebaeude.length && !bases[1].down) {
+    if (R.gebaeude && R.gebaeude.length && !bases[1].down && !enemyInMyHalf()) { // nur ohne gegnerische Einheit in seiner Spielfeldhälfte
       var gn = {};
       for (i = 0; i < R.gebaeude.length; i++) {
         var ge = R.gebaeude[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
