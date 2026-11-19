@@ -236,6 +236,9 @@
   .sknoten i { position: absolute; right: -6px; bottom: -6px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
   .sknoten.besiegt i { background: #1d7a3a; } .sknoten.gesperrt i { background: #4b5357; }
   .sknoten.sel { box-shadow: 0 0 0 5px rgba(255,255,255,0.85); }
+  .sblatt { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 64px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--fg); font-size: 2rem; line-height: 1; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 3; }
+  .sblatt.links { left: 8px; } .sblatt.rechts { right: 8px; }
+  .sblatt[hidden] { display: none; }
   .sname { position: absolute; transform: translateX(-50%); margin-top: 4px; text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
   .sname b { font-size: 0.9rem; display: block; }
   .sfigur { position: absolute; transform: translate(-50%, -100%); width: 50px; height: 50px; border-radius: 50%; background: #dbe7f7; border: 4px solid var(--me); box-sizing: border-box; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }

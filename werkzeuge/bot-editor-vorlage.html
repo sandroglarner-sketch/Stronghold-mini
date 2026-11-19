@@ -75,8 +75,7 @@
         <div class="feld"><label for="f_name">Name</label><input type="text" id="f_name" data-k="name"><small>So heisst er im Spiel, z. B. «Der Bandit».</small></div>
         <div class="feld"><label for="f_id">ID</label><input type="text" id="f_id" data-k="id"><small>Interner Name, nur Kleinbuchstaben und Zahlen.</small></div>
         <div class="feld"><label for="f_koenig">König</label><div class="koenigwahl"><canvas id="koenigBild" width="72" height="72"></canvas><select id="f_koenig" data-k="koenig"></select></div><small>Aussehen des Königs; ein Sieg schaltet ihn für den Spieler frei.</small></div>
-        <div class="feld"><label for="f_platz">Platz im Story-Modus</label><input type="number" id="f_platz" data-k="platz" min="1" step="1" placeholder="leer"><small>Reihenfolge (1 = erster Gegner). Leer = noch nicht in der Story.</small></div>
-        <div class="feld"><label>Lage auf der Story-Karte</label><div class="zeile">x <input type="number" id="f_kx" data-k="kx" min="0" max="100" step="1"> % &nbsp; y <input type="number" id="f_ky" data-k="ky" min="0" max="100" step="1"> %</div><small>Prozent von links / oben. Nur nötig mit Platz.</small></div>
+        <div class="feld"><label for="f_platz">Platz im Story-Modus</label><input type="number" id="f_platz" data-k="platz" min="1" step="1" placeholder="leer"><small>Reihenfolge (1 = erster Gegner). Leer = noch nicht in der Story. Die Lage auf der Karte ergibt sich von selbst (4 pro Seite).</small></div>
       </div>
     </section>
 
@@ -186,7 +185,7 @@
 
   // ----- Daten: Original aus dem Spiel, Entwürfe aus dem Browser -----
   function ausSpiel(b) {
-    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', kx: b.karte ? b.karte.x : '', ky: b.karte ? b.karte.y : '', logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
+    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
   }
   var ORIG = {}; BOT_DB.forEach(function (b) { ORIG[b.id] = ausSpiel(b); });
   var ENTW = {}; try { ENTW = JSON.parse(localStorage.getItem(SPEICHER) || '{}') || {}; } catch (e) { ENTW = {}; }
@@ -221,7 +220,7 @@
     sel.innerHTML = h;
   }
   function fuellen() {
-    $('f_name').value = cur.name; $('f_id').value = cur.id; $('f_platz').value = cur.platz; $('f_kx').value = cur.kx; $('f_ky').value = cur.ky;
+    $('f_name').value = cur.name; $('f_id').value = cur.id; $('f_platz').value = cur.platz;
     $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
     $('f_spezial').value = cur.spezial || '';
     $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
@@ -340,9 +339,9 @@
     var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     if (k === 'spezial') { if (v.trim()) cur.spezial = v; else delete cur.spezial; geaendert(); return; }
     if (k.indexOf('turm.') === 0 && cur.logik) { var tt = k.slice(5), n = Math.max(0, Math.floor(+v || 0)); if (n) cur.logik.turm[tt] = n; else delete cur.logik.turm[tt]; turmSumme(); geaendert(); return; }
-    if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) {
+    if (['name', 'id', 'koenig', 'platz'].indexOf(k) >= 0) {
       if (k === 'id') { v = String(v).toLowerCase().replace(/[^a-z0-9]/g, ''); if (cur.neu) cur.logikKey = v; }
-      cur[k] = (k === 'platz' || k === 'kx' || k === 'ky') ? (v === '' ? '' : +v) : v;
+      cur[k] = (k === 'platz') ? (v === '' ? '' : +v) : v;
       if (k === 'koenig') koenigZeigen();
     } else if (cur.logik) {
       var L = cur.logik;
@@ -363,7 +362,7 @@
   $('logikWegBtn').addEventListener('click', function () { if (!confirm('Die Logik dieses Bots entfernen? Er ist dann nicht mehr spielbar.')) return; cur.logik = null; fuellen(); geaendert(); });
   $('neuBtn').addEventListener('click', function () {
     var n = 1, id; do { id = 'neuerbot' + n++; } while (bot(id));
-    ENTW[id] = { id: id, name: 'Neuer Bot', koenig: 'standard', platz: '', kx: '', ky: '', logikKey: id, logik: kopie(CONFIG.BOTS.bauern), neu: true };
+    ENTW[id] = { id: id, name: 'Neuer Bot', koenig: 'standard', platz: '', logikKey: id, logik: kopie(CONFIG.BOTS.bauern), neu: true };
     speichern(); akt = id; botListe(); laden(id);
   });
   $('resetBtn').addEventListener('click', function () {
@@ -391,7 +390,7 @@
       if (!o) { el.classList.add('chg'); return; }
       if (k === 'spezial') { a = cur.spezial || ''; b = ''; }
       else if (k.indexOf('turm.') === 0) { var tt = k.slice(5); a = cur.logik && cur.logik.turm ? cur.logik.turm[tt] || 0 : 0; b = o.logik && o.logik.turm ? o.logik.turm[tt] || 0 : 0; }
-      else if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) { a = cur[k]; b = o[k]; }
+      else if (['name', 'id', 'koenig', 'platz'].indexOf(k) >= 0) { a = cur[k]; b = o[k]; }
       else { a = cur.logik ? cur.logik[k] : undefined; b = o.logik ? o.logik[k] : undefined; }
       el.classList.toggle('chg', String(a === undefined ? '' : a) !== String(b === undefined ? '' : b));
     });
@@ -401,7 +400,6 @@
     var o = ORIG[b.id], l = [];
     if (!o) return ['Neuer Bot'].concat(b.spezial ? ['Spezialregeln (Text)'] : []);
     ['name', 'koenig', 'platz'].forEach(function (k) { if (String(b[k]) !== String(o[k])) l.push(k + ': ' + (o[k] === '' ? 'leer' : o[k]) + ' → ' + (b[k] === '' ? 'leer' : b[k])); });
-    if (String(b.kx) !== String(o.kx) || String(b.ky) !== String(o.ky)) l.push('Karte: ' + o.kx + '/' + o.ky + ' → ' + b.kx + '/' + b.ky);
     if (!o.logik && b.logik) l.push('Logik neu');
     else if (o.logik && !b.logik) l.push('Logik entfernt');
     else if (b.logik) {
@@ -424,7 +422,7 @@
   }
   function dbCode(b) {
     return "    { id: '" + b.id + "', name: '" + String(b.name).replace(/'/g, "\\'") + "', koenig: '" + b.koenig + "', platz: " + (b.platz === '' ? 'null' : b.platz) +
-      ', karte: ' + (b.kx === '' || b.ky === '' ? 'null' : '{ x: ' + b.kx + ', y: ' + b.ky + ' }') + ', logik: ' + (b.logik ? "'" + (b.logikKey || b.id) + "'" : 'null') + ' }';
+      ', logik: ' + (b.logik ? "'" + (b.logikKey || b.id) + "'" : 'null') + ' }';
   }
   function text(b) {
     var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;

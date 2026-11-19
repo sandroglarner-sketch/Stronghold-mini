@@ -1,6 +1,6 @@
   // ---------- Menü, Story-Modus, Freunde, Herausfordern, Zuschauen (19.11.) ----------
   // spielArt = was zuletzt gestartet wurde ('story' | 'sandbox' | 'tut' | ''), für «Nochmal» und «Zur Karte»
-  var spielArt = '', storyIdx = 0, storySel = 0;
+  var spielArt = '', storyIdx = 0, storySel = 0, storySeite = 0;
   var sozial = { ich: null, liste: [], code: '', zuschauer: 0, forderungRaus: null, forderungRein: null, lastToken: null };
   var SVG = function (d, c, w) { return '<svg width="' + (w || 20) + '" height="' + (w || 20) + '" viewBox="0 0 24 24" fill="none" stroke="' + (c || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
   var ICON = {
@@ -46,19 +46,24 @@
   function storyOpen() {
     var n = storyStand();
     storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
+    storySeite = Math.floor(Math.min(n, STORY.length - 1) / STORY_PRO_SEITE); // Seite mit dem aktuellen Gegner
     $('story').hidden = false;
     storyMalen();
   }
   function storyMalen() {
     var n = storyStand(), h = '';
-    $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length;
+    var seiten = Math.ceil(STORY.length / STORY_PRO_SEITE);
+    $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length + (seiten > 1 ? ' · Seite ' + (storySeite + 1) + '/' + seiten : '');
+    $('storyZurueck').hidden = storySeite <= 0; $('storyWeiter').hidden = storySeite >= seiten - 1;
+    $('storyRein').style.display = storySeite > 0 ? '' : 'none'; $('storyRaus').style.display = storySeite < seiten - 1 ? '' : 'none';
     STORY.forEach(function (g, i) {
+      if (g.seite !== storySeite) return; // nur die Gegner dieser Seite
       var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? '' : ICON.schloss;
       h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '"><canvas data-bild="' + g.koenig + '"' + (cls === 'gesperrt' ? ' data-grau="1"' : '') + '></canvas>' + (ic ? '<i>' + SVG(ic, '#ffffff', 14) + '</i>' : '') + '</button>' +
         '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
-    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 36px)"><canvas data-mein="1"></canvas></div>'; // dein König im blauen Kreis
+    if (f.seite === storySeite) h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 36px)"><canvas data-mein="1"></canvas></div>'; // dein König im blauen Kreis
     $('storyKnoten').innerHTML = h;
     var mk = $('storyKnoten').querySelector('canvas[data-mein]'); if (mk) koenigBild(mk, meinKoenig(), 0);
     Array.prototype.forEach.call($('storyKnoten').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 1, cv.hasAttribute('data-grau')); }); // Bild: König des Bots
@@ -94,6 +99,9 @@
   }
   $('storyBtn').addEventListener('click', storyOpen);
   $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
+  function storyBlaettern(d) { storySeite = Math.max(0, Math.min(Math.ceil(STORY.length / STORY_PRO_SEITE) - 1, storySeite + d)); storySel = -1; storyMalen(); }
+  $('storyZurueck').addEventListener('click', function () { storyBlaettern(-1); });
+  $('storyWeiter').addEventListener('click', function () { storyBlaettern(1); });
   $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });

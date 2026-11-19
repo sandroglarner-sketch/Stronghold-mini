@@ -94,7 +94,7 @@
       '<div class="info"><div class="kopf"><b>' + esc(b.name) + '</b>' + (L && i !== undefined ? '<span class="tag ja">im Spiel</span>' : '<span class="tag nein">noch nicht im Spiel</span>') + '</div><dl>' +
       '<dt>ID</dt><dd>' + b.id + '</dd>' +
       '<dt>König</dt><dd>' + b.koenig + ' (wird durch einen Sieg freigeschaltet)</dd>' +
-      '<dt>Platz</dt><dd>' + (b.platz ? b.platz + (b.karte ? ' (Karte: ' + b.karte.x + ' % / ' + b.karte.y + ' %)' : '') : '<span class="leer">leer</span>') + '</dd>' +
+      '<dt>Platz</dt><dd>' + (b.platz ? b.platz + (i !== undefined ? ' (Karte: Seite ' + (STORY[i].seite + 1) + ', Stelle ' + (i % STORY_PRO_SEITE + 1) + ')' : '') : '<span class="leer">leer</span>') + '</dd>' +
       '<dt>Wann im Story-Modus</dt><dd>' + wann + '</dd>' +
       '<dt>Bot-Logik</dt><dd>' + logik + '</dd></dl></div></section>';
   }).join('');
