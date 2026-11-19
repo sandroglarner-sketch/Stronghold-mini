@@ -27,7 +27,7 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
-    if (d.gebaeude) a.push('Gebäude: ein Arbeiter baut sie neben der Burg. Stufen (nochmals kaufen): ' + d.gebaeude.stufen.map(function (st, i) { return (i + 1) + ': ' + st.cost + ' Gold, ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold alle ' + d.gebaeude.alle + ' s</b>'; }).join('; ') + '. Heilt sich wie die Mauer.');
+    if (d.gebaeude) a.push(d.gebaeude.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>'));
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
