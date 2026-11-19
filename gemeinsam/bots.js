@@ -63,9 +63,8 @@
     return false;
   }
   // Wie viele Einheiten der Seite stehen auf den Türmen?
-  // Bots, Verteidigung (alle Bots, für den Gegner und die eigenen Einheiten): Belagerungsmaschinen zählen als mehrere Einheiten
-  var DEF_WEIGHT = { ram: 2, baliste: 2, catapult: 4, trebuchet: 6, belfry: 8 };
-  function defW(type) { return DEF_WEIGHT[type] || 1; }
+  // Bots, Verteidigung (alle Bots, für den Gegner und die eigenen Einheiten): jede Einheit zählt mit ihrem Stärkewert (CONFIG.units[..].staerke, sonst 1)
+  function defW(type) { var st = CONFIG.units[type] && CONFIG.units[type].staerke; return st === undefined ? 1 : st; }
   function countTowerUnits(team) {
     var n = 0;
     for (var i = 0; i < units.length; i++) if (units[i].team === team && units[i].hp > 0 && units[i].tower) n += defW(units[i].type);
@@ -85,7 +84,7 @@
     var n = 0, i, u;
     for (i = 0; i < units.length; i++) {
       u = units[i];
-      if (u.team === team && u.hp > 0 && !CONFIG.units[u.type].passive && !CONFIG.units[u.type].worker && !CONFIG.units[u.type].king && !(team === 0 && u.dig) && !(noTower && u.tower)) n += defW(u.type); // Rammbock/Baliste 2, Katapult 4, Trebuchet 6, Belagerungsturm 8
+      if (u.team === team && u.hp > 0 && !CONFIG.units[u.type].passive && !CONFIG.units[u.type].worker && !CONFIG.units[u.type].king && !(team === 0 && u.dig) && !(noTower && u.tower)) n += defW(u.type); // Stärkewert: Kampfeinheiten 1, Belagerungsmaschinen 2 bis 8
     }
     return n;
   }

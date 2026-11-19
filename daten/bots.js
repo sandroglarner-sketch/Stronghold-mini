@@ -2,7 +2,7 @@
     // farmers = höchstens so viele Bauern; huntLead = so viele Sekunden lang musst du mehr Bauern haben, bis die Jagd kommt; hunt = Jagdtrupp, huntEvery = Pause zwischen zwei Jagden;
     // wallGold = so viel Gold, dann baut er eine Mauer (repairAt 0 = er repariert nie, baut sie aber neu), wallClear = nur, solange kein Gegner in seiner Spielfeldhälfte ist;
     // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
-    // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (deine Einheiten abzüglich seiner Turmbesatzung) plus so vielen Einheiten mehr als du hast,
+    // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (Stärkewert deiner Einheiten abzüglich seiner Turmbesatzung) plus so viel Stärke mehr als du hast (Stärkewert: CONFIG.units[..].staerke),
     // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
   CONFIG.BOTS = {
       bauern: { farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,

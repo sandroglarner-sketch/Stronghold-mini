@@ -85,7 +85,7 @@
         '<dt>Mauer</dt><dd>ab ' + L.wallGold + ' Gold' + (L.wallStage ? ', bis Stufe ' + L.wallStage : '') + (L.repairAt ? ', repariert ab ' + L.repairAt + ' Leben' : ', repariert nie') + (L.towerSiege ? ', Belagerungsplatz: ' + esc(name(L.towerSiege)) : '') + '</dd>' +
         '<dt>Jagd</dt><dd>nach ' + L.huntLead + ' s Bauern-Vorsprung: ' + L.hunt.map(function (x) { return x[1] + '× ' + esc(name(x[0])); }).join(', ') + ' (Pause ' + L.huntEvery + ' s)</dd>' +
         '<dt>Angriff</dt><dd>ab ' + L.attackGold + ' Gold, Welle kostet ' + kosten + ' Gold<div class="welle">' + welle + '</div></dd>' +
-        '<dt>Verteidigung</dt><dd>' + L.defPool.map(name).map(esc).join(', ') + ' (+' + L.defPlus + ' mehr als du)</dd></dl>' +
+        '<dt>Verteidigung</dt><dd>' + L.defPool.map(name).map(esc).join(', ') + ' (Stärke des Angriffs +' + L.defPlus + ')</dd></dl>' +
         '<details><summary>Ganze Logik anzeigen</summary><pre>' + esc(JSON.stringify(L, null, 1)) + '</pre></details>';
     }
     return '<section class="bot" data-spiel="' + (L && i !== undefined ? 1 : 0) + '" data-leer="' + (L ? 0 : 1) + '">' +
