@@ -131,10 +131,15 @@
             u.gT = 0;
             if (u.gebetT > 0) { u.gebetT = Math.max(0, u.gebetT - dt); if (u.gebetT <= 0) { u.gunst = (u.gunst || 0) + 1; effects.push({ kind: 'puff', x: u.x, y: u.y - 0.5, team: u.team, t: 0, dur: 0.6 }); } }
             if ((u.gunst || 0) >= GD.gunstMax) {
-              u.blitzT = (u.blitzT || 0) + dt;
+              u.sturmT = (u.sturmT || 0) + dt; // Unwetter zieht auf (Zeichnung blendet ein)
+              u.blitzT = (u.blitzT || 0) + (u.sturmT < GD.blitz.auf ? 0 : dt); // Blitze erst, wenn das Unwetter aufgezogen ist
               while (u.blitzT >= GD.blitz.alle) {
                 u.blitzT -= GD.blitz.alle;
                 var bx1 = u.team === 0 ? W * 2 / 3 : 0.3, bx2 = u.team === 0 ? W - 0.3 : W / 3, blx = bx1 + simRand() * (bx2 - bx1), bly = 0.4 + simRand() * (H - 0.8);
+                u.blitzN = (u.blitzN || 0) + 1;
+                if (u.blitzN % GD.blitz.koenig === 0) { // jeder 4. Blitz trifft genau den gegnerischen König (auch in der Burg)
+                  for (var kb = 0; kb < units.length; kb++) { var kgu = units[kb]; if (kgu.type === 'king' && kgu.team !== u.team && kgu.hp > 0) { blx = kgu.x; bly = kgu.y; hurt(kgu, GD.blitz.schaden, { range: 0 }) /* voller Schaden, kein Fernkampf-Schutz */; kgu.hit = 0.15; kgu.lastHit = clock; break; } }
+                }
                 applySplash(u.team, blx, -1, blx, bly, { atk: GD.blitz.schaden, splash: GD.blitz.radius, range: 99 }, null, false, false); // trifft alles vom Gegner im Umkreis
                 effects.push({ kind: 'blitz', x: blx, y: bly, t: 0, dur: 0.45, seed: Math.floor(simRand() * 1000) });
                 effects.push({ kind: 'blast', x: blx, y: bly, r: GD.blitz.radius, t: 0, dur: 0.45 });
@@ -156,7 +161,7 @@
           u.weg = { hin: [tuer, { x: u.x, y: ey }, { x: ecx, y: ey }, { x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }].map(rel),
                     zur: [{ x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }, { x: ecx, y: ey }, { x: u.x, y: ey }, tuer].map(rel) }; // direkt zurück ins Haus
         }
-        u.settled = { gunst: u.gunst || 0, gebet: u.gebetT || 0, weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
+        u.settled = { gunst: u.gunst || 0, gebet: u.gebetT || 0, weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.stufe > 0 ? (u.werk || 0) / u.max : u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
@@ -335,8 +340,10 @@
         var bdx = u.bp.x - u.x, bdy = u.bp.y - u.y, bdd = hyp(bdx, bdy);
         if (bdd > 0.05) { var bs = Math.min(spd * dt, bdd); u.x += bdx / bdd * bs; u.y += bdy / bdd * bs; if (Math.abs(bdx) > 0.1) u.face = bdx > 0 ? 1 : -1; }
         else {
-          bk.hp = Math.round(Math.min(bk.max, bk.hp + WALL.rate * dt) * 1e6) / 1e6;
-          if (bk.hp >= bk.max - 1e-6) { bk.hp = bk.max; bk.bau = false; bk.stufe = bk.ziel; bk.gT = 0; u.fade = WALL.fade; effects.push({ kind: 'puff', x: bk.x, y: bk.y, team: bk.team, t: 0, dur: 0.5 }); }
+          var ausbau = bk.stufe > 0;
+          if (ausbau) bk.werk = Math.round(((bk.werk || 0) + WALL.rate * dt) * 1e6) / 1e6; // Ausbau: Arbeit, die Leben bleiben gleich
+          else bk.hp = Math.round(Math.min(bk.max, bk.hp + WALL.rate * dt) * 1e6) / 1e6;
+          if (ausbau ? bk.werk >= bk.max - 1e-6 : bk.hp >= bk.max - 1e-6) { bk.hp = bk.max; bk.bau = false; bk.stufe = bk.ziel; bk.gT = 0; u.fade = WALL.fade; effects.push({ kind: 'puff', x: bk.x, y: bk.y, team: bk.team, t: 0, dur: 0.5 }); }
         }
         continue;
       }

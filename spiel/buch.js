@@ -30,7 +30,7 @@
     if (d.gebaeude) { var GBt = d.gebaeude; // Gebäude: keine Leben (stehen oben), immer «alle … s»
       a.push(GBt.art === 'zins' ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.prozent + ' % deines Goldes</b> (aufgerundet).'
         : GBt.art === 'dieb' ? 'Alle ' + GBt.alle + ' s klaut ein Dieb <b>' + GBt.prozent + ' % des gegnerischen Goldes</b> (aufgerundet).'
-        : GBt.art === 'kirche' ? 'Nochmals kaufen: ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter</b> über das gegnerische Drittel: alle ' + GBt.blitz.alle + ' s ein Blitz mit ' + GBt.blitz.schaden + ' Schaden im Umkreis ' + GBt.blitz.radius + ', bis die Kirche zerstört ist.'
+        : GBt.art === 'kirche' ? 'Nochmals kaufen: ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter</b> über das gegnerische Drittel: alle ' + GBt.blitz.alle + ' s ein Blitz mit ' + GBt.blitz.schaden + ' Schaden im Umkreis ' + GBt.blitz.radius + ', jeder ' + GBt.blitz.koenig + '. trifft den König – bis die Kirche zerstört ist.'
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }

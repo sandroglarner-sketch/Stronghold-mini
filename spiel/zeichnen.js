@@ -494,9 +494,13 @@
       var ku = units[wi2], KG = CONFIG.units[ku.type].gebaeude;
       if (!KG || !KG.gunstMax || ku.hp <= 0 || (ku.gunst || 0) < KG.gunstMax) continue;
       var wx1 = ku.team === 0 ? W * 2 / 3 * T : 0, ww = W / 3 * T, wt = performance.now() / 1000;
-      ctx.save(); ctx.fillStyle = 'rgba(30,35,55,0.28)'; ctx.fillRect(wx1, 0, ww, H * T);
-      ctx.fillStyle = 'rgba(55,60,80,0.55)';
-      for (var cw2 = 0; cw2 < 7; cw2++) { var cxw = wx1 + ((cw2 * 97 + wt * 18) % (ww + 120)) - 60, cyw = 18 + (cw2 % 3) * 22; ctx.beginPath(); ctx.ellipse(cxw, cyw, 70, 26, 0, 0, Math.PI * 2); ctx.fill(); }
+      var auf = Math.min(1, (ku.sturmT || 0) / KG.blitz.auf), sauf = auf * auf * (3 - 2 * auf); // weich aufziehen
+      ctx.save();
+      var gr = ctx.createLinearGradient(wx1 + (ku.team === 0 ? 0 : ww), 0, wx1 + (ku.team === 0 ? 70 : ww - 70), 0); // weicher Rand zur Mitte
+      gr.addColorStop(0, 'rgba(30,35,55,0)'); gr.addColorStop(1, 'rgba(30,35,55,' + (0.28 * sauf) + ')');
+      ctx.fillStyle = gr; ctx.fillRect(wx1, 0, ww, H * T);
+      ctx.fillStyle = 'rgba(55,60,80,' + (0.55 * sauf) + ')';
+      for (var cw2 = 0; cw2 < 7; cw2++) { var cxw = wx1 + ((cw2 * 97 + wt * 18) % (ww + 120)) - 60, cyw = 18 + (cw2 % 3) * 22 - (1 - sauf) * 70; ctx.beginPath(); ctx.ellipse(cxw, cyw, 70 * (0.6 + 0.4 * sauf), 26, 0, 0, Math.PI * 2); ctx.fill(); } // Wolken sinken von oben herein
       ctx.restore();
     }
   }

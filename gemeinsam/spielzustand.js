@@ -384,7 +384,7 @@
     }
     if (g) { // nächste Stufe: Arbeiter baut die zusätzlichen Leben
       if (g.bau || g.stufe >= G.stufen.length) return false;
-      g.ziel = g.stufe + 1; g.max = G.stufen[g.ziel - 1].hp; g.bau = true;
+      g.ziel = g.stufe + 1; g.max = G.stufen[g.ziel - 1].hp; g.werk = 0; g.bau = true; // Ausbau: Arbeit (so viel wie die Leben der Stufe), Leben bleiben
     } else {
       var frei = gebPlaetze(team); if (!frei.length) return false;
       var p = frei[Math.floor(simRand() * frei.length)];
