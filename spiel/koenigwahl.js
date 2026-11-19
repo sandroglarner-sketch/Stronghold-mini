@@ -13,15 +13,17 @@
   }
   function meinName() { return sozial && sozial.ich ? sozial.ich.name : konto.user ? konto.user.split('@')[0] : 'Du'; }
   // Bild eines Königs in ein Canvas (Körper mittig, Waffe ragt nach rechts)
-  function koenigBild(cv, id, team, grau) {
+  // modus: 0 = ohne Waffe (Hände leer), 1 = mit Bogen, 2 = mit Nahkampfwaffe
+  function koenigBild(cv, id, team, grau, modus) {
     if (!cv.getAttribute('data-w')) { cv.setAttribute('data-w', cv.clientWidth || cv.width); cv.setAttribute('data-h', cv.clientHeight || cv.height); }
     var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || +cv.getAttribute('data-w'), h = cv.clientHeight || +cv.getAttribute('data-h');
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
-    var r = Math.min(h * 0.4, w * 0.3);
-    c.save(); c.translate(w / 2 + r * 0.4, h / 2); // ohne Waffe: Körper mittig
+    var r = modus ? Math.min(h * 0.3, w * 0.15) : Math.min(h * 0.4, w * 0.3);
+    c.save();
+    if (modus === 2) c.translate(w * 0.3, h * 0.62); else if (modus === 1) c.translate(w * 0.38, h / 2); else c.translate(w / 2 + r * 0.4, h / 2); // ohne Waffe: Körper mittig
     if (grau) c.filter = 'grayscale(1) brightness(0.75)';
-    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, { ohneWaffe: true });
+    koenigMalen(c, koenigOptik(id), r, team === 0 ? P.me : P.foe, modus === 1 ? { bogen: true, zieh: 1, str: 0.5, arrow: 1 } : modus === 2 ? {} : { ohneWaffe: true });
     c.restore();
   }
   // Name eines Königs für die Auswahl
@@ -39,24 +41,38 @@
     if (tester) BOT_DB.forEach(function (b) { if (!l.some(function (x) { return x.id === b.koenig; })) l.push({ id: b.koenig, frei: true, txt: 'Tester-Modus (Bot noch nicht im Spiel)' }); });
     return l;
   }
+  var kwAnsicht = {}; // pro König: 0 ohne Waffe, 1 Bogen, 2 Nahkampfwaffe (Pfeil auf dem Bild schaltet weiter)
+  var KW_TEXT = ['Ohne Waffe – Pfeil: mit Bogen zeigen', 'Mit Bogen – Pfeil: mit Nahkampfwaffe zeigen', 'Mit Nahkampfwaffe – Pfeil: ohne Waffe zeigen'];
   function koenigWahlOpen(on) {
     $('koenigWahl').hidden = !on;
     if (!on) return;
     var akt = meinKoenig();
     $('koenigGrid').innerHTML = koenigListe().map(function (k) {
-      return '<button type="button" class="kwkarte' + (k.id === akt ? ' sel' : '') + (k.frei ? '' : ' zu') + '" data-k="' + k.id + '"' + (k.frei ? '' : ' aria-disabled="true"') + '>' +
-        '<canvas data-bild="' + k.id + '"' + (k.frei ? '' : ' data-grau="1"') + '></canvas><b>' + esc(koenigName(k.id)) + '</b><span>' + (k.id === akt ? '✓ Ausgewählt' : (k.frei ? '' : '🔒 ') + esc(k.txt)) + '</span></button>';
+      var m = kwAnsicht[k.id] || 0;
+      return '<div role="button" tabindex="0" class="kwkarte' + (k.id === akt ? ' sel' : '') + (k.frei ? '' : ' zu') + '" data-k="' + k.id + '"' + (k.frei ? '' : ' aria-disabled="true"') + ' aria-label="' + esc(koenigName(k.id)) + '">' +
+        '<span class="kwbild"><canvas data-bild="' + k.id + '"' + (k.frei ? '' : ' data-grau="1"') + '></canvas><button type="button" class="kwpfeil" data-pfeil="' + k.id + '" title="' + KW_TEXT[m] + '" aria-label="' + KW_TEXT[m] + '">›</button></span>' +
+        '<b>' + esc(koenigName(k.id)) + '</b><span>' + (k.id === akt ? '✓ Ausgewählt' : (k.frei ? '' : '🔒 ') + esc(k.txt)) + '</span></div>';
     }).join('');
-    Array.prototype.forEach.call($('koenigGrid').querySelectorAll('canvas[data-bild]'), function (cv) { koenigBild(cv, cv.getAttribute('data-bild'), 0, cv.hasAttribute('data-grau')); });
+    Array.prototype.forEach.call($('koenigGrid').querySelectorAll('canvas[data-bild]'), function (cv) { var id = cv.getAttribute('data-bild'); koenigBild(cv, id, 0, cv.hasAttribute('data-grau'), kwAnsicht[id] || 0); });
   }
   $('koenigBtn').addEventListener('click', function () { koenigWahlOpen(true); });
   $('koenigZu').addEventListener('click', function () { koenigWahlOpen(false); });
-  $('koenigGrid').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-k]') : null; if (!b || b.classList.contains('zu')) return;
+  function kwWaehlen(b) {
+    if (!b || b.classList.contains('zu')) return;
     try { localStorage.setItem('stronghold-koenig', b.getAttribute('data-k')); } catch (x) {}
     pvpSend({ k: 'koenig', id: meinKoenig() });
     koenigWahlOpen(true); menuKoenig();
+  }
+  $('koenigGrid').addEventListener('click', function (e) {
+    var pf = e.target.closest ? e.target.closest('[data-pfeil]') : null;
+    if (pf) { // nur die Ansicht wechseln, nicht auswählen
+      var id = pf.getAttribute('data-pfeil'), m = ((kwAnsicht[id] || 0) + 1) % 3, cv = pf.parentNode.querySelector('canvas');
+      kwAnsicht[id] = m; koenigBild(cv, id, 0, cv.hasAttribute('data-grau'), m); pf.title = KW_TEXT[m]; pf.setAttribute('aria-label', KW_TEXT[m]);
+      return;
+    }
+    kwWaehlen(e.target.closest ? e.target.closest('[data-k]') : null);
   });
+  $('koenigGrid').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('kwkarte')) { e.preventDefault(); kwWaehlen(e.target); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('koenigWahl').hidden) koenigWahlOpen(false); });
 
   // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg, fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
