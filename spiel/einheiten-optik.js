@@ -90,7 +90,22 @@
     }
     return P0;
   }
+  // Betender Priester von oben (kniend, Kutte, weisser Kragen, gefaltete Hände); ang = Blickrichtung
+  function priesterMalen(c, x, y, psm, ang) {
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.fillStyle = '#3b2f2a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-psm * 0.15, 0, psm * 0.75, psm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Kutte
+    c.fillStyle = '#f2ece0'; c.fillRect(psm * 0.05, -psm * 0.12, psm * 0.3, psm * 0.24); // Kragen
+    c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.15, 0, psm * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.55, -psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.arc(psm * 0.55, psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.fill(); // gefaltete Hände
+    c.restore();
+  }
   function drawUnit(c, type, x, y, r, team, face, hit, settled, at, ang) { // ang = Blickrichtung in Bogenmass (gedreht statt gespiegelt), sonst face = ±1 // at = Sekunden relativ zum Treffer (negativ = Ausholen, positiv = danach), undefined = keine Angriffsanimation
+    if (type === 'priester') { // nur Knopfbild der fertigen Kirche: betender Priester mit Schein und Kreuz
+      c.save(); c.translate(x, y);
+      c.fillStyle = 'rgba(255,240,170,0.45)'; c.beginPath(); c.arc(0, 0, r * 1.5, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#e2b13c'; c.lineWidth = Math.max(2, r * 0.14); c.beginPath(); c.moveTo(r * 1.05, -r * 0.55); c.lineTo(r * 1.05, r * 0.55); c.moveTo(r * 0.75, -r * 0.2); c.lineTo(r * 1.35, -r * 0.2); c.stroke();
+      c.restore(); priesterMalen(c, x - r * 0.15, y, r, 0); return;
+    }
     var A = attackPose(type, at, r);
     if (type === 'knight') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
     var col = team === 0 ? P.me : P.foe;
@@ -101,6 +116,24 @@
     if (ang !== undefined) c.rotate(ang); else c.scale(face, 1);
     c.lineCap = 'round';
 
+    if (type === 'karawane') {
+      // Kamel von oben (Körper, Höcker, langer Hals, Kopf, Schweif) mit 4 Tontöpfen an den Seiten; volle Töpfe glänzen blau. settled = { voll 0..1, toepfe }
+      var KS = settled && typeof settled === 'object' ? settled : { voll: 0, toepfe: 4 }, kvoll = KS.voll * KS.toepfe;
+      c.fillStyle = '#c9a36a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
+      c.beginPath(); c.ellipse(-r * 0.1, 0, r * 1.3, r * 0.58, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.strokeStyle = '#c9a36a'; c.lineWidth = Math.max(3, r * 0.34); c.beginPath(); c.moveTo(r * 0.95, 0); c.quadraticCurveTo(r * 1.45, 0, r * 1.75, 0); c.stroke(); // Hals
+      c.fillStyle = '#c9a36a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(r * 1.95, 0, r * 0.34, r * 0.22, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Kopf
+      c.fillStyle = '#8a6a3e'; c.beginPath(); c.arc(r * 1.82, -r * 0.18, r * 0.07, 0, Math.PI * 2); c.arc(r * 1.82, r * 0.18, r * 0.07, 0, Math.PI * 2); c.fill(); // Ohren
+      c.strokeStyle = '#8a6a3e'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-r * 1.38, 0); c.lineTo(-r * 1.7, r * 0.12); c.stroke(); // Schweif
+      c.fillStyle = '#dcbb85'; c.beginPath(); c.ellipse(-r * 0.55, 0, r * 0.42, r * 0.36, 0, 0, Math.PI * 2); c.fill(); // Höcker
+      c.fillStyle = '#9c3b2e'; c.fillRect(-r * 0.15, -r * 0.62, r * 0.5, r * 1.24); // Satteldecke
+      for (var tp = 0; tp < KS.toepfe; tp++) { // Töpfe: zwei auf jeder Seite
+        var tpx = tp < 2 ? -r * 0.75 + tp * r * 0.75 : -r * 0.75 + (tp - 2) * r * 0.75, tpy = (tp < 2 ? -1 : 1) * r * 0.78, tf = Math.max(0, Math.min(1, kvoll - [0, 2, 1, 3][tp]));
+        c.fillStyle = '#b5643a'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.arc(tpx, tpy, r * 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = '#5a2f1c'; c.beginPath(); c.arc(tpx, tpy, r * 0.17, 0, Math.PI * 2); c.fill(); // Öffnung
+        if (tf > 0) { c.fillStyle = 'rgba(90,170,235,' + (0.5 + 0.5 * tf) + ')'; c.beginPath(); c.arc(tpx, tpy, r * 0.17 * tf, 0, Math.PI * 2); c.fill(); }
+      }
+    }
     if (type === 'rider') {
       // Pferd von oben: Körper, Kopf, Schweif
       c.translate(A.lunge, 0);
@@ -113,7 +146,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
+    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -127,7 +160,12 @@
     c.lineWidth = 2;
     c.beginPath(); c.arc(0, 0, bodyR, 0, Math.PI * 2); c.fill(); c.stroke();
 
-    if (type === 'spear') {
+    if (type === 'karawane') { // Treiber: heller Turban, Hände an den Zügeln
+      c.fillStyle = '#efe6d2'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.beginPath(); c.arc(-r * 0.03, 0, r * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.strokeStyle = '#d6c7a6'; c.lineWidth = 1; c.beginPath(); c.arc(-r * 0.03, 0, r * 0.22, -0.5, 2.6); c.stroke();
+      c.strokeStyle = '#5a3d22'; c.lineWidth = 1; c.beginPath(); c.moveTo(r * 0.45, -r * 0.18); c.lineTo(r * 1.8, -r * 0.05); c.moveTo(r * 0.45, r * 0.18); c.lineTo(r * 1.8, r * 0.05); c.stroke(); // Zügel
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.45, -r * 0.2, r * 0.11, 0, Math.PI * 2); c.arc(r * 0.45, r * 0.2, r * 0.11, 0, Math.PI * 2); c.fill();
+    } else if (type === 'spear') {
       c.fillStyle = '#8a6a44'; // brauner Lederhelm wie der Speerwerfer
       c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
       c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
@@ -655,12 +693,7 @@
           if (KZ.gebet > 0) { // Priester kniet vor der Kirche und betet
             var pext = Math.abs(kvy) * kh2 / 2 + Math.abs(kvx) * kw2 / 2, ppx = kvx * (pext + r * 0.4) + r * 0.35, ppy = kvy * (pext + r * 0.4), psm = r * CONFIG.units.farmer.r / CONFIG.units.kirche.r * 1.1, pg = 0.5 + 0.5 * Math.sin(know * 3);
             c.fillStyle = 'rgba(255,240,170,' + (0.18 + 0.2 * pg) + ')'; c.beginPath(); c.arc(ppx, ppy, psm * 1.6, 0, Math.PI * 2); c.fill(); // Schein
-            c.save(); c.translate(ppx, ppy); c.rotate(Math.atan2(-kvy, -kvx)); // schaut zur Kirche
-            c.fillStyle = '#3b2f2a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-psm * 0.15, 0, psm * 0.75, psm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Kutte
-            c.fillStyle = '#f2ece0'; c.fillRect(psm * 0.05, -psm * 0.12, psm * 0.3, psm * 0.24); // Kragen
-            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.15, 0, psm * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
-            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.55, -psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.arc(psm * 0.55, psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.fill(); // gefaltete Hände
-            c.restore();
+            priesterMalen(c, ppx, ppy, psm, Math.atan2(-kvy, -kvx)); // schaut zur Kirche
           }
         }
       }

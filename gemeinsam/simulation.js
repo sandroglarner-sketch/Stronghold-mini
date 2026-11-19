@@ -137,8 +137,8 @@
                 u.blitzT -= GD.blitz.alle;
                 var bx1 = u.team === 0 ? W * 2 / 3 : 0.3, bx2 = u.team === 0 ? W - 0.3 : W / 3, blx = bx1 + simRand() * (bx2 - bx1), bly = 0.4 + simRand() * (H - 0.8);
                 u.blitzN = (u.blitzN || 0) + 1;
-                if (u.blitzN % GD.blitz.koenig === 0) { // jeder 4. Blitz trifft genau den gegnerischen König (auch in der Burg)
-                  for (var kb = 0; kb < units.length; kb++) { var kgu = units[kb]; if (kgu.type === 'king' && kgu.team !== u.team && kgu.hp > 0) { blx = kgu.x; bly = kgu.y; hurt(kgu, GD.blitz.schaden, { range: 0 }) /* voller Schaden, kein Fernkampf-Schutz */; kgu.hit = 0.15; kgu.lastHit = clock; break; } }
+                if (u.blitzN % GD.blitz.koenig === 0) { // jeder 4. Blitz zielt genau auf den gegnerischen König
+                  for (var kb = 0; kb < units.length; kb++) { var kgu = units[kb]; if (kgu.type === 'king' && kgu.team !== u.team && kgu.hp > 0) { blx = kgu.x; bly = kgu.y; if (!kgu.inCastle) { hurt(kgu, GD.blitz.schaden, { range: 0 }); kgu.hit = 0.15; kgu.lastHit = clock; } break; } } // zielt auf den König; in der Burg ist er geschützt, sonst voller Schaden
                 }
                 applySplash(u.team, blx, -1, blx, bly, { atk: GD.blitz.schaden, splash: GD.blitz.radius, range: 99 }, null, false, false); // trifft alles vom Gegner im Umkreis
                 effects.push({ kind: 'blitz', x: blx, y: bly, t: 0, dur: 0.45, seed: Math.floor(simRand() * 1000) });
@@ -331,6 +331,26 @@
           u.cd = 0.4;
           effects.push({ kind: 'puff', x: u.x, y: u.y, team: u.team, t: 0, dur: 0.5 });
         }
+        continue;
+      }
+      if (d.karawane) { // Karawane: zum Teich, Töpfe füllen, zurück zur Burg, Gold abliefern, von vorn
+        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12;
+        if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
+        var kzx = u.kz === 'zurueck' ? (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) : W / 2 + ksg * 1.95, kzy = u.kz === 'zurueck' ? (kb0.y1 + kb0.y2) / 2 + kof * 1.5 : 1.45 + kof;
+        if (u.kz === 'fuellen') {
+          u.voll = Math.min(1, u.voll + dt / KW.fuellen);
+          if (u.voll >= 1) u.kz = 'zurueck';
+        } else {
+          var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
+          if (kdd > 0.05) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
+          else if (u.kz === 'hin') u.kz = 'fuellen';
+          else { // an der Burg: Wasser verkauft
+            gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
+            effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
+            u.kz = 'hin'; u.voll = 0;
+          }
+        }
+        u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;
       }
       if (d.worker && u.bank) { // Arbeiter am Gebäude: hingehen und mit WALL.rate Leben pro Sekunde bauen, bis die Stufe fertig ist

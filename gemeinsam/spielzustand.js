@@ -147,7 +147,7 @@
       hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
-    if (d.passive) pickSpot(units[units.length - 1]);
+    if (d.passive && !d.karawane) pickSpot(units[units.length - 1]);
     if (d.range > 1.5 && !d.king && !d.ram) seekSlot(units[units.length - 1]); // Fernkämpfer: Turmplatz suchen (welche Typen wo stehen dürfen, steht in WALL.tower.levels)
     if (d.dig) units[units.length - 1].dig = pickDigTarget(team);
     if (d.ladder || d.belfry) { // läuft direkt zur gegnerischen Mauer
@@ -246,7 +246,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
