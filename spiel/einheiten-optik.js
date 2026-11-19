@@ -113,7 +113,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : r * 0.9;
+    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -406,13 +406,13 @@
       var SG = CONFIG.units.schmiede.gebaeude, sw = r * SG.w / CONFIG.units.schmiede.r, sh = r * SG.h / CONFIG.units.schmiede.r;
       var Z = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1 }, now = performance.now() / 1000, L = Math.max(1, Math.min(3, Z.stufe || 1));
       c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -sw / 2 + 3, -sh / 2 + 4, sw, sh, 4); c.fill();
-      if (Z.bau < 1 && Z.stufe <= 1 && Z.phase < 0 && typeof settled === 'object') { // erster Bau: Fundament und Gerüst
+      if (Z.neu && Z.bau < 1) { // allererster Bau: Fundament und Gerüst
         c.fillStyle = '#a89c86'; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill();
         c.save(); c.beginPath(); c.rect(-sw / 2, -sh / 2, sw * Z.bau, sh); c.clip();
-        c.fillStyle = '#9a7a52'; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill(); c.restore();
+        c.fillStyle = '#d6b25a'; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill(); c.restore();
         c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.stroke(); c.setLineDash([]);
         c.beginPath(); c.moveTo(-sw / 2, -sh / 2); c.lineTo(sw / 2, sh / 2); c.moveTo(-sw / 2, sh / 2); c.lineTo(sw / 2, -sh / 2); c.stroke();
-      } else {
+      } else { // Ausbau (1 -> 2 und 2 -> 3): das Gebäude bleibt, aussen gestrichelte Linie und Fortschritt
         var ins = L === 1 ? 0.08 : 0, hw = sw / 2 * (1 - ins), hh = sh / 2 * (1 - ins); // Stufe 1 etwas kleiner
         // Von oben sieht man nur das Dach: Stufe 1 Stroh, Stufe 2 Holz, Stufe 3 Stein (Schiefer)
         var rx0 = -hw, ry0 = -hh, rw = 2 * hw, rh = 2 * hh, k;
@@ -476,7 +476,7 @@
           c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-sw / 2, -sh / 2 - 9, sw, 4); c.fillStyle = '#c98a12'; c.fillRect(-sw / 2, -sh / 2 - 9, sw * Z.bau, 4);
         }
         if (Z.phase >= 0) { // Amboss und Schmied vor dem Gebäude
-          var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * hw + Math.abs(vy) * hh, sm = r * CONFIG.units.farmer.r / CONFIG.units.schmiede.r * 1.05; // sm = Radius wie ein Bauer (5 % grösser wirkt gleich gross)
+          var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * hw + Math.abs(vy) * hh, sm = r * CONFIG.units.farmer.r / CONFIG.units.schmiede.r * 1.1; // sm = Radius wie ein Bauer (5 % grösser wirkt gleich gross)
           var ax = vx * (ext + r * 0.45), ay = vy * (ext + r * 0.45), qx = -vy, qy = vx;
           var tx0 = vx * ext, ty0 = vy * ext, smx = ax + qx * sm * 1.6 + vx * sm * 0.3, smy = ay + qy * sm * 1.6 + vy * sm * 0.3, ph = Z.phase, sa = 1, sx2 = smx, sy2 = smy;
           // Ablauf (5 s): 0–0,5 drin, 0,5–0,75 kommt heraus, 0,75–4,25 schmiedet, 4,25–4,5 geht hinein, 4,5–5 drin, dann Gold

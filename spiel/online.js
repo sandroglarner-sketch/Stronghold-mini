@@ -211,7 +211,7 @@
     var ok, pd = CONFIG.units[type];
     ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= preisVon(ME, type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet
-      if (units.some(function (w) { return w.team === ME && w.type === 'worker' && w.hp > 0; }) || deploys.some(function (q) { return CONFIG.units[q.type].wall; })) ok = false;
+      if (units.some(function (w) { return w.team === ME && w.type === 'worker' && w.hp > 0 && !w.bank; }) || deploys.some(function (q) { return CONFIG.units[q.type].wall; })) ok = false;
     }
     if (ok) {
       deploys.push({ type: type, cost: preisVon(ME, type), t: 0, net: pvp.on }); // Gold ist ab sofort reserviert

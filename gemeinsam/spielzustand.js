@@ -373,7 +373,7 @@
       units.push(g);
     }
     spawn(team, 'worker'); // ein Arbeiter baut (wie an der Mauer)
-    var wk = units[units.length - 1]; wk.bank = g; wk.bp = { x: g.x - g.nx * (G.w / 2 + 0.25), y: g.y - g.ny * (G.h / 2 + 0.25) };
+    var wk = units[units.length - 1]; wk.bank = g; wk.bp = { x: g.x - dir * (G.w / 2 + 0.25), y: g.y }; // baut an der Seite zur Burg (läuft nicht über das Dach)
     return true;
   }
   function buy(team, type) {

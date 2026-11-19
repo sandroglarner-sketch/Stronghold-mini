@@ -128,7 +128,7 @@
             if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
-        u.settled = { bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
+        u.settled = { neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
