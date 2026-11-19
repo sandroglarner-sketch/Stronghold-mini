@@ -138,6 +138,11 @@ class Client {
     this.queued = false;
     this.msgs = 0;      // einfache Begrenzung
     this.acc = false;   // hat ein (von Supabase bestätigtes) Konto
+    this.user = null;   // { id, name } nach 'hallo' mit gültigem Token
+    this.status = 'menu'; this.info = ''; // was der Spieler gerade macht (Menü, Story, Tutorial; Online-Partie kennt der Server selbst)
+    this.match = null;  // laufende Online-Partie (für Zuschauer)
+    this.schaut = null; // Partie, der dieser Client zuschaut
+    this.v = '';        // Spielversion
     socket.on('data', (d) => this.onData(d));
     socket.on('close', () => this.onClose());
     socket.on('error', () => this.onClose());
@@ -197,7 +202,15 @@ class Client {
     if (this.peer && m.k === 't') { // Spielschritt-Nachrichten 1:1 weitergeben
       const peer = this.peer;
       if (TEST_DELAY > 0) setTimeout(() => peer.sendRaw(text), TEST_DELAY); else peer.sendRaw(text);
+      const ma = this.match; // Zuschauer: mitschreiben und weitergeben
+      if (ma && typeof m.t === 'number') {
+        const team = ma.a === this ? 0 : 1, c = Array.isArray(m.c) ? m.c.slice(0, 6) : [];
+        ma.log.push([team, m.t, c]);
+        if (ma.zuschauer.size) { const z = JSON.stringify({ k: 'zt', p: team, t: m.t, c }); for (const s of ma.zuschauer) s.sendRaw(z); }
+      }
+      return;
     }
+    sozial(this, m).catch((e) => { console.error('sozial', m.k, e.message); if (['freund', 'freunde', 'fordern', 'zuschauen'].includes(m.k)) this.send({ k: 'sozialfehler', text: 'Serverfehler (' + (e.status || e.message) + '). Ist die Datenbank eingerichtet (schema.sql)?' }); });
   }
   onClose() {
     if (!this.alive) return;
@@ -206,6 +219,9 @@ class Client {
     const p = this.peer;
     this.peer = null;
     if (p) { p.peer = null; p.send({ k: 'left' }); }
+    matchAus(this.match);
+    if (this.schaut) zuschauenAus(this);
+    if (this.user) { const set = online.get(this.user.id); if (set) { set.delete(this); if (!set.size) online.delete(this.user.id); } }
     clients.delete(this);
     broadcastInfo();
   }
@@ -231,13 +247,125 @@ function tryMatch() {
     const a = queue.shift(), b = queue.shift();
     a.queued = b.queued = false;
     if (!a.alive || !b.alive) { if (a.alive) { a.queued = true; queue.unshift(a); } if (b.alive) { b.queued = true; queue.unshift(b); } continue; }
-    a.peer = b; b.peer = a;
-    const seed = crypto.randomInt(1, 2147483647); // gemeinsamer Zufalls-Startwert: beide Browser rechnen dieselbe Partie
-    const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
-    const frei = [a.frei || [], b.frei || []]; // freigeschaltete Einheiten (z. B. Armbrustschütze durch Einladung)
-    a.send({ k: 'match', me: 0, seed, acc, frei });
-    b.send({ k: 'match', me: 1, seed, acc, frei });
+    starteMatch(a, b);
   }
+}
+// Eine Online-Partie starten (Zufallsgegner oder Herausforderung): beide bekommen denselben Startwert
+function starteMatch(a, b) {
+  a.queued = b.queued = false; queue = queue.filter((x) => x !== a && x !== b);
+  a.peer = b; b.peer = a;
+  const seed = crypto.randomInt(1, 2147483647); // gemeinsamer Zufalls-Startwert: beide Browser rechnen dieselbe Partie
+  const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
+  const frei = [a.frei || [], b.frei || []]; // freigeschaltete Einheiten (z. B. Armbrustschütze durch Einladung)
+  const namen = [a.user ? a.user.name : 'Gast', b.user ? b.user.name : 'Gast'];
+  const ma = { a, b, seed, acc, frei, namen, log: [], zuschauer: new Set(), start: Date.now() };
+  a.match = b.match = ma;
+  a.send({ k: 'match', me: 0, seed, acc, frei, namen });
+  b.send({ k: 'match', me: 1, seed, acc, frei, namen });
+  broadcastInfo();
+}
+// ---------- Freunde, Herausfordern, Zuschauen, Story ----------
+const online = new Map(); // user_id -> Set der Verbindungen dieses Spielers
+const forderungen = new Map(); // id -> { von: Client, an: user_id, timer }
+function nameAus(email) { return String(email || 'Spieler').split('@')[0].slice(0, 24) || 'Spieler'; }
+function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; [ma.a, ma.b].forEach((c) => c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
+function matchAus(ma) {
+  if (!ma || ma.aus) return;
+  if (ma.a.alive && ma.a.match === ma && ma.b.alive && ma.b.match === ma) return; // läuft noch
+  ma.aus = true;
+  for (const s of ma.zuschauer) { s.schaut = null; s.send({ k: 'zende' }); }
+  ma.zuschauer.clear();
+}
+function zuschauenAus(c) { const ma = c.schaut; c.schaut = null; if (ma) { ma.zuschauer.delete(c); zuschauerMelden(ma); } }
+async function sindFreunde(a, b) { if (!KONTO_SECRET) return false; const l = await db('GET', 'freunde?select=freund_id&user_id=eq.' + a + '&freund_id=eq.' + b); return !!(l && l.length); }
+function verbindung(userId) { const set = online.get(userId); if (!set) return null; for (const c of set) if (c.alive) return c; return null; }
+async function freundesliste(c) {
+  if (!c.user || !KONTO_SECRET) return c.send({ k: 'freunde', liste: [], code: '' });
+  const [rows, code] = await Promise.all([db('GET', 'freunde?select=freund_id&user_id=eq.' + c.user.id), eigenerCode(c.user.id).catch(() => '')]);
+  const ids = (rows || []).map((r) => r.freund_id);
+  const profile = ids.length ? await db('GET', 'spieler?select=user_id,name,gesehen&user_id=in.(' + ids.join(',') + ')') : [];
+  const liste = ids.map((id) => {
+    const p = (profile || []).find((x) => x.user_id === id) || {}, v = verbindung(id), e = { id, name: p.name || 'Spieler', gesehen: p.gesehen || null, status: 'offline' };
+    if (v) {
+      const ma = v.match && !v.match.aus && v.peer ? v.match : null;
+      if (ma) { const ich = ma.a === v ? 0 : 1; e.status = 'pvp'; e.info = 'gegen ' + ma.namen[1 - ich]; e.seit = ma.start; e.zuschauer = ma.zuschauer.size; }
+      else if (v.status === 'story' || v.status === 'tutorial') { e.status = 'spiel'; e.info = v.info || (v.status === 'tutorial' ? 'Tutorial' : 'Story'); }
+      else e.status = 'menu';
+    }
+    return e;
+  });
+  const rang = { pvp: 0, spiel: 1, menu: 2, offline: 3 };
+  liste.sort((x, y) => rang[x.status] - rang[y.status] || x.name.localeCompare(y.name));
+  c.send({ k: 'freunde', liste, code });
+}
+async function sozial(c, m) {
+  if (m.k === 'hallo') { // Anmeldung der Verbindung (Anwesenheit): mit Token weiss der Server, wer online ist
+    c.v = String(m.v || '');
+    const u = await kontoUser(m.token);
+    if (c.user) { const set = online.get(c.user.id); if (set) { set.delete(c); if (!set.size) online.delete(c.user.id); } }
+    c.user = u ? { id: u.id, name: nameAus(u.email) } : null; c.acc = !!u; c.frei = [];
+    if (!c.user) return c.send({ k: 'ich', id: null });
+    if (!online.has(c.user.id)) online.set(c.user.id, new Set());
+    online.get(c.user.id).add(c);
+    let story = 0;
+    if (KONTO_SECRET) {
+      const l = await db('GET', 'spieler?select=name,story&user_id=eq.' + c.user.id).catch(() => []);
+      if (l && l.length) { story = l[0].story | 0; c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
+      else await db('POST', 'spieler', { user_id: c.user.id, name: c.user.name }, 'resolution=ignore-duplicates').catch(() => {});
+      c.frei = await freischaltungen(c.user.id).catch(() => []);
+    }
+    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, story });
+  }
+  if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
+  if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
+  if (m.k === 'story') { const n = Math.max(0, Math.min(99, m.n | 0)); await db('PATCH', 'spieler?user_id=eq.' + c.user.id + '&story=lt.' + n, { story: n }); return; }
+  if (m.k === 'freunde') return freundesliste(c);
+  if (m.k === 'freund') { // Freund per Code hinzufügen (beide Richtungen)
+    const code = String(m.code || '').toUpperCase().trim();
+    if (!/^[A-Z0-9]{6}$/.test(code)) return c.send({ k: 'sozialfehler', text: 'Der Code hat 6 Zeichen.' });
+    const l = await db('GET', 'einladungen?select=user_id&code=eq.' + code);
+    if (!l || !l.length) return c.send({ k: 'sozialfehler', text: 'Diesen Code gibt es nicht.' });
+    const f = l[0].user_id;
+    if (f === c.user.id) return c.send({ k: 'sozialfehler', text: 'Das ist dein eigener Code.' });
+    await db('POST', 'freunde', [{ user_id: c.user.id, freund_id: f }, { user_id: f, freund_id: c.user.id }], 'resolution=ignore-duplicates');
+    c.send({ k: 'sozialok', text: 'Freund hinzugefügt.' });
+    const v = verbindung(f); if (v) freundesliste(v).catch(() => {});
+    return freundesliste(c);
+  }
+  if (m.k === 'fordern') { // einen Freund zu einer Online-Partie herausfordern
+    const ziel = String(m.an || ''), v = verbindung(ziel);
+    if (!(await sindFreunde(c.user.id, ziel))) return;
+    if (!v || v.peer || v.queued || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
+    if (c.peer) return;
+    if (SPIEL_V && (c.v !== SPIEL_V || v.v !== SPIEL_V)) return c.send({ k: 'forderung_aus', grund: 'version' });
+    const id = crypto.randomBytes(6).toString('hex');
+    const timer = setTimeout(() => { if (forderungen.delete(id)) { c.send({ k: 'forderung_aus', grund: 'zeit' }); const z = verbindung(ziel); if (z) z.send({ k: 'forderung_weg', id }); } }, 30000);
+    forderungen.set(id, { von: c, an: ziel, timer });
+    c.send({ k: 'forderung_raus', id, an: ziel });
+    for (const z of online.get(ziel) || []) z.send({ k: 'forderung', id, von: { id: c.user.id, name: c.user.name } });
+    return;
+  }
+  if (m.k === 'fordern_ab' || m.k === 'antwort') {
+    const f = forderungen.get(String(m.id || '')); if (!f) return;
+    if (m.k === 'fordern_ab' && f.von !== c) return;
+    if (m.k === 'antwort' && f.an !== c.user.id) return;
+    forderungen.delete(m.id); clearTimeout(f.timer);
+    for (const z of online.get(f.an) || []) if (z !== c) z.send({ k: 'forderung_weg', id: m.id });
+    if (m.k === 'fordern_ab') return;
+    if (!m.ja) return f.von.send({ k: 'forderung_aus', grund: 'abgelehnt' });
+    if (!f.von.alive || f.von.peer || c.peer) return c.send({ k: 'forderung_weg', id: m.id });
+    return starteMatch(f.von, c);
+  }
+  if (m.k === 'zuschauen') {
+    const ziel = String(m.id || ''), v = verbindung(ziel), ma = v && v.peer ? v.match : null;
+    if (!(await sindFreunde(c.user.id, ziel))) return;
+    if (!ma || ma.aus) return c.send({ k: 'sozialfehler', text: 'Diese Partie ist schon vorbei.' });
+    if (c.schaut) zuschauenAus(c);
+    c.schaut = ma; ma.zuschauer.add(c);
+    c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, log: ma.log, v: SPIEL_V });
+    return zuschauerMelden(ma);
+  }
+  if (m.k === 'nichtzuschauen') return zuschauenAus(c);
 }
 function broadcastInfo() {
   const info = { k: 'info', online: clients.size, queued: queue.length, v: SPIEL_V };

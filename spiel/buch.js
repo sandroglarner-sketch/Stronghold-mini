@@ -240,11 +240,13 @@
   }
 
   function showOverlay(title, text, btnText, withChoice) {
-    $('ovChoice').hidden = withChoice === false;
+    // Ergebnis-, Pausen- und Suchfenster (das Startmenü zeigt zeigeMenu() in sozial.js)
+    overlay.classList.remove('menu');
+    ovZumMenu = false;
     var ohneWahl = withChoice === false || (state === 'paused');
-    sandBtn.hidden = ohneWahl || !tester; // Sandbox nur im Tester-Modus
-    $('tutBtn').hidden = ohneWahl;
-    $('pvpBtn').hidden = ohneWahl; // auch im Artifact sichtbar (dort nur Hinweis), damit es aussieht wie online
+    $('menuBtn').hidden = ohneWahl || pvp.on;
+    $('menuBtn').textContent = spielArt === 'story' ? 'Zur Karte' : 'Zum Menü';
+    if (!pvp.on && state === 'over') sozialStatus('menu');
     ovTitle.textContent = title;
     ovText.textContent = text;
     ovBtn.textContent = btnText;
@@ -265,11 +267,18 @@
     if (tut.on) {
       tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
       tutBox('');
-      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Spiel starten');
+      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Zum Menü');
+      ovZumMenu = true; $('menuBtn').hidden = true;
       if (w === 0) jingle('win'); else jingle('lose');
       return;
     }
+    if (pvp.on && pvp.zuschauer) { // Zuschauer: neutral, wer gewonnen hat
+      pvp.ended = true; state = 'over'; winner = w;
+      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
+      return;
+    }
     if (pvp.on) { pvp.ended = true; if (pvp.me === 1 && w >= 0) w = 1 - w; } // im Online-Spiel immer aus deiner Sicht
+    if (!pvp.on && note === undefined) { var neu = storyErgebnis(w); if (neu) note = (w === 0 ? 'Der gegnerische König ist gefallen.' : '') + neu; }
     state = 'over';
     winner = w;
     var again = pvp.on ? 'Zum Menü' : 'Nochmal';
@@ -334,6 +343,7 @@
     state = 'playing';
     jingle('start');
     overlay.hidden = true;
+    $('story').hidden = true; $('freunde').hidden = true;
     openBook(false);
     applyDeck();
     pauseBtn.textContent = 'Pause';

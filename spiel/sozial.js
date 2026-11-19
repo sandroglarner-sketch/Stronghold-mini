@@ -1,0 +1,227 @@
+  // ---------- Menü, Story-Modus, Freunde, Herausfordern, Zuschauen (19.11.) ----------
+  // spielArt = was zuletzt gestartet wurde ('story' | 'sandbox' | 'tut' | ''), für «Nochmal» und «Zur Karte»
+  var spielArt = '', storyIdx = 0, storySel = 0;
+  var sozial = { ich: null, liste: [], code: '', zuschauer: 0, forderungRaus: null, forderungRein: null, lastToken: null };
+  var SVG = function (d, c, w) { return '<svg width="' + (w || 20) + '" height="' + (w || 20) + '" viewBox="0 0 24 24" fill="none" stroke="' + (c || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var ICON = {
+    haken: '<path d="M5 12l5 5 9-10"></path>', burg: '<path d="M4 21V8l3 2V6l3 2V4l2 2 2-2v4l3-2v4l3-2v13z"></path>',
+    schloss: '<rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path>', krone: '<path d="M5 17l2-9 5 4 5-4 2 9z"></path><path d="M5 20h14"></path>',
+    schwert: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path>',
+    auge: '<path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle>'
+  };
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ----- Startmenü -----
+  function zeigeMenu() {
+    if (pvp.on) return;
+    overlay.classList.add('menu');
+    overlay.hidden = false;
+    pauseBtn.hidden = false;
+    $('menuBtn').hidden = true;
+    sandBtn.hidden = !tester;
+    applyDeck(); menuAktuell();
+    sozialStatus('menu');
+  }
+  function menuAktuell() {
+    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX;
+    var n = storyStand(), d = $('storyDots'), h = '';
+    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (i < n ? 'voll' : '') + '"></i>';
+    d.innerHTML = h + '<em>' + Math.min(n, STORY.length) + ' von ' + STORY.length + ' besiegt</em>';
+    $('storyText').textContent = n >= STORY.length ? 'Alle Gegner besiegt – spiele sie nochmals' : 'Weiter gegen: ' + STORY[n].name;
+    var on = sozial.liste.filter(function (f) { return f.status !== 'offline'; }).length;
+    $('freundeZahl').hidden = !on; $('freundeZahl').textContent = on;
+  }
+
+  // ----- Story-Modus -----
+  function storyStand() {
+    var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
+    if (sozial.ich && sozial.ich.story > n) n = sozial.ich.story;
+    return Math.max(0, Math.min(STORY.length, n));
+  }
+  function storySpeichern(n) {
+    try { localStorage.setItem('stronghold-story', String(n)); } catch (e) {}
+    if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
+  }
+  function storyFrei(i) { return tester || i <= storyStand(); }
+  function storyOpen() {
+    var n = storyStand();
+    storySel = Math.min(n, STORY.length - 1);
+    $('story').hidden = false;
+    storyMalen();
+  }
+  function storyMalen() {
+    var n = storyStand(), h = '';
+    $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length;
+    STORY.forEach(function (g, i) {
+      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? ICON.burg : ICON.schloss;
+      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '">' + SVG(ic, 'currentColor', 26) + '</button>' +
+        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 34px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
+    });
+    var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    $('storyKnoten').innerHTML = h;
+    var g = STORY[storySel], art = storySel < n ? '<small class="ok">Besiegt</small>' : storyFrei(storySel) ? '<small>Nächster Gegner</small>' : '<small class="zu">Gesperrt</small>';
+    $('storyKarte').innerHTML = art + '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b><p>' + esc(g.text) + '</p>' +
+      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal spielen' : 'Kämpfen') + '</button>'
+        : '<button class="primary" type="button" disabled>Besiege zuerst: ' + esc(STORY[storySel - 1].name) + '</button>');
+  }
+  function storyStart(i) {
+    storyIdx = i; spielArt = 'story';
+    botType = STORY[i].bot; botEl.value = botType; aiRoll();
+    $('story').hidden = true;
+    start();
+    sozialStatus('story', 'Story gegen ' + STORY[i].name);
+  }
+  // nach einer Story-Partie: Sieg gegen den aktuellen Gegner schaltet den nächsten frei; Text für das Ergebnisfenster
+  function storyErgebnis(w) {
+    if (spielArt !== 'story' || w !== 0) return '';
+    var n = storyStand();
+    if (storyIdx === n && n < STORY.length) {
+      storySpeichern(n + 1);
+      return n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!';
+    }
+    return '';
+  }
+  $('storyBtn').addEventListener('click', storyOpen);
+  $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
+  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; storySel = +b.getAttribute('data-i'); storyMalen(); });
+  $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
+  $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
+
+  // ----- Server-Verbindung: wer bin ich, was mache ich -----
+  function sendeHallo(force) {
+    if (!pvp.ws || pvp.ws.readyState !== 1) return;
+    var tk = konto.token || null;
+    if (!force && tk === sozial.lastToken) return;
+    sozial.lastToken = tk;
+    pvpSend({ k: 'hallo', token: tk, v: VERSION });
+  }
+  function sozialStatus(s, info) { if (ONLINE) pvpSend({ k: 'status', s: s, info: info || '' }); }
+  function freundeHolen() { if (ONLINE && konto.user) pvpSend({ k: 'freunde' }); }
+  setInterval(function () { if (!overlay.hidden || !$('freunde').hidden) freundeHolen(); }, 15000);
+
+  // ----- Freundesliste -----
+  var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
+  function freundeOpen(on) {
+    $('freunde').hidden = !on;
+    if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
+  }
+  function zeitSeit(t) { var s = Math.max(0, Math.floor((Date.now() - t) / 1000)); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
+  function gesehen(t) { if (!t) return 'Offline'; var m = Math.floor((Date.now() - new Date(t).getTime()) / 60000); return 'Offline · ' + (m < 60 ? 'vor ' + Math.max(1, m) + ' Min.' : m < 1440 ? 'vor ' + Math.floor(m / 60) + ' Std.' : 'vor ' + Math.floor(m / 1440) + ' Tagen'); }
+  function freundeMalen() {
+    var l = $('freundListe'), angemeldet = !!konto.user;
+    $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
+    $('meinCode').textContent = !ONLINE ? 'Freunde gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'
+      : !angemeldet ? 'Melde dich an (👤 Konto), um Freunde hinzuzufügen, herauszufordern und ihnen zuzuschauen.'
+      : sozial.code ? 'Dein Code: ' + sozial.code + ' – gib ihn Freunden, oder schick ihnen deinen Einladungslink.' : '';
+    if (!angemeldet || !ONLINE) { l.innerHTML = ''; return; }
+    if (!sozial.liste.length) { l.innerHTML = '<p class="frmein">Noch keine Freunde. Lade jemanden ein oder gib seinen Code ein.</p>'; return; }
+    var frei = state !== 'playing' && !pvp.on;
+    l.innerHTML = sozial.liste.map(function (f, i) {
+      var farbe = FARBEN[(f.name.charCodeAt(0) || 0) % FARBEN.length], punkt = { menu: '#1d7a3a', spiel: '#c76a00', pvp: '#c76a00', offline: '' }[f.status];
+      var txt = f.status === 'menu' ? '<span style="color:#1d7a3a">Online · im Menü</span>'
+        : f.status === 'pvp' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + ' · ' + zeitSeit(f.seit) + '</span>'
+        : f.status === 'spiel' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + '</span>'
+        : '<span style="color:var(--muted)">' + gesehen(f.gesehen) + '</span>';
+      var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
+        : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
+      return '<div class="frzeile"><span class="frava" style="background:' + (f.status === 'offline' ? '#9aa3a6' : farbe) + '">' + esc(f.name.charAt(0).toUpperCase()) + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
+        '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '</span>' + knopf + '</div>';
+    }).join('');
+  }
+  function freundMsg(t, err) { var m = $('freundMsg'); m.textContent = t || ''; m.classList.toggle('err', !!err); }
+  $('freundeBtn').addEventListener('click', function () { freundeOpen(true); });
+  $('freundeZu').addEventListener('click', function () { freundeOpen(false); });
+  $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
+  $('freundListe').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau]') : null; if (!b) return;
+    if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
+    else pvpSend({ k: 'zuschauen', id: b.getAttribute('data-schau') });
+  });
+
+  // ----- Herausforderungen -----
+  function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
+  function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
+  function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
+
+  // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
+  function startZuschauen(m) {
+    freundeOpen(false); toastWeg();
+    pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
+    pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
+    pvp.namen = m.namen || ['', ''];
+    startPvp(0, m.seed | 0);
+    pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0;
+    document.documentElement.classList.remove('guest');
+    document.documentElement.classList.add('zuschauer');
+    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2]); });
+    $('zText').textContent = 'Du schaust ' + pvp.namen[0] + ' gegen ' + pvp.namen[1] + ' zu';
+    $('zBanner').hidden = false;
+  }
+  function zuschauTick(team, t, c) {
+    if (team !== 0 && team !== 1 || typeof t !== 'number') return;
+    var box = pvp.inbox[t] = pvp.inbox[t] || {};
+    box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
+    if (t > pvp.letzte) pvp.letzte = t;
+  }
+  function zuschauenEnde() { $('zBanner').hidden = true; document.documentElement.classList.remove('zuschauer'); pvp.zuschauer = false; }
+  $('zRaus').addEventListener('click', function () { pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); pvpLeave(); });
+  function augen(n) {
+    sozial.zuschauer = n | 0;
+    var a = $('augen'); a.hidden = !(pvp.on && sozial.zuschauer > 0);
+    $('augenZahl').textContent = sozial.zuschauer;
+    a.setAttribute('aria-label', sozial.zuschauer + (sozial.zuschauer === 1 ? ' Zuschauer' : ' Zuschauer'));
+    if (!a.hidden) augenPlatz();
+  }
+
+  // ----- Nachrichten vom Server (alles ausser Partie selbst) -----
+  function sozialMsg(m) {
+    if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
+    if (m.k === 'ich') {
+      sozial.ich = m.id ? { id: m.id, name: m.name, story: m.story | 0 } : null;
+      if (sozial.ich) { var lokal = 0; try { lokal = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {} if (lokal > sozial.ich.story) storySpeichern(lokal); freundeHolen(); }
+      if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
+      sozialStatus(state === 'playing' && !pvp.on ? (tut.on ? 'tutorial' : 'story') : 'menu', spielArt === 'story' && state === 'playing' ? 'Story gegen ' + STORY[storyIdx].name : '');
+      return;
+    }
+    if (m.k === 'freunde') { sozial.liste = m.liste || []; sozial.code = m.code || sozial.code; if (!$('freunde').hidden) freundeMalen(); menuAktuell(); return; }
+    if (m.k === 'sozialfehler') { freundMsg(m.text, true); return; }
+    if (m.k === 'sozialok') { freundMsg(m.text); return; }
+    if (m.k === 'forderung_raus') {
+      var f = sozial.liste.filter(function (x) { return x.id === m.an; })[0];
+      sozial.forderungRaus = { id: m.id };
+      freundeOpen(false);
+      showOverlay('Herausforderung', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false);
+      return;
+    }
+    if (m.k === 'forderung_aus') {
+      var grund = { zeit: 'hat nicht rechtzeitig angenommen.', abgelehnt: 'hat abgelehnt.', 'nicht frei': 'ist gerade nicht frei.', version: 'hat eine andere Spielversion. Bitte beide die Seite neu laden.' }[m.grund] || 'ist nicht verfügbar.';
+      sozial.forderungRaus = null; zeigeMenu(); freundeOpen(true); freundMsg('Dein Freund ' + grund, true);
+      return;
+    }
+    if (m.k === 'forderung') {
+      if (state === 'playing' || pvp.on || pvp.searching) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      sozial.forderungRein = { id: m.id, von: m.von };
+      toast(m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
+      return;
+    }
+    if (m.k === 'forderung_weg') { if (sozial.forderungRein && sozial.forderungRein.id === m.id) toastWeg(); return; }
+    if (m.k === 'zuschau') { if (state !== 'playing' && !pvp.on) startZuschauen(m); return; }
+    if (m.k === 'zt') { if (pvp.zuschauer) zuschauTick(m.p, m.t, m.c); return; }
+    if (m.k === 'zende') { if (pvp.zuschauer && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Partie beendet', 'Ein Spieler hat die Partie verlassen.', 'Zum Menü', false); } return; }
+    if (m.k === 'zuschauer') { augen(m.n); return; }
+  }
+
+  var ovZumMenu = false; // Knopf im Ergebnisfenster führt ins Menü (nach dem Tutorial)
+  var hinweisT = 0;
+  function hinweis(t) { toast(t, false); clearTimeout(hinweisT); hinweisT = setTimeout(function () { if ($('toastKn').hidden) $('toast').hidden = true; }, 4500); }
+  // Augensymbol über die Einheiten-Leiste schieben, damit es keine Karte verdeckt (die Leiste ragt unten halb ins Spielfeld)
+  function augenPlatz() {
+    var a = $('augen'), st = $('stage').getBoundingClientRect(), u = unitsEl.getBoundingClientRect(), ueber = st.bottom - u.top;
+    a.style.bottom = Math.round(ueber > 0 && ueber < st.height / 2 ? ueber + 8 : 10) + 'px';
+  }
+  window.addEventListener('resize', function () { if (!$('augen').hidden) augenPlatz(); });
+  sandBtn.hidden = !tester;
+  menuAktuell();

@@ -217,6 +217,87 @@
   }
 
   #testerBtn.on { border-color: #c27c0e; color: #c27c0e; font-weight: 600; }
+  /* Menü (19.11.): .overlay.menu = Startmenü mit Kopfleiste und Modus-Karten; ohne .menu = Ergebnis/Pause/Suche mit Titel und Knopf */
+  .overlay.menu { justify-content: flex-start; padding: 12px 14px calc(12px + 34px); gap: 12px; }
+  .overlay.menu #ovTitle, .overlay.menu #ovText, .overlay.menu #ovBtn, .overlay.menu #menuBtn { display: none; }
+  .overlay:not(.menu) .ovtop, .overlay:not(.menu) .ovmodes, .overlay:not(.menu) #sandBtn { display: none; }
+  .ovtop { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ovright { display: flex; gap: 8px; align-items: center; }
+  .ovtop .ghost { height: 40px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 10px; background: var(--panel); font-weight: 600; font-size: 0.85rem; color: var(--fg); }
+  .ovdeck { font-weight: 500; color: var(--muted); }
+  .ovbadge { min-width: 20px; height: 20px; border-radius: 10px; background: #1d7a3a; color: #fff; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; box-sizing: border-box; }
+  .ovbadge[hidden] { display: none; }
+  .ovkonto { border-radius: 20px !important; }
+  .ovmodes { flex: 1; width: 100%; max-width: 860px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-height: 0; }
+  .ovmode { border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); padding: 14px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; min-height: 0; overflow: hidden; }
+  .ovmode b { font-family: var(--display); font-size: 1.35rem; line-height: 1.1; margin-top: 4px; }
+  .ovmode span { font-size: 0.85rem; color: var(--muted); line-height: 1.3; }
+  .ovmode.ovstory { background: var(--me); border-color: var(--me); color: #fff; box-shadow: 0 6px 18px rgba(23, 32, 35, 0.18); }
+  .ovmode.ovstory span { color: #fff; }
+  .ovonl { margin-top: auto; font-weight: 600; color: #1d7a3a !important; }
+  .ovonl.ovgrau { color: var(--muted) !important; font-weight: 500; }
+  .ovdots { margin-top: auto; display: flex; gap: 5px; align-items: center; }
+  .ovdots i { width: 20px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.45); display: inline-block; }
+  .ovdots i.voll { background: #fff; }
+  .ovdots em { font-style: normal; font-size: 0.8rem; margin-left: 4px; }
+  /* Story-Karte */
+  .story { position: absolute; inset: 0; z-index: 5; background: var(--grass-a); overflow: hidden; border-radius: 10px; }
+  .story[hidden] { display: none; }
+  .storymap { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .storykopf { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .storykopf .ghost { height: 40px; background: var(--panel); border-radius: 10px; font-weight: 600; }
+  .storykopf b { padding: 7px 14px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); font-family: var(--display); font-size: 1.05rem; }
+  .storyleer { width: 80px; }
+  .sknoten { position: absolute; transform: translate(-50%, -50%); width: 58px; height: 58px; border-radius: 50%; border: 4px solid; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
+  .sknoten.besiegt { background: var(--panel); border-color: #1d7a3a; color: #1d7a3a; }
+  .sknoten.offen { background: var(--foe); border-color: #8f2a21; color: #fff; }
+  .sknoten.gesperrt { background: #6e787b; border-color: #4b5357; color: #fff; }
+  .sknoten.sel { box-shadow: 0 0 0 5px rgba(255,255,255,0.85); }
+  .sname { position: absolute; transform: translateX(-50%); text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
+  .sname b { font-size: 0.9rem; display: block; }
+  .sfigur { position: absolute; transform: translate(-50%, -100%); width: 44px; height: 44px; border-radius: 50%; background: var(--me); border: 3px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
+  .storykarte { position: absolute; right: 12px; bottom: 12px; width: min(300px, 44%); padding: 12px 14px; border-radius: 14px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.25); display: grid; gap: 4px; }
+  .storykarte small { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--foe); }
+  .storykarte small.ok { color: #1d7a3a; } .storykarte small.zu { color: var(--muted); }
+  .storykarte b { font-family: var(--display); font-size: 1.2rem; }
+  .storykarte p { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+  .storykarte .primary { margin-top: 4px; }
+  .storykarte .primary:disabled { opacity: 0.5; cursor: default; }
+  /* Freunde */
+  .freunde { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 6; background: var(--panel); box-shadow: -8px 0 24px rgba(23, 32, 35, 0.25); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; box-sizing: border-box; overflow-y: auto; border-radius: 0 10px 10px 0; }
+  .freunde[hidden] { display: none; }
+  .frkopf { display: flex; align-items: center; justify-content: space-between; }
+  .frkopf b { font-family: var(--display); font-size: 1.2rem; }
+  .frzu { position: static; }
+  .frein { height: 42px; border: 1px dashed var(--me); border-radius: 10px; background: color-mix(in srgb, var(--me) 8%, transparent); color: var(--me); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .frein[hidden], .frcode[hidden] { display: none; }
+  .frcode { display: flex; gap: 6px; }
+  .frcode input { flex: 1; min-width: 0; font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); text-transform: uppercase; }
+  .frmein, .frmsg { margin: 0; font-size: 0.8rem; color: var(--muted); }
+  .frmsg.err { color: var(--foe); }
+  .frliste { display: flex; flex-direction: column; }
+  .frzeile { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+  .frava { position: relative; flex: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 700; }
+  .frava i { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--panel); }
+  .frinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .frinfo b { font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .frinfo span { font-size: 0.75rem; }
+  .frzeile .primary, .frzeile .ghost { margin: 0; height: 38px; padding: 0 12px; font-size: 0.8rem; white-space: nowrap; }
+  /* Herausforderung, Zuschauer */
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); top: 12px; z-index: 8; width: min(320px, calc(100% - 24px)); padding: 12px 14px; border-radius: 14px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.3); display: grid; gap: 8px; }
+  .toast[hidden] { display: none; }
+  .toast p { margin: 0; font-weight: 600; }
+  .toast .primary { margin-top: 0; }
+  .toast .kontorow[hidden] { display: none; }
+  .zbanner { position: absolute; left: 10px; right: 10px; top: 8px; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
+  .zbanner[hidden] { display: none; }
+  .zbtext { pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: rgba(23, 32, 35, 0.78); color: #fff; font-size: 0.85rem; }
+  .zbanner .ghost { pointer-events: auto; background: var(--panel); height: 38px; font-weight: 600; }
+  .augen { position: absolute; right: 10px; bottom: 46px; z-index: 3; height: 32px; padding: 0 11px; border-radius: 16px; background: rgba(23, 32, 35, 0.72); color: #fff; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; pointer-events: none; }
+  .augen[hidden] { display: none; }
+  html.zuschauer .units, html.zuschauer #fsGive, html.zuschauer #giveBtn { display: none !important; }
+  @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
+  html.phone .ovmode { padding: 10px 12px; } html.phone .ovmode svg { width: 24px; height: 24px; }
   .konto {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
     display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
@@ -564,14 +645,23 @@
     <div class="fshint" id="fsHint" hidden>Echtes Vollbild am iPhone: unten auf <b>Teilen</b> (□↑) tippen, dann <b>«Zum Home-Bildschirm»</b> und das Spiel über das neue Symbol starten.</div>
     <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
     <div class="units" id="units"></div>
-    <div class="overlay" id="overlay">
+    <div class="overlay menu" id="overlay">
+      <div class="ovtop">
+        <button class="ghost ovbook" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Einheitenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
+        <span class="ovright">
+          <button class="ghost ovfr" id="freundeBtn" type="button" title="Freunde: einladen, herausfordern, zuschauen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freunde</span><span class="ovbadge" id="freundeZahl" hidden>0</span></button>
+          <button class="ghost ovkonto" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
+        </span>
+      </div>
       <h2 id="ovTitle">Besiege den gegnerischen König</h2>
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
+      <div class="ovmodes">
+        <button class="ovmode ovstory" id="storyBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14"></path><path d="M15 6v14"></path></svg><b>Story-Modus</b><span id="storyText">Besiege einen Gegner nach dem anderen</span><span class="ovdots" id="storyDots"></span></button>
+        <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovonl" id="pvpOnline"></span></button>
+        <button class="ovmode" id="tutBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"></path><path d="M22 9v6"></path></svg><b>Tutorial</b><span>Lerne jede Einheit kennen</span><span class="ovonl ovgrau">ca. 5 Minuten</span></button>
+      </div>
       <div class="ovrow">
-        <button class="ghost bookbtn" id="bookBtn" type="button" title="Einheitenbuch: wähle bis zu 10 Einheiten für dein Deck" aria-label="Einheitenbuch">📖</button>
-        <button class="ghost" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet Belagerungsturm und Trebuchet frei">👤 Konto</button>
-        <button class="ghost" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen">👥 Freund einladen</button>
-        <span class="choice" id="ovChoice">
+        <span class="choice" id="ovChoice" hidden>
           <select id="botType" aria-label="Gegner">
             <option value="bauern" selected>Gegner: Bandit</option>
             <option value="prinz">Gegner: Kleiner Prinz</option>
@@ -580,11 +670,34 @@
           </select>
         </span>
         <button class="primary" id="ovBtn" type="button">Spiel starten</button>
-        <button class="ghost" id="pvpBtn" type="button" hidden title="Spiele online gegen einen anderen Spieler">Online (PvP)</button>
-        <button class="ghost" id="tutBtn" type="button" title="Lerne jede Einheit an einem Trainingsgegner kennen">Tutorial</button>
+        <button class="ghost" id="menuBtn" type="button" hidden>Zum Menü</button>
         <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 9999 Gold, der Gegner mit 160">Sandbox</button>
       </div>
     </div>
+    <div class="story" id="story" hidden role="dialog" aria-label="Story-Modus">
+      <svg class="storymap" viewBox="0 0 1000 460" preserveAspectRatio="none" aria-hidden="true">
+        <ellipse cx="660" cy="400" rx="80" ry="30" fill="var(--water)"></ellipse>
+        <circle cx="250" cy="100" r="22" fill="var(--tree)"></circle><circle cx="282" cy="118" r="17" fill="var(--tree)"></circle>
+        <circle cx="910" cy="370" r="24" fill="var(--tree)"></circle><circle cx="470" cy="420" r="19" fill="var(--tree)"></circle>
+        <circle cx="70" cy="140" r="18" fill="var(--tree)"></circle><circle cx="620" cy="120" r="16" fill="var(--tree)"></circle><circle cx="940" cy="90" r="20" fill="var(--tree)"></circle>
+        <path id="storyWeg1" d="M130 336 C 210 336, 260 220, 340 216 S 470 322, 560 317 S 700 190, 800 184" fill="none" stroke="var(--dirt-edge)" stroke-width="26" stroke-linecap="round"></path>
+        <path d="M130 336 C 210 336, 260 220, 340 216 S 470 322, 560 317 S 700 190, 800 184" fill="none" stroke="var(--dirt)" stroke-width="18" stroke-linecap="round"></path>
+      </svg>
+      <div class="storykopf"><button class="ghost" id="storyZu" type="button">‹ Menü</button><b id="storyTitel">Story-Modus</b><span class="storyleer"></span></div>
+      <div id="storyKnoten"></div>
+      <div class="storykarte" id="storyKarte"></div>
+    </div>
+    <div class="freunde" id="freunde" hidden role="dialog" aria-label="Freunde">
+      <div class="frkopf"><b>Freunde</b><button class="kontox frzu" id="freundeZu" type="button" aria-label="Schliessen">✕</button></div>
+      <button class="frein" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--me)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freund einladen</span></button>
+      <form class="frcode" id="freundForm" novalidate hidden><input type="text" id="freundCode" maxlength="6" placeholder="Code eines Freundes" aria-label="Code eines Freundes" autocomplete="off"><button class="ghost" type="submit">Hinzufügen</button></form>
+      <p class="frmein" id="meinCode"></p>
+      <div class="frliste" id="freundListe"></div>
+      <p class="frmsg" id="freundMsg"></p>
+    </div>
+    <div class="toast" id="toast" hidden role="status"><p id="toastText"></p><div class="kontorow" id="toastKn"><button class="primary" id="toastJa" type="button">Annehmen</button><button class="ghost" id="toastNein" type="button">Ablehnen</button></div></div>
+    <div class="zbanner" id="zBanner" hidden><span class="zbtext"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="zText"></span></span><button class="ghost" id="zRaus" type="button">Verlassen</button></div>
+    <div class="augen" id="augen" hidden aria-live="polite"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="augenZahl">0</span></div>
     <div class="book" id="book" hidden role="dialog" aria-label="Einheitenbuch">
       <div class="bookhead"><b>Einheitenbuch</b><span class="bookfilter" id="bookFilter" role="group" aria-label="Nach Typ filtern"><button type="button" data-f="" class="on">Alle</button><button type="button" data-f="eco" title="Wirtschaft">🌾<span> Wirtschaft</span></button><button type="button" data-f="melee" title="Nahkampf">🗡️<span> Nahkampf</span></button><button type="button" data-f="ranged" title="Fernkampf">🏹<span> Fernkampf</span></button><button type="button" data-f="siege" title="Belagerung">🔨<span> Belagerung</span></button></span><span class="bookcnt">Deck <span id="bookN">0</span> / 10</span><button class="ghost bookx" id="bookClose" type="button" aria-label="Buch schliessen">✕</button></div>
       <div class="bookbody">
@@ -764,6 +877,13 @@
   // Konto (Supabase): öffentliche Projekt-Adresse und öffentlicher Schlüssel («anon/publishable», darf im Spiel stehen).
   // Leer = Kontofunktion aus (dann ist auch nichts gesperrt).
   var KONTO = { url: 'https://odxpdyrwtvgicntbjlrh.supabase.co', key: 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn' };
+  // Story-Modus: Gegner in dieser Reihenfolge; den nächsten schaltet frei, wer den aktuellen besiegt. x/y = Platz auf der Karte (Prozent)
+  var STORY = [
+    { bot: 'bauern', name: 'Bandit', x: 13, y: 73, text: 'Ein Räuber mit 5 Bauern. Greift mit Rammbock, Speerkämpfern und Bogenschützen an.' },
+    { bot: 'prinz', name: 'Kleiner Prinz', x: 34, y: 47, text: '6 Bauern, Mauer bis Stufe 3. Kommt mit Belagerungsschild, Rammbock und Rittern.' },
+    { bot: 'feldherr', name: 'Feldherr', x: 56, y: 69, text: '12 Bauern, Mauer bis Stufe 2. Greift mit Katapult, Rammbock und Reitern an.' },
+    { bot: 'baron', name: 'Baron', x: 80, y: 40, text: '9 Bauern, Mauer bis Stufe 5 mit Trebuchets auf den Türmen. Greift mit Rittern an.' }
+  ];
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
@@ -784,7 +904,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '79d1fa0a15'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '56db53fee6'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3520,11 +3640,13 @@
   }
 
   function showOverlay(title, text, btnText, withChoice) {
-    $('ovChoice').hidden = withChoice === false;
+    // Ergebnis-, Pausen- und Suchfenster (das Startmenü zeigt zeigeMenu() in sozial.js)
+    overlay.classList.remove('menu');
+    ovZumMenu = false;
     var ohneWahl = withChoice === false || (state === 'paused');
-    sandBtn.hidden = ohneWahl || !tester; // Sandbox nur im Tester-Modus
-    $('tutBtn').hidden = ohneWahl;
-    $('pvpBtn').hidden = ohneWahl; // auch im Artifact sichtbar (dort nur Hinweis), damit es aussieht wie online
+    $('menuBtn').hidden = ohneWahl || pvp.on;
+    $('menuBtn').textContent = spielArt === 'story' ? 'Zur Karte' : 'Zum Menü';
+    if (!pvp.on && state === 'over') sozialStatus('menu');
     ovTitle.textContent = title;
     ovText.textContent = text;
     ovBtn.textContent = btnText;
@@ -3545,11 +3667,18 @@
     if (tut.on) {
       tut.on = false; state = 'over'; winner = w; pauseBtn.textContent = 'Pause';
       tutBox('');
-      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Spiel starten');
+      showOverlay(w === 0 ? 'Tutorial geschafft!' : 'Lektion verloren', w === 0 ? 'Du hast den gegnerischen König besiegt. Jetzt bist du bereit für ein echtes Spiel.' : 'Dein König ist gefallen. Starte das Tutorial einfach neu.', 'Zum Menü');
+      ovZumMenu = true; $('menuBtn').hidden = true;
       if (w === 0) jingle('win'); else jingle('lose');
       return;
     }
+    if (pvp.on && pvp.zuschauer) { // Zuschauer: neutral, wer gewonnen hat
+      pvp.ended = true; state = 'over'; winner = w;
+      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
+      return;
+    }
     if (pvp.on) { pvp.ended = true; if (pvp.me === 1 && w >= 0) w = 1 - w; } // im Online-Spiel immer aus deiner Sicht
+    if (!pvp.on && note === undefined) { var neu = storyErgebnis(w); if (neu) note = (w === 0 ? 'Der gegnerische König ist gefallen.' : '') + neu; }
     state = 'over';
     winner = w;
     var again = pvp.on ? 'Zum Menü' : 'Nochmal';
@@ -3614,6 +3743,7 @@
     state = 'playing';
     jingle('start');
     overlay.hidden = true;
+    $('story').hidden = true; $('freunde').hidden = true;
     openBook(false);
     applyDeck();
     pauseBtn.textContent = 'Pause';
@@ -3689,6 +3819,7 @@
     applyDeck();
     if (!$('book').hidden) renderBook();
     kontoView();
+    if (sozial) { sendeHallo(); if (!konto.user) { sozial.liste = []; sozial.code = ''; } freundeMalen(); menuAktuell(); }
   }
   var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
   // Eigene Einladungsdaten vom Render-Server holen (nur online, nur angemeldet)
@@ -3826,7 +3957,9 @@
   function testerSync() {
     var b = $('testerBtn'); b.hidden = ONLINE; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
     b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
-    if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester || overlay.hidden || $('ovChoice').hidden;
+    if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester;
+    if (sozial && !$('story').hidden) storyMalen();
+    if (sozial) menuAktuell();
   }
   $('testerBtn').addEventListener('click', function () {
     tester = !tester;
@@ -3946,7 +4079,7 @@
     if (s.box || !(tut.boxOpen && tut.noSlow)) tutBox(s.box || ''); // ein offenes Erklärfenster aus notes bleibt beim Schrittwechsel offen
   }
   function tutNextStep() { if (tut.i < TUT.length - 1) tutEnter(tut.i + 1); }
-  function tutGo() { tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
+  function tutGo() { spielArt = 'tut'; sozialStatus('tutorial', 'Tutorial'); tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
   // gdt = Spielzeit dieses Bildes
   function tutTick(gdt) {
     if (!tut.on) return;
@@ -3968,7 +4101,8 @@
   function tutExit() {
     tut.on = false; state = 'over'; pauseBtn.textContent = 'Pause';
     tutBox('');
-    showOverlay('Tutorial beendet', 'Du kannst es jederzeit im Startmenü wieder aufrufen.', 'Spiel starten');
+    showOverlay('Tutorial beendet', 'Du kannst es jederzeit im Startmenü wieder aufrufen.', 'Zum Menü');
+    ovZumMenu = true; $('menuBtn').hidden = true;
   }
   $('tutBtn').addEventListener('click', function () { tutGo(); });
   $('tutEnd').addEventListener('click', tutExit);
@@ -3983,7 +4117,7 @@
   if (ONLINE) presenceOpen();
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
-  function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
+  function showMenu() { pauseBtn.hidden = false; zeigeMenu(); }
   function pvpOpen(onOpen) {
     var ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
     pvp.ws = ws;
@@ -4032,6 +4166,7 @@
   function pvpLeave() {
     pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
     setTimeout(presenceOpen, 300);
+    zuschauenEnde(); augen(0);
     pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random;
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
@@ -4047,14 +4182,15 @@
     if (m.k === 'alt') return;
     if (m.k === 'info') {
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
-      if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
+      if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else sozialMsg(m);
   }
   function startPvp(me, seed) {
-    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me;
+    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; pvp.zuschauer = false; augen(0);
     document.documentElement.classList.toggle('guest', me === 1);
     simRand = mulberry32(seed);
     tut.on = false; sandbox = false;
@@ -4121,11 +4257,13 @@
     }
   }
   function pvpFrame(rdt) {
-    pvp.acc = Math.min(pvp.acc + rdt, 0.5);
+    // Zuschauer: sendet nichts; liegt er zurück (Einstieg mitten in der Partie), rechnet er schnell nach (bis 300 Schritte pro Bild)
+    var nach = pvp.zuschauer && pvp.letzte - pvp.tick > PVP_DELAY + 4, maxS = nach ? 300 : 8;
+    pvp.acc = nach ? Math.max(pvp.acc, (pvp.letzte - pvp.tick - PVP_DELAY) * STEP) : Math.min(pvp.acc + rdt, 0.5);
     var steps = 0, waited = false;
-    while (pvp.acc >= STEP && steps < 8 && state === 'playing') {
+    while (pvp.acc >= STEP && steps < maxS && state === 'playing') {
       var T = pvp.tick;
-      if (!pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
+      if (!pvp.zuschauer && !pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
       var box = pvp.inbox[T];
       if (state !== 'playing') break;
       if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
@@ -4136,7 +4274,8 @@
       pvp.acc -= STEP; steps++;
     }
     pvp.stall = waited ? pvp.stall + rdt : 0;
-    if (pvp.stall > 20 && state === 'playing') finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
+    if (nach && !waited) pvp.acc = 0;
+    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
     pvp.alpha = Math.min(1, pvp.acc / STEP);
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
@@ -4153,7 +4292,8 @@
     for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
   }
   $('pvpBtn').addEventListener('click', function () {
-    if (!ONLINE) { ovText.textContent = 'Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'; return; }
+    if (!ONLINE) { hinweis('Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'); return; }
+    spielArt = '';
     pvpSearch();
   });
 
@@ -4192,6 +4332,233 @@
     }
   }
 
+  // ---------- Menü, Story-Modus, Freunde, Herausfordern, Zuschauen (19.11.) ----------
+  // spielArt = was zuletzt gestartet wurde ('story' | 'sandbox' | 'tut' | ''), für «Nochmal» und «Zur Karte»
+  var spielArt = '', storyIdx = 0, storySel = 0;
+  var sozial = { ich: null, liste: [], code: '', zuschauer: 0, forderungRaus: null, forderungRein: null, lastToken: null };
+  var SVG = function (d, c, w) { return '<svg width="' + (w || 20) + '" height="' + (w || 20) + '" viewBox="0 0 24 24" fill="none" stroke="' + (c || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var ICON = {
+    haken: '<path d="M5 12l5 5 9-10"></path>', burg: '<path d="M4 21V8l3 2V6l3 2V4l2 2 2-2v4l3-2v4l3-2v13z"></path>',
+    schloss: '<rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path>', krone: '<path d="M5 17l2-9 5 4 5-4 2 9z"></path><path d="M5 20h14"></path>',
+    schwert: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path>',
+    auge: '<path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle>'
+  };
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ----- Startmenü -----
+  function zeigeMenu() {
+    if (pvp.on) return;
+    overlay.classList.add('menu');
+    overlay.hidden = false;
+    pauseBtn.hidden = false;
+    $('menuBtn').hidden = true;
+    sandBtn.hidden = !tester;
+    applyDeck(); menuAktuell();
+    sozialStatus('menu');
+  }
+  function menuAktuell() {
+    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX;
+    var n = storyStand(), d = $('storyDots'), h = '';
+    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (i < n ? 'voll' : '') + '"></i>';
+    d.innerHTML = h + '<em>' + Math.min(n, STORY.length) + ' von ' + STORY.length + ' besiegt</em>';
+    $('storyText').textContent = n >= STORY.length ? 'Alle Gegner besiegt – spiele sie nochmals' : 'Weiter gegen: ' + STORY[n].name;
+    var on = sozial.liste.filter(function (f) { return f.status !== 'offline'; }).length;
+    $('freundeZahl').hidden = !on; $('freundeZahl').textContent = on;
+  }
+
+  // ----- Story-Modus -----
+  function storyStand() {
+    var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
+    if (sozial.ich && sozial.ich.story > n) n = sozial.ich.story;
+    return Math.max(0, Math.min(STORY.length, n));
+  }
+  function storySpeichern(n) {
+    try { localStorage.setItem('stronghold-story', String(n)); } catch (e) {}
+    if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
+  }
+  function storyFrei(i) { return tester || i <= storyStand(); }
+  function storyOpen() {
+    var n = storyStand();
+    storySel = Math.min(n, STORY.length - 1);
+    $('story').hidden = false;
+    storyMalen();
+  }
+  function storyMalen() {
+    var n = storyStand(), h = '';
+    $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length;
+    STORY.forEach(function (g, i) {
+      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? ICON.burg : ICON.schloss;
+      h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '">' + SVG(ic, 'currentColor', 26) + '</button>' +
+        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 34px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
+    });
+    var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
+    h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
+    $('storyKnoten').innerHTML = h;
+    var g = STORY[storySel], art = storySel < n ? '<small class="ok">Besiegt</small>' : storyFrei(storySel) ? '<small>Nächster Gegner</small>' : '<small class="zu">Gesperrt</small>';
+    $('storyKarte').innerHTML = art + '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b><p>' + esc(g.text) + '</p>' +
+      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal spielen' : 'Kämpfen') + '</button>'
+        : '<button class="primary" type="button" disabled>Besiege zuerst: ' + esc(STORY[storySel - 1].name) + '</button>');
+  }
+  function storyStart(i) {
+    storyIdx = i; spielArt = 'story';
+    botType = STORY[i].bot; botEl.value = botType; aiRoll();
+    $('story').hidden = true;
+    start();
+    sozialStatus('story', 'Story gegen ' + STORY[i].name);
+  }
+  // nach einer Story-Partie: Sieg gegen den aktuellen Gegner schaltet den nächsten frei; Text für das Ergebnisfenster
+  function storyErgebnis(w) {
+    if (spielArt !== 'story' || w !== 0) return '';
+    var n = storyStand();
+    if (storyIdx === n && n < STORY.length) {
+      storySpeichern(n + 1);
+      return n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!';
+    }
+    return '';
+  }
+  $('storyBtn').addEventListener('click', storyOpen);
+  $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
+  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; storySel = +b.getAttribute('data-i'); storyMalen(); });
+  $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
+  $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
+
+  // ----- Server-Verbindung: wer bin ich, was mache ich -----
+  function sendeHallo(force) {
+    if (!pvp.ws || pvp.ws.readyState !== 1) return;
+    var tk = konto.token || null;
+    if (!force && tk === sozial.lastToken) return;
+    sozial.lastToken = tk;
+    pvpSend({ k: 'hallo', token: tk, v: VERSION });
+  }
+  function sozialStatus(s, info) { if (ONLINE) pvpSend({ k: 'status', s: s, info: info || '' }); }
+  function freundeHolen() { if (ONLINE && konto.user) pvpSend({ k: 'freunde' }); }
+  setInterval(function () { if (!overlay.hidden || !$('freunde').hidden) freundeHolen(); }, 15000);
+
+  // ----- Freundesliste -----
+  var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
+  function freundeOpen(on) {
+    $('freunde').hidden = !on;
+    if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
+  }
+  function zeitSeit(t) { var s = Math.max(0, Math.floor((Date.now() - t) / 1000)); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
+  function gesehen(t) { if (!t) return 'Offline'; var m = Math.floor((Date.now() - new Date(t).getTime()) / 60000); return 'Offline · ' + (m < 60 ? 'vor ' + Math.max(1, m) + ' Min.' : m < 1440 ? 'vor ' + Math.floor(m / 60) + ' Std.' : 'vor ' + Math.floor(m / 1440) + ' Tagen'); }
+  function freundeMalen() {
+    var l = $('freundListe'), angemeldet = !!konto.user;
+    $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
+    $('meinCode').textContent = !ONLINE ? 'Freunde gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'
+      : !angemeldet ? 'Melde dich an (👤 Konto), um Freunde hinzuzufügen, herauszufordern und ihnen zuzuschauen.'
+      : sozial.code ? 'Dein Code: ' + sozial.code + ' – gib ihn Freunden, oder schick ihnen deinen Einladungslink.' : '';
+    if (!angemeldet || !ONLINE) { l.innerHTML = ''; return; }
+    if (!sozial.liste.length) { l.innerHTML = '<p class="frmein">Noch keine Freunde. Lade jemanden ein oder gib seinen Code ein.</p>'; return; }
+    var frei = state !== 'playing' && !pvp.on;
+    l.innerHTML = sozial.liste.map(function (f, i) {
+      var farbe = FARBEN[(f.name.charCodeAt(0) || 0) % FARBEN.length], punkt = { menu: '#1d7a3a', spiel: '#c76a00', pvp: '#c76a00', offline: '' }[f.status];
+      var txt = f.status === 'menu' ? '<span style="color:#1d7a3a">Online · im Menü</span>'
+        : f.status === 'pvp' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + ' · ' + zeitSeit(f.seit) + '</span>'
+        : f.status === 'spiel' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + '</span>'
+        : '<span style="color:var(--muted)">' + gesehen(f.gesehen) + '</span>';
+      var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
+        : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
+      return '<div class="frzeile"><span class="frava" style="background:' + (f.status === 'offline' ? '#9aa3a6' : farbe) + '">' + esc(f.name.charAt(0).toUpperCase()) + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
+        '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '</span>' + knopf + '</div>';
+    }).join('');
+  }
+  function freundMsg(t, err) { var m = $('freundMsg'); m.textContent = t || ''; m.classList.toggle('err', !!err); }
+  $('freundeBtn').addEventListener('click', function () { freundeOpen(true); });
+  $('freundeZu').addEventListener('click', function () { freundeOpen(false); });
+  $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
+  $('freundListe').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau]') : null; if (!b) return;
+    if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
+    else pvpSend({ k: 'zuschauen', id: b.getAttribute('data-schau') });
+  });
+
+  // ----- Herausforderungen -----
+  function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
+  function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
+  function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
+
+  // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
+  function startZuschauen(m) {
+    freundeOpen(false); toastWeg();
+    pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
+    pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
+    pvp.namen = m.namen || ['', ''];
+    startPvp(0, m.seed | 0);
+    pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0;
+    document.documentElement.classList.remove('guest');
+    document.documentElement.classList.add('zuschauer');
+    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2]); });
+    $('zText').textContent = 'Du schaust ' + pvp.namen[0] + ' gegen ' + pvp.namen[1] + ' zu';
+    $('zBanner').hidden = false;
+  }
+  function zuschauTick(team, t, c) {
+    if (team !== 0 && team !== 1 || typeof t !== 'number') return;
+    var box = pvp.inbox[t] = pvp.inbox[t] || {};
+    box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
+    if (t > pvp.letzte) pvp.letzte = t;
+  }
+  function zuschauenEnde() { $('zBanner').hidden = true; document.documentElement.classList.remove('zuschauer'); pvp.zuschauer = false; }
+  $('zRaus').addEventListener('click', function () { pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); pvpLeave(); });
+  function augen(n) {
+    sozial.zuschauer = n | 0;
+    var a = $('augen'); a.hidden = !(pvp.on && sozial.zuschauer > 0);
+    $('augenZahl').textContent = sozial.zuschauer;
+    a.setAttribute('aria-label', sozial.zuschauer + (sozial.zuschauer === 1 ? ' Zuschauer' : ' Zuschauer'));
+    if (!a.hidden) augenPlatz();
+  }
+
+  // ----- Nachrichten vom Server (alles ausser Partie selbst) -----
+  function sozialMsg(m) {
+    if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
+    if (m.k === 'ich') {
+      sozial.ich = m.id ? { id: m.id, name: m.name, story: m.story | 0 } : null;
+      if (sozial.ich) { var lokal = 0; try { lokal = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {} if (lokal > sozial.ich.story) storySpeichern(lokal); freundeHolen(); }
+      if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
+      sozialStatus(state === 'playing' && !pvp.on ? (tut.on ? 'tutorial' : 'story') : 'menu', spielArt === 'story' && state === 'playing' ? 'Story gegen ' + STORY[storyIdx].name : '');
+      return;
+    }
+    if (m.k === 'freunde') { sozial.liste = m.liste || []; sozial.code = m.code || sozial.code; if (!$('freunde').hidden) freundeMalen(); menuAktuell(); return; }
+    if (m.k === 'sozialfehler') { freundMsg(m.text, true); return; }
+    if (m.k === 'sozialok') { freundMsg(m.text); return; }
+    if (m.k === 'forderung_raus') {
+      var f = sozial.liste.filter(function (x) { return x.id === m.an; })[0];
+      sozial.forderungRaus = { id: m.id };
+      freundeOpen(false);
+      showOverlay('Herausforderung', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false);
+      return;
+    }
+    if (m.k === 'forderung_aus') {
+      var grund = { zeit: 'hat nicht rechtzeitig angenommen.', abgelehnt: 'hat abgelehnt.', 'nicht frei': 'ist gerade nicht frei.', version: 'hat eine andere Spielversion. Bitte beide die Seite neu laden.' }[m.grund] || 'ist nicht verfügbar.';
+      sozial.forderungRaus = null; zeigeMenu(); freundeOpen(true); freundMsg('Dein Freund ' + grund, true);
+      return;
+    }
+    if (m.k === 'forderung') {
+      if (state === 'playing' || pvp.on || pvp.searching) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      sozial.forderungRein = { id: m.id, von: m.von };
+      toast(m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
+      return;
+    }
+    if (m.k === 'forderung_weg') { if (sozial.forderungRein && sozial.forderungRein.id === m.id) toastWeg(); return; }
+    if (m.k === 'zuschau') { if (state !== 'playing' && !pvp.on) startZuschauen(m); return; }
+    if (m.k === 'zt') { if (pvp.zuschauer) zuschauTick(m.p, m.t, m.c); return; }
+    if (m.k === 'zende') { if (pvp.zuschauer && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Partie beendet', 'Ein Spieler hat die Partie verlassen.', 'Zum Menü', false); } return; }
+    if (m.k === 'zuschauer') { augen(m.n); return; }
+  }
+
+  var ovZumMenu = false; // Knopf im Ergebnisfenster führt ins Menü (nach dem Tutorial)
+  var hinweisT = 0;
+  function hinweis(t) { toast(t, false); clearTimeout(hinweisT); hinweisT = setTimeout(function () { if ($('toastKn').hidden) $('toast').hidden = true; }, 4500); }
+  // Augensymbol über die Einheiten-Leiste schieben, damit es keine Karte verdeckt (die Leiste ragt unten halb ins Spielfeld)
+  function augenPlatz() {
+    var a = $('augen'), st = $('stage').getBoundingClientRect(), u = unitsEl.getBoundingClientRect(), ueber = st.bottom - u.top;
+    a.style.bottom = Math.round(ueber > 0 && ueber < st.height / 2 ? ueber + 8 : 10) + 'px';
+  }
+  window.addEventListener('resize', function () { if (!$('augen').hidden) augenPlatz(); });
+  sandBtn.hidden = !tester;
+  menuAktuell();
   // ---------- Werte-Karte: lange auf einen Einheiten-Knopf drücken ----------
   var SPECIAL = {
     farmer: 'Bringt alle 5 s +1 Gold, sobald er an seinem Platz steht.',
@@ -4246,13 +4613,16 @@
   });
   ovBtn.addEventListener('click', function () {
     if (pvp.searching) { pvpCancel(); return; }
+    if (sozial.forderungRaus) { forderungAbbrechen(); return; }
+    if (ovZumMenu) { zeigeMenu(); return; }
     if (pvp.ended) { pvpLeave(); return; }
     if (state === 'paused') setPaused(false); else start();
   });
   sandBtn.addEventListener('click', function () {
     if (state === 'paused') return;
-    sandbox = true;
+    sandbox = true; spielArt = 'sandbox';
     start();
+    sozialStatus('story', 'Sandbox');
   });
   pauseBtn.addEventListener('click', function (e) {
     if (state === 'playing') setPaused(true); else if (state === 'paused') setPaused(false);

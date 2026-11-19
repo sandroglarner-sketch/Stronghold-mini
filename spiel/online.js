@@ -7,7 +7,7 @@
   if (ONLINE) presenceOpen();
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
   function pvpClose() { var w = pvp.ws; pvp.ws = null; if (w) { try { w.close(); } catch (e) { /* egal */ } } }
-  function showMenu() { pauseBtn.hidden = false; showOverlay(menuTitle, menuText, 'Spiel starten'); }
+  function showMenu() { pauseBtn.hidden = false; zeigeMenu(); }
   function pvpOpen(onOpen) {
     var ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
     pvp.ws = ws;
@@ -56,6 +56,7 @@
   function pvpLeave() {
     pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
     setTimeout(presenceOpen, 300);
+    zuschauenEnde(); augen(0);
     pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random;
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
@@ -71,14 +72,15 @@
     if (m.k === 'alt') return;
     if (m.k === 'info') {
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
-      if (typeof m.online === 'number') $('pvpBtn').textContent = 'Online (PvP) · ' + m.online + ' online'; // alle Besucher der Seite
+      if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else sozialMsg(m);
   }
   function startPvp(me, seed) {
-    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me;
+    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; pvp.zuschauer = false; augen(0);
     document.documentElement.classList.toggle('guest', me === 1);
     simRand = mulberry32(seed);
     tut.on = false; sandbox = false;
@@ -145,11 +147,13 @@
     }
   }
   function pvpFrame(rdt) {
-    pvp.acc = Math.min(pvp.acc + rdt, 0.5);
+    // Zuschauer: sendet nichts; liegt er zurück (Einstieg mitten in der Partie), rechnet er schnell nach (bis 300 Schritte pro Bild)
+    var nach = pvp.zuschauer && pvp.letzte - pvp.tick > PVP_DELAY + 4, maxS = nach ? 300 : 8;
+    pvp.acc = nach ? Math.max(pvp.acc, (pvp.letzte - pvp.tick - PVP_DELAY) * STEP) : Math.min(pvp.acc + rdt, 0.5);
     var steps = 0, waited = false;
-    while (pvp.acc >= STEP && steps < 8 && state === 'playing') {
+    while (pvp.acc >= STEP && steps < maxS && state === 'playing') {
       var T = pvp.tick;
-      if (!pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
+      if (!pvp.zuschauer && !pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
       var box = pvp.inbox[T];
       if (state !== 'playing') break;
       if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
@@ -160,7 +164,8 @@
       pvp.acc -= STEP; steps++;
     }
     pvp.stall = waited ? pvp.stall + rdt : 0;
-    if (pvp.stall > 20 && state === 'playing') finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
+    if (nach && !waited) pvp.acc = 0;
+    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
     pvp.alpha = Math.min(1, pvp.acc / STEP);
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
@@ -177,7 +182,8 @@
     for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
   }
   $('pvpBtn').addEventListener('click', function () {
-    if (!ONLINE) { ovText.textContent = 'Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'; return; }
+    if (!ONLINE) { hinweis('Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'); return; }
+    spielArt = '';
     pvpSearch();
   });
 

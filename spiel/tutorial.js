@@ -82,7 +82,7 @@
     if (s.box || !(tut.boxOpen && tut.noSlow)) tutBox(s.box || ''); // ein offenes Erklärfenster aus notes bleibt beim Schrittwechsel offen
   }
   function tutNextStep() { if (tut.i < TUT.length - 1) tutEnter(tut.i + 1); }
-  function tutGo() { tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
+  function tutGo() { spielArt = 'tut'; sozialStatus('tutorial', 'Tutorial'); tut.on = true; tut.notes = []; tut.hl = false; start(true); tutEnter(0); }
   // gdt = Spielzeit dieses Bildes
   function tutTick(gdt) {
     if (!tut.on) return;
@@ -104,7 +104,8 @@
   function tutExit() {
     tut.on = false; state = 'over'; pauseBtn.textContent = 'Pause';
     tutBox('');
-    showOverlay('Tutorial beendet', 'Du kannst es jederzeit im Startmenü wieder aufrufen.', 'Spiel starten');
+    showOverlay('Tutorial beendet', 'Du kannst es jederzeit im Startmenü wieder aufrufen.', 'Zum Menü');
+    ovZumMenu = true; $('menuBtn').hidden = true;
   }
   $('tutBtn').addEventListener('click', function () { tutGo(); });
   $('tutEnd').addEventListener('click', tutExit);

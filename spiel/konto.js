@@ -67,6 +67,7 @@
     applyDeck();
     if (!$('book').hidden) renderBook();
     kontoView();
+    if (sozial) { sendeHallo(); if (!konto.user) { sozial.liste = []; sozial.code = ''; } freundeMalen(); menuAktuell(); }
   }
   var kontoPwModus = ''; // '' | 'aendern' (angemeldet) | 'reset' (aus dem Link der Passwort-vergessen-Mail)
   // Eigene Einladungsdaten vom Render-Server holen (nur online, nur angemeldet)
@@ -204,7 +205,9 @@
   function testerSync() {
     var b = $('testerBtn'); b.hidden = ONLINE; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
     b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
-    if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester || overlay.hidden || $('ovChoice').hidden;
+    if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester;
+    if (sozial && !$('story').hidden) storyMalen();
+    if (sozial) menuAktuell();
   }
   $('testerBtn').addEventListener('click', function () {
     tester = !tester;

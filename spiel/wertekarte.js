@@ -52,13 +52,16 @@
   });
   ovBtn.addEventListener('click', function () {
     if (pvp.searching) { pvpCancel(); return; }
+    if (sozial.forderungRaus) { forderungAbbrechen(); return; }
+    if (ovZumMenu) { zeigeMenu(); return; }
     if (pvp.ended) { pvpLeave(); return; }
     if (state === 'paused') setPaused(false); else start();
   });
   sandBtn.addEventListener('click', function () {
     if (state === 'paused') return;
-    sandbox = true;
+    sandbox = true; spielArt = 'sandbox';
     start();
+    sozialStatus('story', 'Sandbox');
   });
   pauseBtn.addEventListener('click', function (e) {
     if (state === 'playing') setPaused(true); else if (state === 'paused') setPaused(false);

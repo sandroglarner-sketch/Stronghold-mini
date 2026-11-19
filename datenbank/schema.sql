@@ -28,3 +28,22 @@ alter table public.einladung_besuche enable row level security;
 alter table public.freischaltungen   enable row level security;
 
 grant all on public.einladungen, public.einladung_besuche, public.freischaltungen to service_role;
+
+-- 19.11.: Spielerprofil (Anzeigename, Story-Fortschritt) und Freundesliste
+create table if not exists public.spieler (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  name       text not null,
+  story      int  not null default 0,                            -- so viele Story-Gegner besiegt
+  gesehen    timestamptz not null default now()
+);
+
+create table if not exists public.freunde (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  freund_id  uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, freund_id)                               -- immer in beide Richtungen eingetragen
+);
+
+alter table public.spieler enable row level security;
+alter table public.freunde enable row level security;
+grant all on public.spieler, public.freunde to service_role;
