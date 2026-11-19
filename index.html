@@ -418,7 +418,9 @@
   .bookfoot { flex: 0 0 auto; display: flex; justify-content: space-between; gap: 10px; font-size: 0.75rem; color: var(--muted); padding: 3px 40px 0; min-height: 1.2em; }
   .bookmsg { color: var(--foe); }
   .bookdetail { flex: 0 0 clamp(150px, 30%, 270px); min-width: 0; display: flex; font-size: var(--bk-fs, 13px); }
-  .bookdetail .ucard { flex: 1; overflow: hidden; min-height: 0; animation: bookpop 0.18s ease-out; }
+  .bookdetail .ucard { flex: 1; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; min-height: 0; animation: bookpop 0.18s ease-out; } /* Grossansicht: langer Text lässt sich (am Handy) nach unten scrollen */
+  .bookdetail .ucard .ab { flex: none; overflow: visible; }
+  .bookdetail .ucard .lockinfo { font-size: 0.85em; }
   .bookdetail .ucard canvas { width: 6em; height: 6em; }
   @keyframes bookpop { from { transform: scale(0.96); } to { transform: none; } }
   .bookpage { justify-content: center; align-content: center; }
