@@ -509,7 +509,11 @@
           else { foeBase.hp = Math.max(0, foeBase.hp - d.atk); if (d.atk > 0) { foeBase.flash = 0.2; foeBase.lastHit = clock; } }
           if (d.splash) applySplash(u.team, u.x, u.y, tx, ty, d, tgt, wallT, !tgt && !wallT);
         }
-        if (d.multi) { /* Trebuchet: Steine und Einschläge zeichnet fireMulti, keine Stich-/Ziellinie */ }
+        if (d.fackel) { // Fackelwerfer: brennende Fackel fliegt im Bogen und dreht sich, kleiner Brand am Einschlag
+          effects.push({ kind: 'fackel', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
+          effects.push({ kind: 'fbrand', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.6 });
+        }
+        else if (d.multi) { /* Trebuchet: Steine und Einschläge zeichnet fireMulti, keine Stich-/Ziellinie */ }
         else if (u.type === 'onager') { // Onager: grauer Stein fliegt gerade, Einschlag mit Staub
           effects.push({ kind: 'rock', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
           effects.push({ kind: 'oblast', x: tx, y: ty, r: (d.blast ? d.blast.r : 1) * 0.8, t: -d.delay, dur: 0.7 }); // Optik 20 % kleiner als der Schadensradius

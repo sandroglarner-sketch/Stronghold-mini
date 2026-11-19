@@ -320,6 +320,21 @@
         ctx.beginPath(); ctx.moveTo(Math.cos(frot + 0.6), Math.sin(frot + 0.6)); ctx.lineTo(Math.cos(frot - 1.5) * 4.5, Math.sin(frot - 1.5) * 4.5); ctx.stroke();
         ctx.fillStyle = 'rgba(255,240,200,0.35)'; ctx.beginPath(); ctx.arc(-2, -2.5, 1.6, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+      } else if (e.kind === 'fackel') { // fliegende Fackel: Holzstiel, brennender Kopf, dreht sich im Flug, Funkenschweif
+        var fkx = lerp(e.x1, e.x2, k) * T, fky = lerp(e.y1, e.y2, k) * T - Math.sin(k * Math.PI) * 16, fka = k * Math.PI * 3;
+        ctx.save(); ctx.translate(fkx, fky); ctx.rotate(fka); ctx.lineCap = 'round';
+        ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(4, 0); ctx.stroke();
+        ctx.fillStyle = '#e8641e'; ctx.beginPath(); ctx.arc(6, 0, 4.2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffd25a'; ctx.beginPath(); ctx.arc(6, 0, 2.2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255,170,60,0.6)'; for (var fs = 1; fs <= 3; fs++) { var fk2 = Math.max(0, k - fs * 0.06); ctx.beginPath(); ctx.arc(lerp(e.x1, e.x2, fk2) * T, lerp(e.y1, e.y2, fk2) * T - Math.sin(fk2 * Math.PI) * 16, 2.2 - fs * 0.5, 0, Math.PI * 2); ctx.fill(); }
+      } else if (e.kind === 'fbrand') { // kleiner Brand am Einschlag der Fackel (Umkreis = Flächenschaden)
+        var fbr = e.r * T, fba = Math.min(1, k * 5) * (1 - k);
+        ctx.globalAlpha = fba;
+        ctx.fillStyle = 'rgba(232,100,30,0.25)'; ctx.beginPath(); ctx.arc(e.x * T, e.y * T, fbr * (0.6 + 0.4 * Math.min(1, k * 3)), 0, Math.PI * 2); ctx.fill();
+        for (var fq = 0; fq < 4; fq++) { var fqa = fq * 1.7, fqx = e.x * T + Math.cos(fqa) * fbr * 0.4, fqy = e.y * T + Math.sin(fqa) * fbr * 0.35, fqh = 7 + 3 * Math.sin(k * 20 + fq);
+          ctx.fillStyle = '#e8641e'; ctx.beginPath(); ctx.moveTo(fqx - 3.5, fqy); ctx.quadraticCurveTo(fqx, fqy - fqh * 1.6, fqx + 3.5, fqy); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#ffd25a'; ctx.beginPath(); ctx.moveTo(fqx - 1.8, fqy); ctx.quadraticCurveTo(fqx, fqy - fqh, fqx + 1.8, fqy); ctx.closePath(); ctx.fill(); }
+        ctx.globalAlpha = 1;
       } else if (e.kind === 'fblast') {
         // Feuerexplosion mit Flammenzungen
         var fbr = e.r * T * (0.3 + 0.7 * Math.min(1, k * 2.2));

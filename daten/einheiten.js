@@ -29,17 +29,17 @@
               // out = Abstand vor der Mauer; slots = Plätze (types = erlaubte Einheitentypen, dx/dy = Versatz in Kacheln)
               levels: {
                 2: { list: [
-                  { k: 'sq', f: 0.25, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: 0 }] },
-                  { k: 'sq', f: 0.75, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: 0 }] }] },
+                  { k: 'sq', f: 0.25, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: 0 }] },
+                  { k: 'sq', f: 0.75, w: 0.7, h: 0.9, out: 0.5, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: 0 }] }] },
                 3: { list: [
-                  { k: 'sq', f: 0.25, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: 0.28 }] },
-                  { k: 'sq', f: 0.75, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0, dy: 0.28 }] }] },
+                  { k: 'sq', f: 0.25, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: 0.28 }] },
+                  { k: 'sq', f: 0.75, w: 0.85, h: 1.2, out: 0.55, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: -0.28 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0, dy: 0.28 }] }] },
                 4: { list: [
-                  { k: 'rd', f: 0.25, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.2, dy: 0.38 }] },
-                  { k: 'rd', f: 0.75, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.2, dy: 0.38 }] }] },
+                  { k: 'rd', f: 0.25, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.2, dy: 0.38 }] },
+                  { k: 'rd', f: 0.75, r: 0.8, out: 0.6, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.38, dy: 0 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.2, dy: -0.38 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.2, dy: 0.38 }] }] },
                 5: { list: [
-                  { k: 'rd', f: 0.25, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] },
-                  { k: 'rd', f: 0.75, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] }] }
+                  { k: 'rd', f: 0.25, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] },
+                  { k: 'rd', f: 0.75, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] }] }
               } }, stages: [40, 80, 120, 160, 200], bars: [40, 40, 80, 120, 160, 200] } }, // rate = Leben pro Sekunde je Arbeiter, add = Leben, die jeder Arbeiter insgesamt bringt, cap = höchstes Leben der Mauer; stages = ab so viel Leben erscheint die nächste der 5 Optiken (davor nur ein Gerüst), bars = Maximum der Lebensleiste je Stufe (Gerüst, Optik 1 bis 5) = Leben, ab denen die Optik erscheint; heal = Leben pro Sekunde, die eine Mauer unter dem Höchstwert ihrer Optik von selbst heilt (erst ab der ersten Optik)
       // shield = Belagerungsschild: greift nur Mauern und Kasernen an (wie der Rammbock), richtet aber keinen Schaden an
       shield: { cat: 'siege', name: 'Belagerungsschild', cost: 25, staerke: 2, hp: 12, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
@@ -91,6 +91,8 @@
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
       trebuchet: { cat: 'siege', name: 'Trebuchet', account: true, cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
+      // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
+      fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 7, staerke: 1, hp: 1, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', invite: true, cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 2 }, // setup: muss nach jedem Stillstand erst 2 s einrichten (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },

@@ -3,7 +3,7 @@
   // ---------- Angriffsanimationen ----------
   // ANIM[type] = { wind: Sekunden Ausholen vor dem Treffer, after: Sekunden Nachschwingen danach }.
   // attackPose liefert die Stellung für drawUnit; at = Sekunden relativ zum Treffer/Abschuss (undefined = Ruhe).
-  var LAUNCH = { javelin: [1.2, -0.5], crossbow: [1.6, 0], trebuchet: [0, 0], // Trebuchet: Steine kommen mittig heraus (dort pendelt die Schlinge oben aus)
+  var LAUNCH = { javelin: [1.2, -0.5], fackel: [1.0, -0.5], crossbow: [1.6, 0], trebuchet: [0, 0], // Trebuchet: Steine kommen mittig heraus (dort pendelt die Schlinge oben aus)
     archer: [1.4, 0], baliste: [1.6, 0], onager: [0.4, 0], mage: [1.9, 0.35], catapult: [1.2, 0] }; // Abschusspunkt der Geschosse (Vielfache von r, vor der Einheit)
   function launchPt(u, d, tx, ty) { var L = LAUNCH[u.type]; if (!L) return { x: u.x, y: u.y }; var a = Math.atan2(ty - u.y, tx - u.x), ca = Math.cos(a), sa = Math.sin(a); return { x: u.x + (ca * L[0] - sa * L[1]) * d.r, y: u.y + (sa * L[0] + ca * L[1]) * d.r }; } // nur Darstellung (Effekte)
   // Stellung für die Darstellung: kurz vor dem Treffer ausholen (u.ready = Ziel in Reichweite, u.cd = Restzeit), danach nachschwingen (u.atkT = Zeitpunkt des letzten Angriffs)
@@ -17,7 +17,7 @@
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
     spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, digger: { wind: 0.3, after: 0.25 },
-    javelin: { wind: 0.35, after: 0.55 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
+    javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
   };
@@ -66,7 +66,7 @@
       else if (at < 0.2) { P0.arm = oh1 + 0.15 * Math.sin(at / 0.2 * Math.PI); P0.ball = 0; }
       else { P0.arm = lerp(oh1, oh0, sm((at - 0.2) / (F - 0.45))); P0.ball = sm((at - (F - 0.3)) / 0.3); }
     }
-    else if (type === 'javelin') { // ausholen (Speer nach hinten), werfen; danach neuen Speer aus dem Köcher ziehen
+    else if (type === 'javelin' || type === 'fackel') { // ausholen (Speer nach hinten), werfen; danach neuen Speer aus dem Köcher ziehen
       if (at < 0) { P0.off = swing(at, W, F, -0.55 * r, 0.3 * r, 0.75); P0.arrow = 1; }
       else { P0.off = 0.3 * r * (1 - sm(at / 0.15)); P0.arrow = at < 0.25 ? 0 : sm((at - 0.25) / 0.3); }
     }
@@ -773,6 +773,24 @@
         c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.14);
         c.beginPath(); c.moveTo(-r * 0.5, -r * 0.5); c.lineTo(r * 1.35, -r * 0.5); c.stroke();
         c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 1.7, -r * 0.5); c.lineTo(r * 1.3, -r * 0.68); c.lineTo(r * 1.3, -r * 0.32); c.closePath(); c.fill();
+        c.globalAlpha = 1; c.restore();
+      }
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.25 + A.off, -r * 0.5, r * 0.14, 0, Math.PI * 2); c.fill(); // Wurfhand
+    } else if (type === 'fackel') {
+      // Fackelwerfer: russgeschwärzte Lederkappe, Tasche mit Fackeln auf dem Rücken, eine brennende Fackel wurfbereit in der Hand
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(1.5, r * 0.12);
+      c.beginPath(); for (var fq2 = -1; fq2 <= 1; fq2++) { c.moveTo(-r * 0.3, r * (0.35 + fq2 * 0.12)); c.lineTo(-r * 0.95, r * (0.45 + fq2 * 0.15)); } c.stroke();
+      c.fillStyle = '#3a2e28'; for (var fq3 = -1; fq3 <= 1; fq3++) { c.beginPath(); c.arc(-r * 0.98, r * (0.45 + fq3 * 0.15), r * 0.1, 0, Math.PI * 2); c.fill(); } // verkohlte Fackelköpfe
+      c.fillStyle = '#5a4636'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(r * 0.1, -r * 0.15, r * 0.2, 0, Math.PI * 2); c.fill(); // Russfleck
+      if (A.arrow > 0) {
+        var fl2 = 0.85 + 0.15 * Math.sin(performance.now() / 70);
+        c.save(); c.translate(A.off, 0); c.globalAlpha = A.arrow;
+        c.strokeStyle = '#6b4a2a'; c.lineWidth = Math.max(2, r * 0.15); c.beginPath(); c.moveTo(-r * 0.1, -r * 0.5); c.lineTo(r * 0.9, -r * 0.5); c.stroke();
+        c.fillStyle = 'rgba(255,150,40,0.35)'; c.beginPath(); c.arc(r * 1.05, -r * 0.5, r * 0.42 * fl2, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#e8641e'; c.beginPath(); c.arc(r * 1.02, -r * 0.5, r * 0.24 * fl2, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffd25a'; c.beginPath(); c.arc(r * 1.04, -r * 0.5, r * 0.12, 0, Math.PI * 2); c.fill();
         c.globalAlpha = 1; c.restore();
       }
       c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.25 + A.off, -r * 0.5, r * 0.14, 0, Math.PI * 2); c.fill(); // Wurfhand
