@@ -246,7 +246,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren

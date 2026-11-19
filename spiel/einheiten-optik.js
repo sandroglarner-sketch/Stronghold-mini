@@ -113,7 +113,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe
+    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -540,6 +540,72 @@
             c.strokeStyle = '#e2b13c'; c.lineWidth = Math.max(1.5, nsm * 0.14); c.beginPath(); c.arc(nsm * 0.1, 0, nsm * 0.36, -2.2, 2.2); c.stroke(); // Goldreif
             c.restore();
           }
+        }
+      }
+    } else if (type === 'bank' || type === 'dieb') {
+      // Bank: viereckiges Steingebäude mit flachem Dach (Brüstung, Platten), Geschäftsmann geht zum König: 0–1 drin, 1–4 hin, 4–6 in der Burg, 6–9 zurück, 9–10 drin, dann +10 %.
+      // Diebeshaus: dunkle Bretterhütte mit Laterne; der Dieb (Kapuze, mit Beute ein Sack) läuft halb durchsichtig (Deckkraft schwankt 5–50 %) am Spielfeldrand in die gegnerische Burg und zurück.
+      var BGd = CONFIG.units[type].gebaeude, bw2 = r * BGd.w / CONFIG.units[type].r, bh2 = r * BGd.h / CONFIG.units[type].r;
+      var BZ = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1, kx: 0, ky: 0 }, bnow = performance.now() / 1000;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -bw2 / 2 + 3, -bh2 / 2 + 4, bw2, bh2, 3); c.fill();
+      if (BZ.neu && BZ.bau < 1) {
+        c.fillStyle = '#a89c86'; rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.fill();
+        c.save(); c.beginPath(); c.rect(-bw2 / 2, -bh2 / 2, bw2 * BZ.bau, bh2); c.clip(); c.fillStyle = type === 'bank' ? '#b8b2a6' : '#4a3a2c'; rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw2 / 2, -bh2 / 2, bw2, bh2, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-bw2 / 2, -bh2 / 2); c.lineTo(bw2 / 2, bh2 / 2); c.moveTo(-bw2 / 2, bh2 / 2); c.lineTo(bw2 / 2, -bh2 / 2); c.stroke();
+      } else {
+        var bx0 = -bw2 / 2, by0 = -bh2 / 2;
+        if (type === 'bank') {
+          c.fillStyle = '#c9c3b6'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2; c.fillRect(bx0, by0, bw2, bh2); c.strokeRect(bx0, by0, bw2, bh2); // Brüstung
+          var bi2 = r * 0.16; c.fillStyle = '#a49e92'; c.fillRect(bx0 + bi2, by0 + bi2, bw2 - 2 * bi2, bh2 - 2 * bi2); // flaches Dach
+          c.strokeStyle = 'rgba(0,0,0,0.22)'; c.lineWidth = 1;
+          for (var gx2 = 1; gx2 < 4; gx2++) { c.beginPath(); c.moveTo(bx0 + bi2 + (bw2 - 2 * bi2) * gx2 / 4, by0 + bi2); c.lineTo(bx0 + bi2 + (bw2 - 2 * bi2) * gx2 / 4, by0 + bh2 - bi2); c.stroke(); c.beginPath(); c.moveTo(bx0 + bi2, by0 + bi2 + (bh2 - 2 * bi2) * gx2 / 4); c.lineTo(bx0 + bw2 - bi2, by0 + bi2 + (bh2 - 2 * bi2) * gx2 / 4); c.stroke(); }
+          c.fillStyle = '#8f897d'; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { c.fillRect(q[0] * (bw2 / 2 - bi2 * 0.5) - bi2 * 0.5, q[1] * (bh2 / 2 - bi2 * 0.5) - bi2 * 0.5, bi2, bi2); }); // Ecksteine
+        } else {
+          c.fillStyle = '#4a3a2c'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2; rr(c, bx0, by0, bw2, bh2, 2); c.fill(); c.stroke();
+          c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1; for (var db = 1; db < 7; db++) { c.beginPath(); c.moveTo(bx0 + bw2 * db / 7, by0 + (db % 2 ? 2 : 0)); c.lineTo(bx0 + bw2 * db / 7, by0 + bh2 - (db % 3 ? 0 : 3)); c.stroke(); } // schiefe Bretter
+          c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(bx0, 0, bw2, bh2 / 2);
+          c.fillStyle = '#6b5a48'; c.fillRect(bx0 + bw2 * 0.55, by0 + bh2 * 0.15, bw2 * 0.25, bh2 * 0.2); // Flicken
+          var lg = 0.5 + 0.5 * Math.sin(bnow * 3); c.fillStyle = 'rgba(255,190,80,' + (0.25 + 0.25 * lg) + ')'; c.beginPath(); c.arc(bx0 + bw2 * 0.2, by0 + bh2 * 0.25, r * 0.28, 0, Math.PI * 2); c.fill(); // Laterne
+          c.fillStyle = '#ffcf6a'; c.beginPath(); c.arc(bx0 + bw2 * 0.2, by0 + bh2 * 0.25, r * 0.08, 0, Math.PI * 2); c.fill();
+          c.fillStyle = col; c.fillRect(bx0 + bw2 - r * 0.25, by0, r * 0.25, r * 0.14); // kleines Tuch in Teamfarbe
+        }
+        if (BZ.bau < 1) { c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw2 / 2 - 3, -bh2 / 2 - 3, bw2 + 6, bh2 + 6, 4); c.stroke(); c.setLineDash([]); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-bw2 / 2, -bh2 / 2 - 9, bw2, 4); c.fillStyle = '#c98a12'; c.fillRect(-bw2 / 2, -bh2 / 2 - 9, bw2 * BZ.bau, 4); }
+        var fsm = r * CONFIG.units.farmer.r / CONFIG.units[type].r * 1.1, ph2 = BZ.phase;
+        var figur = function (x, y, ang, art, alpha, sack) { // Geschäftsmann oder Dieb (von oben)
+          c.save(); c.globalAlpha = alpha; c.translate(x, y); c.rotate(ang); c.translate(0, Math.sin(bnow * 6) * fsm * 0.05);
+          c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5;
+          if (art === 'bank') {
+            c.fillStyle = '#2f5d4a'; c.beginPath(); c.ellipse(-fsm * 0.1, 0, fsm * 0.8, fsm * 0.72, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Mantel
+            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(fsm * 0.1, 0, fsm * 0.38, 0, Math.PI * 2); c.fill(); c.stroke();
+            c.fillStyle = '#2a2420'; c.beginPath(); c.arc(fsm * 0.05, 0, fsm * 0.36, 0, Math.PI * 2); c.fill(); // flacher Hut
+            c.fillStyle = '#c98a12'; c.beginPath(); c.arc(-fsm * 0.2, fsm * 0.62, fsm * 0.2, 0, Math.PI * 2); c.fill(); // Geldbeutel
+          } else {
+            if (sack) { c.fillStyle = '#9c7a4a'; c.beginPath(); c.arc(-fsm * 0.7, 0, fsm * 0.45, 0, Math.PI * 2); c.fill(); c.stroke(); }
+            c.fillStyle = '#2b2b33'; c.beginPath(); c.ellipse(-fsm * 0.1, 0, fsm * 0.78, fsm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // dunkler Umhang
+            c.fillStyle = '#3d3d48'; c.beginPath(); c.arc(fsm * 0.08, 0, fsm * 0.42, 0, Math.PI * 2); c.fill(); c.stroke(); // Kapuze
+            c.fillStyle = '#c99a72'; c.beginPath(); c.arc(fsm * 0.32, 0, fsm * 0.15, 0, Math.PI * 2); c.fill(); // Gesicht unter der Kapuze
+          }
+          c.restore();
+        };
+        var entlang = function (pts, k) { // Punkt und Richtung auf einem Weg (Kacheln, relativ) bei Anteil k
+          var L = 0, i, seg = []; for (i = 1; i < pts.length; i++) { var sl = hyp(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); seg.push(sl); L += sl; }
+          var dd = Math.max(0, Math.min(1, k)) * L;
+          for (i = 1; i < pts.length; i++) { if (dd <= seg[i - 1] || i === pts.length - 1) { var f2 = seg[i - 1] ? Math.min(1, dd / seg[i - 1]) : 0, a2 = pts[i - 1], b2 = pts[i]; return { x: (a2.x + (b2.x - a2.x) * f2) * T, y: (a2.y + (b2.y - a2.y) * f2) * T, ang: Math.atan2(b2.y - a2.y, b2.x - a2.x) }; } dd -= seg[i - 1]; }
+          return { x: 0, y: 0, ang: 0 };
+        };
+        if (ph2 >= 0 && type === 'bank') {
+          var dvx = BZ.nx || 0, dvy = BZ.ny === undefined ? 1 : BZ.ny, dext = Math.abs(dvx) * bw2 / 2 + Math.abs(dvy) * bh2 / 2;
+          var tur = { x: dvx * (dext + r * 0.25) / T, y: dvy * (dext + r * 0.25) / T }, burg = { x: BZ.kx || 0, y: BZ.ky || 0 }, bk2 = -1, hin2 = true;
+          if (ph2 >= 1 && ph2 < 4) bk2 = (ph2 - 1) / 3; else if (ph2 >= 6 && ph2 < 9) { bk2 = (ph2 - 6) / 3; hin2 = false; }
+          if (bk2 >= 0) { var pp = entlang(hin2 ? [tur, burg] : [burg, tur], bk2); figur(pp.x, pp.y, pp.ang, 'bank', Math.min(1, bk2 * 8, (1 - bk2) * 8)); }
+        }
+        if (ph2 >= 0 && type === 'dieb' && BZ.weg) { // 0–1 drin, 1–13 hin, 13–15 in der Burg, 15–26 zurück, 26–27 lädt ab, 27–29 heim, 29–30 drin
+          var W2 = BZ.weg, dp = null, sack = false, dk = 0;
+          if (ph2 >= 1 && ph2 < 13) { dk = (ph2 - 1) / 12; dp = entlang(W2.hin, dk); }
+          else if (ph2 >= 15 && ph2 < 26) { dk = (ph2 - 15) / 11; dp = entlang(W2.zur, dk); sack = true; }
+          else if (ph2 >= 27 && ph2 < 29) { dk = (ph2 - 27) / 2; dp = entlang(W2.heim, dk); }
+          if (dp) figur(dp.x, dp.y, dp.ang, 'dieb', (0.05 + 0.45 * (0.5 + 0.5 * Math.sin(bnow * 2.5))) * Math.min(1, dk * 10, (1 - dk) * 10), sack); // Deckkraft 5–50 %
         }
       }
     } else if (type === 'farmer') {

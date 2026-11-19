@@ -27,7 +27,11 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
-    if (d.gebaeude) a.push(d.gebaeude.stufen.length === 1 ? d.gebaeude.stufen[0].hp + ' Leben, <b>+' + d.gebaeude.stufen[0].gold + ' Gold alle ' + d.gebaeude.alle + ' s</b>' : d.gebaeude.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>'));
+    if (d.gebaeude) { var GBt = d.gebaeude;
+      a.push(GBt.art === 'zins' ? GBt.stufen[0].hp + ' Leben, alle ' + GBt.alle + ' s <b>+' + GBt.prozent + ' % deines Goldes</b> (aufgerundet)'
+        : GBt.art === 'dieb' ? GBt.stufen[0].hp + ' Leben, klaut alle ' + GBt.alle + ' s <b>' + GBt.prozent + ' % des gegnerischen Goldes</b> (aufgerundet)'
+        : GBt.stufen.length === 1 ? GBt.stufen[0].hp + ' Leben, <b>+' + GBt.stufen[0].gold + ' Gold alle ' + GBt.alle + ' s</b>'
+        : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
