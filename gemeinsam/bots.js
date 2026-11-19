@@ -158,22 +158,24 @@
     }
     // Mauer (keine Einheit, die Sperre gilt hier nicht): ab wallGold Gold, nur ohne Gegner in seiner Hälfte; repariert wird nie, nur neu gebaut
     var aw = walls[1];
-    if (!bases[1].down && (!aw || !aw.built || aw.hp <= R.repairAt || wallWeak(aw) || (R.wallStage && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
+    if (R.wallStage !== 0 && !bases[1].down && (!aw || !aw.built || aw.hp <= R.repairAt || wallWeak(aw) || (R.wallStage > 1 && (aw.stage || 0) < R.wallStage)) && spendable() >= R.wallGold && countFighters(0) >= R.wallUnits && !(R.wallClear && enemyInMyHalf()) && !units.some(function (w) { return w.team === 1 && w.type === 'worker' && w.hp > 0; })) buy(1, 'wall');
     if (!free) return;
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
     var guard = 0;
     while (guard++ < 3 && countFarmers(1) < R.farmers && countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
-    // Türme (gilt für alle Gegner): jeder freie Platz wird besetzt (nach einem Kauf 20 Sekunden Pause), mit Bogenschützen und Katapulten (nur, wenn die Mauer Türme hat)
+    // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
+    // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
-      var need = {}, tl = aw.tlv.list, tt, tc, sty;
+      var tl = aw.tlv.list, tt, tc, ziel = R.turm, ist = {}, kauf = [], sk;
+      for (sk in aw.sl) { var so = aw.sl[sk]; if (so && so.hp > 0 && so.gar && so.gar.key === sk) ist[so.type] = (ist[so.type] || 0) + 1; }
       for (tt = 0; tt < tl.length; tt++) for (tc = 0; tc < tl[tt].slots.length; tc++) if (slotFree(aw, tt + '_' + tc)) {
-        sty = tl[tt].slots[tc].types[0]; if (sty === 'catapult' && R.towerSiege) sty = R.towerSiege; // Belagerungsplatz: z. B. Baron mit Trebuchet
-        need[sty] = (need[sty] || 0) + 1;
+        var sTypes = tl[tt].slots[tc].types, wahl = null;
+        if (ziel) { for (var zt in ziel) if (sTypes.indexOf(zt) >= 0 && (ist[zt] || 0) < ziel[zt]) { wahl = zt; break; } }
+        else { wahl = sTypes[0]; if (wahl === 'catapult' && R.towerSiege) wahl = R.towerSiege; }
+        if (wahl) { ist[wahl] = (ist[wahl] || 0) + 1; kauf.push(wahl); }
       }
-      [R.towerSiege || 'catapult', 'archer'].forEach(function (ty) {
-        for (var nn = 0; nn < (need[ty] || 0) && spendable() >= CONFIG.units[ty].cost; nn++) if (buy(1, ty)) ai.towerCool = CONFIG.AI.towerCool; else break; // danach 20 Sekunden Pause
-      });
+      for (var ki = 0; ki < kauf.length && spendable() >= CONFIG.units[kauf[ki]].cost; ki++) if (buy(1, kauf[ki])) ai.towerCool = CONFIG.AI.towerCool; else break; // danach 20 Sekunden Pause
     }
     // Jagd: hast du mehr Bauern, kommt alle huntEvery Sekunden der Jagdtrupp
     if (ai.leadT >= R.huntLead && ai.huntCool <= 0 && spendable() >= planCost(R.hunt) + (R.huntLater ? R.huntLater.reduce(function (a, h) { return a + planCost(h.buy); }, 0) : 0)) {

@@ -119,10 +119,13 @@
           <div class="feld"><label for="f_wallGold">Mauer ab … Gold</label><input type="number" id="f_wallGold" data-k="wallGold" min="0" step="1"><small>So viel Gold braucht er frei, dann baut er (weiter).</small></div>
           <div class="feld"><label for="f_wallUnits">… und ab so vielen Gegnern</label><input type="number" id="f_wallUnits" data-k="wallUnits" min="0" step="1"><small>Kampfeinheiten, die du mindestens haben musst (0 = egal).</small></div>
           <div class="feld"><label for="f_repairAt">Repariert ab … Leben</label><input type="number" id="f_repairAt" data-k="repairAt" min="0" step="1"><small>0 = repariert nie, baut sie aber neu.</small></div>
-          <div class="feld"><label for="f_wallStage">Ausbau bis Stufe</label><select id="f_wallStage" data-k="wallStage"><option value="">nur Grundmauer</option><option value="1">1</option><option value="2">2 (Türme)</option><option value="3">3</option><option value="4">4</option><option value="5">5 (grosse Türme)</option></select></div>
-          <div class="feld"><label for="f_towerSiege">Belagerungsplatz auf den Türmen</label><select id="f_towerSiege" data-k="towerSiege"></select><small>Was auf den Belagerungsplatz der grossen Türme kommt.</small></div>
+          <div class="feld"><label for="f_wallStage">Ausbau bis Stufe</label><select id="f_wallStage" data-k="wallStage"><option value="0">Keine Mauer</option><option value="1">1 – Mauer ohne Türme</option><option value="2">2 – 2 Schützenplätze</option><option value="3">3 – 4 Schützenplätze</option><option value="4">4 – 6 Schützenplätze</option><option value="5">5 – 6 Schützen- + 2 Belagerungsplätze</option></select></div>
           <div class="feld check"><label><input type="checkbox" id="f_wallClear" data-k="wallClear"> Nur ohne Gegner in seiner Hälfte</label><small>Baut nicht, solange deine Einheiten bei ihm stehen.</small></div>
         </div>
+        <h2 style="margin-top:14px">Turmbesatzung</h2>
+        <p class="hilfe">Gesamtzahl je Einheit auf allen Türmen, die er anstrebt. Steigen eigene Einheiten (aus Angriff, Jagd oder Verteidigung) von selbst hinauf, bleiben sie oben; wird ein Platz frei, besetzt er ihn wieder mit dieser Mischung. Leere Plätze bleiben leer.</p>
+        <div class="felder" id="turmFelder"></div>
+        <div class="summe" id="turmSumme"></div>
       </section>
 
       <section class="karte">
@@ -138,18 +141,21 @@
 
       <section class="karte">
         <h2>Verteidigung</h2>
-        <p class="hilfe">Wird er angegriffen, kauft er Verteidiger mit der Stärke deines Angriffs (ohne seine Turmbesatzung) plus «Mehr Stärke».</p>
+        <p class="hilfe">Wird er angegriffen, kauft er Verteidiger mit der Stärke deines Angriffs (ohne seine Turmbesatzung) plus oder minus den eingestellten Wert.</p>
         <div class="felder">
-          <div class="feld"><label for="f_defPlus">Mehr Stärke als du</label><input type="number" id="f_defPlus" data-k="defPlus" min="0" step="1"></div>
+          <div class="feld"><label for="f_defPlus">Stärke mehr (+) oder weniger (−) als dein Angriff</label><input type="number" id="f_defPlus" data-k="defPlus" step="1"><small>1 = eine Stärke mehr, 0 = gleich viel, −2 = zwei weniger.</small></div>
           <div class="feld"><label for="f_noOutput">Danach … s keine Einheiten</label><input type="number" id="f_noOutput" data-k="noOutput" min="0" step="1"></div>
-          <div class="feld"><label for="f_defMage">Magier ab … benötigter Stärke</label><input type="number" id="f_defMage" data-k="defMage" min="0" step="1"><small>99 = nie.</small></div>
-          <div class="feld"><label for="f_defMageAtt">Magier, wenn du ≥ … Stärke hast</label><input type="number" id="f_defMageAtt" data-k="defMageAtt" min="0" step="1" placeholder="leer"><small>Leer = aus.</small></div>
-          <div class="feld"><label for="f_defDiggerAt">Tunnelgräber ab … Schützen</label><input type="number" id="f_defDiggerAt" data-k="defDiggerAt" min="0" step="1" placeholder="leer"><small>Wenn du so viele Bogenschützen + Magier hast. Leer = aus.</small></div>
-          <div class="feld"><label for="f_defDiggerVsCatapult">Tunnelgräber gegen Katapult</label><input type="number" id="f_defDiggerVsCatapult" data-k="defDiggerVsCatapult" min="0" step="1" placeholder="leer"><small>Mindestens so viele, wenn du ein Katapult auf dem Feld hast. Leer = aus.</small></div>
         </div>
         <div class="feld" style="margin-top:10px"><label>Erlaubte Verteidiger</label><div class="pool" id="pool"></div></div>
       </section>
     </div>
+
+    <section class="karte">
+      <h2>Spezialregeln</h2>
+      <p class="hilfe">Alles, was die Felder oben nicht abdecken. Beschreibe es in eigenen Worten; Claude baut es beim Übernehmen ein.</p>
+      <ul class="aend" id="spezialAlt"></ul>
+      <textarea id="f_spezial" data-k="spezial" rows="5" style="width:100%;background:var(--input);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;color:var(--fg)" placeholder="z. B. «Wenn du einen Rammbock schickst, kauft er sofort 2 Ritter.»"></textarea>
+    </section>
   </div>
 
   <aside>
@@ -219,15 +225,18 @@
   function fuellen() {
     $('f_name').value = cur.name; $('f_id').value = cur.id; $('f_platz').value = cur.platz; $('f_kx').value = cur.kx; $('f_ky').value = cur.ky;
     $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
+    $('f_spezial').value = cur.spezial || '';
     $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
     koenigZeigen();
     var L = cur.logik;
     $('logik').hidden = !L; $('ohneLogik').hidden = !!L; $('logikWegBtn').hidden = !L;
     $('logikTag').innerHTML = L ? '<span class="tag ja">vorhanden' + (cur.logikKey ? ' · CONFIG.BOTS.' + cur.logikKey : '') + '</span>' : '<span class="tag nein">leer</span>';
     if (L) {
-      ['farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'repairAt', 'attackGold', 'lockSecs', 'defPlus', 'noOutput', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
-      $('f_wallStage').value = L.wallStage ? String(L.wallStage) : '';
-      $('f_towerSiege').innerHTML = '<option value="">Katapult (Standard)</option>' + ['trebuchet', 'onager', 'baliste'].map(function (t) { return '<option value="' + t + '"' + (L.towerSiege === t ? ' selected' : '') + '>' + uName(t) + '</option>'; }).join('');
+      ['farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'repairAt', 'attackGold', 'lockSecs', 'defPlus', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
+      if (L.wallStage === undefined) L.wallStage = 1; // alte Daten: ohne Angabe = Mauer ohne Türme
+      $('f_wallStage').value = String(L.wallStage);
+      if (!L.turm) { L.turm = {}; var pl = platz(L.wallStage); if (pl.schuetzen) L.turm.archer = pl.schuetzen; if (pl.belagerung) L.turm[L.towerSiege || 'catapult'] = pl.belagerung; delete L.towerSiege; }
+      turmMalen(); spezialAlt();
       $('f_wallClear').checked = !!L.wallClear;
       zeilenMalen(); poolMalen();
     }
@@ -288,6 +297,33 @@
   $('attackAdd').addEventListener('click', function () { var l = rows.attack[rows.attack.length - 1]; rows.attack.push({ s: l ? l.s + 1 : 0, t: 'spear', n: 1 }); tabelle('attack'); zurueck('attack'); });
   $('attackSort').addEventListener('click', function () { rows.attack.sort(function (a, b) { return a.s - b.s; }); tabelle('attack'); zurueck('attack'); });
 
+  // ----- Turmbesatzung -----
+  var WALLD = CONFIG.units.wall.wall, SCHUETZEN = ['archer', 'mage', 'crossbow', 'javelin'], BELAGERUNG = ['catapult', 'baliste', 'trebuchet'];
+  function platz(stufe) {
+    var lv = WALLD.tower.levels[stufe], p = { schuetzen: 0, belagerung: 0 };
+    if (lv) lv.list.forEach(function (t) { t.slots.forEach(function (sl) { if (sl.types.indexOf('archer') >= 0) p.schuetzen++; else p.belagerung++; }); });
+    return p;
+  }
+  function turmMalen() {
+    var L = cur.logik, h = '';
+    SCHUETZEN.concat(BELAGERUNG).forEach(function (t) {
+      h += '<div class="feld"><label for="t_' + t + '">' + uName(t) + ' <span class="status">(' + preis(t) + ' Gold' + (BELAGERUNG.indexOf(t) >= 0 ? ', Belagerungsplatz' : ', Schützenplatz') + ')</span></label><input type="number" id="t_' + t + '" data-k="turm.' + t + '" min="0" step="1" value="' + (L.turm[t] || 0) + '"></div>';
+    });
+    $('turmFelder').innerHTML = h; turmSumme();
+  }
+  function turmSumme() {
+    var L = cur.logik, p = platz(+L.wallStage || 0), s = 0, b = 0;
+    SCHUETZEN.forEach(function (t) { s += L.turm[t] || 0; }); BELAGERUNG.forEach(function (t) { b += L.turm[t] || 0; });
+    $('turmSumme').innerHTML = '<span>Schützenplätze: <b class="' + (s > p.schuetzen ? 'rot' : '') + '">' + s + ' von ' + p.schuetzen + '</b></span><span>Belagerungsplätze: <b class="' + (b > p.belagerung ? 'rot' : '') + '">' + b + ' von ' + p.belagerung + '</b></span>' +
+      (s > p.schuetzen || b > p.belagerung ? '<span class="rot">Mehr als Plätze vorhanden (bei dieser Ausbaustufe).</span>' : '');
+  }
+  var SPEZIAL_TEXT = { defMage: function (v) { return v >= 99 ? null : 'Magier in der Verteidigung ab ' + v + ' benötigter Stärke'; }, defMageAtt: function (v) { return 'Magier in der Verteidigung, wenn du mindestens ' + v + ' Stärke hast'; },
+    defDiggerAt: function (v) { return 'Tunnelgräber in der Verteidigung, wenn du ' + v + ' Bogenschützen + Magier hast'; }, defDiggerVsCatapult: function (v) { return 'mindestens ' + v + ' Tunnelgräber in der Verteidigung, wenn du ein Katapult auf dem Feld hast'; } };
+  function spezialAlt() {
+    var L = cur.logik, l = [];
+    Object.keys(L).forEach(function (k) { if (SPEZIAL_TEXT[k]) { var t = SPEZIAL_TEXT[k](L[k]); if (t) l.push(t + ' (' + k + ': ' + L[k] + ')'); } else if (REIHE.indexOf(k) < 0) l.push(k + ': ' + JSON.stringify(L[k])); });
+    $('spezialAlt').innerHTML = l.length ? '<li><b>Schon eingebaut:</b></li>' + l.map(function (x) { return '<li>' + x.replace(/</g, '&lt;') + '</li>'; }).join('') : '';
+  }
   function poolMalen() {
     var L = cur.logik, h = '';
     KAUF.forEach(function (t) { var an = L.defPool.indexOf(t) >= 0; h += '<label class="' + (an ? 'an' : '') + '"><input type="checkbox" value="' + t + '"' + (an ? ' checked' : '') + '>' + uName(t) + ' <span class="status">(' + preis(t) + ' · St. ' + staerke(t) + ')</span></label>'; });
@@ -300,10 +336,11 @@
   });
 
   // ----- Einzelne Felder -----
-  var ZAHL_OPTIONAL = ['defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult'];
   document.querySelector('main').addEventListener('input', function (e) {
     var k = e.target.getAttribute('data-k'); if (!k) return;
     var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (k === 'spezial') { if (v.trim()) cur.spezial = v; else delete cur.spezial; geaendert(); return; }
+    if (k.indexOf('turm.') === 0 && cur.logik) { var tt = k.slice(5), n = Math.max(0, Math.floor(+v || 0)); if (n) cur.logik.turm[tt] = n; else delete cur.logik.turm[tt]; turmSumme(); geaendert(); return; }
     if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) {
       if (k === 'id') { v = String(v).toLowerCase().replace(/[^a-z0-9]/g, ''); if (cur.neu) cur.logikKey = v; }
       cur[k] = (k === 'platz' || k === 'kx' || k === 'ky') ? (v === '' ? '' : +v) : v;
@@ -311,9 +348,7 @@
     } else if (cur.logik) {
       var L = cur.logik;
       if (k === 'wallClear') L.wallClear = !!v;
-      else if (k === 'wallStage') { if (v) L.wallStage = +v; else delete L.wallStage; }
-      else if (k === 'towerSiege') { if (v) L.towerSiege = v; else delete L.towerSiege; }
-      else if (ZAHL_OPTIONAL.indexOf(k) >= 0) { if (v === '') delete L[k]; else L[k] = +v; }
+      else if (k === 'wallStage') { L.wallStage = +v; turmSumme(); }
       else L[k] = v === '' ? 0 : +v;
       if (k === 'attackGold') summen();
     }
@@ -355,7 +390,9 @@
     document.querySelectorAll('[data-k]').forEach(function (el) {
       var k = el.getAttribute('data-k'), a, b;
       if (!o) { el.classList.add('chg'); return; }
-      if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) { a = cur[k]; b = o[k]; }
+      if (k === 'spezial') { a = cur.spezial || ''; b = ''; }
+      else if (k.indexOf('turm.') === 0) { var tt = k.slice(5); a = cur.logik && cur.logik.turm ? cur.logik.turm[tt] || 0 : 0; b = o.logik && o.logik.turm ? o.logik.turm[tt] || 0 : 0; }
+      else if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) { a = cur[k]; b = o[k]; }
       else { a = cur.logik ? cur.logik[k] : undefined; b = o.logik ? o.logik[k] : undefined; }
       el.classList.toggle('chg', String(a === undefined ? '' : a) !== String(b === undefined ? '' : b));
     });
@@ -363,22 +400,23 @@
   }
   function aenderungen(b) {
     var o = ORIG[b.id], l = [];
-    if (!o) return ['Neuer Bot'];
+    if (!o) return ['Neuer Bot'].concat(b.spezial ? ['Spezialregeln (Text)'] : []);
     ['name', 'koenig', 'platz'].forEach(function (k) { if (String(b[k]) !== String(o[k])) l.push(k + ': ' + (o[k] === '' ? 'leer' : o[k]) + ' → ' + (b[k] === '' ? 'leer' : b[k])); });
     if (String(b.kx) !== String(o.kx) || String(b.ky) !== String(o.ky)) l.push('Karte: ' + o.kx + '/' + o.ky + ' → ' + b.kx + '/' + b.ky);
     if (!o.logik && b.logik) l.push('Logik neu');
     else if (o.logik && !b.logik) l.push('Logik entfernt');
     else if (b.logik) {
       var ks = {}; Object.keys(o.logik).concat(Object.keys(b.logik)).forEach(function (k) { ks[k] = 1; });
-      Object.keys(ks).forEach(function (k) { if (!gleich(k === 'attack' ? gruppiert(flach(o.logik[k])) : o.logik[k], b.logik[k])) l.push(k === 'attack' ? 'Angriffswelle' : k === 'hunt' ? 'Jagdtrupp' : k === 'huntLater' ? 'Jagd später' : k === 'defPool' ? 'Verteidiger' : k + ': ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k])); });
+      Object.keys(ks).forEach(function (k) { if (!gleich(k === 'attack' ? gruppiert(flach(o.logik[k])) : o.logik[k], b.logik[k])) l.push(k === 'attack' ? 'Angriffswelle' : k === 'hunt' ? 'Jagdtrupp' : k === 'huntLater' ? 'Jagd später' : k === 'defPool' ? 'Verteidiger' : k === 'turm' ? 'Turmbesatzung: ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k]) : k + ': ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k])); });
     }
+    if (b.spezial) l.push('Spezialregeln (Text)');
     return l;
   }
   function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
 
   // ----- Code für das Spiel -----
-  var REIHE = ['farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'repairAt', 'wallStage', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
-  function js(v) { return JSON.stringify(v).replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
+  var REIHE = ['farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'repairAt', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
+  function js(v) { return JSON.stringify(v).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
   function logikCode(b) {
     var L = b.logik, teile = [];
     REIHE.forEach(function (k) { if (L[k] !== undefined) teile.push(k + ': ' + (k === 'attack' || k === 'huntLater' ? '[' + L[k].map(function (s) { return '{ after: ' + s.after + ', buy: ' + js(s.buy) + ' }'; }).join(', ') + ']' : js(L[k]))); });
@@ -392,7 +430,7 @@
   function text(b) {
     var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;
     return 'Bot «' + b.name + '» (' + b.id + ')' + (a.length ? ': ' + a.join('; ') : ': unverändert') + (b.logik ? '\nAngriffswelle ' + wk + ' Gold (Start ab ' + b.logik.attackGold + ' Gold)' : '') +
-      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '');
+      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '') + (b.spezial ? '\nSpezialregeln (bitte einbauen):\n' + b.spezial : '');
   }
   function ausgabe() {
     var a = aenderungen(cur);
