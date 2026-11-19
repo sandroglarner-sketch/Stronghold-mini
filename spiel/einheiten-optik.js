@@ -8,11 +8,13 @@
   function launchPt(u, d, tx, ty) { var L = LAUNCH[u.type]; if (!L) return { x: u.x, y: u.y }; var a = Math.atan2(ty - u.y, tx - u.x), ca = Math.cos(a), sa = Math.sin(a); return { x: u.x + (ca * L[0] - sa * L[1]) * d.r, y: u.y + (sa * L[0] + ca * L[1]) * d.r }; } // nur Darstellung (Effekte)
   // Stellung für die Darstellung: kurz vor dem Treffer ausholen (u.ready = Ziel in Reichweite, u.cd = Restzeit), danach nachschwingen (u.atkT = Zeitpunkt des letzten Angriffs)
   function unitAt(u, type) {
+    if (type === 'farmer') return u.grabT !== undefined && clock - u.grabT <= GRAB ? clock - u.grabT : undefined; // Bauer: gräbt beim Gold-Bonus
     var a = ANIM[type]; if (!a) return undefined;
     if (u.ready && u.cd > 0 && u.cd <= a.wind) return -u.cd;
     if (u.atkT !== undefined && clock - u.atkT <= a.after) return clock - u.atkT;
     return undefined;
   }
+  var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
     spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
@@ -276,7 +278,7 @@
       }
     } else if (type === 'king' || type === 'kingbow') {
       // König von oben in der gewählten Optik (koenigTeam[team], siehe spiel/koenig-optik.js): mit Bogen (auf der Burg) oder seiner Waffe (ohne Burg)
-      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', zieh: typeof settled === 'number' ? settled : 1, rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
+      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', kratz: type === 'kingbow' ? kKratz[team] : 0, zieh: typeof settled === 'number' ? settled : 1, rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
     } else if (type === 'sword') {
       // Schwertkämpfer: einfacher grauer Eisenhelm mit dunklem Rand (anders als der Ritter), runder Holzschild mit Eisenrand und Buckel, Schwert
       c.fillStyle = '#8d9399';
@@ -407,6 +409,9 @@
       c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
       c.fillStyle = P.wood;
       c.beginPath(); c.arc(0, 0, r * 0.28, 0, Math.PI * 2); c.fill();
+      // Heugabel; beim Gold-Bonus (at = Sekunden seit dem Bonus) sticht er zweimal in den Boden: Gabel nach vorn und schräg, kleine Erdbrocken
+      var gp = at !== undefined ? Math.min(1, at / GRAB) : 1, gj = at !== undefined ? Math.max(0, Math.sin(gp * Math.PI * 4)) : 0; // zweimal zustechen
+      c.save(); c.translate(r * 0.35 * gj, 0); c.translate(-r * 0.2, r * 0.9); c.rotate(0.25 * gj); c.translate(r * 0.2, -r * 0.9);
       c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.18);
       c.beginPath(); c.moveTo(-r * 0.2, r * 0.9); c.lineTo(r * 1.6, r * 0.9); c.stroke();
       c.strokeStyle = P.steel; c.lineWidth = 2;
@@ -416,6 +421,12 @@
       c.moveTo(r * 1.6, r * 0.9); c.lineTo(r * 2.0, r * 0.9);
       c.moveTo(r * 1.6, r * 1.3); c.lineTo(r * 2.0, r * 1.3);
       c.stroke();
+      c.restore();
+      if (at !== undefined && gp % 0.5 > 0.1) { // Erdbrocken fliegen bei jedem Stich auf
+        c.fillStyle = '#7a5a3a';
+        for (var gk = 0; gk < 4; gk++) { var gs = (gp % 0.5 - 0.1) / 0.4, ga = gk * 1.6 + 0.4; c.globalAlpha = Math.max(0, 1 - gs); c.beginPath(); c.arc(r * (2.1 + Math.cos(ga) * gs * 0.7), r * (0.9 + Math.sin(ga) * gs * 0.7), r * 0.1, 0, 7); c.fill(); }
+        c.globalAlpha = 1;
+      }
     } else if (type === 'digger') {
       // Gelber Helm mit Lampe und Spitzhacke
       c.fillStyle = '#e0b020';

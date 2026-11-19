@@ -88,6 +88,7 @@
         gu.gT -= gd.bonusEvery;
         gold[gu.team] = Math.min(CONFIG.GOLD_MAX, gold[gu.team] + gd.bonus);
         effects.push({ kind: 'text', text: '+' + gd.bonus, x: gu.x, y: gu.y - 0.55, farmer: true, t: 0, dur: 1.1 });
+        gu.grabT = clock; // nur für die Darstellung: gräbt kurz mit der Heugabel
       }
     }
     if (!tut.on && !pvp.on) aiUpdate(dt);

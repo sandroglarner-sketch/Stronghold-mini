@@ -1032,7 +1032,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '79ab0824a9'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '5eb08b4064'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1182,6 +1182,7 @@
   // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
+  var kKratz = [0, 0]; // Kopfkratzen in der Burg je Team (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
   var KSCHRAEG = -0.5; // Nahkampfwaffe schräg nach vorn gehalten (Bogenmass)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
   function koenigOptik(id) { return KOENIGE[id] || KOENIGE.standard; }
@@ -1205,7 +1206,8 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r); // Bild bzw. in der Burg ohne Gegner: leere Hände
+    var kratzt = o.kratz > 0 && o.bogen && !(o.zieh > 0);
+    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r, kratzt); // Bild bzw. in der Burg ohne Gegner: leere Hände
     else if (o.bogen) kBogen(c, k, r, o);
     else { c.save(); c.translate(r * 0.45, 0); c.rotate(KSCHRAEG + (o.rot || 0)); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); } // Nahkampfwaffe immer etwas schräg
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
@@ -1214,11 +1216,20 @@
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.36, Math.PI * 0.55, Math.PI * 1.45); c.fill(); }
     kBart(c, k, r);
     kKrone(c, k, r);
+    if (kratzt) kKratzHand(c, k, r, o.kratz);
     c.restore();
   }
   // Hände in Ruhe (vorne links und rechts am Körper)
   var KRUHE = [[0.38, -0.66], [0.38, 0.66]];
-  function kRuhe(c, k, r) { kHand(c, r * KRUHE[0][0], r * KRUHE[0][1], r, k.haut); kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); }
+  function kRuhe(c, k, r, ohneLinks) { if (!ohneLinks) kHand(c, r * KRUHE[0][0], r * KRUHE[0][1], r, k.haut); kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); }
+  // Kopfkratzen: eine Hand geht zum Kopf, kratzt (kleines Hin und Her) und geht zurück; wird nach Kopf und Krone gezeichnet
+  function kKratzHand(c, k, r, p) {
+    var hin = Math.min(1, p / 0.25), zur = Math.min(1, (1 - p) / 0.25), e = Math.min(hin, zur); e = e * e * (3 - 2 * e);
+    var wackel = p > 0.25 && p < 0.75 ? Math.sin((p - 0.25) * 40) * r * 0.09 : 0;
+    var hx = r * KRUHE[0][0] + (r * -0.02 - r * KRUHE[0][0]) * e + wackel, hy = r * KRUHE[0][1] + (r * -0.38 - r * KRUHE[0][1]) * e;
+    c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(hx, hy, r * 0.16, 0, 7); c.fill(); c.stroke(); // Hand mit Rand, damit man sie auf dem Kopf sieht
+  }
   // Eigener Bogen des Königs (k.bogen). o.zieh 0..1 = Bogen hervorholen (0 = auf dem Rücken, 1 = schussbereit); o.str/o.vib/o.arrow = Sehne und Pfeil wie attackPose
   function kBogen(c, k, r, o) {
     var B = k.bogen || { holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0 }, e = Math.max(0, Math.min(1, o.zieh === undefined ? 1 : o.zieh));
@@ -2111,6 +2122,7 @@
         gu.gT -= gd.bonusEvery;
         gold[gu.team] = Math.min(CONFIG.GOLD_MAX, gold[gu.team] + gd.bonus);
         effects.push({ kind: 'text', text: '+' + gd.bonus, x: gu.x, y: gu.y - 0.55, farmer: true, t: 0, dur: 1.1 });
+        gu.grabT = clock; // nur für die Darstellung: gräbt kurz mit der Heugabel
       }
     }
     if (!tut.on && !pvp.on) aiUpdate(dt);
@@ -2575,11 +2587,13 @@
   function launchPt(u, d, tx, ty) { var L = LAUNCH[u.type]; if (!L) return { x: u.x, y: u.y }; var a = Math.atan2(ty - u.y, tx - u.x), ca = Math.cos(a), sa = Math.sin(a); return { x: u.x + (ca * L[0] - sa * L[1]) * d.r, y: u.y + (sa * L[0] + ca * L[1]) * d.r }; } // nur Darstellung (Effekte)
   // Stellung für die Darstellung: kurz vor dem Treffer ausholen (u.ready = Ziel in Reichweite, u.cd = Restzeit), danach nachschwingen (u.atkT = Zeitpunkt des letzten Angriffs)
   function unitAt(u, type) {
+    if (type === 'farmer') return u.grabT !== undefined && clock - u.grabT <= GRAB ? clock - u.grabT : undefined; // Bauer: gräbt beim Gold-Bonus
     var a = ANIM[type]; if (!a) return undefined;
     if (u.ready && u.cd > 0 && u.cd <= a.wind) return -u.cd;
     if (u.atkT !== undefined && clock - u.atkT <= a.after) return clock - u.atkT;
     return undefined;
   }
+  var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
     spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
@@ -2843,7 +2857,7 @@
       }
     } else if (type === 'king' || type === 'kingbow') {
       // König von oben in der gewählten Optik (koenigTeam[team], siehe spiel/koenig-optik.js): mit Bogen (auf der Burg) oder seiner Waffe (ohne Burg)
-      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', zieh: typeof settled === 'number' ? settled : 1, rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
+      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', kratz: type === 'kingbow' ? kKratz[team] : 0, zieh: typeof settled === 'number' ? settled : 1, rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
     } else if (type === 'sword') {
       // Schwertkämpfer: einfacher grauer Eisenhelm mit dunklem Rand (anders als der Ritter), runder Holzschild mit Eisenrand und Buckel, Schwert
       c.fillStyle = '#8d9399';
@@ -2974,6 +2988,9 @@
       c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
       c.fillStyle = P.wood;
       c.beginPath(); c.arc(0, 0, r * 0.28, 0, Math.PI * 2); c.fill();
+      // Heugabel; beim Gold-Bonus (at = Sekunden seit dem Bonus) sticht er zweimal in den Boden: Gabel nach vorn und schräg, kleine Erdbrocken
+      var gp = at !== undefined ? Math.min(1, at / GRAB) : 1, gj = at !== undefined ? Math.max(0, Math.sin(gp * Math.PI * 4)) : 0; // zweimal zustechen
+      c.save(); c.translate(r * 0.35 * gj, 0); c.translate(-r * 0.2, r * 0.9); c.rotate(0.25 * gj); c.translate(r * 0.2, -r * 0.9);
       c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.18);
       c.beginPath(); c.moveTo(-r * 0.2, r * 0.9); c.lineTo(r * 1.6, r * 0.9); c.stroke();
       c.strokeStyle = P.steel; c.lineWidth = 2;
@@ -2983,6 +3000,12 @@
       c.moveTo(r * 1.6, r * 0.9); c.lineTo(r * 2.0, r * 0.9);
       c.moveTo(r * 1.6, r * 1.3); c.lineTo(r * 2.0, r * 1.3);
       c.stroke();
+      c.restore();
+      if (at !== undefined && gp % 0.5 > 0.1) { // Erdbrocken fliegen bei jedem Stich auf
+        c.fillStyle = '#7a5a3a';
+        for (var gk = 0; gk < 4; gk++) { var gs = (gp % 0.5 - 0.1) / 0.4, ga = gk * 1.6 + 0.4; c.globalAlpha = Math.max(0, 1 - gs); c.beginPath(); c.arc(r * (2.1 + Math.cos(ga) * gs * 0.7), r * (0.9 + Math.sin(ga) * gs * 0.7), r * 0.1, 0, 7); c.fill(); }
+        c.globalAlpha = 1;
+      }
     } else if (type === 'digger') {
       // Gelber Helm mit Lampe und Spitzhacke
       c.fillStyle = '#e0b020';
@@ -3578,18 +3601,12 @@
       if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
       if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
         var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
-        // alle 10 s ein paar Schritte auf dem Holzboden (nur Darstellung, solange der Bogen verstaut ist)
-        var kz = clock + u.team * 3.7, kn = Math.floor(kz / 10), kp = (kz % 10) / 3, kgx = 0, kgy = 0;
-        if (kp < 1 && !(u.bogenT > 0)) {
-          var kox = ((kn % 3) - 1) * 0.09, koy = (kn % 2 ? 1 : -1) * 0.22, ks = Math.sin(Math.PI * kp);
-          kgx = kox * ks; kgy = koy * ks;
-          if (kp > 0.06 && kp < 0.94) kwant = kp < 0.5 ? Math.atan2(koy, kox) : Math.atan2(-koy, -kox); // schaut in Laufrichtung
-        }
-        u.wx = (u.wx || 0) + (kgx - (u.wx || 0)) * 0.25; u.wy = (u.wy || 0) + (kgy - (u.wy || 0)) * 0.25;
+        // alle 10 s kratzt er sich kurz am Kopf (nur Darstellung, solange der Bogen verstaut ist; Team 1 um 3,7 s versetzt)
+        var kz = (clock + u.team * 3.7) % 10;
+        kKratz[u.team] = kz < 1.2 && !(u.bogenT > 0) ? kz / 1.2 : 0;
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
-        var kschritt = Math.abs(kgy) > 0.01 && kp < 1 ? 1 + 0.04 * Math.sin(clock * 18) : 1; // leichtes Wippen beim Gehen
-        ctx.save(); ctx.translate((u.x + u.wx) * T, (u.y + u.wy) * T); ctx.rotate(u.ang); ctx.scale(kschritt, kschritt);
+        ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
         drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), faceAngle(u));

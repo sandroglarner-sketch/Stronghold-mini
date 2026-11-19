@@ -3,6 +3,7 @@
   // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
+  var kKratz = [0, 0]; // Kopfkratzen in der Burg je Team (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
   var KSCHRAEG = -0.5; // Nahkampfwaffe schräg nach vorn gehalten (Bogenmass)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
   function koenigOptik(id) { return KOENIGE[id] || KOENIGE.standard; }
@@ -26,7 +27,8 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r); // Bild bzw. in der Burg ohne Gegner: leere Hände
+    var kratzt = o.kratz > 0 && o.bogen && !(o.zieh > 0);
+    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r, kratzt); // Bild bzw. in der Burg ohne Gegner: leere Hände
     else if (o.bogen) kBogen(c, k, r, o);
     else { c.save(); c.translate(r * 0.45, 0); c.rotate(KSCHRAEG + (o.rot || 0)); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); } // Nahkampfwaffe immer etwas schräg
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
@@ -35,11 +37,20 @@
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.36, Math.PI * 0.55, Math.PI * 1.45); c.fill(); }
     kBart(c, k, r);
     kKrone(c, k, r);
+    if (kratzt) kKratzHand(c, k, r, o.kratz);
     c.restore();
   }
   // Hände in Ruhe (vorne links und rechts am Körper)
   var KRUHE = [[0.38, -0.66], [0.38, 0.66]];
-  function kRuhe(c, k, r) { kHand(c, r * KRUHE[0][0], r * KRUHE[0][1], r, k.haut); kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); }
+  function kRuhe(c, k, r, ohneLinks) { if (!ohneLinks) kHand(c, r * KRUHE[0][0], r * KRUHE[0][1], r, k.haut); kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); }
+  // Kopfkratzen: eine Hand geht zum Kopf, kratzt (kleines Hin und Her) und geht zurück; wird nach Kopf und Krone gezeichnet
+  function kKratzHand(c, k, r, p) {
+    var hin = Math.min(1, p / 0.25), zur = Math.min(1, (1 - p) / 0.25), e = Math.min(hin, zur); e = e * e * (3 - 2 * e);
+    var wackel = p > 0.25 && p < 0.75 ? Math.sin((p - 0.25) * 40) * r * 0.09 : 0;
+    var hx = r * KRUHE[0][0] + (r * -0.02 - r * KRUHE[0][0]) * e + wackel, hy = r * KRUHE[0][1] + (r * -0.38 - r * KRUHE[0][1]) * e;
+    c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(hx, hy, r * 0.16, 0, 7); c.fill(); c.stroke(); // Hand mit Rand, damit man sie auf dem Kopf sieht
+  }
   // Eigener Bogen des Königs (k.bogen). o.zieh 0..1 = Bogen hervorholen (0 = auf dem Rücken, 1 = schussbereit); o.str/o.vib/o.arrow = Sehne und Pfeil wie attackPose
   function kBogen(c, k, r, o) {
     var B = k.bogen || { holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0 }, e = Math.max(0, Math.min(1, o.zieh === undefined ? 1 : o.zieh));

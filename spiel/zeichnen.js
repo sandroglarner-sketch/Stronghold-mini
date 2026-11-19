@@ -470,18 +470,12 @@
       if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
       if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
         var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
-        // alle 10 s ein paar Schritte auf dem Holzboden (nur Darstellung, solange der Bogen verstaut ist)
-        var kz = clock + u.team * 3.7, kn = Math.floor(kz / 10), kp = (kz % 10) / 3, kgx = 0, kgy = 0;
-        if (kp < 1 && !(u.bogenT > 0)) {
-          var kox = ((kn % 3) - 1) * 0.09, koy = (kn % 2 ? 1 : -1) * 0.22, ks = Math.sin(Math.PI * kp);
-          kgx = kox * ks; kgy = koy * ks;
-          if (kp > 0.06 && kp < 0.94) kwant = kp < 0.5 ? Math.atan2(koy, kox) : Math.atan2(-koy, -kox); // schaut in Laufrichtung
-        }
-        u.wx = (u.wx || 0) + (kgx - (u.wx || 0)) * 0.25; u.wy = (u.wy || 0) + (kgy - (u.wy || 0)) * 0.25;
+        // alle 10 s kratzt er sich kurz am Kopf (nur Darstellung, solange der Bogen verstaut ist; Team 1 um 3,7 s versetzt)
+        var kz = (clock + u.team * 3.7) % 10;
+        kKratz[u.team] = kz < 1.2 && !(u.bogenT > 0) ? kz / 1.2 : 0;
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
-        var kschritt = Math.abs(kgy) > 0.01 && kp < 1 ? 1 + 0.04 * Math.sin(clock * 18) : 1; // leichtes Wippen beim Gehen
-        ctx.save(); ctx.translate((u.x + u.wx) * T, (u.y + u.wy) * T); ctx.rotate(u.ang); ctx.scale(kschritt, kschritt);
+        ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
         drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), faceAngle(u));
