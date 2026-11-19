@@ -127,9 +127,24 @@
             if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
             if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
           }
-          if (u.gT >= GD.alle) {
+          if (GD.art === 'kirche') { // Gebet und Unwetter
+            u.gT = 0;
+            if (u.gebetT > 0) { u.gebetT = Math.max(0, u.gebetT - dt); if (u.gebetT <= 0) { u.gunst = (u.gunst || 0) + 1; effects.push({ kind: 'puff', x: u.x, y: u.y - 0.5, team: u.team, t: 0, dur: 0.6 }); } }
+            if ((u.gunst || 0) >= GD.gunstMax) {
+              u.blitzT = (u.blitzT || 0) + dt;
+              while (u.blitzT >= GD.blitz.alle) {
+                u.blitzT -= GD.blitz.alle;
+                var bx1 = u.team === 0 ? W * 2 / 3 : 0.3, bx2 = u.team === 0 ? W - 0.3 : W / 3, blx = bx1 + simRand() * (bx2 - bx1), bly = 0.4 + simRand() * (H - 0.8);
+                applySplash(u.team, blx, -1, blx, bly, { atk: GD.blitz.schaden, splash: GD.blitz.radius, range: 99 }, null, false, false); // trifft alles vom Gegner im Umkreis
+                effects.push({ kind: 'blitz', x: blx, y: bly, t: 0, dur: 0.45, seed: Math.floor(simRand() * 1000) });
+                effects.push({ kind: 'blast', x: blx, y: bly, r: GD.blitz.radius, t: 0, dur: 0.45 });
+              }
+            }
+          }
+          else if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
-            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' ? 0 : GD.stufen[u.stufe - 1].gold; // Bank: Prozent des Goldes, aufgerundet
+            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
+            u.zahl = (u.zahl || 0) + 1;
             if (gg > 0 && !(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
@@ -141,7 +156,7 @@
           u.weg = { hin: [tuer, { x: u.x, y: ey }, { x: ecx, y: ey }, { x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }].map(rel),
                     zur: [{ x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }, { x: ecx, y: ey }, { x: u.x, y: ey }, tuer].map(rel) }; // direkt zurück ins Haus
         }
-        u.settled = { weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
+        u.settled = { gunst: u.gunst || 0, gebet: u.gebetT || 0, weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);

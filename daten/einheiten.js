@@ -55,9 +55,9 @@
       // Gebäude, ist 2 s drin, dann gibt es das Gold); heilt wie die Mauer (WALL.heal). Kann angegriffen werden; Bauern weichen an ihren Rand aus. passive = zählt nicht als Kampfeinheit.
       schmiede: { cat: 'building', name: 'Schmiede', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                   gebaeude: { w: 1.2, h: 1.0, alle: 5, stufen: [{ cost: 40, hp: 10, gold: 5 }, { cost: 80, hp: 20, gold: 10 }, { cost: 120, hp: 30, gold: 15 }] } },
-      // Adelshaus (Typ Gebäude): eine Stufe; 100 Gold, 20 Leben, alle 30 s +50 Gold. Darstellung: 2 s drin, ein Adliger geht langsam in die Burg, bleibt 5 s, geht zurück, 2 s drin.
+      // Adelshaus (Typ Gebäude): eine Stufe; 100 Gold, 20 Leben, alle 30 s Gold: zuerst 10, jedes Mal 10 mehr (10, 20, 30 …). Darstellung: 2 s drin, ein Adliger geht langsam in die Burg, bleibt 5 s, geht zurück, 2 s drin.
       adel: { cat: 'building', name: 'Adelshaus', cost: 100, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-              gebaeude: { w: 1.2, h: 1.0, alle: 30, stufen: [{ cost: 100, hp: 20, gold: 50 }] } },
+              gebaeude: { w: 1.2, h: 1.0, alle: 30, steigt: 10, stufen: [{ cost: 100, hp: 20, gold: 10 }] } }, // 1. Auszahlung 10 Gold, jede weitere 10 mehr
       // Bank (Typ Gebäude): 80 Gold, 20 Leben; alle 10 s +10 % deines Goldes (aufgerundet). Ein Geschäftsmann geht zum König (2 s), zurück, 1 s in der Bank.
       bank: { cat: 'building', name: 'Bank', cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
@@ -65,6 +65,11 @@
       // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
       dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 15, gold: 0 }] } },
+      // Kirche (Typ Gebäude): 120 Gold, 30 Leben (Annahme). Fertig: nochmals kaufen = ein Priester betet 20 s (50 Gold), danach Gunst +1 (Balken über der Kirche).
+      // Bei Gunst 5 kommt ein Unwetter über das gegnerische Drittel: jede Sekunde ein Blitz an einer zufälligen Stelle, 20 Schaden im Umkreis 1 an allem vom Gegner
+      // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
+      kirche: { cat: 'building', name: 'Kirche', cost: 120, staerke: 0, hp: 30, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+                gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1 }, stufen: [{ cost: 120, hp: 30, gold: 0 }] } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)

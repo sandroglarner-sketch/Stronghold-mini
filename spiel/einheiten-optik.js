@@ -619,6 +619,51 @@
           if (dp) figur(dp.x, dp.y, dp.ang, 'dieb', (0.05 + 0.45 * (0.5 + 0.5 * Math.sin(bnow * 2.5))) * Math.min(1, dk * 10, (1 - dk) * 10), sack); // Deckkraft 5–50 %
         }
       }
+    } else if (type === 'kirche') {
+      // Kirche von oben: Schiff mit steilem Schieferdach, vorne ein Glockenturm (Pyramidendach, Kreuz), Banner; darüber der Gunst-Balken (5 Felder).
+      // Betet der Priester (settled.gebet > 0), kniet er vor der Kirche, ein Schein pulsiert, das nächste Feld füllt sich.
+      var KG2 = CONFIG.units.kirche.gebaeude, kw2 = r * KG2.w / CONFIG.units.kirche.r, kh2 = r * KG2.h / CONFIG.units.kirche.r;
+      var KZ = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1, gunst: 0, gebet: 0 }, know = performance.now() / 1000;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -kw2 / 2 + 3, -kh2 / 2 + 4, kw2, kh2, 3); c.fill();
+      if (KZ.neu && KZ.bau < 1) {
+        c.fillStyle = '#a89c86'; rr(c, -kw2 / 2, -kh2 / 2, kw2, kh2, 3); c.fill();
+        c.save(); c.beginPath(); c.rect(-kw2 / 2, -kh2 / 2, kw2 * KZ.bau, kh2); c.clip(); c.fillStyle = '#5e6670'; rr(c, -kw2 / 2, -kh2 / 2, kw2, kh2, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -kw2 / 2, -kh2 / 2, kw2, kh2, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-kw2 / 2, -kh2 / 2); c.lineTo(kw2 / 2, kh2 / 2); c.moveTo(-kw2 / 2, kh2 / 2); c.lineTo(kw2 / 2, -kh2 / 2); c.stroke();
+      } else {
+        var kvy = KZ.ny === undefined ? 1 : KZ.ny, kvx = KZ.nx || 0; // Vorderseite (zum Weg)
+        var sw3 = kw2 * 0.62, sx3 = -sw3 / 2; // Schiff (quer zur Vorderseite)
+        c.fillStyle = '#5e6670'; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; c.fillRect(sx3, -kh2 / 2, sw3, kh2); c.strokeRect(sx3, -kh2 / 2, sw3, kh2);
+        c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(0, -kh2 / 2, sw3 / 2, kh2);
+        c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1; for (var ks = 1; ks < 7; ks++) { c.beginPath(); c.moveTo(sx3, -kh2 / 2 + kh2 * ks / 7); c.lineTo(sx3 + sw3, -kh2 / 2 + kh2 * ks / 7); c.stroke(); } // Schieferreihen
+        c.strokeStyle = '#3c424a'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(0, -kh2 / 2); c.lineTo(0, kh2 / 2); c.stroke(); // First
+        var tyk = kvy * (kh2 / 2 - r * 0.3), ts = r * 0.62; // Glockenturm an der Vorderseite
+        c.fillStyle = '#b8b0a2'; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; c.fillRect(-ts / 2, tyk - ts / 2, ts, ts); c.strokeRect(-ts / 2, tyk - ts / 2, ts, ts);
+        c.fillStyle = '#4e555e'; c.beginPath(); c.moveTo(-ts / 2, tyk - ts / 2); c.lineTo(ts / 2, tyk - ts / 2); c.lineTo(0, tyk); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-ts / 2, tyk + ts / 2); c.lineTo(ts / 2, tyk + ts / 2); c.lineTo(0, tyk); c.closePath(); c.fill();
+        c.fillStyle = '#6e767f'; c.beginPath(); c.moveTo(-ts / 2, tyk - ts / 2); c.lineTo(-ts / 2, tyk + ts / 2); c.lineTo(0, tyk); c.closePath(); c.fill(); c.beginPath(); c.moveTo(ts / 2, tyk - ts / 2); c.lineTo(ts / 2, tyk + ts / 2); c.lineTo(0, tyk); c.closePath(); c.fill();
+        c.strokeStyle = '#e2b13c'; c.lineWidth = Math.max(2, r * 0.09); c.beginPath(); c.moveTo(0, tyk - r * 0.2); c.lineTo(0, tyk + r * 0.2); c.moveTo(-r * 0.12, tyk - r * 0.06); c.lineTo(r * 0.12, tyk - r * 0.06); c.stroke(); // Kreuz
+        c.fillStyle = col; c.fillRect(sx3 + sw3 - r * 0.05, -kvy * kh2 * 0.15 - r * 0.15, r * 0.22, r * 0.3); // Banner
+        if (KZ.bau < 1) { c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -kw2 / 2 - 3, -kh2 / 2 - 3, kw2 + 6, kh2 + 6, 4); c.stroke(); c.setLineDash([]); }
+        if (KZ.phase >= 0) { // Gunst-Balken: 5 Felder über der Kirche, das laufende Gebet füllt das nächste
+          var gb = KZ.gunst || 0, gmax = KG2.gunstMax, gw = kw2 + 6, gx0 = -gw / 2, gy0 = -kh2 / 2 - 22, gfw = gw / gmax;
+          c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(gx0 - 1, gy0 - 1, gw + 2, 8);
+          for (var gi = 0; gi < gmax; gi++) {
+            var fill = gi < gb ? 1 : gi === gb && KZ.gebet > 0 ? 1 - KZ.gebet / KG2.gebet.dauer : 0;
+            c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(gx0 + gi * gfw + 1, gy0, gfw - 2, 6);
+            if (fill > 0) { c.fillStyle = gb >= gmax ? '#b9d4ff' : '#f0c63a'; c.fillRect(gx0 + gi * gfw + 1, gy0, (gfw - 2) * fill, 6); }
+          }
+          if (KZ.gebet > 0) { // Priester kniet vor der Kirche und betet
+            var pext = Math.abs(kvy) * kh2 / 2 + Math.abs(kvx) * kw2 / 2, ppx = kvx * (pext + r * 0.4) + r * 0.35, ppy = kvy * (pext + r * 0.4), psm = r * CONFIG.units.farmer.r / CONFIG.units.kirche.r * 1.1, pg = 0.5 + 0.5 * Math.sin(know * 3);
+            c.fillStyle = 'rgba(255,240,170,' + (0.18 + 0.2 * pg) + ')'; c.beginPath(); c.arc(ppx, ppy, psm * 1.6, 0, Math.PI * 2); c.fill(); // Schein
+            c.save(); c.translate(ppx, ppy); c.rotate(Math.atan2(-kvy, -kvx)); // schaut zur Kirche
+            c.fillStyle = '#3b2f2a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-psm * 0.15, 0, psm * 0.75, psm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Kutte
+            c.fillStyle = '#f2ece0'; c.fillRect(psm * 0.05, -psm * 0.12, psm * 0.3, psm * 0.24); // Kragen
+            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.15, 0, psm * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
+            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.55, -psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.arc(psm * 0.55, psm * 0.08, psm * 0.13, 0, Math.PI * 2); c.fill(); // gefaltete Hände
+            c.restore();
+          }
+        }
+      }
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
       if (!settled) {

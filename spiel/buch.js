@@ -27,11 +27,13 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
-    if (d.gebaeude) { var GBt = d.gebaeude;
-      a.push(GBt.art === 'zins' ? GBt.stufen[0].hp + ' Leben, alle ' + GBt.alle + ' s <b>+' + GBt.prozent + ' % deines Goldes</b> (aufgerundet)'
-        : GBt.art === 'dieb' ? GBt.stufen[0].hp + ' Leben, klaut alle ' + GBt.alle + ' s <b>' + GBt.prozent + ' % des gegnerischen Goldes</b> (aufgerundet)'
-        : GBt.stufen.length === 1 ? GBt.stufen[0].hp + ' Leben, <b>+' + GBt.stufen[0].gold + ' Gold alle ' + GBt.alle + ' s</b>'
-        : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
+    if (d.gebaeude) { var GBt = d.gebaeude; // Gebäude: keine Leben (stehen oben), immer «alle … s»
+      a.push(GBt.art === 'zins' ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.prozent + ' % deines Goldes</b> (aufgerundet).'
+        : GBt.art === 'dieb' ? 'Alle ' + GBt.alle + ' s klaut ein Dieb <b>' + GBt.prozent + ' % des gegnerischen Goldes</b> (aufgerundet).'
+        : GBt.art === 'kirche' ? 'Nochmals kaufen: ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter</b> über das gegnerische Drittel: alle ' + GBt.blitz.alle + ' s ein Blitz mit ' + GBt.blitz.schaden + ' Schaden im Umkreis ' + GBt.blitz.radius + ', bis die Kirche zerstört ist.'
+        : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
+        : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
+        : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');

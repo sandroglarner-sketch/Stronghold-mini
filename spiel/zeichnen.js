@@ -244,6 +244,14 @@
         ctx.beginPath(); ctx.arc(ox, oy, 6, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(ox - 1.5, oy - 1.5, 2, 0, Math.PI * 2); ctx.fill();
+      } else if (e.kind === 'blitz') { // Blitz: Zickzack von oben bis zum Einschlag, kurzer heller Schein
+        ctx.globalAlpha = Math.max(0, 1 - k * 1.3);
+        var bxp = e.x * T, byp = e.y * T, bs = e.seed || 1, by0 = Math.max(0, byp - 260);
+        ctx.strokeStyle = 'rgba(200,220,255,0.6)'; ctx.lineWidth = 9; ctx.lineJoin = 'round';
+        var zick = function () { ctx.beginPath(); ctx.moveTo(bxp + ((bs * 7) % 40) - 20, by0); for (var zi = 1; zi <= 6; zi++) { var zf = zi / 6; ctx.lineTo(bxp + (zi < 6 ? (((bs * (zi + 3) * 13) % 36) - 18) * (1 - zf) : 0), by0 + (byp - by0) * zf); } ctx.stroke(); };
+        zick(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; zick();
+        ctx.fillStyle = 'rgba(255,255,220,' + (0.5 * (1 - k)) + ')'; ctx.beginPath(); ctx.arc(bxp, byp, T * 0.9, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
       } else if (e.kind === 'blast') {
         var br = e.r * T * (0.35 + 0.65 * Math.min(1, k * 2));
         ctx.globalAlpha = 1 - k;
@@ -481,5 +489,15 @@
       }
     }
     drawEffects();
+    // Unwetter über dem gegnerischen Drittel (Kirche mit voller Gunst): dunkle, ziehende Wolken
+    for (var wi2 = 0; wi2 < units.length; wi2++) {
+      var ku = units[wi2], KG = CONFIG.units[ku.type].gebaeude;
+      if (!KG || !KG.gunstMax || ku.hp <= 0 || (ku.gunst || 0) < KG.gunstMax) continue;
+      var wx1 = ku.team === 0 ? W * 2 / 3 * T : 0, ww = W / 3 * T, wt = performance.now() / 1000;
+      ctx.save(); ctx.fillStyle = 'rgba(30,35,55,0.28)'; ctx.fillRect(wx1, 0, ww, H * T);
+      ctx.fillStyle = 'rgba(55,60,80,0.55)';
+      for (var cw2 = 0; cw2 < 7; cw2++) { var cxw = wx1 + ((cw2 * 97 + wt * 18) % (ww + 120)) - 60, cyw = 18 + (cw2 % 3) * 22; ctx.beginPath(); ctx.ellipse(cxw, cyw, 70, 26, 0, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    }
   }
 

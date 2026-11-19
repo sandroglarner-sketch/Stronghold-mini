@@ -246,7 +246,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -371,11 +371,17 @@
     if (!d.gebaeude) return d.cost;
     var g = meinGebaeude(team, type), st = d.gebaeude.stufen;
     if (!g) return gebPlaetze(team).length ? st[0].cost : Infinity;
-    if (g.bau || g.stufe >= st.length) return Infinity;
+    if (g.bau) return Infinity;
+    if (d.gebaeude.gebet) return g.gebetT > 0 || (g.gunst || 0) >= d.gebaeude.gunstMax ? Infinity : d.gebaeude.gebet.cost; // Kirche: Priester beten lassen
+    if (g.stufe >= st.length) return Infinity;
     return st[g.stufe].cost;
   }
   function buyGebaeude(team, type) {
     var d = CONFIG.units[type], G = d.gebaeude, g = meinGebaeude(team, type), dir = team === 0 ? 1 : -1;
+    if (g && G.gebet) { // Kirche: ein Priester betet (danach Gunst +1)
+      if (g.bau || g.gebetT > 0 || (g.gunst || 0) >= G.gunstMax) return false;
+      g.gebetT = G.gebet.dauer; return true;
+    }
     if (g) { // nächste Stufe: Arbeiter baut die zusätzlichen Leben
       if (g.bau || g.stufe >= G.stufen.length) return false;
       g.ziel = g.stufe + 1; g.max = G.stufen[g.ziel - 1].hp; g.bau = true;
