@@ -13,7 +13,7 @@
     var ok = types.filter(function (t) { return CONFIG.units[t].cost <= budget; });
     return ok.length ? pick(ok) : null;
   }
-  function countFarmers(team, jagd) { // jagd: für den Jagd-Vorsprung zählt eine Karawane wie 2 Bauern
+  function countFarmers(team, jagd) { // jagd: eine Karawane zählt wie 2 Bauern (Jagd-Vorsprung und Bauern-Obergrenze des Bots)
     var n = 0;
     for (var i = 0; i < units.length; i++) {
       if (units[i].team !== team || units[i].hp <= 0) continue;
@@ -182,7 +182,7 @@
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
     var guard = 0;
-    while (guard++ < 3 && countFarmers(1) < R.farmers && countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
+    while (guard++ < 3 && countFarmers(1, true) < R.farmers && /* eigene Karawanen zählen wie 2 Bauern */ countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
     // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
