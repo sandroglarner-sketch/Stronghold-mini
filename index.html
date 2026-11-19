@@ -977,39 +977,40 @@
   // krone: reif zacken diadem hoch helm kapuze turban lorbeer hoerner pelz wolf spitzhut mitra eis federn pilz dreispitz strohhut topf; kf = Kronenfarbe
   // umhang: Farbe oder 'team' (= Teamfarbe abgedunkelt, wie der Standard-König); muster: hermelin streifen kreuz punkte sterne blaetter flicken muenzen zacken schuppen
   // ruestung, haut, haar (leer = keine Haare): Farben; bart: kurz voll lang spitz schnauz stoppel zopf; waffe: zweihaender schwert saebel axt kolben speer zepter forke holzschwert; wf = Waffenfarbe
-  // bogen: eigener Bogen (holz = Farbe, enden = Farbe der Bogenenden/Beschläge, leer = keine; sehne; form 0 = einfach, 1 = Enden nach vorn gebogen (Reflexbogen), 2 = etwas länger). Nur leichte Unterschiede.
+  // bogen: eigener Bogen (holz = Farbe, enden = Farbe der Bogenenden/Beschläge, leer = keine; sehne; form 0 = einfach, 1 = Enden nach vorn gebogen (Reflexbogen), 2 = etwas länger;
+  //   deko = Verzierung passend zum König: gold baender ranken stroh flicken sterne feder zacken fell runen zaehne mond kreuz kristall muenzen pilz tau horn flamme; dc = Farbe der Verzierung (sonst enden)).
   // Der Saum des Umhangs ist immer in der Teamfarbe (blau/rot), damit die Seiten erkennbar bleiben. Die Waffe ist nur Aussehen.
   var KOENIGE = {
     standard: {krone: 'reif', kf: '#d4a017', umhang: 'team', muster: '', ruestung: '#7d8790', haut: '#d9a066', haar: '', bart: '', waffe: 'zweihaender', wf: '#e3eaec', bogen: {holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0}},  // Der heutige König
-    loewenherz: {krone: 'zacken', kf: '#e2b22c', umhang: '#8a2432', muster: 'hermelin', ruestung: '#c9a54a', haut: '#e0ac7a', haar: '#c77d2a', bart: 'voll', waffe: 'zweihaender', wf: '#f1e4b8', bogen: {holz: '#6b4a2b', enden: '#e2b22c', sehne: '#e8e0cc', form: 2}},  // Goldrüstung, Hermelinkragen, rote Mähne
-    jungkoenig: {krone: 'diadem', kf: '#d9dde2', umhang: '#2c5d55', muster: 'streifen', ruestung: '#a7b4bd', haut: '#f0c29a', haar: '#3b2a1c', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#9a7444', enden: '#d9dde2', sehne: '#e8e0cc', form: 0}},  // Schlankes Silberdiadem, kein Bart
-    waldkoenig: {krone: 'lorbeer', kf: '#4f8a3a', umhang: '#4a5a2a', muster: 'blaetter', ruestung: '#7a5a3a', haut: '#c98b5e', haar: '#6b4a2b', bart: 'kurz', waffe: 'axt', wf: '#cfd6d8', bogen: {holz: '#5a3d22', enden: '#4f8a3a', sehne: '#d8cfb8', form: 1}},  // Blätterkranz, Lederrüstung, Axt
-    strohkoenig: {krone: 'strohhut', kf: '#e6c35c', umhang: '#7a8a3a', muster: 'flicken', ruestung: '#a07a4a', haut: '#e2a878', haar: '#b07a3a', bart: 'stoppel', waffe: 'forke', wf: '#9aa0a4', bogen: {holz: '#7a5a3a', enden: '#e6c35c', sehne: '#e8e0cc', form: 2}},  // Strohhut statt Krone, Heugabel. Ganz zum Anfang, noch vor dem Banditen
-    tollpatsch: {krone: 'topf', kf: '#9aa3aa', umhang: '#b0603a', muster: 'punkte', ruestung: '#c9b48a', haut: '#f2c49c', haar: '#d9a441', bart: '', waffe: 'holzschwert', wf: '#c08a4a', bogen: {holz: '#a0804e', enden: '#9aa3aa', sehne: '#e8e0cc', form: 0}},  // Kochtopf als Helm, Holzschwert
-    bandit: {krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#8a6538', enden: '#4b4038', sehne: '#d8cfb8', form: 1}},  // Kapuze statt Krone, geflickter Umhang
-    prinz: {krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#6b4a2b', enden: '#e8c547', sehne: '#e8e0cc', form: 2}},  // Schmaler Goldreif, Sternenumhang
-    feldherr: {krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2', bogen: {holz: '#9a7444', enden: '#c9a54a', sehne: '#e8e0cc', form: 0}},  // Eisenhelm mit Goldrand, Feldzeichen
-    rabenstein: {krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017', bogen: {holz: '#5a3d22', enden: '#d4a017', sehne: '#d8cfb8', form: 1}},  // Hohe Krone, Hermelin, Zepter
-    raubritterkuno: {krone: 'hoerner', kf: '#8a8f93', umhang: '#3b2f2a', muster: 'flicken', ruestung: '#55595c', haut: '#c98d5e', haar: '#2b2118', bart: 'voll', waffe: 'axt', wf: '#b9c0c4', bogen: {holz: '#7a5a3a', enden: '#8a8f93', sehne: '#e8e0cc', form: 2}},  // Hörnerhelm, schwere Axt
-    graefineisenhand: {krone: 'diadem', kf: '#c0c7cc', umhang: '#5a2232', muster: 'streifen', ruestung: '#9aa6ae', haut: '#efc4a0', haar: '#2d1d14', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#a0804e', enden: '#c0c7cc', sehne: '#e8e0cc', form: 0}},  // Silberdiadem, Weinrot
-    baerenfuerst: {krone: 'pelz', kf: '#6b4a2b', umhang: '#5b3d24', muster: 'hermelin', ruestung: '#6e5a44', haut: '#d69d6c', haar: '#4a3222', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#8a6538', enden: '#6b4a2b', sehne: '#d8cfb8', form: 1}},  // Bärenfell auf dem Kopf
-    herzognebelwald: {krone: 'lorbeer', kf: '#9fb59a', umhang: '#4d5b5f', muster: 'blaetter', ruestung: '#7f8b8a', haut: '#dcae86', haar: '#c8ccc9', bart: 'lang', waffe: 'speer', wf: '#d6dde0', bogen: {holz: '#6b4a2b', enden: '#9fb59a', sehne: '#e8e0cc', form: 2}},  // Grauer Kranz, langer weisser Bart
-    sumpfhexe: {krone: 'spitzhut', kf: '#3f4f2a', umhang: '#2f3d22', muster: 'punkte', ruestung: '#4e5a3a', haut: '#a7c08a', haar: '#2a2a2a', bart: '', waffe: 'zepter', wf: '#7bd17a', bogen: {holz: '#9a7444', enden: '#3f4f2a', sehne: '#e8e0cc', form: 0}},  // Spitzhut, giftgrüner Stab
-    koenigrotbart: {krone: 'zacken', kf: '#d4a017', umhang: '#a3271f', muster: 'hermelin', ruestung: '#7d8790', haut: '#e2ac7c', haar: '#b8401c', bart: 'lang', waffe: 'zweihaender', wf: '#e3eaec', bogen: {holz: '#5a3d22', enden: '#d4a017', sehne: '#d8cfb8', form: 1}},  // Klassische Zackenkrone, roter Bart
-    markgrafmoorstein: {krone: 'helm', kf: '#7a6a4a', umhang: '#4a4136', muster: 'kreuz', ruestung: '#6a6c66', haut: '#cf9a70', haar: '', bart: 'spitz', waffe: 'speer', wf: '#c6cdd0', bogen: {holz: '#7a5a3a', enden: '#7a6a4a', sehne: '#e8e0cc', form: 2}},  // Grauer Topfhelm
-    wolfsjarl: {krone: 'wolf', kf: '#8d939a', umhang: '#36414a', muster: 'streifen', ruestung: '#5c656c', haut: '#e6b894', haar: '#d9c27a', bart: 'zopf', waffe: 'axt', wf: '#cfd6d8', bogen: {holz: '#a0804e', enden: '#8d939a', sehne: '#e8e0cc', form: 0}},  // Wolfsfell, Zopfbart
-    kalifsandsturm: {krone: 'turban', kf: '#e9dfc4', umhang: '#c08a2e', muster: 'streifen', ruestung: '#a88a5a', haut: '#b57a4e', haar: '', bart: 'spitz', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#8a6538', enden: '#e9dfc4', sehne: '#d8cfb8', form: 1}},  // Turban mit Juwel, Krummsäbel
-    fuerstbischofgerold: {krone: 'mitra', kf: '#f1ece0', umhang: '#6d2a6a', muster: 'kreuz', ruestung: '#c9c2b0', haut: '#ecc09a', haar: '', bart: '', waffe: 'zepter', wf: '#d4a017', bogen: {holz: '#6b4a2b', enden: '#f1ece0', sehne: '#e8e0cc', form: 2}},  // Bischofsmütze, Goldstab
-    schwarzeritter: {krone: 'helm', kf: '#2a2a2e', umhang: '#1c1c20', muster: '', ruestung: '#33363a', haut: '#c98d5e', haar: '', bart: '', waffe: 'zweihaender', wf: '#6a6f75', bogen: {holz: '#9a7444', enden: '#2a2a2e', sehne: '#e8e0cc', form: 0}},  // Alles schwarz, dunkle Klinge
-    zarinfrostmantel: {krone: 'eis', kf: '#9ad3f0', umhang: '#dfeaf2', muster: 'hermelin', ruestung: '#a9c2d1', haut: '#f3d2b8', haar: '#f2f2f2', bart: '', waffe: 'speer', wf: '#bfe6fa', bogen: {holz: '#5a3d22', enden: '#9ad3f0', sehne: '#d8cfb8', form: 1}},  // Eiskrone, weisser Mantel
-    junkerhabgier: {krone: 'hoch', kf: '#e5c04a', umhang: '#2e6a3a', muster: 'muenzen', ruestung: '#c9a54a', haut: '#f0bf96', haar: '#5a3a1e', bart: 'schnauz', waffe: 'zepter', wf: '#e5c04a', bogen: {holz: '#7a5a3a', enden: '#e5c04a', sehne: '#e8e0cc', form: 2}},  // Goldrüstung voller Münzen
-    vogtgrimmbart: {krone: 'reif', kf: '#8a7a5a', umhang: '#4a3f33', muster: 'kreuz', ruestung: '#6e7377', haut: '#d19c70', haar: '#7a7a7a', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#a0804e', enden: '#8a7a5a', sehne: '#e8e0cc', form: 0}},  // Eisenreif, grauer Vollbart
-    kaiseringoldfeder: {krone: 'federn', kf: '#e8b830', umhang: '#e0b23a', muster: 'sterne', ruestung: '#d9c38a', haut: '#e9bb90', haar: '#2b1b10', bart: '', waffe: 'schwert', wf: '#f1e4b8', bogen: {holz: '#8a6538', enden: '#e8b830', sehne: '#d8cfb8', form: 1}},  // Federkrone, ganz in Gold
-    pilzkoenig: {krone: 'pilz', kf: '#c8382c', umhang: '#7a5a3a', muster: 'punkte', ruestung: '#a8946a', haut: '#e8c9a0', haar: '', bart: 'lang', waffe: 'zepter', wf: '#c8382c', bogen: {holz: '#6b4a2b', enden: '#c8382c', sehne: '#e8e0cc', form: 2}},  // Fliegenpilz als Hut
-    admiralsalzwind: {krone: 'dreispitz', kf: '#1f2a40', umhang: '#24406a', muster: 'streifen', ruestung: '#c9b07a', haut: '#d79f72', haar: '#e2e2e2', bart: 'schnauz', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#9a7444', enden: '#1f2a40', sehne: '#e8e0cc', form: 0}},  // Dreispitz, Marineblau
-    khansteppensturm: {krone: 'pelz', kf: '#8a5a2e', umhang: '#7a3a22', muster: 'zacken', ruestung: '#8a6a44', haut: '#c78a58', haar: '#1e1a16', bart: 'schnauz', waffe: 'saebel', wf: '#d6dde0', bogen: {holz: '#5a3d22', enden: '#8a5a2e', sehne: '#d8cfb8', form: 1}},  // Pelzmütze, Krummsäbel
-    drachenkoenig: {krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a', bogen: {holz: '#7a5a3a', enden: '#3f7a3a', sehne: '#e8e0cc', form: 2}},  // Drachenhörner, glühende Klinge
-    schattenkoenigin: {krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0', bogen: {holz: '#a0804e', enden: '#7a5ac8', sehne: '#e8e0cc', form: 0}},  // Violette Krone, Sternenmantel
+    loewenherz: {krone: 'zacken', kf: '#e2b22c', umhang: '#8a2432', muster: 'hermelin', ruestung: '#c9a54a', haut: '#e0ac7a', haar: '#c77d2a', bart: 'voll', waffe: 'zweihaender', wf: '#f1e4b8', bogen: {holz: '#6b4a2b', enden: '#e2b22c', sehne: '#e8e0cc', form: 2, deko: 'gold'}},  // Goldrüstung, Hermelinkragen, rote Mähne
+    jungkoenig: {krone: 'diadem', kf: '#d9dde2', umhang: '#2c5d55', muster: 'streifen', ruestung: '#a7b4bd', haut: '#f0c29a', haar: '#3b2a1c', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#9a7444', enden: '#d9dde2', sehne: '#e8e0cc', form: 0, deko: 'baender'}},  // Schlankes Silberdiadem, kein Bart
+    waldkoenig: {krone: 'lorbeer', kf: '#4f8a3a', umhang: '#4a5a2a', muster: 'blaetter', ruestung: '#7a5a3a', haut: '#c98b5e', haar: '#6b4a2b', bart: 'kurz', waffe: 'axt', wf: '#cfd6d8', bogen: {holz: '#5a3d22', enden: '#4f8a3a', sehne: '#d8cfb8', form: 1, deko: 'ranken'}},  // Blätterkranz, Lederrüstung, Axt
+    strohkoenig: {krone: 'strohhut', kf: '#e6c35c', umhang: '#7a8a3a', muster: 'flicken', ruestung: '#a07a4a', haut: '#e2a878', haar: '#b07a3a', bart: 'stoppel', waffe: 'forke', wf: '#9aa0a4', bogen: {holz: '#7a5a3a', enden: '#e6c35c', sehne: '#e8e0cc', form: 0, deko: 'stroh'}},  // Strohhut statt Krone, Heugabel. Ganz zum Anfang, noch vor dem Banditen
+    tollpatsch: {krone: 'topf', kf: '#9aa3aa', umhang: '#b0603a', muster: 'punkte', ruestung: '#c9b48a', haut: '#f2c49c', haar: '#d9a441', bart: '', waffe: 'holzschwert', wf: '#c08a4a', bogen: {holz: '#a0804e', enden: '#9aa3aa', sehne: '#e8e0cc', form: 0, deko: 'flicken'}},  // Kochtopf als Helm, Holzschwert
+    bandit: {krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#8a6538', enden: '#4b4038', sehne: '#d8cfb8', form: 1, deko: 'flicken'}},  // Kapuze statt Krone, geflickter Umhang
+    prinz: {krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#6b4a2b', enden: '#e8c547', sehne: '#e8e0cc', form: 2, deko: 'sterne'}},  // Schmaler Goldreif, Sternenumhang
+    feldherr: {krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2', bogen: {holz: '#9a7444', enden: '#c9a54a', sehne: '#e8e0cc', form: 0, deko: 'baender'}},  // Eisenhelm mit Goldrand, Feldzeichen
+    rabenstein: {krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017', bogen: {holz: '#5a3d22', enden: '#d4a017', sehne: '#d8cfb8', form: 1, dc: '#1c1a24', deko: 'feder'}},  // Hohe Krone, Hermelin, Zepter
+    raubritterkuno: {krone: 'hoerner', kf: '#8a8f93', umhang: '#3b2f2a', muster: 'flicken', ruestung: '#55595c', haut: '#c98d5e', haar: '#2b2118', bart: 'voll', waffe: 'axt', wf: '#b9c0c4', bogen: {holz: '#7a5a3a', enden: '#8a8f93', sehne: '#e8e0cc', form: 2, deko: 'zacken'}},  // Hörnerhelm, schwere Axt
+    graefineisenhand: {krone: 'diadem', kf: '#c0c7cc', umhang: '#5a2232', muster: 'streifen', ruestung: '#9aa6ae', haut: '#efc4a0', haar: '#2d1d14', bart: '', waffe: 'schwert', wf: '#e3eaec', bogen: {holz: '#5a5f66', enden: '#c0c7cc', sehne: '#e8e0cc', form: 0, deko: 'baender'}},  // Silberdiadem, Weinrot
+    baerenfuerst: {krone: 'pelz', kf: '#6b4a2b', umhang: '#5b3d24', muster: 'hermelin', ruestung: '#6e5a44', haut: '#d69d6c', haar: '#4a3222', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#8a6538', enden: '#6b4a2b', sehne: '#d8cfb8', form: 1, deko: 'fell'}},  // Bärenfell auf dem Kopf
+    herzognebelwald: {krone: 'lorbeer', kf: '#9fb59a', umhang: '#4d5b5f', muster: 'blaetter', ruestung: '#7f8b8a', haut: '#dcae86', haar: '#c8ccc9', bart: 'lang', waffe: 'speer', wf: '#d6dde0', bogen: {holz: '#6b4a2b', enden: '#9fb59a', sehne: '#e8e0cc', form: 2, deko: 'ranken'}},  // Grauer Kranz, langer weisser Bart
+    sumpfhexe: {krone: 'spitzhut', kf: '#3f4f2a', umhang: '#2f3d22', muster: 'punkte', ruestung: '#4e5a3a', haut: '#a7c08a', haar: '#2a2a2a', bart: '', waffe: 'zepter', wf: '#7bd17a', bogen: {holz: '#4a3b2a', enden: '#3f4f2a', sehne: '#e8e0cc', form: 0, dc: '#7bd17a', deko: 'runen'}},  // Spitzhut, giftgrüner Stab
+    koenigrotbart: {krone: 'zacken', kf: '#d4a017', umhang: '#a3271f', muster: 'hermelin', ruestung: '#7d8790', haut: '#e2ac7c', haar: '#b8401c', bart: 'lang', waffe: 'zweihaender', wf: '#e3eaec', bogen: {holz: '#5a3d22', enden: '#d4a017', sehne: '#d8cfb8', form: 1, deko: 'gold'}},  // Klassische Zackenkrone, roter Bart
+    markgrafmoorstein: {krone: 'helm', kf: '#7a6a4a', umhang: '#4a4136', muster: 'kreuz', ruestung: '#6a6c66', haut: '#cf9a70', haar: '', bart: 'spitz', waffe: 'speer', wf: '#c6cdd0', bogen: {holz: '#7a5a3a', enden: '#7a6a4a', sehne: '#e8e0cc', form: 2, deko: 'baender'}},  // Grauer Topfhelm
+    wolfsjarl: {krone: 'wolf', kf: '#8d939a', umhang: '#36414a', muster: 'streifen', ruestung: '#5c656c', haut: '#e6b894', haar: '#d9c27a', bart: 'zopf', waffe: 'axt', wf: '#cfd6d8', bogen: {holz: '#a0804e', enden: '#8d939a', sehne: '#e8e0cc', form: 0, deko: 'zaehne'}},  // Wolfsfell, Zopfbart
+    kalifsandsturm: {krone: 'turban', kf: '#e9dfc4', umhang: '#c08a2e', muster: 'streifen', ruestung: '#a88a5a', haut: '#b57a4e', haar: '', bart: 'spitz', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#8a6538', enden: '#e9dfc4', sehne: '#d8cfb8', form: 1, dc: '#e2b22c', deko: 'mond'}},  // Turban mit Juwel, Krummsäbel
+    fuerstbischofgerold: {krone: 'mitra', kf: '#f1ece0', umhang: '#6d2a6a', muster: 'kreuz', ruestung: '#c9c2b0', haut: '#ecc09a', haar: '', bart: '', waffe: 'zepter', wf: '#d4a017', bogen: {holz: '#efe7d4', enden: '#f1ece0', sehne: '#e8e0cc', form: 2, dc: '#d4a017', deko: 'kreuz'}},  // Bischofsmütze, Goldstab
+    schwarzeritter: {krone: 'helm', kf: '#2a2a2e', umhang: '#1c1c20', muster: '', ruestung: '#33363a', haut: '#c98d5e', haar: '', bart: '', waffe: 'zweihaender', wf: '#6a6f75', bogen: {holz: '#2a2a2e', enden: '#2a2a2e', sehne: '#e8e0cc', form: 0, dc: '#6a6f75', deko: 'zacken'}},  // Alles schwarz, dunkle Klinge
+    zarinfrostmantel: {krone: 'eis', kf: '#9ad3f0', umhang: '#dfeaf2', muster: 'hermelin', ruestung: '#a9c2d1', haut: '#f3d2b8', haar: '#f2f2f2', bart: '', waffe: 'speer', wf: '#bfe6fa', bogen: {holz: '#cfe7f5', enden: '#9ad3f0', sehne: '#d8cfb8', form: 1, deko: 'kristall'}},  // Eiskrone, weisser Mantel
+    junkerhabgier: {krone: 'hoch', kf: '#e5c04a', umhang: '#2e6a3a', muster: 'muenzen', ruestung: '#c9a54a', haut: '#f0bf96', haar: '#5a3a1e', bart: 'schnauz', waffe: 'zepter', wf: '#e5c04a', bogen: {holz: '#7a5a3a', enden: '#e5c04a', sehne: '#e8e0cc', form: 2, deko: 'muenzen'}},  // Goldrüstung voller Münzen
+    vogtgrimmbart: {krone: 'reif', kf: '#8a7a5a', umhang: '#4a3f33', muster: 'kreuz', ruestung: '#6e7377', haut: '#d19c70', haar: '#7a7a7a', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', bogen: {holz: '#a0804e', enden: '#8a7a5a', sehne: '#e8e0cc', form: 0, deko: 'baender'}},  // Eisenreif, grauer Vollbart
+    kaiseringoldfeder: {krone: 'federn', kf: '#e8b830', umhang: '#e0b23a', muster: 'sterne', ruestung: '#d9c38a', haut: '#e9bb90', haar: '#2b1b10', bart: '', waffe: 'schwert', wf: '#f1e4b8', bogen: {holz: '#8a6538', enden: '#e8b830', sehne: '#d8cfb8', form: 1, dc: '#e8b830', deko: 'feder'}},  // Federkrone, ganz in Gold
+    pilzkoenig: {krone: 'pilz', kf: '#c8382c', umhang: '#7a5a3a', muster: 'punkte', ruestung: '#a8946a', haut: '#e8c9a0', haar: '', bart: 'lang', waffe: 'zepter', wf: '#c8382c', bogen: {holz: '#6b4a2b', enden: '#c8382c', sehne: '#e8e0cc', form: 2, deko: 'pilz'}},  // Fliegenpilz als Hut
+    admiralsalzwind: {krone: 'dreispitz', kf: '#1f2a40', umhang: '#24406a', muster: 'streifen', ruestung: '#c9b07a', haut: '#d79f72', haar: '#e2e2e2', bart: 'schnauz', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#9a7444', enden: '#1f2a40', sehne: '#e8e0cc', form: 0, deko: 'tau'}},  // Dreispitz, Marineblau
+    khansteppensturm: {krone: 'pelz', kf: '#8a5a2e', umhang: '#7a3a22', muster: 'zacken', ruestung: '#8a6a44', haut: '#c78a58', haar: '#1e1a16', bart: 'schnauz', waffe: 'saebel', wf: '#d6dde0', bogen: {holz: '#d8c7a0', enden: '#8a5a2e', sehne: '#d8cfb8', form: 1, deko: 'horn'}},  // Pelzmütze, Krummsäbel
+    drachenkoenig: {krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a', bogen: {holz: '#3f5a2e', enden: '#3f7a3a', sehne: '#e8e0cc', form: 2, deko: 'flamme'}},  // Drachenhörner, glühende Klinge
+    schattenkoenigin: {krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0', bogen: {holz: '#2a2236', enden: '#7a5ac8', sehne: '#e8e0cc', form: 0, dc: '#b89cff', deko: 'runen'}},  // Violette Krone, Sternenmantel
   };
   // Zu Beginn hat der Spieler nur den Standard-König; alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
   var KOENIG_SPIELER = [{ id: 'standard', name: 'Standard' }];
@@ -1077,7 +1078,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '0570b3e0eb'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'a856830ee9'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1279,6 +1280,84 @@
     c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
     c.beginPath(); c.arc(hx, hy, r * 0.16, 0, 7); c.fill(); c.stroke(); // Hand mit Rand, damit man sie auf dem Kopf sieht
   }
+  // Verzierung des Königsbogens (B.deko), passend zum König; Punkte auf dem Bogen: t 0 = oberes Ende, 0.5 = Griff, 1 = unteres Ende
+  function kBogenDeko(c, B, r, L) {
+    var dc = B.dc || B.enden || '#d4a017', i, t;
+    var pt = function (t) { var u = 1 - t; return { x: r * (0.95 * u * u + 2 * u * t * 1.9 + 0.95 * t * t), y: r * L * (t * t - u * u) }; };
+    var tg = function (t) { var u = 1 - t; return Math.atan2(r * L * (2 * t + 2 * u), r * (2 * u * (1.9 - 0.95) + 2 * t * (0.95 - 1.9))); }; // Richtung entlang des Bogens
+    var band = function (t, w, col) { var p = pt(t), a = tg(t); c.save(); c.translate(p.x, p.y); c.rotate(a); c.fillStyle = col; c.fillRect(-w / 2, -r * 0.17, w, r * 0.34); c.restore(); };
+    var stern = function (x, y, rr, col) { c.fillStyle = col; c.beginPath(); for (var j = 0; j < 10; j++) { var aa = -Math.PI / 2 + j * Math.PI / 5, q = j % 2 ? rr * 0.45 : rr; c.lineTo(x + Math.cos(aa) * q, y + Math.sin(aa) * q); } c.closePath(); c.fill(); };
+    var tips = [pt(0), pt(1)], grip = pt(0.5);
+    c.save(); c.lineCap = 'round';
+    switch (B.deko) {
+      case 'gold': // goldene Bänder, Edelstein am Griff, Schnörkel an den Enden
+        [0.2, 0.8].forEach(function (t) { band(t, r * 0.14, dc); }); band(0.5, r * 0.3, dc);
+        c.fillStyle = '#c0283a'; c.beginPath(); c.arc(grip.x + r * 0.06, grip.y, r * 0.11, 0, 7); c.fill();
+        c.strokeStyle = dc; c.lineWidth = Math.max(1.5, r * 0.08); tips.forEach(function (p, j) { var sg = j ? 1 : -1; c.beginPath(); c.arc(p.x + r * 0.16, p.y + sg * r * 0.05, r * 0.14, 0, Math.PI * 1.5 * sg, sg < 0); c.stroke(); });
+        break;
+      case 'baender': [0.22, 0.5, 0.78].forEach(function (t) { band(t, r * 0.12, dc); }); break;
+      case 'ranken': // grüne Ranke mit Blättern
+        c.strokeStyle = '#3f7a32'; c.lineWidth = Math.max(1.2, r * 0.06); c.beginPath();
+        for (i = 0; i <= 24; i++) { t = i / 24; var p = pt(t), a = tg(t) + Math.PI / 2, o = Math.sin(t * Math.PI * 6) * r * 0.1; c.lineTo(p.x + Math.cos(a) * o, p.y + Math.sin(a) * o); } c.stroke();
+        c.fillStyle = '#5aa043'; [0.12, 0.3, 0.7, 0.88].forEach(function (t, j) { var p = pt(t); c.beginPath(); c.ellipse(p.x + r * 0.14, p.y, r * 0.16, r * 0.08, (j % 2 ? 0.6 : -0.6), 0, 7); c.fill(); });
+        break;
+      case 'stroh': // mit Schnur umwickelt, Strohbüschel an den Enden
+        [0.3, 0.5, 0.7].forEach(function (t) { band(t, r * 0.08, '#c9a24a'); });
+        c.strokeStyle = '#e6c35c'; c.lineWidth = 1.2; tips.forEach(function (p, j) { var sg = j ? 1 : -1; for (var k2 = -2; k2 <= 2; k2++) { c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x + k2 * r * 0.07, p.y + sg * r * 0.3); c.stroke(); } });
+        break;
+      case 'flicken': // geflickt: Knoten und Klebestreifen
+        band(0.33, r * 0.2, '#cdbb92'); band(0.5, r * 0.2, '#5a3d22');
+        c.strokeStyle = '#3b2a1c'; c.lineWidth = 1; var pk = pt(0.68); c.beginPath(); c.moveTo(pk.x - r * 0.12, pk.y - r * 0.08); c.lineTo(pk.x + r * 0.12, pk.y + r * 0.08); c.moveTo(pk.x - r * 0.12, pk.y + r * 0.08); c.lineTo(pk.x + r * 0.12, pk.y - r * 0.08); c.stroke();
+        break;
+      case 'sterne': [0.18, 0.5, 0.82].forEach(function (t) { var p = pt(t); stern(p.x, p.y, r * 0.17, dc); }); break;
+      case 'feder': // Federn an beiden Enden
+        tips.forEach(function (p, j) { var sg = j ? 1 : -1; for (var k2 = 0; k2 < 3; k2++) { c.fillStyle = k2 === 1 ? dc : 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x + r * (0.12 + k2 * 0.1), p.y + sg * r * (0.12 + k2 * 0.05), r * 0.24, r * 0.07, sg * (0.9 - k2 * 0.25), 0, 7); c.fill(); } c.fillStyle = dc; c.beginPath(); c.ellipse(p.x + r * 0.18, p.y + sg * r * 0.16, r * 0.26, r * 0.08, sg * 0.7, 0, 7); c.fill(); });
+        break;
+      case 'zacken': // Dornen nach aussen
+        c.fillStyle = dc; [0.15, 0.3, 0.7, 0.85].forEach(function (t) { var p = pt(t), a = tg(t) - Math.PI / 2; c.save(); c.translate(p.x, p.y); c.rotate(a); c.beginPath(); c.moveTo(-r * 0.08, 0); c.lineTo(0, -r * 0.3); c.lineTo(r * 0.08, 0); c.closePath(); c.fill(); c.restore(); });
+        break;
+      case 'fell': c.fillStyle = '#6b4a2b'; [grip].concat(tips).forEach(function (p) { for (var k2 = 0; k2 < 5; k2++) { c.beginPath(); c.arc(p.x + Math.cos(k2 * 1.3) * r * 0.1, p.y + Math.sin(k2 * 1.3) * r * 0.1, r * 0.1, 0, 7); c.fill(); } }); break;
+      case 'runen': // leuchtende Zeichen
+        c.shadowColor = dc; c.shadowBlur = r * 0.5; c.fillStyle = dc;
+        [0.15, 0.32, 0.68, 0.85].forEach(function (t) { var p = pt(t); c.fillRect(p.x - r * 0.05, p.y - r * 0.09, r * 0.1, r * 0.18); });
+        c.beginPath(); c.arc(grip.x, grip.y, r * 0.1, 0, 7); c.fill();
+        break;
+      case 'zaehne': // Wolfszähne an der Sehnenseite
+        c.fillStyle = '#f2ecdc'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.8;
+        [0.12, 0.22, 0.78, 0.88].forEach(function (t) { var p = pt(t), a = tg(t) + Math.PI / 2; c.save(); c.translate(p.x, p.y); c.rotate(a); c.beginPath(); c.moveTo(-r * 0.06, 0); c.lineTo(0, -r * 0.24); c.lineTo(r * 0.06, 0); c.closePath(); c.fill(); c.stroke(); c.restore(); });
+        band(0.5, r * 0.22, '#5b3d24');
+        break;
+      case 'mond': // goldene Mondsichel am Griff
+        c.fillStyle = dc; c.beginPath(); c.arc(grip.x + r * 0.1, grip.y, r * 0.24, 0, 7); c.fill();
+        c.fillStyle = B.holz; c.beginPath(); c.arc(grip.x + r * 0.2, grip.y, r * 0.2, 0, 7); c.fill();
+        [0.2, 0.8].forEach(function (t) { band(t, r * 0.1, dc); });
+        break;
+      case 'kreuz': c.strokeStyle = dc; c.lineWidth = Math.max(1.5, r * 0.09); [grip].concat(tips).forEach(function (p) { c.beginPath(); c.moveTo(p.x + r * 0.15, p.y - r * 0.2); c.lineTo(p.x + r * 0.15, p.y + r * 0.2); c.moveTo(p.x + r * 0.03, p.y - r * 0.07); c.lineTo(p.x + r * 0.27, p.y - r * 0.07); c.stroke(); }); break;
+      case 'kristall': // Eiskristalle
+        c.fillStyle = '#e8f7ff'; c.strokeStyle = '#7ec4ea'; c.lineWidth = 1;
+        [tips[0], grip, tips[1]].forEach(function (p, j) { var s2 = j === 1 ? r * 0.2 : r * 0.26; c.beginPath(); c.moveTo(p.x, p.y - s2); c.lineTo(p.x + s2 * 0.55, p.y); c.lineTo(p.x, p.y + s2); c.lineTo(p.x - s2 * 0.55, p.y); c.closePath(); c.fill(); c.stroke(); });
+        break;
+      case 'muenzen': // Münzen baumeln an den Enden
+        c.strokeStyle = '#7a5a3a'; c.lineWidth = 1; tips.forEach(function (p, j) { var sg = j ? 1 : -1, mx = p.x + r * 0.05, my = p.y + sg * r * 0.3; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(mx, my); c.stroke(); c.fillStyle = '#e5c04a'; c.beginPath(); c.arc(mx, my, r * 0.13, 0, 7); c.fill(); c.strokeStyle = '#a07a1a'; c.stroke(); c.strokeStyle = '#7a5a3a'; });
+        band(0.5, r * 0.2, dc);
+        break;
+      case 'pilz': // rote Pilzhüte mit weissen Punkten an den Enden
+        tips.forEach(function (p, j) { c.fillStyle = '#c8382c'; c.beginPath(); c.arc(p.x, p.y, r * 0.22, 0, 7); c.fill(); c.fillStyle = '#fff'; [[-0.08, -0.06], [0.07, 0.04], [0, 0.11]].forEach(function (q) { c.beginPath(); c.arc(p.x + q[0] * r, p.y + q[1] * r, r * 0.04, 0, 7); c.fill(); }); });
+        break;
+      case 'tau': // mit Seil umwickelt
+        c.strokeStyle = '#c9b07a'; c.lineWidth = 1.2; for (i = 0; i < 6; i++) { t = 0.38 + i * 0.045; var p2 = pt(t), a2 = tg(t) + Math.PI / 2; c.beginPath(); c.moveTo(p2.x - Math.cos(a2) * r * 0.16, p2.y - Math.sin(a2) * r * 0.16 - r * 0.03); c.lineTo(p2.x + Math.cos(a2) * r * 0.16, p2.y + Math.sin(a2) * r * 0.16 + r * 0.03); c.stroke(); }
+        break;
+      case 'horn': // Hornbogen: helle Hornstreifen, dunkle Spitzen, Lederband
+        c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = Math.max(1, r * 0.06); c.beginPath(); for (i = 0; i <= 20; i++) { var p3 = pt(i / 20); c.lineTo(p3.x - r * 0.04, p3.y); } c.stroke();
+        c.fillStyle = '#3a2c20'; tips.forEach(function (p) { c.beginPath(); c.arc(p.x, p.y, r * 0.12, 0, 7); c.fill(); }); band(0.5, r * 0.26, '#8a5a2e');
+        break;
+      case 'flamme': // Flammen an den Enden
+        tips.forEach(function (p, j) { var sg = j ? 1 : -1, fl = 0.85 + 0.15 * Math.sin(performance.now() / 90 + j); c.fillStyle = '#e07a2a'; c.beginPath(); c.moveTo(p.x - r * 0.12, p.y); c.quadraticCurveTo(p.x, p.y + sg * r * 0.5 * fl, p.x + r * 0.12, p.y); c.fill(); c.fillStyle = '#ffd25a'; c.beginPath(); c.moveTo(p.x - r * 0.06, p.y); c.quadraticCurveTo(p.x, p.y + sg * r * 0.3 * fl, p.x + r * 0.06, p.y); c.fill(); });
+        [0.3, 0.7].forEach(function (t) { band(t, r * 0.1, '#e07a2a'); });
+        break;
+    }
+    c.restore();
+  }
   // Eigener Bogen des Königs (k.bogen). o.zieh 0..1 = Bogen hervorholen (0 = auf dem Rücken, 1 = schussbereit); o.str/o.vib/o.arrow = Sehne und Pfeil wie attackPose
   function kBogen(c, k, r, o) {
     var B = k.bogen || { holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0 }, e = Math.max(0, Math.min(1, o.zieh === undefined ? 1 : o.zieh));
@@ -1292,6 +1371,7 @@
     c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * L); c.stroke();
     if (B.form === 1) { c.lineWidth = Math.max(2, r * 0.15); c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 0.85, -r * (L + 0.12), r * 1.12, -r * (L + 0.2)); c.moveTo(r * 0.95, r * L); c.quadraticCurveTo(r * 0.85, r * (L + 0.12), r * 1.12, r * (L + 0.2)); c.stroke(); }
     if (B.enden) { c.fillStyle = B.enden; c.beginPath(); c.arc(r * 0.95, -r * L, r * 0.12, 0, 7); c.arc(r * 0.95, r * L, r * 0.12, 0, 7); c.fill(); c.fillRect(r * 1.3, -r * 0.14, r * 0.16, r * 0.28); }
+    if (B.deko) kBogenDeko(c, B, r, L);
     c.strokeStyle = B.sehne; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(r * 0.95, -r * L); c.lineTo(bereit ? kmx : r * 0.95, bereit ? (o.vib || 0) * r : 0); c.lineTo(r * 0.95, r * L); c.stroke();
     if (bereit && o.arrow > 0) {

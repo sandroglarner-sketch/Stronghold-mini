@@ -55,6 +55,84 @@
     c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5;
     c.beginPath(); c.arc(hx, hy, r * 0.16, 0, 7); c.fill(); c.stroke(); // Hand mit Rand, damit man sie auf dem Kopf sieht
   }
+  // Verzierung des Königsbogens (B.deko), passend zum König; Punkte auf dem Bogen: t 0 = oberes Ende, 0.5 = Griff, 1 = unteres Ende
+  function kBogenDeko(c, B, r, L) {
+    var dc = B.dc || B.enden || '#d4a017', i, t;
+    var pt = function (t) { var u = 1 - t; return { x: r * (0.95 * u * u + 2 * u * t * 1.9 + 0.95 * t * t), y: r * L * (t * t - u * u) }; };
+    var tg = function (t) { var u = 1 - t; return Math.atan2(r * L * (2 * t + 2 * u), r * (2 * u * (1.9 - 0.95) + 2 * t * (0.95 - 1.9))); }; // Richtung entlang des Bogens
+    var band = function (t, w, col) { var p = pt(t), a = tg(t); c.save(); c.translate(p.x, p.y); c.rotate(a); c.fillStyle = col; c.fillRect(-w / 2, -r * 0.17, w, r * 0.34); c.restore(); };
+    var stern = function (x, y, rr, col) { c.fillStyle = col; c.beginPath(); for (var j = 0; j < 10; j++) { var aa = -Math.PI / 2 + j * Math.PI / 5, q = j % 2 ? rr * 0.45 : rr; c.lineTo(x + Math.cos(aa) * q, y + Math.sin(aa) * q); } c.closePath(); c.fill(); };
+    var tips = [pt(0), pt(1)], grip = pt(0.5);
+    c.save(); c.lineCap = 'round';
+    switch (B.deko) {
+      case 'gold': // goldene Bänder, Edelstein am Griff, Schnörkel an den Enden
+        [0.2, 0.8].forEach(function (t) { band(t, r * 0.14, dc); }); band(0.5, r * 0.3, dc);
+        c.fillStyle = '#c0283a'; c.beginPath(); c.arc(grip.x + r * 0.06, grip.y, r * 0.11, 0, 7); c.fill();
+        c.strokeStyle = dc; c.lineWidth = Math.max(1.5, r * 0.08); tips.forEach(function (p, j) { var sg = j ? 1 : -1; c.beginPath(); c.arc(p.x + r * 0.16, p.y + sg * r * 0.05, r * 0.14, 0, Math.PI * 1.5 * sg, sg < 0); c.stroke(); });
+        break;
+      case 'baender': [0.22, 0.5, 0.78].forEach(function (t) { band(t, r * 0.12, dc); }); break;
+      case 'ranken': // grüne Ranke mit Blättern
+        c.strokeStyle = '#3f7a32'; c.lineWidth = Math.max(1.2, r * 0.06); c.beginPath();
+        for (i = 0; i <= 24; i++) { t = i / 24; var p = pt(t), a = tg(t) + Math.PI / 2, o = Math.sin(t * Math.PI * 6) * r * 0.1; c.lineTo(p.x + Math.cos(a) * o, p.y + Math.sin(a) * o); } c.stroke();
+        c.fillStyle = '#5aa043'; [0.12, 0.3, 0.7, 0.88].forEach(function (t, j) { var p = pt(t); c.beginPath(); c.ellipse(p.x + r * 0.14, p.y, r * 0.16, r * 0.08, (j % 2 ? 0.6 : -0.6), 0, 7); c.fill(); });
+        break;
+      case 'stroh': // mit Schnur umwickelt, Strohbüschel an den Enden
+        [0.3, 0.5, 0.7].forEach(function (t) { band(t, r * 0.08, '#c9a24a'); });
+        c.strokeStyle = '#e6c35c'; c.lineWidth = 1.2; tips.forEach(function (p, j) { var sg = j ? 1 : -1; for (var k2 = -2; k2 <= 2; k2++) { c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x + k2 * r * 0.07, p.y + sg * r * 0.3); c.stroke(); } });
+        break;
+      case 'flicken': // geflickt: Knoten und Klebestreifen
+        band(0.33, r * 0.2, '#cdbb92'); band(0.5, r * 0.2, '#5a3d22');
+        c.strokeStyle = '#3b2a1c'; c.lineWidth = 1; var pk = pt(0.68); c.beginPath(); c.moveTo(pk.x - r * 0.12, pk.y - r * 0.08); c.lineTo(pk.x + r * 0.12, pk.y + r * 0.08); c.moveTo(pk.x - r * 0.12, pk.y + r * 0.08); c.lineTo(pk.x + r * 0.12, pk.y - r * 0.08); c.stroke();
+        break;
+      case 'sterne': [0.18, 0.5, 0.82].forEach(function (t) { var p = pt(t); stern(p.x, p.y, r * 0.17, dc); }); break;
+      case 'feder': // Federn an beiden Enden
+        tips.forEach(function (p, j) { var sg = j ? 1 : -1; for (var k2 = 0; k2 < 3; k2++) { c.fillStyle = k2 === 1 ? dc : 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x + r * (0.12 + k2 * 0.1), p.y + sg * r * (0.12 + k2 * 0.05), r * 0.24, r * 0.07, sg * (0.9 - k2 * 0.25), 0, 7); c.fill(); } c.fillStyle = dc; c.beginPath(); c.ellipse(p.x + r * 0.18, p.y + sg * r * 0.16, r * 0.26, r * 0.08, sg * 0.7, 0, 7); c.fill(); });
+        break;
+      case 'zacken': // Dornen nach aussen
+        c.fillStyle = dc; [0.15, 0.3, 0.7, 0.85].forEach(function (t) { var p = pt(t), a = tg(t) - Math.PI / 2; c.save(); c.translate(p.x, p.y); c.rotate(a); c.beginPath(); c.moveTo(-r * 0.08, 0); c.lineTo(0, -r * 0.3); c.lineTo(r * 0.08, 0); c.closePath(); c.fill(); c.restore(); });
+        break;
+      case 'fell': c.fillStyle = '#6b4a2b'; [grip].concat(tips).forEach(function (p) { for (var k2 = 0; k2 < 5; k2++) { c.beginPath(); c.arc(p.x + Math.cos(k2 * 1.3) * r * 0.1, p.y + Math.sin(k2 * 1.3) * r * 0.1, r * 0.1, 0, 7); c.fill(); } }); break;
+      case 'runen': // leuchtende Zeichen
+        c.shadowColor = dc; c.shadowBlur = r * 0.5; c.fillStyle = dc;
+        [0.15, 0.32, 0.68, 0.85].forEach(function (t) { var p = pt(t); c.fillRect(p.x - r * 0.05, p.y - r * 0.09, r * 0.1, r * 0.18); });
+        c.beginPath(); c.arc(grip.x, grip.y, r * 0.1, 0, 7); c.fill();
+        break;
+      case 'zaehne': // Wolfszähne an der Sehnenseite
+        c.fillStyle = '#f2ecdc'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 0.8;
+        [0.12, 0.22, 0.78, 0.88].forEach(function (t) { var p = pt(t), a = tg(t) + Math.PI / 2; c.save(); c.translate(p.x, p.y); c.rotate(a); c.beginPath(); c.moveTo(-r * 0.06, 0); c.lineTo(0, -r * 0.24); c.lineTo(r * 0.06, 0); c.closePath(); c.fill(); c.stroke(); c.restore(); });
+        band(0.5, r * 0.22, '#5b3d24');
+        break;
+      case 'mond': // goldene Mondsichel am Griff
+        c.fillStyle = dc; c.beginPath(); c.arc(grip.x + r * 0.1, grip.y, r * 0.24, 0, 7); c.fill();
+        c.fillStyle = B.holz; c.beginPath(); c.arc(grip.x + r * 0.2, grip.y, r * 0.2, 0, 7); c.fill();
+        [0.2, 0.8].forEach(function (t) { band(t, r * 0.1, dc); });
+        break;
+      case 'kreuz': c.strokeStyle = dc; c.lineWidth = Math.max(1.5, r * 0.09); [grip].concat(tips).forEach(function (p) { c.beginPath(); c.moveTo(p.x + r * 0.15, p.y - r * 0.2); c.lineTo(p.x + r * 0.15, p.y + r * 0.2); c.moveTo(p.x + r * 0.03, p.y - r * 0.07); c.lineTo(p.x + r * 0.27, p.y - r * 0.07); c.stroke(); }); break;
+      case 'kristall': // Eiskristalle
+        c.fillStyle = '#e8f7ff'; c.strokeStyle = '#7ec4ea'; c.lineWidth = 1;
+        [tips[0], grip, tips[1]].forEach(function (p, j) { var s2 = j === 1 ? r * 0.2 : r * 0.26; c.beginPath(); c.moveTo(p.x, p.y - s2); c.lineTo(p.x + s2 * 0.55, p.y); c.lineTo(p.x, p.y + s2); c.lineTo(p.x - s2 * 0.55, p.y); c.closePath(); c.fill(); c.stroke(); });
+        break;
+      case 'muenzen': // Münzen baumeln an den Enden
+        c.strokeStyle = '#7a5a3a'; c.lineWidth = 1; tips.forEach(function (p, j) { var sg = j ? 1 : -1, mx = p.x + r * 0.05, my = p.y + sg * r * 0.3; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(mx, my); c.stroke(); c.fillStyle = '#e5c04a'; c.beginPath(); c.arc(mx, my, r * 0.13, 0, 7); c.fill(); c.strokeStyle = '#a07a1a'; c.stroke(); c.strokeStyle = '#7a5a3a'; });
+        band(0.5, r * 0.2, dc);
+        break;
+      case 'pilz': // rote Pilzhüte mit weissen Punkten an den Enden
+        tips.forEach(function (p, j) { c.fillStyle = '#c8382c'; c.beginPath(); c.arc(p.x, p.y, r * 0.22, 0, 7); c.fill(); c.fillStyle = '#fff'; [[-0.08, -0.06], [0.07, 0.04], [0, 0.11]].forEach(function (q) { c.beginPath(); c.arc(p.x + q[0] * r, p.y + q[1] * r, r * 0.04, 0, 7); c.fill(); }); });
+        break;
+      case 'tau': // mit Seil umwickelt
+        c.strokeStyle = '#c9b07a'; c.lineWidth = 1.2; for (i = 0; i < 6; i++) { t = 0.38 + i * 0.045; var p2 = pt(t), a2 = tg(t) + Math.PI / 2; c.beginPath(); c.moveTo(p2.x - Math.cos(a2) * r * 0.16, p2.y - Math.sin(a2) * r * 0.16 - r * 0.03); c.lineTo(p2.x + Math.cos(a2) * r * 0.16, p2.y + Math.sin(a2) * r * 0.16 + r * 0.03); c.stroke(); }
+        break;
+      case 'horn': // Hornbogen: helle Hornstreifen, dunkle Spitzen, Lederband
+        c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = Math.max(1, r * 0.06); c.beginPath(); for (i = 0; i <= 20; i++) { var p3 = pt(i / 20); c.lineTo(p3.x - r * 0.04, p3.y); } c.stroke();
+        c.fillStyle = '#3a2c20'; tips.forEach(function (p) { c.beginPath(); c.arc(p.x, p.y, r * 0.12, 0, 7); c.fill(); }); band(0.5, r * 0.26, '#8a5a2e');
+        break;
+      case 'flamme': // Flammen an den Enden
+        tips.forEach(function (p, j) { var sg = j ? 1 : -1, fl = 0.85 + 0.15 * Math.sin(performance.now() / 90 + j); c.fillStyle = '#e07a2a'; c.beginPath(); c.moveTo(p.x - r * 0.12, p.y); c.quadraticCurveTo(p.x, p.y + sg * r * 0.5 * fl, p.x + r * 0.12, p.y); c.fill(); c.fillStyle = '#ffd25a'; c.beginPath(); c.moveTo(p.x - r * 0.06, p.y); c.quadraticCurveTo(p.x, p.y + sg * r * 0.3 * fl, p.x + r * 0.06, p.y); c.fill(); });
+        [0.3, 0.7].forEach(function (t) { band(t, r * 0.1, '#e07a2a'); });
+        break;
+    }
+    c.restore();
+  }
   // Eigener Bogen des Königs (k.bogen). o.zieh 0..1 = Bogen hervorholen (0 = auf dem Rücken, 1 = schussbereit); o.str/o.vib/o.arrow = Sehne und Pfeil wie attackPose
   function kBogen(c, k, r, o) {
     var B = k.bogen || { holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0 }, e = Math.max(0, Math.min(1, o.zieh === undefined ? 1 : o.zieh));
@@ -68,6 +146,7 @@
     c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * L); c.stroke();
     if (B.form === 1) { c.lineWidth = Math.max(2, r * 0.15); c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 0.85, -r * (L + 0.12), r * 1.12, -r * (L + 0.2)); c.moveTo(r * 0.95, r * L); c.quadraticCurveTo(r * 0.85, r * (L + 0.12), r * 1.12, r * (L + 0.2)); c.stroke(); }
     if (B.enden) { c.fillStyle = B.enden; c.beginPath(); c.arc(r * 0.95, -r * L, r * 0.12, 0, 7); c.arc(r * 0.95, r * L, r * 0.12, 0, 7); c.fill(); c.fillRect(r * 1.3, -r * 0.14, r * 0.16, r * 0.28); }
+    if (B.deko) kBogenDeko(c, B, r, L);
     c.strokeStyle = B.sehne; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(r * 0.95, -r * L); c.lineTo(bereit ? kmx : r * 0.95, bereit ? (o.vib || 0) * r : 0); c.lineTo(r * 0.95, r * L); c.stroke();
     if (bereit && o.arrow > 0) {
