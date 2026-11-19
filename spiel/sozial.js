@@ -45,7 +45,7 @@
   function storyFrei(i) { return tester || i <= storyStand(); }
   function storyOpen() {
     var n = storyStand();
-    storySel = Math.min(n, STORY.length - 1);
+    storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
     $('story').hidden = false;
     storyMalen();
   }
@@ -60,10 +60,18 @@
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
     h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
     $('storyKnoten').innerHTML = h;
-    var g = STORY[storySel], art = storySel < n ? '<small class="ok">Besiegt</small>' : storyFrei(storySel) ? '<small>Nächster Gegner</small>' : '<small class="zu">Gesperrt</small>';
-    $('storyKarte').innerHTML = art + '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b><p>' + esc(g.text) + '</p>' +
-      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal spielen' : 'Kämpfen') + '</button>'
+    // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
+    var k = $('storyKarte');
+    if (storySel < 0) { k.hidden = true; return; }
+    var g = STORY[storySel], links = g.x > 62;
+    k.className = 'storykarte' + (links ? ' links' : '');
+    k.style.left = links ? '' : 'calc(' + g.x + '% + 40px)';
+    k.style.right = links ? 'calc(' + (100 - g.x) + '% + 40px)' : '';
+    k.style.top = g.y + '%';
+    k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
+      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal' : 'Kämpfen') + '</button>'
         : '<button class="primary" type="button" disabled>Besiege zuerst: ' + esc(STORY[storySel - 1].name) + '</button>');
+    k.hidden = false;
   }
   function storyStart(i) {
     storyIdx = i; spielArt = 'story';
@@ -84,7 +92,7 @@
   }
   $('storyBtn').addEventListener('click', storyOpen);
   $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
-  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; storySel = +b.getAttribute('data-i'); storyMalen(); });
+  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 

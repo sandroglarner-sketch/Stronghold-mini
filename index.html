@@ -256,13 +256,13 @@
   .sname { position: absolute; transform: translateX(-50%); text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
   .sname b { font-size: 0.9rem; display: block; }
   .sfigur { position: absolute; transform: translate(-50%, -100%); width: 44px; height: 44px; border-radius: 50%; background: var(--me); border: 3px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
-  .storykarte { position: absolute; right: 12px; bottom: 12px; width: min(300px, 44%); padding: 12px 14px; border-radius: 14px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.25); display: grid; gap: 4px; }
-  .storykarte small { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--foe); }
-  .storykarte small.ok { color: #1d7a3a; } .storykarte small.zu { color: var(--muted); }
-  .storykarte b { font-family: var(--display); font-size: 1.2rem; }
-  .storykarte p { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
-  .storykarte .primary { margin-top: 4px; }
-  .storykarte .primary:disabled { opacity: 0.5; cursor: default; }
+  .storykarte { position: absolute; z-index: 2; transform: translateY(-50%); padding: 10px 12px; border-radius: 12px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.3); display: grid; gap: 6px; min-width: 150px; max-width: 230px; }
+  .storykarte[hidden] { display: none; }
+  .storykarte::before { content: ''; position: absolute; top: 50%; left: -7px; width: 14px; height: 14px; background: var(--panel); transform: translateY(-50%) rotate(45deg); }
+  .storykarte.links::before { left: auto; right: -7px; }
+  .storykarte b { font-family: var(--display); font-size: 1.05rem; position: relative; }
+  .storykarte .primary { margin: 0; position: relative; white-space: normal; }
+  .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
   /* Freunde */
   .freunde { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 6; background: var(--panel); box-shadow: -8px 0 24px rgba(23, 32, 35, 0.25); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; box-sizing: border-box; overflow-y: auto; border-radius: 0 10px 10px 0; }
   .freunde[hidden] { display: none; }
@@ -877,12 +877,12 @@
   // Konto (Supabase): öffentliche Projekt-Adresse und öffentlicher Schlüssel («anon/publishable», darf im Spiel stehen).
   // Leer = Kontofunktion aus (dann ist auch nichts gesperrt).
   var KONTO = { url: 'https://odxpdyrwtvgicntbjlrh.supabase.co', key: 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn' };
-  // Story-Modus: Gegner in dieser Reihenfolge; den nächsten schaltet frei, wer den aktuellen besiegt. x/y = Platz auf der Karte (Prozent)
+  // Story-Modus: Gegner in dieser Reihenfolge; den nächsten schaltet frei, wer den aktuellen besiegt. x/y = Platz auf der Karte (Prozent). Absichtlich keine Beschreibung: man soll nicht wissen, wie der Bot spielt
   var STORY = [
-    { bot: 'bauern', name: 'Bandit', x: 13, y: 73, text: 'Ein Räuber mit 5 Bauern. Greift mit Rammbock, Speerkämpfern und Bogenschützen an.' },
-    { bot: 'prinz', name: 'Kleiner Prinz', x: 34, y: 47, text: '6 Bauern, Mauer bis Stufe 3. Kommt mit Belagerungsschild, Rammbock und Rittern.' },
-    { bot: 'feldherr', name: 'Feldherr', x: 56, y: 69, text: '12 Bauern, Mauer bis Stufe 2. Greift mit Katapult, Rammbock und Reitern an.' },
-    { bot: 'baron', name: 'Baron', x: 80, y: 40, text: '9 Bauern, Mauer bis Stufe 5 mit Trebuchets auf den Türmen. Greift mit Rittern an.' }
+    { bot: 'bauern', name: 'Bandit', x: 13, y: 73 },
+    { bot: 'prinz', name: 'Kleiner Prinz', x: 34, y: 47 },
+    { bot: 'feldherr', name: 'Feldherr', x: 56, y: 69 },
+    { bot: 'baron', name: 'Baron', x: 80, y: 40 }
   ];
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
@@ -904,7 +904,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '56db53fee6'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '95c6e28ce6'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -4379,7 +4379,7 @@
   function storyFrei(i) { return tester || i <= storyStand(); }
   function storyOpen() {
     var n = storyStand();
-    storySel = Math.min(n, STORY.length - 1);
+    storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
     $('story').hidden = false;
     storyMalen();
   }
@@ -4394,10 +4394,18 @@
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
     h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 30px)">' + SVG(ICON.krone, '#ffffff', 22) + '</div>';
     $('storyKnoten').innerHTML = h;
-    var g = STORY[storySel], art = storySel < n ? '<small class="ok">Besiegt</small>' : storyFrei(storySel) ? '<small>Nächster Gegner</small>' : '<small class="zu">Gesperrt</small>';
-    $('storyKarte').innerHTML = art + '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b><p>' + esc(g.text) + '</p>' +
-      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal spielen' : 'Kämpfen') + '</button>'
+    // Feld direkt neben dem angeklickten Kreis (rechts, bei Platzmangel links); keine Beschreibung des Gegners
+    var k = $('storyKarte');
+    if (storySel < 0) { k.hidden = true; return; }
+    var g = STORY[storySel], links = g.x > 62;
+    k.className = 'storykarte' + (links ? ' links' : '');
+    k.style.left = links ? '' : 'calc(' + g.x + '% + 40px)';
+    k.style.right = links ? 'calc(' + (100 - g.x) + '% + 40px)' : '';
+    k.style.top = g.y + '%';
+    k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
+      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal' : 'Kämpfen') + '</button>'
         : '<button class="primary" type="button" disabled>Besiege zuerst: ' + esc(STORY[storySel - 1].name) + '</button>');
+    k.hidden = false;
   }
   function storyStart(i) {
     storyIdx = i; spielArt = 'story';
@@ -4418,7 +4426,7 @@
   }
   $('storyBtn').addEventListener('click', storyOpen);
   $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
-  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; storySel = +b.getAttribute('data-i'); storyMalen(); });
+  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 

@@ -236,13 +236,13 @@
   .sname { position: absolute; transform: translateX(-50%); text-align: center; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.65); font-size: 0.82rem; line-height: 1.25; pointer-events: none; white-space: nowrap; }
   .sname b { font-size: 0.9rem; display: block; }
   .sfigur { position: absolute; transform: translate(-50%, -100%); width: 44px; height: 44px; border-radius: 50%; background: var(--me); border: 3px solid #fff; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; transition: left 0.5s, top 0.5s; }
-  .storykarte { position: absolute; right: 12px; bottom: 12px; width: min(300px, 44%); padding: 12px 14px; border-radius: 14px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.25); display: grid; gap: 4px; }
-  .storykarte small { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--foe); }
-  .storykarte small.ok { color: #1d7a3a; } .storykarte small.zu { color: var(--muted); }
-  .storykarte b { font-family: var(--display); font-size: 1.2rem; }
-  .storykarte p { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
-  .storykarte .primary { margin-top: 4px; }
-  .storykarte .primary:disabled { opacity: 0.5; cursor: default; }
+  .storykarte { position: absolute; z-index: 2; transform: translateY(-50%); padding: 10px 12px; border-radius: 12px; background: var(--panel); box-shadow: 0 6px 18px rgba(23, 32, 35, 0.3); display: grid; gap: 6px; min-width: 150px; max-width: 230px; }
+  .storykarte[hidden] { display: none; }
+  .storykarte::before { content: ''; position: absolute; top: 50%; left: -7px; width: 14px; height: 14px; background: var(--panel); transform: translateY(-50%) rotate(45deg); }
+  .storykarte.links::before { left: auto; right: -7px; }
+  .storykarte b { font-family: var(--display); font-size: 1.05rem; position: relative; }
+  .storykarte .primary { margin: 0; position: relative; white-space: normal; }
+  .storykarte .primary:disabled { opacity: 0.55; cursor: default; }
   /* Freunde */
   .freunde { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 6; background: var(--panel); box-shadow: -8px 0 24px rgba(23, 32, 35, 0.25); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; box-sizing: border-box; overflow-y: auto; border-radius: 0 10px 10px 0; }
   .freunde[hidden] { display: none; }

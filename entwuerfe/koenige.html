@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stronghold Mini – Bots und Königs-Optiken</title>
+<style>
+  :root { --bg: #eef1f3; --panel: #ffffff; --fg: #172023; --muted: #5d686c; --line: #d9dfe2; --me: #2a64b8; --foe: #c23a2e; --gold: #b8860b; --grass: #8ab565; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141a1c; --panel: #1e2629; --fg: #e8eef0; --muted: #9aa7ab; --line: #34403f; --grass: #33502f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; }
+  h2 { font-size: 1.2rem; margin: 34px 0 6px; }
+  p.lead { margin: 0 0 6px; color: var(--muted); max-width: 760px; }
+  .tabs { display: flex; gap: 6px; margin: 18px 0 0; flex-wrap: wrap; }
+  .tabs button { font: inherit; padding: 7px 14px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .card canvas { display: block; width: 100%; height: 150px; background: var(--grass); }
+  .card .body { padding: 10px 12px 12px; display: grid; gap: 3px; }
+  .card .nr { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .card b { font-size: 1.05rem; }
+  .card .look { font-size: 0.85rem; color: var(--muted); }
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 6px; vertical-align: 2px; }
+  .tag.alt { background: #e4ecf8; color: #1f4f94; } .tag.neu { background: #fbe9e7; color: #9b2c22; } .tag.sp { background: #e3f1e5; color: #1d6a33; }
+  @media (prefers-color-scheme: dark) { .tag.alt { background: #1d3150; color: #a9c8f5; } .tag.neu { background: #47201c; color: #ffb3a8; } .tag.sp { background: #17351f; color: #a6dcb3; } }
+  .note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 14px; font-size: 0.9rem; }
+  .note ul { margin: 6px 0 0; padding-left: 20px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; margin-top: 12px; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); vertical-align: -2px; margin-right: 4px; }
+  .tablewrap { overflow-x: auto; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; overflow: auto; font-size: 0.78rem; max-height: 340px; }
+  .copy { font: inherit; padding: 7px 14px; border-radius: 9px; border: 0; background: var(--me); color: #fff; cursor: pointer; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bots und Königs-Optiken</h1>
+  <p class="lead">Vorschläge: 20 neue Bot-Namen mit je einer eigenen Königs-Optik, Optiken für die 4 bestehenden Bots und 3 Alternativen für deinen eigenen König. Idee: Wer einen Bot besiegt, schaltet dessen König frei und kann ihn im Menü neben dem Deck auswählen.</p>
+  <div class="tabs" role="group" aria-label="Ansicht">
+    <button type="button" data-team="foe" aria-pressed="true">Als Gegner (rot)</button>
+    <button type="button" data-team="me" aria-pressed="false">Als eigener König (blau)</button>
+  </div>
+  <div class="note">So bleiben die Seiten im Spiel erkennbar: Der <b>Saum des Umhangs</b> ist immer in der Teamfarbe (blau = du, rot = Gegner). Alles andere ist Optik. Jede Karte zeigt den König gross und daneben in Originalgrösse im Spiel. Die Waffe ist nur Aussehen, Werte und Angriff bleiben gleich.</div>
+
+  <h2>Dein König: Standard und 3 Alternativen</h2>
+  <div class="grid" id="gSpieler"></div>
+
+  <h2>Die 4 bestehenden Bots</h2>
+  <div class="grid" id="gAlt"></div>
+
+  <h2>20 neue Bots</h2>
+  <div class="grid" id="gNeu"></div>
+
+  <h2>Datenbank</h2>
+  <div class="tablewrap"><table id="tab"><thead><tr><th>#</th><th>Name</th><th>Art</th><th>Krone</th><th>Umhang</th><th>Rüstung</th><th>Kopf</th><th>Waffe</th><th>Muster</th></tr></thead><tbody></tbody></table></div>
+  <p class="lead" style="margin-top:12px">Dieselben Daten als Code (so kämen sie ins Spiel, z. B. als daten/koenige.js):</p>
+  <pre id="json"></pre>
+  <button class="copy" id="copy" type="button">Code kopieren</button>
+</main>
+<script>
+(function () {
+  // Optik: krone (Form), kf (Kronenfarbe), umhang, muster, ruestung, haut, haar, bart, waffe, wf (Klingen-/Waffenfarbe)
+  var SP = [
+    { nr: 'S', name: 'Standard', art: 'spieler', krone: 'reif', kf: '#d4a017', umhang: 'team', muster: '', ruestung: '#7d8790', haut: '#d9a066', haar: '', bart: '', waffe: 'zweihaender', wf: '#e3eaec', text: 'Der heutige König' },
+    { nr: 'A1', name: 'Löwenherz', art: 'spieler', krone: 'zacken', kf: '#e2b22c', umhang: '#8a2432', muster: 'hermelin', ruestung: '#c9a54a', haut: '#e0ac7a', haar: '#c77d2a', bart: 'voll', waffe: 'zweihaender', wf: '#f1e4b8', text: 'Goldrüstung, Hermelinkragen, rote Mähne' },
+    { nr: 'A2', name: 'Jungkönig', art: 'spieler', krone: 'diadem', kf: '#d9dde2', umhang: '#2c5d55', muster: 'streifen', ruestung: '#a7b4bd', haut: '#f0c29a', haar: '#3b2a1c', bart: '', waffe: 'schwert', wf: '#e3eaec', text: 'Schlankes Silberdiadem, kein Bart' },
+    { nr: 'A3', name: 'Waldkönig', art: 'spieler', krone: 'lorbeer', kf: '#4f8a3a', umhang: '#4a5a2a', muster: 'blaetter', ruestung: '#7a5a3a', haut: '#c98b5e', haar: '#6b4a2b', bart: 'kurz', waffe: 'axt', wf: '#cfd6d8', text: 'Blätterkranz, Lederrüstung, Axt' }
+  ];
+  var ALT = [
+    { nr: 'B1', name: 'Bandit', art: 'alt', krone: 'kapuze', kf: '#4b4038', umhang: '#5b4a3a', muster: 'flicken', ruestung: '#6e6458', haut: '#d29a68', haar: '', bart: 'stoppel', waffe: 'kolben', wf: '#8a8f93', text: 'Kapuze statt Krone, geflickter Umhang' },
+    { nr: 'B2', name: 'Kleiner Prinz', art: 'alt', krone: 'reif', kf: '#e8c547', umhang: '#5d3a8a', muster: 'sterne', ruestung: '#b9c3ca', haut: '#f2c8a2', haar: '#e3c36a', bart: '', waffe: 'schwert', wf: '#e3eaec', text: 'Schmaler Goldreif, Sternenumhang' },
+    { nr: 'B3', name: 'Feldherr', art: 'alt', krone: 'helm', kf: '#c9a54a', umhang: '#3d4a3a', muster: 'kreuz', ruestung: '#5f6a72', haut: '#cf9566', haar: '', bart: 'kurz', waffe: 'zweihaender', wf: '#d8dfe2', text: 'Eisenhelm mit Goldrand, Feldzeichen' },
+    { nr: 'B4', name: 'Baron', art: 'alt', krone: 'hoch', kf: '#d4a017', umhang: '#2a2340', muster: 'hermelin', ruestung: '#8c7a5a', haut: '#e4b48a', haar: '#9aa0a6', bart: 'spitz', waffe: 'zepter', wf: '#d4a017', text: 'Hohe Krone, Hermelin, Zepter' }
+  ];
+  var NEU = [
+    { name: 'Raubritter Kuno', krone: 'hoerner', kf: '#8a8f93', umhang: '#3b2f2a', muster: 'flicken', ruestung: '#55595c', haut: '#c98d5e', haar: '#2b2118', bart: 'voll', waffe: 'axt', wf: '#b9c0c4', text: 'Hörnerhelm, schwere Axt' },
+    { name: 'Gräfin Eisenhand', krone: 'diadem', kf: '#c0c7cc', umhang: '#5a2232', muster: 'streifen', ruestung: '#9aa6ae', haut: '#efc4a0', haar: '#2d1d14', bart: '', waffe: 'schwert', wf: '#e3eaec', text: 'Silberdiadem, Weinrot' },
+    { name: 'Der Bärenfürst', krone: 'pelz', kf: '#6b4a2b', umhang: '#5b3d24', muster: 'hermelin', ruestung: '#6e5a44', haut: '#d69d6c', haar: '#4a3222', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', text: 'Bärenfell auf dem Kopf' },
+    { name: 'Herzog Nebelwald', krone: 'lorbeer', kf: '#9fb59a', umhang: '#4d5b5f', muster: 'blaetter', ruestung: '#7f8b8a', haut: '#dcae86', haar: '#c8ccc9', bart: 'lang', waffe: 'speer', wf: '#d6dde0', text: 'Grauer Kranz, langer weisser Bart' },
+    { name: 'Die Sumpfhexe', krone: 'spitzhut', kf: '#3f4f2a', umhang: '#2f3d22', muster: 'punkte', ruestung: '#4e5a3a', haut: '#a7c08a', haar: '#2a2a2a', bart: '', waffe: 'zepter', wf: '#7bd17a', text: 'Spitzhut, giftgrüner Stab' },
+    { name: 'König Rotbart', krone: 'zacken', kf: '#d4a017', umhang: '#a3271f', muster: 'hermelin', ruestung: '#7d8790', haut: '#e2ac7c', haar: '#b8401c', bart: 'lang', waffe: 'zweihaender', wf: '#e3eaec', text: 'Klassische Zackenkrone, roter Bart' },
+    { name: 'Markgraf Moorstein', krone: 'helm', kf: '#7a6a4a', umhang: '#4a4136', muster: 'kreuz', ruestung: '#6a6c66', haut: '#cf9a70', haar: '', bart: 'spitz', waffe: 'speer', wf: '#c6cdd0', text: 'Grauer Topfhelm' },
+    { name: 'Der Wolfsjarl', krone: 'wolf', kf: '#8d939a', umhang: '#36414a', muster: 'streifen', ruestung: '#5c656c', haut: '#e6b894', haar: '#d9c27a', bart: 'zopf', waffe: 'axt', wf: '#cfd6d8', text: 'Wolfsfell, Zopfbart' },
+    { name: 'Kalif Sandsturm', krone: 'turban', kf: '#e9dfc4', umhang: '#c08a2e', muster: 'streifen', ruestung: '#a88a5a', haut: '#b57a4e', haar: '', bart: 'spitz', waffe: 'saebel', wf: '#e3eaec', text: 'Turban mit Juwel, Krummsäbel' },
+    { name: 'Fürstbischof Gerold', krone: 'mitra', kf: '#f1ece0', umhang: '#6d2a6a', muster: 'kreuz', ruestung: '#c9c2b0', haut: '#ecc09a', haar: '', bart: '', waffe: 'zepter', wf: '#d4a017', text: 'Bischofsmütze, Goldstab' },
+    { name: 'Der Schwarze Ritter', krone: 'helm', kf: '#2a2a2e', umhang: '#1c1c20', muster: '', ruestung: '#33363a', haut: '#c98d5e', haar: '', bart: '', waffe: 'zweihaender', wf: '#6a6f75', text: 'Alles schwarz, dunkle Klinge' },
+    { name: 'Zarin Frostmantel', krone: 'eis', kf: '#9ad3f0', umhang: '#dfeaf2', muster: 'hermelin', ruestung: '#a9c2d1', haut: '#f3d2b8', haar: '#f2f2f2', bart: '', waffe: 'speer', wf: '#bfe6fa', text: 'Eiskrone, weisser Mantel' },
+    { name: 'Junker Habgier', krone: 'hoch', kf: '#e5c04a', umhang: '#2e6a3a', muster: 'muenzen', ruestung: '#c9a54a', haut: '#f0bf96', haar: '#5a3a1e', bart: 'schnauz', waffe: 'zepter', wf: '#e5c04a', text: 'Goldrüstung voller Münzen' },
+    { name: 'Vogt Grimmbart', krone: 'reif', kf: '#8a7a5a', umhang: '#4a3f33', muster: 'kreuz', ruestung: '#6e7377', haut: '#d19c70', haar: '#7a7a7a', bart: 'voll', waffe: 'kolben', wf: '#8a8f93', text: 'Eisenreif, grauer Vollbart' },
+    { name: 'Kaiserin Goldfeder', krone: 'federn', kf: '#e8b830', umhang: '#e0b23a', muster: 'sterne', ruestung: '#d9c38a', haut: '#e9bb90', haar: '#2b1b10', bart: '', waffe: 'schwert', wf: '#f1e4b8', text: 'Federkrone, ganz in Gold' },
+    { name: 'Der Pilzkönig', krone: 'pilz', kf: '#c8382c', umhang: '#7a5a3a', muster: 'punkte', ruestung: '#a8946a', haut: '#e8c9a0', haar: '', bart: 'lang', waffe: 'zepter', wf: '#c8382c', text: 'Fliegenpilz als Hut' },
+    { name: 'Admiral Salzwind', krone: 'dreispitz', kf: '#1f2a40', umhang: '#24406a', muster: 'streifen', ruestung: '#c9b07a', haut: '#d79f72', haar: '#e2e2e2', bart: 'schnauz', waffe: 'saebel', wf: '#e3eaec', text: 'Dreispitz, Marineblau' },
+    { name: 'Khan Steppensturm', krone: 'pelz', kf: '#8a5a2e', umhang: '#7a3a22', muster: 'zacken', ruestung: '#8a6a44', haut: '#c78a58', haar: '#1e1a16', bart: 'schnauz', waffe: 'saebel', wf: '#d6dde0', text: 'Pelzmütze, Krummsäbel' },
+    { name: 'Der Drachenkönig', krone: 'hoerner', kf: '#3f7a3a', umhang: '#2f5a2a', muster: 'schuppen', ruestung: '#4f6a3e', haut: '#9cbf7a', haar: '', bart: '', waffe: 'zweihaender', wf: '#e07a2a', text: 'Drachenhörner, glühende Klinge' },
+    { name: 'Die Schattenkönigin', krone: 'zacken', kf: '#7a5ac8', umhang: '#24183a', muster: 'sterne', ruestung: '#3a3450', haut: '#d8c0d8', haar: '#120c18', bart: '', waffe: 'zepter', wf: '#a98cf0', text: 'Violette Krone, Sternenmantel' }
+  ];
+  NEU.forEach(function (k, i) { k.nr = String(i + 1); k.art = 'neu'; });
+  var ALLE = SP.concat(ALT, NEU);
+  var TEAM = { me: '#2a64b8', foe: '#c23a2e' }, team = 'foe';
+
+  // ---------- König von oben (gleicher Stil wie im Spiel: Blick nach rechts) ----------
+  function koenig(c, k, x, y, r, teamCol) {
+    c.save(); c.translate(x, y); c.lineCap = 'round'; c.lineJoin = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.ellipse(r * 0.05, r * 0.75, r * 1.2, r * 0.5, 0, 0, 7); c.fill();
+    // Umhang
+    var cape = function () { c.beginPath(); c.moveTo(-r * 0.1, -r * 0.75); c.lineTo(-r * 1.2, -r * 0.95); c.quadraticCurveTo(-r * 1.4, 0, -r * 1.2, r * 0.95); c.lineTo(-r * 0.1, r * 0.75); c.closePath(); };
+    cape();
+    if (k.umhang === 'team') { c.fillStyle = teamCol; c.fill(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); }
+    else { c.fillStyle = k.umhang; c.fill(); }
+    c.save(); cape(); c.clip(); muster(c, k, r); c.restore();
+    cape(); c.strokeStyle = teamCol; c.lineWidth = Math.max(2, r * 0.16); c.stroke(); // Saum in Teamfarbe
+    if (k.muster === 'hermelin') { // Pelzkragen über den Schultern
+      c.fillStyle = '#f4f1ea'; c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(-r * 0.2, 0, r * 0.32, r * 0.95, 0, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#1b1b1b'; [-0.6, -0.2, 0.2, 0.6].forEach(function (t) { c.beginPath(); c.arc(-r * 0.22, r * t, r * 0.05, 0, 7); c.fill(); });
+    }
+    // Rüstung
+    c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
+    c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill();
+    waffe(c, k, r);
+    // Haare (hinten), Kopf, Bart (vorne)
+    if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
+    c.fillStyle = k.haut; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(r * 0.05, 0, r * 0.42, 0, 7); c.fill(); c.stroke();
+    if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.36, Math.PI * 0.55, Math.PI * 1.45); c.fill(); }
+    bart(c, k, r);
+    krone(c, k, r);
+    c.restore();
+  }
+  function muster(c, k, r) {
+    var m = k.muster, i, j;
+    c.fillStyle = 'rgba(255,255,255,0.22)'; c.strokeStyle = 'rgba(255,255,255,0.28)'; c.lineWidth = Math.max(1.5, r * 0.09);
+    if (m === 'streifen') for (i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(-r * 1.5, r * 0.38 * i); c.lineTo(0, r * 0.38 * i); c.stroke(); }
+    if (m === 'kreuz') { c.lineWidth = r * 0.16; c.beginPath(); c.moveTo(-r * 0.65, -r * 0.5); c.lineTo(-r * 0.65, r * 0.5); c.moveTo(-r * 1.05, 0); c.lineTo(-r * 0.25, 0); c.stroke(); }
+    if (m === 'punkte') for (i = 0; i < 9; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 3) * 0.32), r * (-0.6 + Math.floor(i / 3) * 0.6), r * 0.08, 0, 7); c.fill(); }
+    if (m === 'sterne') { c.fillStyle = 'rgba(255,240,180,0.8)'; for (i = 0; i < 7; i++) { var sx = -r * (0.35 + ((i * 37) % 9) / 10), sy = r * (-0.75 + ((i * 53) % 15) / 10); stern(c, sx, sy, r * 0.09); } }
+    if (m === 'blaetter') { c.fillStyle = 'rgba(160,210,110,0.45)'; for (i = 0; i < 6; i++) { c.beginPath(); c.ellipse(-r * (0.45 + (i % 2) * 0.45), r * (-0.65 + Math.floor(i / 2) * 0.65), r * 0.16, r * 0.08, 0.6, 0, 7); c.fill(); } }
+    if (m === 'flicken') { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(-r * 0.95, -r * 0.55, r * 0.35, r * 0.3); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(-r * 0.7, r * 0.2, r * 0.3, r * 0.35); }
+    if (m === 'muenzen') { c.fillStyle = '#e5c04a'; for (i = 0; i < 6; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 2) * 0.5), r * (-0.6 + Math.floor(i / 2) * 0.6), r * 0.1, 0, 7); c.fill(); } }
+    if (m === 'zacken') { c.beginPath(); for (i = 0; i <= 8; i++) c.lineTo(-r * 0.55 - (i % 2) * r * 0.25, -r + i * r * 0.25); c.stroke(); }
+    if (m === 'schuppen') { c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; for (i = 0; i < 4; i++) for (j = -3; j <= 3; j++) { c.beginPath(); c.arc(-r * (0.3 + i * 0.28), r * j * 0.28 + (i % 2) * r * 0.14, r * 0.14, Math.PI * 0.5, Math.PI * 1.5); c.stroke(); } }
+  }
+  function stern(c, x, y, s) { c.beginPath(); for (var i = 0; i < 10; i++) { var a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? s * 0.45 : s; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
+  function hand(c, x, y, r) { c.fillStyle = '#d9a066'; c.beginPath(); c.arc(x, y, r * 0.14, 0, 7); c.fill(); }
+  function waffe(c, k, r) {
+    var w = k.waffe, s = 'rgba(0,0,0,0.5)';
+    c.lineWidth = 1.5; c.strokeStyle = s;
+    if (w === 'zweihaender' || w === 'schwert') {
+      var L = w === 'zweihaender' ? 3.5 : 2.6;
+      c.fillStyle = k.wf; c.beginPath(); c.moveTo(r * L, 0); c.lineTo(r * (L - 0.4), -r * 0.2); c.lineTo(r * 0.9, -r * 0.2); c.lineTo(r * 0.9, r * 0.2); c.lineTo(r * (L - 0.4), r * 0.2); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.22); c.beginPath(); c.moveTo(r * 0.85, -r * 0.62); c.lineTo(r * 0.85, r * 0.62); c.stroke();
+      c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      hand(c, r * 0.45, -r * 0.13, r); hand(c, r * 0.7, r * 0.13, r);
+    } else if (w === 'saebel') {
+      c.fillStyle = k.wf; c.beginPath(); c.moveTo(r * 0.9, -r * 0.18); c.quadraticCurveTo(r * 2.2, -r * 0.3, r * 2.9, r * 0.35); c.quadraticCurveTo(r * 2.1, r * 0.1, r * 0.9, r * 0.18); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.85, -r * 0.45); c.lineTo(r * 0.85, r * 0.45); c.stroke();
+      c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.35, 0); c.lineTo(r * 0.85, 0); c.stroke();
+      hand(c, r * 0.6, 0, r);
+    } else if (w === 'axt') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.2, 0); c.lineTo(r * 2.7, 0); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.lineWidth = 1.5; c.beginPath(); c.moveTo(r * 2.2, -r * 0.1); c.quadraticCurveTo(r * 2.4, -r * 0.9, r * 2.9, -r * 0.85); c.quadraticCurveTo(r * 2.75, -r * 0.4, r * 2.75, -r * 0.1); c.closePath(); c.fill(); c.stroke();
+      hand(c, r * 0.45, 0, r); hand(c, r * 0.95, 0, r);
+    } else if (w === 'kolben') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(3, r * 0.2); c.beginPath(); c.moveTo(r * 0.3, 0); c.lineTo(r * 2.0, 0); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.arc(r * 2.15, 0, r * 0.38, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#5a5f63'; for (var i = 0; i < 6; i++) { var a = i * Math.PI / 3; c.beginPath(); c.arc(r * 2.15 + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42, r * 0.09, 0, 7); c.fill(); }
+      hand(c, r * 0.6, 0, r);
+    } else if (w === 'speer') {
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.2, r * 0.3); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.moveTo(r * 3.8, r * 0.3); c.lineTo(r * 3.15, r * 0.05); c.lineTo(r * 3.15, r * 0.55); c.closePath(); c.fill(); c.stroke();
+      hand(c, r * 0.5, r * 0.3, r); hand(c, r * 1.0, r * 0.3, r);
+    } else if (w === 'zepter') {
+      c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.18); c.beginPath(); c.moveTo(r * 0.3, r * 0.15); c.lineTo(r * 1.9, r * 0.15); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.arc(r * 2.05, r * 0.15, r * 0.3, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.arc(r * 1.98, r * 0.06, r * 0.1, 0, 7); c.fill();
+      hand(c, r * 0.6, r * 0.15, r);
+    }
+  }
+  function bart(c, k, r) {
+    var b = k.bart, col = k.haar || '#6b4a2b';
+    if (!b) return;
+    c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1;
+    if (b === 'stoppel') { c.fillStyle = 'rgba(60,40,30,0.35)'; c.beginPath(); c.arc(r * 0.12, 0, r * 0.38, -1.1, 1.1); c.lineTo(r * 0.2, 0); c.closePath(); c.fill(); return; }
+    if (b === 'schnauz') { c.beginPath(); c.ellipse(r * 0.38, -r * 0.14, r * 0.08, r * 0.2, 0.3, 0, 7); c.ellipse(r * 0.38, r * 0.14, r * 0.08, r * 0.2, -0.3, 0, 7); c.fill(); return; }
+    var len = b === 'kurz' ? 0.55 : b === 'spitz' ? 0.75 : b === 'voll' ? 0.7 : 0.95;
+    c.beginPath(); c.moveTo(r * 0.25, -r * 0.33);
+    if (b === 'spitz') { c.lineTo(r * len, 0); }
+    else c.quadraticCurveTo(r * len, -r * 0.3, r * len, 0), c.quadraticCurveTo(r * len, r * 0.3, r * 0.25, r * 0.33);
+    c.lineTo(r * 0.25, r * 0.33); c.closePath(); c.fill(); c.stroke();
+    if (b === 'zopf') { c.fillStyle = col; c.beginPath(); c.arc(r * 0.62, -r * 0.12, r * 0.09, 0, 7); c.arc(r * 0.62, r * 0.12, r * 0.09, 0, 7); c.fill(); c.strokeStyle = '#a0a6ab'; c.lineWidth = 2; c.beginPath(); c.moveTo(r * 0.55, -r * 0.2); c.lineTo(r * 0.55, r * 0.2); c.stroke(); }
+  }
+  function krone(c, k, r) {
+    var t = k.krone, f = k.kf, cx = r * 0.05, i, a;
+    var ring = function (col, w) { c.strokeStyle = col; c.lineWidth = Math.max(2, r * (w || 0.1)); c.beginPath(); c.arc(cx, 0, r * 0.38, -2.2, 2.2); c.stroke(); };
+    var kugel = function (col, rad) { c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx - r * 0.02, 0, r * rad, 0, 7); c.fill(); c.stroke(); };
+    if (t === 'reif') ring(f);
+    else if (t === 'zacken') { c.fillStyle = f; for (i = 0; i < 7; i++) { a = i / 7 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a - 0.22) * r * 0.36, Math.sin(a - 0.22) * r * 0.36); c.lineTo(cx + Math.cos(a) * r * 0.58, Math.sin(a) * r * 0.58); c.lineTo(cx + Math.cos(a + 0.22) * r * 0.36, Math.sin(a + 0.22) * r * 0.36); c.fill(); } c.strokeStyle = f; c.lineWidth = r * 0.12; c.beginPath(); c.arc(cx, 0, r * 0.36, 0, 7); c.stroke(); c.fillStyle = '#c0392b'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.07, 0, 7); c.fill(); }
+    else if (t === 'diadem') { ring(f, 0.07); c.fillStyle = '#5aa9e6'; c.beginPath(); c.arc(cx + r * 0.38, 0, r * 0.09, 0, 7); c.fill(); }
+    else if (t === 'hoch') { kugel('#8a1f2a', 0.36); c.strokeStyle = f; c.lineWidth = r * 0.13; c.beginPath(); c.arc(cx, 0, r * 0.36, 0, 7); c.stroke(); c.lineWidth = r * 0.07; c.beginPath(); c.moveTo(cx - r * 0.34, 0); c.lineTo(cx + r * 0.34, 0); c.moveTo(cx, -r * 0.34); c.lineTo(cx, r * 0.34); c.stroke(); c.fillStyle = f; c.beginPath(); c.arc(cx, 0, r * 0.1, 0, 7); c.fill(); }
+    else if (t === 'helm') { kugel(k.kf === '#2a2a2e' ? '#3a3d42' : '#8d9399', 0.44); c.strokeStyle = f; c.lineWidth = r * 0.08; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = r * 0.07; c.beginPath(); c.moveTo(cx + r * 0.3, -r * 0.18); c.lineTo(cx + r * 0.3, r * 0.18); c.stroke(); }
+    else if (t === 'kapuze') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx - r * 0.05, 0, r * 0.47, Math.PI * 0.35, Math.PI * 1.65); c.quadraticCurveTo(cx + r * 0.2, 0, cx + Math.cos(Math.PI * 0.35) * r * 0.47 - r * 0.05, Math.sin(Math.PI * 0.35) * r * 0.47); c.fill(); c.stroke(); }
+    else if (t === 'turban') { kugel(f, 0.44); c.strokeStyle = 'rgba(0,0,0,0.15)'; c.lineWidth = r * 0.06; for (i = 1; i <= 3; i++) { c.beginPath(); c.arc(cx, 0, r * 0.11 * i, 0, 7); c.stroke(); } c.fillStyle = '#1f8a5a'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.09, 0, 7); c.fill(); c.fillStyle = '#d4a017'; c.beginPath(); c.arc(cx + r * 0.36, 0, r * 0.04, 0, 7); c.fill(); }
+    else if (t === 'lorbeer') { c.fillStyle = f; for (i = 0; i < 12; i++) { a = -2.4 + i / 11 * 4.8; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4, r * 0.13, r * 0.06, a + 1.2, 0, 7); c.fill(); } }
+    else if (t === 'hoerner') { kugel(f, 0.4); c.fillStyle = '#efe6cf'; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx - r * 0.1, s * r * 0.3); c.quadraticCurveTo(cx - r * 0.2, s * r * 0.85, cx + r * 0.35, s * r * 0.95); c.quadraticCurveTo(cx + r * 0.05, s * r * 0.6, cx + r * 0.15, s * r * 0.3); c.closePath(); c.fill(); c.stroke(); }); }
+    else if (t === 'pelz' || t === 'wolf') { kugel(f, 0.47); c.fillStyle = 'rgba(0,0,0,0.15)'; for (i = 0; i < 8; i++) { a = i / 8 * 7; c.beginPath(); c.arc(cx + Math.cos(a) * r * 0.3, Math.sin(a) * r * 0.3, r * 0.08, 0, 7); c.fill(); } if (t === 'wolf') { c.fillStyle = f; [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx + r * 0.2, s * r * 0.25); c.lineTo(cx + r * 0.55, s * r * 0.5); c.lineTo(cx + r * 0.05, s * r * 0.45); c.fill(); }); c.fillStyle = '#2a2a2a'; c.beginPath(); c.arc(cx + r * 0.46, 0, r * 0.07, 0, 7); c.fill(); } }
+    else if (t === 'spitzhut') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(cx - r * 0.05, 0, r * 0.62, r * 0.62, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(cx - r * 0.1, r * 0.05, r * 0.3, 0, 7); c.fill(); c.fillStyle = f; c.beginPath(); c.arc(cx - r * 0.18, r * 0.1, r * 0.13, 0, 7); c.fill(); }
+    else if (t === 'mitra') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(cx, 0, r * 0.3, r * 0.44, 0, 0, 7); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.08; c.beginPath(); c.moveTo(cx, -r * 0.42); c.lineTo(cx, r * 0.42); c.stroke(); }
+    else if (t === 'eis') { c.fillStyle = f; c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1; for (i = 0; i < 8; i++) { a = i / 8 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a - 0.18) * r * 0.34, Math.sin(a - 0.18) * r * 0.34); c.lineTo(cx + Math.cos(a) * r * (i % 2 ? 0.55 : 0.7), Math.sin(a) * r * (i % 2 ? 0.55 : 0.7)); c.lineTo(cx + Math.cos(a + 0.18) * r * 0.34, Math.sin(a + 0.18) * r * 0.34); c.fill(); c.stroke(); } c.strokeStyle = f; c.lineWidth = r * 0.1; c.beginPath(); c.arc(cx, 0, r * 0.35, 0, 7); c.stroke(); }
+    else if (t === 'federn') { ring(f, 0.12); var fc = ['#c0392b', '#e8b830', '#2a64b8', '#1f8a5a', '#e8b830']; for (i = 0; i < 5; i++) { a = Math.PI + (i - 2) * 0.35; c.fillStyle = fc[i]; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, r * 0.32, r * 0.1, a, 0, 7); c.fill(); } }
+    else if (t === 'pilz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; [[0, 0, 0.14], [0.35, -0.3, 0.1], [-0.3, 0.32, 0.12], [0.3, 0.35, 0.09], [-0.35, -0.3, 0.1]].forEach(function (p) { c.beginPath(); c.arc(cx + p[0] * r, p[1] * r, p[2] * r, 0, 7); c.fill(); }); }
+    else if (t === 'dreispitz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx + r * 0.55, 0); c.lineTo(cx - r * 0.45, -r * 0.6); c.lineTo(cx - r * 0.45, r * 0.6); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.06; c.stroke(); }
+  }
+
+  // ---------- Karten ----------
+  var LABEL = { reif: 'Goldreif', zacken: 'Zackenkrone', diadem: 'Diadem', hoch: 'Hohe Krone', helm: 'Helm', kapuze: 'Kapuze', turban: 'Turban', lorbeer: 'Kranz', hoerner: 'Hörnerhelm', pelz: 'Pelzmütze', wolf: 'Wolfsfell', spitzhut: 'Spitzhut', mitra: 'Mitra', eis: 'Eiskrone', federn: 'Federkrone', pilz: 'Pilzhut', dreispitz: 'Dreispitz',
+    zweihaender: 'Zweihänder', schwert: 'Schwert', saebel: 'Säbel', axt: 'Axt', kolben: 'Streitkolben', speer: 'Speer', zepter: 'Zepter',
+    voll: 'Vollbart', kurz: 'kurzer Bart', lang: 'langer Bart', spitz: 'Spitzbart', schnauz: 'Schnauz', stoppel: 'Stoppeln', zopf: 'Zopfbart',
+    hermelin: 'Hermelin', streifen: 'Streifen', kreuz: 'Kreuz', punkte: 'Punkte', sterne: 'Sterne', blaetter: 'Blätter', flicken: 'Flicken', muenzen: 'Münzen', zacken_m: 'Zacken', schuppen: 'Schuppen' };
+  function lab(x, m) { return x ? (m && x === 'zacken' ? 'Zacken' : LABEL[x] || x) : '–'; }
+  function zeichne(cv, k) {
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 250, h = 150;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    var tc = k.art === 'spieler' ? TEAM.me : TEAM[team];
+    koenig(c, k, w * 0.27, h * 0.48, 27, tc);
+    // Originalgrösse im Spiel (etwa r = 9), auf Holzboden wie in der Burg
+    var gx = w - 46, gy = h - 40;
+    c.fillStyle = '#6a5a48'; c.beginPath(); c.roundRect ? c.roundRect(gx - 26, gy - 24, 64, 48, 5) : c.rect(gx - 26, gy - 24, 64, 48); c.fill();
+    koenig(c, k, gx, gy, 9, tc);
+    c.fillStyle = 'rgba(255,255,255,0.85)'; c.font = '600 10px system-ui'; c.fillText('im Spiel', gx - 22, gy - 28);
+  }
+  function karte(k) {
+    var d = document.createElement('div'); d.className = 'card';
+    var tag = k.art === 'spieler' ? (k.nr === 'S' ? '<span class="tag sp">heute</span>' : '<span class="tag sp">dein König</span>') : k.art === 'alt' ? '<span class="tag alt">bestehender Bot</span>' : '<span class="tag neu">neu</span>';
+    d.innerHTML = '<canvas aria-label="König ' + k.name + '"></canvas><div class="body"><span class="nr">' + (k.art === 'neu' ? 'Vorschlag ' + k.nr : k.nr) + '</span><b>' + k.name + tag + '</b><span class="look">' + k.text + '</span></div>';
+    return d;
+  }
+  function aufbauen() {
+    [['gSpieler', SP], ['gAlt', ALT], ['gNeu', NEU]].forEach(function (g) { var el = document.getElementById(g[0]); g[1].forEach(function (k) { var d = karte(k); el.appendChild(d); k._cv = d.querySelector('canvas'); }); });
+    malen();
+    var tb = document.querySelector('#tab tbody');
+    ALLE.forEach(function (k) {
+      var um = k.umhang === 'team' ? 'Teamfarbe' : '<span class="sw" style="background:' + k.umhang + '"></span>' + k.umhang;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + k.nr + '</td><td><b>' + k.name + '</b></td><td>' + ({ spieler: 'Spieler', alt: 'Bot (bestehend)', neu: 'Bot (neu)' })[k.art] + '</td><td><span class="sw" style="background:' + k.kf + '"></span>' + lab(k.krone) + '</td><td>' + um + '</td><td><span class="sw" style="background:' + k.ruestung + '"></span>' + k.ruestung + '</td><td><span class="sw" style="background:' + k.haut + '"></span>' + (k.bart ? lab(k.bart) : 'kein Bart') + '</td><td>' + lab(k.waffe) + '</td><td>' + lab(k.muster, 1) + '</td>';
+      tb.appendChild(tr);
+    });
+    var daten = ALLE.map(function (k) { var o = {}; ['nr', 'name', 'art', 'krone', 'kf', 'umhang', 'muster', 'ruestung', 'haut', 'haar', 'bart', 'waffe', 'wf'].forEach(function (f) { o[f] = k[f]; }); return o; });
+    var txt = '// Königs-Optiken: Saum des Umhangs immer in Teamfarbe\nvar KOENIGE = [\n' + daten.map(function (o) { return '  ' + JSON.stringify(o); }).join(',\n') + '\n];';
+    document.getElementById('json').textContent = txt;
+    document.getElementById('copy').addEventListener('click', function () {
+      var b = this; var ok = function () { b.textContent = 'Kopiert'; setTimeout(function () { b.textContent = 'Code kopieren'; }, 1500); };
+      try { navigator.clipboard.writeText(txt).then(ok, function () {}); } catch (e) {}
+    });
+  }
+  function malen() { ALLE.forEach(function (k) { zeichne(k._cv, k); }); }
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      team = b.getAttribute('data-team');
+      document.querySelectorAll('.tabs button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      malen();
+    });
+  });
+  window.addEventListener('resize', malen);
+  aufbauen();
+})();
+</script>
+</body>
+</html>
