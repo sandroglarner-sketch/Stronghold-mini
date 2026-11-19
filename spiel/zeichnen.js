@@ -198,20 +198,12 @@
       ctx.beginPath(); ctx.ellipse(cx, y + h * 0.79, 34 + 3 * gk, 16 + 2 * gk, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
     }
 
-    // Lebensanzeige: Balken mit Strich alle 5 Leben und der Zahl darüber
-    var n = CONFIG.BASE_HP, py = y - 20;
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    rr(ctx, x - 4, py - 4, w + 8, 18, 5); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.fillRect(x, py, w, 10);
-    ctx.fillStyle = col;
-    ctx.fillRect(x, py, w * clamp(b.hp / n, 0, 1), 10);
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    for (i = 5; i < n; i += 5) ctx.fillRect(x + w * i / n - 0.5, py, 1, 10);
-    ctx.font = '600 13px "Space Grotesk", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.strokeText(Math.ceil(b.hp), x + w / 2, py - 8);
-    ctx.fillStyle = '#ffffff'; ctx.fillText(Math.ceil(b.hp), x + w / 2, py - 8);
+    // Lebensanzeige: klein wie bei der Mauer, oben in der Burg (Balken, Zahl darunter)
+    var n = CONFIG.BASE_HP, bbw = 34, bbx = x + w / 2 - 25, bby = y + 9; // Zahl rechts neben dem Balken (darunter steigt das +Gold auf)
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bbx - 1, bby - 1, bbw + 2, 8);
+    ctx.fillStyle = col; ctx.fillRect(bbx, bby, bbw * clamp(b.hp / n, 0, 1), 6);
+    ctx.font = '600 10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.textAlign = 'left'; ctx.strokeText(Math.ceil(b.hp) + '', bbx + bbw + 4, bby + 7); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(b.hp) + '', bbx + bbw + 4, bby + 7); ctx.restore(); ctx.textAlign = 'center';
   }
 
   // Grabspur der Tunnelgräber: bleibt die volle Dauer sichtbar, nur das letzte Fünftel blendet aus
@@ -479,7 +471,7 @@
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
         drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
-      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), faceAngle(u));
+      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
       if (u.dummy) { ctx.save(); ctx.strokeStyle = P.gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
       if (u.hp < u.max && !(u.fade > 0)) {

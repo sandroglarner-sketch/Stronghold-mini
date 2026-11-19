@@ -117,16 +117,18 @@
       var d = CONFIG.units[u.type];
       var ewIn = walls[1 - u.team]; u.inFoe = !!(ewIn && ewIn.built && !wallOut(ewIn, u.x, u.y)); // steht hinter der fertigen gegnerischen Mauer
       if (u.dummy) { u.hit = Math.max(0, u.hit - dt); u.slow = Math.max(0, u.slow - dt); continue; } // Trainingspuppe: steht still
-      if (d.gebaeude) { // Bank: steht still; fertig bringt sie Gold und heilt wie die Mauer
-        u.hit = Math.max(0, u.hit - dt); u.slow = 0; u.settled = u.bau ? u.hp / u.max : true;
+      if (d.gebaeude) { // Gebäude (Schmiede): steht still; fertig bringt es Gold (Stufe) und heilt wie die Mauer
+        u.hit = Math.max(0, u.hit - dt); u.slow = 0;
         if (!u.bau) {
           if (u.hp < u.max) u.hp = Math.round(Math.min(u.max, u.hp + WALL.heal * dt) * 1e6) / 1e6;
           u.gT += dt;
           if (u.gT >= d.gebaeude.alle) {
             u.gT -= d.gebaeude.alle;
-            if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + d.gebaeude.gold); effects.push({ kind: 'text', text: '+' + d.gebaeude.gold, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
+            var gg = d.gebaeude.stufen[u.stufe - 1].gold;
+            if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
+        u.settled = { bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
@@ -298,7 +300,7 @@
         }
         continue;
       }
-      if (d.worker && u.bank) { // Arbeiter der Bank: hingehen und mit WALL.rate Leben pro Sekunde bauen, bis sie fertig ist
+      if (d.worker && u.bank) { // Arbeiter am Gebäude: hingehen und mit WALL.rate Leben pro Sekunde bauen, bis die Stufe fertig ist
         if (u.fade > 0) { u.fade -= dt; if (u.fade <= 0) { u.hp = 0; u.gone = true; } continue; }
         var bk = u.bank;
         if (bk.hp <= 0 || !bk.bau) { u.fade = WALL.fade; continue; }
@@ -306,7 +308,7 @@
         if (bdd > 0.05) { var bs = Math.min(spd * dt, bdd); u.x += bdx / bdd * bs; u.y += bdy / bdd * bs; if (Math.abs(bdx) > 0.1) u.face = bdx > 0 ? 1 : -1; }
         else {
           bk.hp = Math.round(Math.min(bk.max, bk.hp + WALL.rate * dt) * 1e6) / 1e6;
-          if (bk.hp >= bk.max - 1e-6) { bk.hp = bk.max; bk.bau = false; bk.gT = 0; u.fade = WALL.fade; effects.push({ kind: 'puff', x: bk.x, y: bk.y, team: bk.team, t: 0, dur: 0.5 }); }
+          if (bk.hp >= bk.max - 1e-6) { bk.hp = bk.max; bk.bau = false; bk.stufe = bk.ziel; bk.gT = 0; u.fade = WALL.fade; effects.push({ kind: 'puff', x: bk.x, y: bk.y, team: bk.team, t: 0, dur: 0.5 }); }
         }
         continue;
       }
@@ -512,10 +514,9 @@
     var kdead = [false, false];
     for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
 
-    // Banken: niemand steht in einer Bank (Bauern regeln das selbst über farmerStand)
+    // Gebäude: niemand steht darin (Bauern regeln das selbst über farmerStand)
     for (i = 0; i < units.length; i++) {
-      var gb = units[i]; if (gb.type !== 'bank' || gb.hp <= 0) continue;
-      var GB = CONFIG.units.bank.gebaeude;
+      var gb = units[i], GB = CONFIG.units[gb.type].gebaeude; if (!GB || gb.hp <= 0) continue;
       for (j = 0; j < units.length; j++) {
         var gu2 = units[j], gd2 = CONFIG.units[gu2.type];
         if (gu2 === gb || gu2.hp <= 0 || gd2.passive || gu2.tower || gu2.inCastle || gu2.dig || gu2.bf || gd2.worker) continue;

@@ -399,27 +399,53 @@
       c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.34 * A.orb * (1 + 0.3 * A.glow), 0, Math.PI * 2); c.fill();
       if (A.glow > 0) { c.strokeStyle = 'rgba(200,170,255,' + (0.8 * A.glow) + ')'; c.lineWidth = 1.5; for (var mi = 0; mi < 5; mi++) { var ma = mi * 1.257 + A.spin; c.beginPath(); c.moveTo(r * 1.65 + Math.cos(ma) * r * 0.75, r * 0.6 + Math.sin(ma) * r * 0.75); c.lineTo(r * 1.65 + Math.cos(ma) * r * 1.05, r * 0.6 + Math.sin(ma) * r * 1.05); c.stroke(); } }
       c.restore();
-    } else if (type === 'bank') {
-      // Bank von oben: Steinhaus mit Satteldach (Teamfarbe), goldene Münze über der Tür; im Bau (settled = Fortschritt 0..1) nur Gerüst und Fundament
-      var BG = CONFIG.units.bank.gebaeude, bw = r * BG.w / CONFIG.units.bank.r, bh = r * BG.h / CONFIG.units.bank.r, fort = typeof settled === 'number' ? settled : 1;
-      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -bw / 2 + 3, -bh / 2 + 4, bw, bh, 4); c.fill();
-      if (fort < 1) {
-        c.fillStyle = '#b8ab92'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); // Fundament
-        c.save(); c.beginPath(); c.rect(-bw / 2, -bh / 2, bw * fort, bh); c.clip(); // wächst von hinten nach vorn
-        c.fillStyle = '#d8cfbd'; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.restore();
-        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.stroke(); c.setLineDash([]);
-        c.beginPath(); c.moveTo(-bw / 2, -bh / 2); c.lineTo(bw / 2, bh / 2); c.moveTo(-bw / 2, bh / 2); c.lineTo(bw / 2, -bh / 2); c.stroke(); // Gerüst
+    } else if (type === 'schmiede') {
+      // Schmiede von oben: Steinhaus mit Dach in Teamfarbe, Esse (Schornstein) mit Rauch, Stufen-Punkte; vorne (nx/ny = weg von der Burg) Amboss und Schmied.
+      // settled = { bau 0..1, stufe, phase (Sekunden im 5-s-Takt, -1 = im Bau), nx, ny } im Spiel, sonst (Buch/Knopf) fertig ohne Schmied
+      var SG = CONFIG.units.schmiede.gebaeude, sw = r * SG.w / CONFIG.units.schmiede.r, sh = r * SG.h / CONFIG.units.schmiede.r;
+      var Z = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 1, ny: 0 }, now = performance.now() / 1000;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -sw / 2 + 3, -sh / 2 + 4, sw, sh, 4); c.fill();
+      if (Z.bau < 1 && Z.stufe <= 1 && Z.phase < 0) {
+        c.fillStyle = '#a89c86'; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill(); // Fundament
+        c.save(); c.beginPath(); c.rect(-sw / 2, -sh / 2, sw * Z.bau, sh); c.clip();
+        c.fillStyle = '#8f8678'; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-sw / 2, -sh / 2); c.lineTo(sw / 2, sh / 2); c.moveTo(-sw / 2, sh / 2); c.lineTo(sw / 2, -sh / 2); c.stroke();
       } else {
-        c.fillStyle = '#d8cfbd'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 2; rr(c, -bw / 2, -bh / 2, bw, bh, 3); c.fill(); c.stroke(); // Mauern
-        var rd = r * 0.12; // Dach: zwei Hälften in Teamfarbe, First quer
-        c.fillStyle = col; rr(c, -bw / 2 + rd, -bh / 2 + rd, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
-        c.fillStyle = col; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill(); c.fillStyle = 'rgba(0,0,0,0.22)'; rr(c, -bw / 2 + rd, 0, bw - 2 * rd, bh / 2 - rd, 2); c.fill();
-        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = Math.max(1, r * 0.06);
-        for (var bz = 1; bz < 4; bz++) { var by = -bh / 2 + rd + (bh / 2 - rd) * bz / 4; c.beginPath(); c.moveTo(-bw / 2 + rd, by); c.lineTo(bw / 2 - rd, by); c.stroke(); c.beginPath(); c.moveTo(-bw / 2 + rd, -by); c.lineTo(bw / 2 - rd, -by); c.stroke(); } // Ziegelreihen
-        c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-bw / 2 + rd, 0); c.lineTo(bw / 2 - rd, 0); c.stroke(); // First
-        c.fillStyle = '#6a4a2a'; c.fillRect(bw / 2 - r * 0.12, -r * 0.22, r * 0.14, r * 0.44); // Tür vorne
-        c.fillStyle = '#f0c63a'; c.strokeStyle = '#a77d10'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.arc(0, 0, r * 0.32, 0, Math.PI * 2); c.fill(); c.stroke(); // Münze
-        c.fillStyle = '#a77d10'; c.font = '700 ' + Math.round(r * 0.42) + 'px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('$', 0, r * 0.03);
+        c.fillStyle = '#8f8678'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2; rr(c, -sw / 2, -sh / 2, sw, sh, 3); c.fill(); c.stroke(); // Mauern
+        var sd = r * 0.12;
+        c.fillStyle = col; rr(c, -sw / 2 + sd, -sh / 2 + sd, sw - 2 * sd, sh - 2 * sd, 3); c.fill(); // Dach
+        c.fillStyle = 'rgba(0,0,0,0.25)'; rr(c, -sw / 2 + sd, 0, sw - 2 * sd, sh / 2 - sd, 3); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(-sw / 2 + sd, 0); c.lineTo(sw / 2 - sd, 0); c.stroke(); // First
+        var ex = -sw * 0.28, ey = -sh * 0.18; // Esse
+        c.fillStyle = '#4a4440'; c.fillRect(ex - r * 0.2, ey - r * 0.2, r * 0.4, r * 0.4);
+        var drin = Z.phase >= 3.4, glut = drin ? 0.6 + 0.4 * Math.sin(now * 12) : 0.25;
+        c.fillStyle = 'rgba(255,' + Math.round(120 + 60 * glut) + ',40,' + (0.5 + 0.5 * glut) + ')'; c.fillRect(ex - r * 0.11, ey - r * 0.11, r * 0.22, r * 0.22);
+        for (var sk = 0; sk < (drin ? 4 : 2); sk++) { var sp = ((now * 0.6 + sk / 4) % 1); c.fillStyle = 'rgba(90,90,90,' + (0.45 * (1 - sp)) + ')'; c.beginPath(); c.arc(ex - sp * r * 0.5, ey - sp * r * 1.1, r * (0.12 + sp * 0.22), 0, Math.PI * 2); c.fill(); } // Rauch
+        for (var sl = 0; sl < (Z.stufe || 1); sl++) { c.fillStyle = '#f0c63a'; c.strokeStyle = '#a77d10'; c.lineWidth = 1; c.beginPath(); c.arc(sw * 0.12 + sl * r * 0.32, -sh * 0.22, r * 0.12, 0, Math.PI * 2); c.fill(); c.stroke(); } // Stufe
+        if (Z.bau < 1) { // nächste Stufe im Bau: Gerüst über dem Dach
+          c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -sw / 2 - 3, -sh / 2 - 3, sw + 6, sh + 6, 4); c.stroke(); c.setLineDash([]);
+          c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-sw / 2, sh / 2 + 4, sw, 4); c.fillStyle = '#c98a12'; c.fillRect(-sw / 2, sh / 2 + 4, sw * Z.bau, 4);
+        }
+        if (Z.phase >= 0) { // Amboss und Schmied vor dem Gebäude
+          var vx = Z.nx, vy = Z.ny, ext = Math.abs(vx) * sw / 2 + Math.abs(vy) * sh / 2;
+          var ax = vx * (ext + r * 0.5), ay = vy * (ext + r * 0.5), qx = -vy, qy = vx; // Amboss; quer dazu steht der Schmied
+          var tx0 = vx * ext, ty0 = vy * ext, smx = ax + qx * r * 0.5 + vx * r * 0.15, smy = ay + qy * r * 0.5 + vy * r * 0.15, ph = Z.phase, sa = 1, sx2 = smx, sy2 = smy;
+          if (ph < 0.3) { var k1 = ph / 0.3; sx2 = tx0 + (smx - tx0) * k1; sy2 = ty0 + (smy - ty0) * k1; sa = k1; }
+          else if (ph >= 3 && ph < 3.4) { var k2 = (ph - 3) / 0.4; sx2 = smx + (tx0 - smx) * k2; sy2 = smy + (ty0 - smy) * k2; sa = 1 - k2; }
+          else if (ph >= 3.4) sa = 0;
+          c.fillStyle = '#3c3f44'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1; c.save(); c.translate(ax, ay); c.rotate(Math.atan2(qy, qx)); rr(c, -r * 0.3, -r * 0.13, r * 0.6, r * 0.26, 2); c.fill(); c.stroke(); c.restore(); // Amboss
+          if (sa > 0) {
+            c.save(); c.globalAlpha = sa; c.translate(sx2, sy2); c.rotate(Math.atan2(ay - sy2, ax - sx2));
+            var hk = ph >= 0.3 && ph < 3 ? Math.abs(Math.sin((ph - 0.3) * Math.PI * 2.2)) : 0; // Hammer: hoch und runter
+            c.fillStyle = '#6b4a2b'; c.beginPath(); c.ellipse(0, 0, r * 0.3, r * 0.4, 0, 0, Math.PI * 2); c.fill(); // Schürze
+            c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.12); c.beginPath(); c.moveTo(r * 0.1, r * 0.2); c.lineTo(r * (0.35 + 0.25 * (1 - hk)), r * (0.25 - 0.1 * hk)); c.stroke(); // Hammerstiel
+            c.fillStyle = '#5c6066'; c.fillRect(r * (0.3 + 0.25 * (1 - hk)), r * (0.13 - 0.1 * hk), r * 0.16, r * 0.22); // Hammerkopf
+            c.fillStyle = '#d9a066'; c.beginPath(); c.arc(-r * 0.02, 0, r * 0.2, 0, Math.PI * 2); c.fill(); // Kopf
+            c.restore();
+            if (hk < 0.15 && ph >= 0.3 && ph < 3) { c.fillStyle = '#ffd24a'; for (var fk = 0; fk < 4; fk++) { var fa = fk * 1.7 + now * 9; c.beginPath(); c.arc(ax + Math.cos(fa) * r * 0.3, ay + Math.sin(fa) * r * 0.3, r * 0.05, 0, Math.PI * 2); c.fill(); } } // Funken
+          }
+        }
       }
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).

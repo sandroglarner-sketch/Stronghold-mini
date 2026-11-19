@@ -26,7 +26,7 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
-    if (d.gebaeude) a.push('Gebäude: ein Arbeiter baut sie neben der Burg. Fertig bringt sie <b>alle ' + d.gebaeude.alle + ' s +' + d.gebaeude.gold + ' Gold</b> und heilt sich wie die Mauer.');
+    if (d.gebaeude) a.push('Gebäude: ein Arbeiter baut sie neben der Burg. Stufen (nochmals kaufen): ' + d.gebaeude.stufen.map(function (st, i) { return (i + 1) + ': ' + st.cost + ' Gold, ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold alle ' + d.gebaeude.alle + ' s</b>'; }).join('; ') + '. Heilt sich wie die Mauer.');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
@@ -220,8 +220,15 @@
     if (gm !== ui.gm) {
       goldMeEl.textContent = gm;
       ui.gm = gm;
-      BUY_TYPES.forEach(function (t) { btns[t].classList.toggle('poor', gm < CONFIG.units[t].cost); });
+      BUY_TYPES.forEach(function (t) { btns[t].classList.toggle('poor', gm < preisVon(ME, t)); });
     }
+    BUY_TYPES.forEach(function (t) { // Gebäude: Preis der nächsten Stufe (– = höchste Stufe, im Bau oder kein Platz)
+      if (!CONFIG.units[t].gebaeude) return;
+      var gp = state === 'playing' || state === 'paused' ? preisVon(ME, t) : CONFIG.units[t].cost, gk = gp + '|' + gm;
+      if (ui['geb_' + t] === gk) return; ui['geb_' + t] = gk;
+      var gc = btns[t].querySelector('.cost'); if (gc) gc.innerHTML = COIN_SVG + (isFinite(gp) ? gp : '–');
+      btns[t].classList.toggle('poor', gm < gp);
+    });
     if (gf !== ui.gf) { goldFoeEl.textContent = gf; ui.gf = gf; }
     var cdown = !!(bases && bases[ME] && bases[ME].down);
     if (cdown !== ui.cdown && btns.wall) { // Burg gefallen: der Mauer-Knopf zeigt eine Burg und baut sie wieder auf

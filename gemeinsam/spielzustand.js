@@ -52,7 +52,7 @@
         var y = y0 + iy * 0.2;
         var dist = hyp(x - clamp(x, b.x1, b.x2), y - clamp(y, b.y1, b.y2));
         if (dist < 0.6 - 1e-6) continue; // nicht auf der Kaserne
-        if (units.some(function (bo) { return bo.type === 'bank' && bo.hp > 0 && Math.abs(bo.x - x) < CONFIG.units.bank.gebaeude.w / 2 + 0.3 && Math.abs(bo.y - y) < CONFIG.units.bank.gebaeude.h / 2 + 0.3; })) continue; // nicht auf einer Bank
+        if (units.some(function (bo) { var BG = CONFIG.units[bo.type].gebaeude; return BG && bo.hp > 0 && Math.abs(bo.x - x) < BG.w / 2 + 0.3 && Math.abs(bo.y - y) < BG.h / 2 + 0.3; })) continue; // nicht auf einem Gebäude
         var ok = true;
         for (i = 0; i < others.length; i++) {
           if (hyp(others[i].tx - x, others[i].ty - y) < CONFIG.FARMER_RADIUS - 1e-6) { ok = false; break; }
@@ -85,7 +85,7 @@
         }
       }
     }
-    for (var bi = 0; bi < units.length; bi++) { var bo = units[bi]; if (bo.type === 'bank' && bo.hp > 0) { var BG = CONFIG.units.bank.gebaeude; obs.push({ k: 'sq', x: bo.x, y: bo.y, ca: 1, sa: 0, hw: BG.w / 2 + fr, hh: BG.h / 2 + fr }); } } // Bank: Bauern stehen an ihrem Rand
+    for (var bi = 0; bi < units.length; bi++) { var bo = units[bi], BG = CONFIG.units[bo.type].gebaeude; if (BG && bo.hp > 0) { obs.push({ k: 'sq', x: bo.x, y: bo.y, ca: 1, sa: 0, hw: BG.w / 2 + fr, hh: BG.h / 2 + fr }); } } // Gebäude: Bauern stehen an ihrem Rand
     function inside(o, x, y) {
       if (o.k === 'w') { var d0 = wallD(o.w.team, x, y); return o.outOnly ? d0 < o.out : d0 > o.in && d0 < o.out; }
       if (o.k === 'rd') return hyp(x - o.x, y - o.y) < o.r - 1e-6;
@@ -246,7 +246,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', bank: 'n' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -343,26 +343,43 @@
     return true;
   }
 
-  // Bank: freie Bauplätze seitlich der Burg (oben/unten), zuerst nahe, dann weiter Richtung Mauer
-  function bankPlaetze(team) {
-    var b = bases[team], G = CONFIG.units.bank.gebaeude, dir = team === 0 ? 1 : -1, cx = (b.x1 + b.x2) / 2 + dir * 0.9, l = [];
-    [0, 1.5].forEach(function (weiter) { [b.y1 - G.h / 2 - 0.3, b.y2 + G.h / 2 + 0.3].forEach(function (y) { l.push({ x: cx + dir * weiter, y: y }); }); });
-    return l.filter(function (p) { return !units.some(function (o) { return o.type === 'bank' && o.team === team && o.hp > 0 && hyp(o.x - p.x, o.y - p.y) < 0.2; }); });
+  // Gebäude: 2 Plätze auf einem Bogen wie die Mauer (Abstand GEB_ABSTAND zur Burg), oben (f 0,2) und unten (f 0,8); die Mitte mit dem Weg bleibt frei
+  var GEB_ABSTAND = 1.6, GEB_F = [0.2, 0.8];
+  function gebPlaetze(team) {
+    return GEB_F.map(function (f) { return wallPoint(team, f, GEB_ABSTAND); }).filter(function (p) {
+      return !units.some(function (o) { return CONFIG.units[o.type].gebaeude && o.team === team && o.hp > 0 && hyp(o.x - p.x, o.y - p.y) < 0.2; });
+    });
   }
-  function buyBank(team) {
-    var frei = bankPlaetze(team); if (!frei.length) return false;
-    var nah = frei.filter(function (p) { return Math.abs(p.x - frei[0].x) < 0.01; }), p = nah[Math.floor(simRand() * nah.length)]; // oben oder unten: Zufall
-    var d = CONFIG.units.bank, G = d.gebaeude, dir = team === 0 ? 1 : -1;
-    var bk = { id: nextId++, team: team, type: 'bank', x: p.x, y: p.y, hp: 1, max: d.hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1, bau: true, gT: 0 };
-    units.push(bk);
-    spawn(team, 'worker'); // ein Arbeiter baut sie (wie an der Mauer)
-    var wk = units[units.length - 1]; wk.bank = bk; wk.bp = { x: p.x - dir * (G.w / 2 + 0.3), y: p.y };
+  function meinGebaeude(team, type) { for (var i = 0; i < units.length; i++) if (units[i].type === type && units[i].team === team && units[i].hp > 0) return units[i]; return null; }
+  // Preis des nächsten Kaufs: Gebäude = nächste Stufe (Infinity = schon höchste Stufe, im Bau oder kein Platz frei)
+  function preisVon(team, type) {
+    var d = CONFIG.units[type]; if (!d) return Infinity;
+    if (!d.gebaeude) return d.cost;
+    var g = meinGebaeude(team, type), st = d.gebaeude.stufen;
+    if (!g) return gebPlaetze(team).length ? st[0].cost : Infinity;
+    if (g.bau || g.stufe >= st.length) return Infinity;
+    return st[g.stufe].cost;
+  }
+  function buyGebaeude(team, type) {
+    var d = CONFIG.units[type], G = d.gebaeude, g = meinGebaeude(team, type), dir = team === 0 ? 1 : -1;
+    if (g) { // nächste Stufe: Arbeiter baut die zusätzlichen Leben
+      if (g.bau || g.stufe >= G.stufen.length) return false;
+      g.ziel = g.stufe + 1; g.max = G.stufen[g.ziel - 1].hp; g.bau = true;
+    } else {
+      var frei = gebPlaetze(team); if (!frei.length) return false;
+      var p = frei[Math.floor(simRand() * frei.length)], b = bases[team], cx = clamp(p.x, b.x1, b.x2), cy = clamp(p.y, b.y1, b.y2), nl = hyp(p.x - cx, p.y - cy) || 1;
+      g = { id: nextId++, team: team, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
+            bau: true, stufe: 0, ziel: 1, gT: 0, nx: (p.x - cx) / nl, ny: (p.y - cy) / nl }; // nx/ny = Vorderseite (weg von der Burg)
+      units.push(g);
+    }
+    spawn(team, 'worker'); // ein Arbeiter baut (wie an der Mauer)
+    var wk = units[units.length - 1]; wk.bank = g; wk.bp = { x: g.x - g.nx * (G.w / 2 + 0.25), y: g.y - g.ny * (G.h / 2 + 0.25) };
     return true;
   }
   function buy(team, type) {
     if (state !== 'playing') return false;
     var d = CONFIG.units[type];
-    if (!d || d.hidden || gold[team] < d.cost) return false;
+    if (!d || d.hidden || gold[team] < preisVon(team, type)) return false;
     if (tut.on && team === 0 && tut.avail.indexOf(type) < 0) return false; // im Tutorial nur, was gerade verlangt ist
     if (d.wall) {
       if (!buyWall(team)) return false;
@@ -371,8 +388,9 @@
       rec[team].push(clock.toFixed(1) + LOGKEY[type]);
       return true;
     }
-    if (d.gebaeude && !buyBank(team)) return false; // kein Bauplatz mehr frei
-    gold[team] -= d.cost;
+    var preis = preisVon(team, type);
+    if (d.gebaeude && !buyGebaeude(team, type)) return false; // kein Platz frei / schon höchste Stufe
+    gold[team] -= preis;
     if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
     rec[team].push(clock.toFixed(1) + LOGKEY[type]);
     if (!d.gebaeude) spawn(team, type);

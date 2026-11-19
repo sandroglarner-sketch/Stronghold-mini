@@ -209,12 +209,12 @@
     if (unitLocked(type)) return; // braucht ein Konto
     if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
     var ok, pd = CONFIG.units[type];
-    ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= pd.cost && !(tut.on && tut.avail.indexOf(type) < 0);
+    ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= preisVon(ME, type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet
       if (units.some(function (w) { return w.team === ME && w.type === 'worker' && w.hp > 0; }) || deploys.some(function (q) { return CONFIG.units[q.type].wall; })) ok = false;
     }
     if (ok) {
-      deploys.push({ type: type, cost: pd.cost, t: 0, net: pvp.on }); // Gold ist ab sofort reserviert
+      deploys.push({ type: type, cost: preisVon(ME, type), t: 0, net: pvp.on }); // Gold ist ab sofort reserviert
       if (pvp.on) pvp.pending.push(type); // online: wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später)
       if (el) { el.classList.remove('press'); void el.offsetWidth; el.classList.add('press'); } // Knopf drückt sich kurz ein
     }
