@@ -827,6 +827,7 @@
     AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 40 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
     // Gegner «Der Bandit» (Zahlen in BOTS.bauern):
+    // income / incomeEvery = Grundeinkommen des Bots: so viel Gold alle so viele Sekunden (Standard 10 Gold alle 5 s, wie der Spieler);
     // farmers = höchstens so viele Bauern; huntLead = so viele Sekunden lang musst du mehr Bauern haben, bis die Jagd kommt; hunt = Jagdtrupp, huntEvery = Pause zwischen zwei Jagden;
     // wallGold = so viel Gold, dann baut er eine Mauer (repariert wird bei allen Bots gleich: fehlen mehr als 40 Leben zum Höchstwert der angestrebten Stufe), wallClear = nur, solange kein Gegner in seiner Spielfeldhälfte ist;
     // wallStage = Ausbau bis Stufe (0 = keine Mauer, 1 = Mauer ohne Türme, 2 = 2 Turmplätze, 3 = 4, 4 = 6, 5 = 6 + 2 Belagerungsplätze);
@@ -836,20 +837,20 @@
     // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft; defPlus = Verteidigung mit (Stärkewert deiner Einheiten abzüglich seiner Turmbesatzung) plus so viel Stärke mehr als du hast (Stärkewert: CONFIG.units[..].staerke),
     // defPool = erlaubte Einheiten, defMage = ab so vielen benötigten Einheiten sind auch Magier erlaubt, noOutput = danach so viele Sekunden keine Einheiten
   CONFIG.BOTS = {
-      bauern: { farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
+      bauern: { income: 10, incomeEvery: 5, farmers: 5, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30,
                 wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true,
                 attackGold: 130, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
       // «Kleiner Prinz»: wie Der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) 
-      prinz: { farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
+      prinz: { income: 10, incomeEvery: 5, farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
                wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true,
                attackGold: 180, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
                defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
       // «Der Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
-      feldherr: { farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
+      feldherr: { income: 10, incomeEvery: 5, farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
                wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true,
                attackGold: 210, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['catapult', 1], ['ram', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 13, buy: [['rider', 4]] }],
@@ -857,7 +858,7 @@
       // «Baron Rabenstein»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 5 (die Türme besetzt er wie alle Gegner komplett: je 3 Bogenschützen und auf dem Belagerungsplatz ein Trebuchet, towerSiege),
       // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
       // verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern, greift bei 230 Gold an
-      baron: { farmers: 9, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
+      baron: { income: 10, incomeEvery: 5, farmers: 9, huntLead: 20, hunt: [['knight', 1]], huntEvery: 35,
                huntLater: [{ after: 3, buy: [['archer', 2]] }, { after: 4, buy: [['spear', 2]] }],
                wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, trebuchet: 2 }, wallClear: true,
                attackGold: 230, lockSecs: 15,
@@ -1045,7 +1046,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ad4a499a58'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'b85739dd0c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1497,7 +1498,7 @@
   });
 
   // ---------- Spielzustand ----------
-  var units, effects, bases, gold, payT, clock, nextId, produced;
+  var units, effects, bases, gold, payT, payT1 = 0, clock, nextId, produced; // payT1 = eigener Gold-Takt des Bots (income/incomeEvery)
   var walls = [null, null]; // pro Seite höchstens eine Mauer
   var shots = []; // Geschosse im Flug: der Schaden folgt erst nach delay Sekunden
   var state = 'ready'; // ready | playing | paused | over
@@ -1518,7 +1519,7 @@
     spawnKing(0); spawnKing(1);
     gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
     sandbox = false;
-    payT = 0;
+    payT = 0; payT1 = 0;
     clock = 0;
     nextId = 1;
     produced = 0;
@@ -2130,13 +2131,30 @@
     if (d.blast) applySplash(s.team, s.sx, s.sy, s.tx, s.ty, { atk: d.blast.atk, splash: d.blast.r, range: d.range }, null, false, false); // Onager: zusätzlich Flächenschaden um den Einschlagpunkt, trifft alles (auch die getroffene Mauer/Burg nochmals)
   }
 
+  // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
+  function botEinkommen() {
+    if (pvp && pvp.on) return null;
+    var R = CONFIG.BOTS[botType]; if (!R) return null;
+    return { gold: R.income === undefined ? income(1) : R.income, alle: Math.max(0.5, R.incomeEvery || CONFIG.GOLD_EVERY) };
+  }
   function update(dt) {
     clock += dt;
+    var be = botEinkommen();
+    if (be && !tut.on) {
+      payT1 += dt;
+      if (payT1 >= be.alle) {
+        payT1 -= be.alle;
+        gold[1] = Math.min(CONFIG.GOLD_MAX, gold[1] + be.gold);
+        var bb1 = bases[1];
+        if (be.gold) effects.push({ kind: 'text', text: '+' + be.gold, x: (bb1.x1 + bb1.x2) / 2, y: bb1.y1 + 0.55, t: 0, dur: 1.2 });
+      }
+    }
     payT += dt;
     if (payT >= CONFIG.GOLD_EVERY) {
       payT -= CONFIG.GOLD_EVERY;
       for (var t = 0; t < 2; t++) {
         if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
+        if (t === 1 && botEinkommen()) continue; // Bot: eigenes Grundeinkommen (unten)
         var amt = income(t);
         gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
         var bb = bases[t];

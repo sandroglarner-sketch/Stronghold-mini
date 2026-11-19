@@ -67,13 +67,30 @@
     if (d.blast) applySplash(s.team, s.sx, s.sy, s.tx, s.ty, { atk: d.blast.atk, splash: d.blast.r, range: d.range }, null, false, false); // Onager: zusätzlich Flächenschaden um den Einschlagpunkt, trifft alles (auch die getroffene Mauer/Burg nochmals)
   }
 
+  // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
+  function botEinkommen() {
+    if (pvp && pvp.on) return null;
+    var R = CONFIG.BOTS[botType]; if (!R) return null;
+    return { gold: R.income === undefined ? income(1) : R.income, alle: Math.max(0.5, R.incomeEvery || CONFIG.GOLD_EVERY) };
+  }
   function update(dt) {
     clock += dt;
+    var be = botEinkommen();
+    if (be && !tut.on) {
+      payT1 += dt;
+      if (payT1 >= be.alle) {
+        payT1 -= be.alle;
+        gold[1] = Math.min(CONFIG.GOLD_MAX, gold[1] + be.gold);
+        var bb1 = bases[1];
+        if (be.gold) effects.push({ kind: 'text', text: '+' + be.gold, x: (bb1.x1 + bb1.x2) / 2, y: bb1.y1 + 0.55, t: 0, dur: 1.2 });
+      }
+    }
     payT += dt;
     if (payT >= CONFIG.GOLD_EVERY) {
       payT -= CONFIG.GOLD_EVERY;
       for (var t = 0; t < 2; t++) {
         if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
+        if (t === 1 && botEinkommen()) continue; // Bot: eigenes Grundeinkommen (unten)
         var amt = income(t);
         gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
         var bb = bases[t];

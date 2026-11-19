@@ -81,6 +81,7 @@
       var kosten = 0;
       var welle = L.attack.map(function (a) { return a.buy.map(function (x) { kosten += preis(x[0]) * x[1]; return '<span>' + a.after + ' s: ' + x[1] + '× ' + esc(name(x[0])) + '</span>'; }).join(''); }).join('');
       logik = 'CONFIG.BOTS.' + b.logik + '<dl>' +
+        '<dt>Grundeinkommen</dt><dd>' + (L.income === undefined ? 10 : L.income) + ' Gold alle ' + (L.incomeEvery || 5) + ' s</dd>' +
         '<dt>Bauern</dt><dd>höchstens ' + L.farmers + '</dd>' +
         '<dt>Mauer</dt><dd>' + (L.wallStage === 0 ? 'keine Mauer' : 'ab ' + L.wallGold + ' Gold, bis Stufe ' + (L.wallStage || 1) + ', repariert, wenn mehr als 40 Leben fehlen') + '</dd>' +
         '<dt>Turmbesatzung</dt><dd>' + (L.turm && Object.keys(L.turm).length ? Object.keys(L.turm).map(function (t) { return L.turm[t] + '× ' + esc(name(t)); }).join(', ') : 'keine') + '</dd>' +

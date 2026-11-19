@@ -1,5 +1,5 @@
   // ---------- Spielzustand ----------
-  var units, effects, bases, gold, payT, clock, nextId, produced;
+  var units, effects, bases, gold, payT, payT1 = 0, clock, nextId, produced; // payT1 = eigener Gold-Takt des Bots (income/incomeEvery)
   var walls = [null, null]; // pro Seite höchstens eine Mauer
   var shots = []; // Geschosse im Flug: der Schaden folgt erst nach delay Sekunden
   var state = 'ready'; // ready | playing | paused | over
@@ -20,7 +20,7 @@
     spawnKing(0); spawnKing(1);
     gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
     sandbox = false;
-    payT = 0;
+    payT = 0; payT1 = 0;
     clock = 0;
     nextId = 1;
     produced = 0;
