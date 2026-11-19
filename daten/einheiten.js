@@ -55,6 +55,9 @@
       // Gebäude, ist 2 s drin, dann gibt es das Gold); heilt wie die Mauer (WALL.heal). Kann angegriffen werden; Bauern weichen an ihren Rand aus. passive = zählt nicht als Kampfeinheit.
       schmiede: { cat: 'building', name: 'Schmiede', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                   gebaeude: { w: 1.2, h: 1.0, alle: 5, stufen: [{ cost: 40, hp: 10, gold: 5 }, { cost: 80, hp: 20, gold: 10 }, { cost: 120, hp: 30, gold: 15 }] } },
+      // Adelshaus (Typ Gebäude): eine Stufe; 100 Gold, 20 Leben, alle 30 s +50 Gold. Darstellung: 2 s drin, ein Adliger geht langsam in die Burg, bleibt 5 s, geht zurück, 2 s drin.
+      adel: { cat: 'building', name: 'Adelshaus', cost: 100, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+              gebaeude: { w: 1.2, h: 1.0, alle: 30, stufen: [{ cost: 100, hp: 20, gold: 50 }] } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)

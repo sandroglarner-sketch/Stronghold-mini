@@ -498,6 +498,50 @@
           }
         }
       }
+    } else if (type === 'adel') {
+      // Adelshaus von oben: Ziegeldach (Terrakotta) mit Rundturm (Kegeldach in Teamfarbe), Hecke und Banner vorne. Ein Adliger (violetter Mantel, Goldreif)
+      // geht im 30-s-Takt langsam in die Burg und zurück: 0–2 drin, 2–12,5 hin, 12,5–17,5 in der Burg, 17,5–28 zurück, 28–30 drin, dann +Gold.
+      var AG = CONFIG.units.adel.gebaeude, aw = r * AG.w / CONFIG.units.adel.r, ah = r * AG.h / CONFIG.units.adel.r;
+      var AZ = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1, kx: 0, ky: 0 }, anow = performance.now() / 1000;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -aw / 2 + 3, -ah / 2 + 4, aw, ah, 4); c.fill();
+      if (AZ.neu && AZ.bau < 1) { // erster Bau: Fundament und Gerüst
+        c.fillStyle = '#a89c86'; rr(c, -aw / 2, -ah / 2, aw, ah, 3); c.fill();
+        c.save(); c.beginPath(); c.rect(-aw / 2, -ah / 2, aw * AZ.bau, ah); c.clip(); c.fillStyle = '#b5523a'; rr(c, -aw / 2, -ah / 2, aw, ah, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -aw / 2, -ah / 2, aw, ah, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-aw / 2, -ah / 2); c.lineTo(aw / 2, ah / 2); c.moveTo(-aw / 2, ah / 2); c.lineTo(aw / 2, -ah / 2); c.stroke();
+      } else {
+        var ax0 = -aw / 2, ay0 = -ah / 2;
+        c.save(); rr(c, ax0, ay0, aw, ah, 3); c.clip();
+        c.fillStyle = '#b5523a'; c.fillRect(ax0, ay0, aw, ah); // Ziegel
+        c.strokeStyle = 'rgba(80,20,10,0.35)'; c.lineWidth = 1;
+        var zr = r * 0.16; for (var zy = 0; zy < ah; zy += zr) { c.beginPath(); c.moveTo(ax0, ay0 + zy); c.lineTo(ax0 + aw, ay0 + zy); c.stroke(); for (var zx = ax0 + ((Math.round(zy / zr) % 2) ? r * 0.12 : 0); zx < ax0 + aw; zx += r * 0.24) { c.beginPath(); c.arc(zx, ay0 + zy + zr, r * 0.12, Math.PI, 0); c.stroke(); } }
+        c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(ax0, 0, aw, ah / 2);
+        c.restore();
+        c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2; rr(c, ax0, ay0, aw, ah, 3); c.stroke();
+        c.strokeStyle = '#7e3423'; c.lineWidth = Math.max(2, r * 0.12); c.beginPath(); c.moveTo(ax0, 0); c.lineTo(ax0 + aw, 0); c.stroke(); // First
+        var tx3 = aw / 2 - r * 0.05, ty3 = -ah / 2 + r * 0.05, trr = r * 0.34; // Rundturm an der Ecke
+        c.fillStyle = '#c9c0ad'; c.beginPath(); c.arc(tx3, ty3, trr, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = col; c.beginPath(); c.arc(tx3, ty3, trr * 0.78, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1; for (var ta = 0; ta < 6; ta++) { var tA = ta * Math.PI / 3; c.beginPath(); c.moveTo(tx3, ty3); c.lineTo(tx3 + Math.cos(tA) * trr * 0.78, ty3 + Math.sin(tA) * trr * 0.78); c.stroke(); }
+        c.fillStyle = '#e2b13c'; c.beginPath(); c.arc(tx3, ty3, r * 0.07, 0, Math.PI * 2); c.fill(); // Turmspitze
+        var avx = AZ.nx || 0, avy = AZ.ny === undefined ? 1 : AZ.ny, aqx = -avy, aqy = avx, aext = Math.abs(avx) * aw / 2 + Math.abs(avy) * ah / 2;
+        c.fillStyle = '#3f7a3a'; for (var hz = -2; hz <= 2; hz++) { if (!hz) continue; c.beginPath(); c.arc(avx * (aext + r * 0.14) + aqx * hz * r * 0.26, avy * (aext + r * 0.14) + aqy * hz * r * 0.26, r * 0.12, 0, Math.PI * 2); c.fill(); } // Hecke, Lücke vor der Tür
+        if (AZ.bau < 1) { c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -aw / 2 - 3, -ah / 2 - 3, aw + 6, ah + 6, 4); c.stroke(); c.setLineDash([]); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-aw / 2, -ah / 2 - 9, aw, 4); c.fillStyle = '#c98a12'; c.fillRect(-aw / 2, -ah / 2 - 9, aw * AZ.bau, 4); }
+        if (AZ.phase >= 0) { // der Adlige
+          var aph = AZ.phase, dx0 = avx * (aext + r * 0.3), dy0 = avy * (aext + r * 0.3), kx0 = (AZ.kx || 0) * T, ky0 = (AZ.ky || 0) * T, ak = -1;
+          if (aph >= 2 && aph < 12.5) ak = (aph - 2) / 10.5; else if (aph >= 17.5 && aph < 28) ak = 1 - (aph - 17.5) / 10.5;
+          if (ak >= 0) {
+            var nxp = dx0 + (kx0 - dx0) * ak, nyp = dy0 + (ky0 - dy0) * ak, hin = aph < 15, nsm = r * CONFIG.units.farmer.r / CONFIG.units.adel.r * 1.1;
+            var nal = Math.min(1, ak * 8, (1 - ak) * 8); // an Tür und Burg ein-/ausblenden
+            c.save(); c.globalAlpha = nal; c.translate(nxp, nyp); c.rotate(Math.atan2(hin ? ky0 - dy0 : dy0 - ky0, hin ? kx0 - dx0 : dx0 - kx0)); c.translate(0, Math.sin(anow * 6) * nsm * 0.05);
+            c.fillStyle = '#6a3d8a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-nsm * 0.15, 0, nsm * 0.85, nsm * 0.75, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Mantel
+            c.fillStyle = '#f2ece0'; c.beginPath(); c.ellipse(nsm * 0.2, 0, nsm * 0.2, nsm * 0.55, 0, 0, Math.PI * 2); c.fill(); // Kragen
+            c.fillStyle = '#e8b994'; c.beginPath(); c.arc(nsm * 0.1, 0, nsm * 0.4, 0, Math.PI * 2); c.fill(); c.stroke(); // Kopf
+            c.strokeStyle = '#e2b13c'; c.lineWidth = Math.max(1.5, nsm * 0.14); c.beginPath(); c.arc(nsm * 0.1, 0, nsm * 0.36, -2.2, 2.2); c.stroke(); // Goldreif
+            c.restore();
+          }
+        }
+      }
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
       if (!settled) {

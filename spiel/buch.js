@@ -27,7 +27,7 @@
   // Spezialfähigkeit: nur was im Code wirklich programmiert ist (aus den Werten in CONFIG.units abgeleitet)
   function abilityText(d) {
     var a = [];
-    if (d.gebaeude) a.push(d.gebaeude.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>'));
+    if (d.gebaeude) a.push(d.gebaeude.stufen.length === 1 ? d.gebaeude.stufen[0].hp + ' Leben, <b>+' + d.gebaeude.stufen[0].gold + ' Gold alle ' + d.gebaeude.alle + ' s</b>' : d.gebaeude.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': ' + st.hp + ' Leben, <b>+' + st.gold + ' Gold</b>'; }).join('<br>'));
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
@@ -229,7 +229,7 @@
       var gp = state === 'playing' || state === 'paused' ? preisVon(ME, t) : CONFIG.units[t].cost, gk = gp + '|' + gm;
       if (ui['geb_' + t] === gk) return; ui['geb_' + t] = gk;
       var gc = btns[t].querySelector('.cost'); if (gc) gc.innerHTML = COIN_SVG + (isFinite(gp) ? gp : '–');
-      var gg = state === 'playing' || state === 'paused' ? meinGebaeude(ME, t) : null, nst = Math.min(3, gg ? gg.stufe + (gg.bau ? 0 : 1) : 1); // Bild: nächste Stufe
+      var gg = state === 'playing' || state === 'paused' ? meinGebaeude(ME, t) : null, nst = Math.min(CONFIG.units[t].gebaeude.stufen.length, gg ? gg.stufe + (gg.bau ? 0 : 1) : 1); // Bild: nächste Stufe
       if (ui['gebB_' + t] !== nst) { ui['gebB_' + t] = nst; var ic = icons[t].getContext('2d'), ext = ICON_EXT[t] || [1, 2], span = ext[0] + ext[1], ir = Math.min(24, 78 / span); ic.clearRect(0, 0, 88, 88); drawUnit(ic, t, (88 - span * ir) / 2 + ext[0] * ir, 44, ir, 0, 1, 0, { bau: 1, stufe: nst, phase: -1, nx: 0, ny: 1 }, undefined, 0); }
       btns[t].classList.toggle('poor', gm < gp);
     });

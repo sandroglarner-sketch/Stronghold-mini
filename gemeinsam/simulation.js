@@ -128,7 +128,8 @@
             if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
-        u.settled = { neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
+        var kbp = bases[u.team], kpx = clamp(u.x, kbp.x1 + 0.3, kbp.x2 - 0.3), kpy = clamp(u.y, kbp.y1 + 0.3, kbp.y2 - 0.3);
+        u.settled = { kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
@@ -176,7 +177,7 @@
         if (!kb.down) { // Burg steht wieder (ab 1 Leben): sofort zurück (Waffe bleibt in der Hand), oben versorgt er sie und wird wieder zum Fernkämpfer
           kdx = kcx - u.x; kdy = kcy - u.y; kdl = hyp(kdx, kdy);
           if (kdl <= 0.15) { u.inCastle = true; u.draussen = false; u.x = kcx; u.y = kcy; }
-          else { var krs = Math.min(spd * dt, kdl); u.x += kdx / kdl * krs; u.y += kdy / kdl * krs; if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1; }
+          else { var krs = Math.min(spd * dt, kdl), kgv = umGebaeude(u, kdx / kdl, kdy / kdl, null); u.x += kgv.x * krs; u.y += kgv.y * krs; if (Math.abs(kdx) > 0.1) u.face = kdx > 0 ? 1 : -1; }
           continue;
         }
         var kt = null, kdd = 1e9;
@@ -413,7 +414,8 @@
       if (wallT && d.range <= 1.5) stop = Math.min(stop, 0.5); // Nahkämpfer gehen dicht an die Mauer, damit die Kaserne sie trifft
       if (td > stop && td > 1e-6) {
         var step = Math.min(spd * dt, td - stop);
-        var vx = (tx - u.x) / td, vy = (ty - u.y) / td;
+        var vx = (tx - u.x) / td, vy = (ty - u.y) / td, gv = umGebaeude(u, vx, vy, tgt); // um Gebäude herum
+        vx = gv.x; vy = gv.y;
         u.x += vx * step;
         u.y += vy * step;
         if (Math.abs(vx) > 0.2) u.face = vx > 0 ? 1 : -1;

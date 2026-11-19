@@ -246,7 +246,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -349,6 +349,20 @@
     return GEB_F.map(function (f) { return wallPoint(team, f, GEB_ABSTAND); }).filter(function (p) {
       return !units.some(function (o) { return CONFIG.units[o.type].gebaeude && o.team === team && o.hp > 0 && hyp(o.x - p.x, o.y - p.y) < 0.2; });
     });
+  }
+  // Läuft eine Einheit auf ein Gebäude zu, geht sie seitlich daran vorbei (statt davor stecken zu bleiben); tgt = ihr Ziel (das Gebäude selbst ist kein Hindernis)
+  function umGebaeude(u, vx, vy, tgt) {
+    var ur = CONFIG.units[u.type].r * 0.8 + 0.05;
+    for (var i = 0; i < units.length; i++) {
+      var b = units[i], G = CONFIG.units[b.type].gebaeude;
+      if (!G || b.hp <= 0 || b === tgt) continue;
+      var hw = G.w / 2 + ur, hh = G.h / 2 + ur, px = u.x + vx * 0.35 - b.x, py = u.y + vy * 0.35 - b.y;
+      if (Math.abs(px) >= hw || Math.abs(py) >= hh) continue;
+      var ox = u.x - b.x, oy = u.y - b.y;
+      if (Math.abs(ox) / hw > Math.abs(oy) / hh) return { x: 0, y: Math.abs(vy) > 0.15 ? (vy > 0 ? 1 : -1) : (oy >= 0 ? 1 : -1) }; // an der linken/rechten Seite entlang
+      return { x: Math.abs(vx) > 0.15 ? (vx > 0 ? 1 : -1) : (ox >= 0 ? 1 : -1), y: 0 }; // an der oberen/unteren Seite entlang
+    }
+    return { x: vx, y: vy };
   }
   function meinGebaeude(team, type) { for (var i = 0; i < units.length; i++) if (units[i].type === type && units[i].team === team && units[i].hp > 0) return units[i]; return null; }
   // Preis des nächsten Kaufs: Gebäude = nächste Stufe (Infinity = schon höchste Stufe, im Bau oder kein Platz frei)
