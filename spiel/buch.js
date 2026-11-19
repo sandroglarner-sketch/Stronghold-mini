@@ -214,6 +214,8 @@
       if (th) { var tn = String(TUT[tut.i].need[t] - (tut.bought[t] || 0)); if (btns[t].getAttribute('data-need') !== tn) btns[t].setAttribute('data-need', tn); }
     });
     if (giveBtn.disabled === canGive) giveBtn.disabled = !canGive;
+    var ruhe = state !== 'playing'; // Menü, Pause, Ergebnis: alle Einheiten leicht durchsichtig wie «zu wenig Gold»
+    if (ruhe !== ui.ruhe) { unitsEl.classList.toggle('ruhe', ruhe); ui.ruhe = ruhe; }
     if (gm !== ui.gm) {
       goldMeEl.textContent = gm;
       ui.gm = gm;
