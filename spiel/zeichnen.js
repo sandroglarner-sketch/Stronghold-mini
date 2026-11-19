@@ -473,7 +473,7 @@
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
-        drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, true, unitAt(u, 'kingbow'));
+        drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), faceAngle(u));
       if (u.fade > 0) ctx.globalAlpha = 1;

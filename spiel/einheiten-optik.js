@@ -276,7 +276,7 @@
       }
     } else if (type === 'king' || type === 'kingbow') {
       // König von oben in der gewählten Optik (koenigTeam[team], siehe spiel/koenig-optik.js): mit Bogen (auf der Burg) oder seiner Waffe (ohne Burg)
-      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
+      koenigMalen(c, koenigOptik(koenigTeam[team]), r, col, { bogen: type === 'kingbow', zieh: typeof settled === 'number' ? settled : 1, rot: A.rot, str: A.str, vib: A.vib, arrow: A.arrow });
     } else if (type === 'sword') {
       // Schwertkämpfer: einfacher grauer Eisenhelm mit dunklem Rand (anders als der Ritter), runder Holzschild mit Eisenrand und Buckel, Schwert
       c.fillStyle = '#8d9399';

@@ -1,6 +1,6 @@
   // ---------- König zeichnen (Optik aus KOENIGE) ----------
   // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
-  // o.ohneWaffe = nur der König (für Bilder); o.bogen = auf der Burg mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
+  // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
   var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
@@ -25,7 +25,7 @@
     c.fillStyle = k.ruestung; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
     c.beginPath(); c.ellipse(0, 0, r * 0.55, r * 0.88, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     if (!std) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(-r * 0.1, -r * 0.35, r * 0.25, r * 0.3, 0, 0, 7); c.fill(); }
-    if (o.ohneWaffe) { /* Bild (Auswahl, Karte, Datenbank): ohne Waffe */ }
+    if (o.ohneWaffe || (o.bogen && !(o.zieh > 0))) kRuhe(c, k, r); // Bild bzw. in der Burg ohne Gegner: leere Hände
     else if (o.bogen) kBogen(c, k, r, o);
     else { c.save(); c.translate(r * 0.45, 0); c.rotate(o.rot || 0); c.translate(-r * 0.45, 0); kWaffe(c, k, r); c.restore(); }
     if (k.haar) { c.fillStyle = k.haar; c.beginPath(); c.arc(-r * 0.08, 0, r * 0.44, 0, 7); c.fill(); }
@@ -36,23 +36,37 @@
     kKrone(c, k, r);
     c.restore();
   }
-  function kBogen(c, k, r, o) { // Bogen mit aufgelegtem Pfeil (wie bisher)
-    var str = o.str === undefined ? 0.5 : o.str;
-    c.strokeStyle = KHOLZ; c.lineWidth = Math.max(3, r * 0.22);
-    c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * 1.15); c.stroke();
-    var kmx = str * r;
-    c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.5;
-    c.beginPath(); c.moveTo(r * 0.95, -r * 1.15); c.lineTo(kmx, (o.vib || 0) * r); c.lineTo(r * 0.95, r * 1.15); c.stroke();
-    if (o.arrow > 0) {
-      c.globalAlpha = o.arrow;
-      c.strokeStyle = KHOLZ; c.lineWidth = 2;
+  // Hände in Ruhe (vorne links und rechts am Körper)
+  var KRUHE = [[0.38, -0.66], [0.38, 0.66]];
+  function kRuhe(c, k, r) { kHand(c, r * KRUHE[0][0], r * KRUHE[0][1], r, k.haut); kHand(c, r * KRUHE[1][0], r * KRUHE[1][1], r, k.haut); }
+  // Eigener Bogen des Königs (k.bogen). o.zieh 0..1 = Bogen hervorholen (0 = auf dem Rücken, 1 = schussbereit); o.str/o.vib/o.arrow = Sehne und Pfeil wie attackPose
+  function kBogen(c, k, r, o) {
+    var B = k.bogen || { holz: '#8a6538', enden: '', sehne: '#e8e0cc', form: 0 }, e = Math.max(0, Math.min(1, o.zieh === undefined ? 1 : o.zieh));
+    var ee = e * e * (3 - 2 * e), L = B.form === 2 ? 1.3 : 1.15, bereit = e >= 1;
+    var str = bereit ? (o.str === undefined ? 0.5 : o.str) : 0.95, kmx = str * r;
+    // Bogen: kommt vom Rücken (schräg, hinten) nach vorn
+    c.save();
+    c.globalAlpha *= Math.min(1, e * 4);
+    c.translate(r * 0.95, 0); c.translate(-r * 1.7 * (1 - ee), r * 0.15 * (1 - ee)); c.rotate(1.25 * (1 - ee)); c.translate(-r * 0.95, 0);
+    c.strokeStyle = B.holz; c.lineWidth = Math.max(3, r * 0.22);
+    c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 1.9, 0, r * 0.95, r * L); c.stroke();
+    if (B.form === 1) { c.lineWidth = Math.max(2, r * 0.15); c.beginPath(); c.moveTo(r * 0.95, -r * L); c.quadraticCurveTo(r * 0.85, -r * (L + 0.12), r * 1.12, -r * (L + 0.2)); c.moveTo(r * 0.95, r * L); c.quadraticCurveTo(r * 0.85, r * (L + 0.12), r * 1.12, r * (L + 0.2)); c.stroke(); }
+    if (B.enden) { c.fillStyle = B.enden; c.beginPath(); c.arc(r * 0.95, -r * L, r * 0.12, 0, 7); c.arc(r * 0.95, r * L, r * 0.12, 0, 7); c.fill(); c.fillRect(r * 1.3, -r * 0.14, r * 0.16, r * 0.28); }
+    c.strokeStyle = B.sehne; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(r * 0.95, -r * L); c.lineTo(bereit ? kmx : r * 0.95, bereit ? (o.vib || 0) * r : 0); c.lineTo(r * 0.95, r * L); c.stroke();
+    if (bereit && o.arrow > 0) {
+      c.globalAlpha *= o.arrow;
+      c.strokeStyle = B.holz; c.lineWidth = 2;
       c.beginPath(); c.moveTo(kmx, 0); c.lineTo(kmx + r * 1.1, 0); c.stroke();
       c.fillStyle = KSTAHL; c.beginPath(); c.moveTo(kmx + r * 1.4, 0); c.lineTo(kmx + r * 1.0, -r * 0.14); c.lineTo(kmx + r * 1.0, r * 0.14); c.closePath(); c.fill();
-      c.globalAlpha = 1;
     }
-    c.fillStyle = k.haut;
-    c.beginPath(); c.arc(r * 0.95, 0, r * 0.14, 0, Math.PI * 2); c.arc(Math.min(kmx, r * 0.5), 0, r * 0.14, 0, Math.PI * 2); c.fill();
+    c.restore();
+    // Hände: von der Ruhe zum Griff (vordere Hand) und zur Sehne (hintere Hand)
+    var gx = r * 0.95 - r * 1.7 * (1 - ee), gy = r * 0.15 * (1 - ee);
+    kHand(c, lerpK(r * KRUHE[1][0], gx, ee), lerpK(r * KRUHE[1][1], gy, ee), r, k.haut);
+    kHand(c, lerpK(r * KRUHE[0][0], Math.min(kmx, r * 0.5), ee), lerpK(r * KRUHE[0][1], 0, ee), r, k.haut);
   }
+  function lerpK(a, b, t) { return a + (b - a) * t; }
   function kMuster(c, k, r) {
     var m = k.muster, i, j;
     c.fillStyle = 'rgba(255,255,255,0.22)'; c.strokeStyle = 'rgba(255,255,255,0.28)'; c.lineWidth = Math.max(1.5, r * 0.09);

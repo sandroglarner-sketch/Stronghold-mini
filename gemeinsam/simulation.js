@@ -111,21 +111,23 @@
           else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
             u.x = kcx; u.y = kcy;
             u.ready = u.aimT !== undefined && clock - u.aimT < CONFIG.BASE_CD + 0.3; // schießt gerade: nächsten Pfeil schon spannen (Animation)
-            if (u.cd <= 0) {
-              var vic = null, vd = 1e9, vp = null;
-              for (j = 0; j < units.length; j++) {
-                var en = units[j];
-                if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
-                var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
-                if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; vp = np; }
-              }
-              if (vic) {
-                shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
-                u.cd = CONFIG.BASE_CD; u.atkT = clock;
-                u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel
-                effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand
-              }
+            // Gegner in Reichweite? Dann Bogen hervorholen (KING_BOW.draw s), erst danach schießen; sonst Bogen wieder verstauen (KING_BOW.stow s)
+            var vic = null, vd = 1e9;
+            for (j = 0; j < units.length; j++) {
+              var en = units[j];
+              if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
+              var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
+              if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; }
             }
+            u.bogenT = u.bogenT || 0;
+            if (vic) u.bogenT = Math.min(1, u.bogenT + dt / CONFIG.KING_BOW.draw);
+            else u.bogenT = Math.max(0, u.bogenT - dt / CONFIG.KING_BOW.stow);
+            if (vic && u.bogenT >= 1 && u.cd <= 0) {
+              shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
+              u.cd = CONFIG.BASE_CD; u.atkT = clock;
+              u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel
+              effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand
+            } else if (vic && u.bogenT < 1) { u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock - CONFIG.BASE_CD * 0.5; } // dreht sich schon beim Hervorholen zum Ziel
             continue;
           }
         }
