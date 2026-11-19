@@ -331,6 +331,7 @@
   .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
   .mcard.lockd canvas, .ucard.lockd canvas, .mcard.lockd .mc { filter: grayscale(1); opacity: 0.45; }
   .mcard.lockd .pick, .ucard.lockd .pick { background: var(--line); border-color: var(--line); }
+  .mcard .neu { position: absolute; left: 4px; top: 4px; background: #2f8a3e; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 6px; pointer-events: none; } /* neu freigeschaltet, bis zum ersten Antippen */
   .mcard.lockd::after { content: '🔒'; position: absolute; left: 4px; top: 3px; font-size: 12px; }
   .ucard .lockinfo { margin: 4px 0 0; font-size: 0.8rem; color: var(--muted); }
   .tut { position: absolute; right: 8px; top: 8px; z-index: 3; }

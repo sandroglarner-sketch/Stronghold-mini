@@ -438,13 +438,16 @@
   var TURN = Math.PI, TURN_SIEGE = Math.PI / 2, lastRender = 0, renderDt = 0; // halbe Umdrehung = 1 s, Belagerungsmaschinen 2 s
   function faceAngle(u) {
     var want, px = u.px === undefined ? u.x : u.px, py = u.py === undefined ? u.y : u.py, mx = u.x - px, my = u.y - py;
+    if (u.type === 'rider' && renderDt > 0) { // Reiter: Laufrichtung geglättet (kein wildes Drehen nach einem Treffer, wenn er kurz zurückgeschoben wird oder ein neues Ziel sucht)
+      var sk = Math.min(1, renderDt / 0.35); u.mvx = (u.mvx || 0) * (1 - sk) + mx * sk; u.mvy = (u.mvy || 0) * (1 - sk) + my * sk; mx = u.mvx; my = u.mvy;
+    }
     if (u.aimX !== undefined && (u.ready || (u.atkT !== undefined && clock - u.atkT < 0.6))) want = Math.atan2(u.aimY - u.y, u.aimX - u.x);
     else if (renderDt > 0 && hyp(mx, my) > Math.max(0.0005, 0.2 * renderDt)) want = Math.atan2(my, mx);
     else if (renderDt > 0) want = u.team === 0 ? 0 : Math.PI; // steht still: gerade zum Gegner
     u.px = u.x; u.py = u.y;
     if (u.rang === undefined) u.rang = want !== undefined ? want : (u.face < 0 ? Math.PI : 0);
     if (want !== undefined) {
-      var df = Math.atan2(Math.sin(want - u.rang), Math.cos(want - u.rang)), st = (CONFIG.units[u.type].cat === 'siege' ? TURN_SIEGE : TURN) * renderDt;
+      var df = Math.atan2(Math.sin(want - u.rang), Math.cos(want - u.rang)), st = (CONFIG.units[u.type].cat === 'siege' ? TURN_SIEGE : u.type === 'rider' ? TURN * 0.6 : TURN) * renderDt;
       u.rang += Math.abs(df) <= st ? df : (df > 0 ? st : -st);
     }
     return u.rang;

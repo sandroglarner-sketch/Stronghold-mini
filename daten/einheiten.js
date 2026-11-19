@@ -63,14 +63,14 @@
       // Bank (Typ Gebäude): 80 Gold, 20 Leben; alle 10 s +10 % deines Goldes (aufgerundet). Ein Geschäftsmann geht zum König (2 s), zurück, 1 s in der Bank.
       bank: { cat: 'building', name: 'Bank', cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
-      // Diebeshaus (Typ Gebäude): 50 Gold, 10 Leben; alle 30 s klaut ein Dieb 50 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
+      // Diebeshaus (Typ Gebäude): 50 Gold, 10 Leben; alle 30 s klaut ein Dieb 40 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
       // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
       dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-              gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 50, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
-      // Brandstifterhaus (Typ Gebäude): 30 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
+              gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 40, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
+      // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 50 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
-      brand: { cat: 'building', name: 'Brandstifterhaus', cost: 30, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 13, klauen: 15, stufen: [{ cost: 30, hp: 10, gold: 0 }] } },
+      brand: { cat: 'building', name: 'Brandstifterhaus', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'brand', prozent: 50, zuenden: 13, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
       // Kirche (Typ Gebäude): 120 Gold, 30 Leben (Annahme). Fertig: nochmals kaufen = ein Priester betet 20 s (50 Gold), danach Gunst +1 (Balken über der Kirche).
       // Bei Gunst 5 kommt ein Unwetter über das gegnerische Drittel: jede Sekunde ein Blitz an einer zufälligen Stelle, 20 Schaden im Umkreis 1 an allem vom Gegner
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.

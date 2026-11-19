@@ -59,7 +59,27 @@
   }
   // Buch: so gross wie der Startbildschirm (liegt im Spielfeld), Karten seitenweise, Pfeile/Wischen/Pfeiltasten blättern mit Umblätter-Animation
   var book = { page: 0, per: 6, busy: false, sel: null, filter: '' };
-  function bookTypes() { return BUY_TYPES.filter(function (t) { return t !== 'wall' && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); }); }
+  function bookTypes() {
+    var l = BUY_TYPES.filter(function (t) { return t !== 'wall' && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); });
+    neuPruefen();
+    return l.filter(function (t) { return !unitLocked(t); }).concat(l.filter(function (t) { return unitLocked(t); })); // nicht freigeschaltete Karten ganz hinten
+  }
+  // «neu»: war eine Karte gesperrt und ist jetzt frei, steht bis zum ersten Antippen ein grünes «neu» darauf (gemerkt im Browser)
+  var NEU = { gesperrt: [], neu: [] };
+  try { NEU = JSON.parse(localStorage.getItem('stronghold-neu') || 'null') || NEU; } catch (err) {}
+  function neuSpeichern() { try { localStorage.setItem('stronghold-neu', JSON.stringify(NEU)); } catch (err) {} }
+  function neuPruefen() {
+    if (!kontoAn() || tester) return; // ohne Konto-System oder im Tester-Modus ist alles frei: nichts merken
+    var ch = false;
+    BUY_TYPES.forEach(function (t) {
+      var lk = unitLocked(t), gi = NEU.gesperrt.indexOf(t);
+      if (lk && gi < 0) { NEU.gesperrt.push(t); ch = true; }
+      else if (!lk && gi >= 0) { NEU.gesperrt.splice(gi, 1); if (NEU.neu.indexOf(t) < 0) NEU.neu.push(t); ch = true; }
+    });
+    if (ch) neuSpeichern();
+  }
+  function istNeu(t) { return NEU.neu.indexOf(t) >= 0 && !unitLocked(t); }
+  function neuGesehen(t) { var i = NEU.neu.indexOf(t); if (i < 0) return; NEU.neu.splice(i, 1); neuSpeichern(); document.querySelectorAll('[data-show="' + t + '"] .neu').forEach(function (n) { n.remove(); }); }
   // Goldmünze: ein Symbol für Burg-Anzeige, Deck-Knöpfe, Buch (Mini- und Grosskarte) und die aufpoppenden +Gold-Zahlen
   function cardHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0, c = cardCat(d), ab = abilityText(d);
@@ -74,7 +94,7 @@
   function miniHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0;
     return '<div class="mcard' + (on ? ' on' : '') + (t === book.sel ? ' sel' : '') + (unitLocked(t) ? ' lockd' : '') + '" data-show="' + t + '" title="' + d.name + (unitLocked(t) ? ' (' + lockText(t) + ')' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
-      '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span></div>';
+      '<canvas width="88" height="88" data-t="' + t + '"></canvas><span class="mc">' + COIN_SVG + d.cost + '</span>' + (istNeu(t) ? '<span class="neu">neu</span>' : '') + '</div>';
   }
   function drawCardIcons(el) {
     el.querySelectorAll('canvas').forEach(function (cv) {
@@ -162,12 +182,13 @@
     if (!b) { // Minikarte angetippt: rechts gross zeigen
       var m = e.target.closest ? e.target.closest('[data-show]') : null;
       if (!m) return;
-      book.sel = m.getAttribute('data-show');
+      book.sel = m.getAttribute('data-show'); neuGesehen(book.sel);
       $('bookPage').querySelectorAll('.mcard').forEach(function (c) { c.classList.toggle('sel', c.getAttribute('data-show') === book.sel); });
       renderDetail();
       return;
     }
     var t = b.getAttribute('data-pick'), i = DECK.indexOf(t), msg = '';
+    neuGesehen(t);
     if (i < 0 && unitLocked(t)) { $('bookMsg').textContent = lockText(t); return; }
     if (i >= 0) { if (DECK.length > 1) DECK.splice(i, 1); else msg = 'Mindestens eine Einheit muss im Deck bleiben.'; }
     else if (DECK.length >= DECK_MAX) msg = 'Dein Deck ist voll (' + DECK_MAX + '). Entferne zuerst eine Einheit.';
