@@ -64,4 +64,8 @@ console.log('gebaut: build/artifact.html (' + artifact.length + ' Zeichen), inde
   fsx.mkdirSync(px.join(wurzel, 'build'), { recursive: true });
   fsx.writeFileSync(px.join(wurzel, 'build', 'botdatenbank.html'), seite);
   console.log('gebaut: build/botdatenbank.html');
+  // Bot-Editor (Eingabemaske für alle Bot-Parameter), gleiche Daten
+  const editor = fsx.readFileSync(px.join(__dirname, 'bot-editor-vorlage.html'), 'utf8').replace('/*DATEN*/', () => teile + '\n  var STAND = ' + JSON.stringify(stand) + ';');
+  fsx.writeFileSync(px.join(wurzel, 'build', 'bot-editor.html'), editor);
+  console.log('gebaut: build/bot-editor.html');
 }

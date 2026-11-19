@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stronghold Mini – Bot-Editor</title>
+<style>
+  :root { --bg: #eef1f3; --panel: #ffffff; --fg: #172023; --muted: #5d686c; --line: #d9dfe2; --me: #2a64b8; --foe: #c23a2e; --ok: #1d7a3a; --grass: #8ab565; --input: #f7f9fa; --chg: #fff4d6; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141a1c; --panel: #1e2629; --fg: #e8eef0; --muted: #9aa7ab; --line: #34403f; --grass: #33502f; --input: #172023; --ok: #6fcf8a; --foe: #ff7d6c; --chg: #3a3220; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  header h1 { font-size: 1.15rem; margin: 0 8px 0 0; }
+  select, input, button { font: inherit; color: var(--fg); }
+  select, input[type=text], input[type=number] { background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+  input[type=number] { width: 84px; }
+  input.chg, select.chg { background: var(--chg); }
+  button { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button.prim { background: var(--me); border-color: var(--me); color: #fff; font-weight: 600; }
+  button.klein { padding: 3px 8px; font-size: 0.82rem; }
+  button.weg { border: 0; background: transparent; color: var(--muted); font-size: 1.05rem; padding: 2px 6px; }
+  button.weg:hover { color: var(--foe); }
+  main { max-width: 1280px; margin: 0 auto; padding: 16px 18px 60px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  section.karte { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px 14px; margin-bottom: 14px; }
+  section.karte h2 { font-size: 1rem; margin: 0 0 2px; }
+  section.karte > p.hilfe { margin: 0 0 10px; color: var(--muted); font-size: 0.82rem; }
+  .felder { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; }
+  .feld { display: grid; gap: 3px; align-content: start; }
+  .feld > input, .feld > select, .zeile > input, .zeile > select { height: 34px; }
+  .feld label { font-weight: 600; font-size: 0.85rem; }
+  .feld small { color: var(--muted); font-size: 0.76rem; line-height: 1.3; }
+  .feld .zeile { display: flex; gap: 6px; align-items: center; }
+  .feld.check label { display: flex; gap: 6px; align-items: center; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  td.kosten { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td select { width: 100%; }
+  .summe { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 0.88rem; }
+  .summe b { font-variant-numeric: tabular-nums; }
+  .rot { color: var(--foe); } .gruen { color: var(--ok); }
+  .pool { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pool label { display: flex; gap: 5px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 0.82rem; cursor: pointer; }
+  .pool label.an { border-color: var(--me); background: color-mix(in srgb, var(--me) 10%, transparent); }
+  .koenigwahl { display: flex; gap: 12px; align-items: center; }
+  .koenigwahl select { flex: 1; min-width: 0; height: 34px; }
+  .koenigwahl canvas { width: 72px; height: 72px; border-radius: 50%; background: #f7e3df; border: 4px solid var(--foe); flex: none; }
+  aside { position: sticky; top: 70px; }
+  aside .karte { max-height: calc(100vh - 90px); overflow: auto; }
+  pre { background: var(--input); border: 1px solid var(--line); border-radius: 10px; padding: 10px; overflow: auto; font-size: 0.74rem; white-space: pre-wrap; word-break: break-word; margin: 6px 0; }
+  .aend { font-size: 0.82rem; margin: 6px 0; padding-left: 18px; }
+  .aend li { margin: 2px 0; }
+  .status { font-size: 0.8rem; color: var(--muted); }
+  .ohne { padding: 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); }
+  .ohne[hidden], [hidden] { display: none !important; }
+  .tag { font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; margin-left: 6px; }
+  .tag.ja { background: #e3f1e5; color: #1d6a33; } .tag.nein { background: #eceff1; color: #5d686c; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bot-Editor</h1>
+  <select id="botSel" aria-label="Bot wählen"></select>
+  <button type="button" id="neuBtn">+ Neuer Bot</button>
+  <button type="button" id="resetBtn" title="Alle Änderungen an diesem Bot verwerfen">Zurücksetzen</button>
+  <span class="status" id="status"></span>
+</header>
+<main>
+  <div>
+    <section class="karte">
+      <h2>Grunddaten</h2>
+      <p class="hilfe">Name, König und Platz im Story-Modus (Bot-Datenbank).</p>
+      <div class="felder">
+        <div class="feld"><label for="f_name">Name</label><input type="text" id="f_name" data-k="name"><small>So heisst er im Spiel, z. B. «Der Bandit».</small></div>
+        <div class="feld"><label for="f_id">ID</label><input type="text" id="f_id" data-k="id"><small>Interner Name, nur Kleinbuchstaben und Zahlen.</small></div>
+        <div class="feld"><label for="f_koenig">König</label><div class="koenigwahl"><canvas id="koenigBild" width="72" height="72"></canvas><select id="f_koenig" data-k="koenig"></select></div><small>Aussehen des Königs; ein Sieg schaltet ihn für den Spieler frei.</small></div>
+        <div class="feld"><label for="f_platz">Platz im Story-Modus</label><input type="number" id="f_platz" data-k="platz" min="1" step="1" placeholder="leer"><small>Reihenfolge (1 = erster Gegner). Leer = noch nicht in der Story.</small></div>
+        <div class="feld"><label>Lage auf der Story-Karte</label><div class="zeile">x <input type="number" id="f_kx" data-k="kx" min="0" max="100" step="1"> % &nbsp; y <input type="number" id="f_ky" data-k="ky" min="0" max="100" step="1"> %</div><small>Prozent von links / oben. Nur nötig mit Platz.</small></div>
+      </div>
+    </section>
+
+    <section class="karte">
+      <h2>Bot-Logik <span id="logikTag"></span></h2>
+      <p class="hilfe">Ohne Logik ist der Bot nicht spielbar. Übernimm die Logik eines anderen Bots als Startpunkt.</p>
+      <div class="zeile" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="vorlageSel" aria-label="Vorlage"></select>
+        <button type="button" id="vorlageBtn">Logik übernehmen</button>
+        <button type="button" id="logikWegBtn" class="klein">Logik entfernen</button>
+      </div>
+      <div class="ohne" id="ohneLogik" style="margin-top:10px">Dieser Bot hat noch keine Logik.</div>
+    </section>
+
+    <div id="logik">
+      <section class="karte">
+        <h2>Wirtschaft</h2>
+        <div class="felder">
+          <div class="feld"><label for="f_farmers">Bauern (höchstens)</label><input type="number" id="f_farmers" data-k="farmers" min="0" step="1"><small>Er baut Bauern bis zu dieser Zahl, solange du nicht mehr Kampfeinheiten hast.</small></div>
+        </div>
+      </section>
+
+      <section class="karte">
+        <h2>Jagd</h2>
+        <p class="hilfe">Hast du länger mehr Bauern als er, schickt er einen Jagdtrupp.</p>
+        <div class="felder">
+          <div class="feld"><label for="f_huntLead">Jagd nach … s Vorsprung</label><input type="number" id="f_huntLead" data-k="huntLead" min="0" step="1"><small>So lange musst du mehr Bauern haben.</small></div>
+          <div class="feld"><label for="f_huntEvery">Pause zwischen Jagden (s)</label><input type="number" id="f_huntEvery" data-k="huntEvery" min="0" step="1"></div>
+        </div>
+        <table><thead><tr><th>Jagdtrupp: Einheit</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="huntRows"></tbody></table>
+        <button type="button" class="klein" id="huntAdd" style="margin-top:6px">+ Einheit</button>
+        <table style="margin-top:12px"><thead><tr><th>Später nachschicken: Sekunde</th><th>Einheit</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="laterRows"></tbody></table>
+        <button type="button" class="klein" id="laterAdd" style="margin-top:6px">+ Zeile</button>
+        <div class="summe"><span>Jagd kostet <b id="huntSum">0</b> Gold (er jagt erst, wenn er so viel hat)</span></div>
+      </section>
+
+      <section class="karte">
+        <h2>Mauer</h2>
+        <div class="felder">
+          <div class="feld"><label for="f_wallGold">Mauer ab … Gold</label><input type="number" id="f_wallGold" data-k="wallGold" min="0" step="1"><small>So viel Gold braucht er frei, dann baut er (weiter).</small></div>
+          <div class="feld"><label for="f_wallUnits">… und ab so vielen Gegnern</label><input type="number" id="f_wallUnits" data-k="wallUnits" min="0" step="1"><small>Kampfeinheiten, die du mindestens haben musst (0 = egal).</small></div>
+          <div class="feld"><label for="f_repairAt">Repariert ab … Leben</label><input type="number" id="f_repairAt" data-k="repairAt" min="0" step="1"><small>0 = repariert nie, baut sie aber neu.</small></div>
+          <div class="feld"><label for="f_wallStage">Ausbau bis Stufe</label><select id="f_wallStage" data-k="wallStage"><option value="">nur Grundmauer</option><option value="1">1</option><option value="2">2 (Türme)</option><option value="3">3</option><option value="4">4</option><option value="5">5 (grosse Türme)</option></select></div>
+          <div class="feld"><label for="f_towerSiege">Belagerungsplatz auf den Türmen</label><select id="f_towerSiege" data-k="towerSiege"></select><small>Was auf den Belagerungsplatz der grossen Türme kommt.</small></div>
+          <div class="feld check"><label><input type="checkbox" id="f_wallClear" data-k="wallClear"> Nur ohne Gegner in seiner Hälfte</label><small>Baut nicht, solange deine Einheiten bei ihm stehen.</small></div>
+        </div>
+      </section>
+
+      <section class="karte">
+        <h2>Angriff</h2>
+        <div class="felder">
+          <div class="feld"><label for="f_attackGold">Angriff startet ab … Gold</label><input type="number" id="f_attackGold" data-k="attackGold" min="0" step="1"></div>
+          <div class="feld"><label for="f_lockSecs">Danach … s nur Angriff</label><input type="number" id="f_lockSecs" data-k="lockSecs" min="0" step="1"><small>So lange kauft er nichts anderes als die Welle.</small></div>
+        </div>
+        <table><thead><tr><th>Sekunde</th><th>Einheit (Preis)</th><th>Anzahl</th><th>Kosten</th><th></th></tr></thead><tbody id="attackRows"></tbody></table>
+        <div style="display:flex;gap:8px;margin-top:6px"><button type="button" class="klein" id="attackAdd">+ Zeile hinzufügen</button><button type="button" class="klein" id="attackSort">Nach Sekunden sortieren</button></div>
+        <div class="summe"><span>Gesamtkosten <b id="attSum">0</b></span><span>Startgold <b id="attStart">0</b></span><span>Differenz <b id="attDiff">0</b></span><span>Stärke <b id="attStaerke">0</b></span></div>
+      </section>
+
+      <section class="karte">
+        <h2>Verteidigung</h2>
+        <p class="hilfe">Wird er angegriffen, kauft er Verteidiger mit der Stärke deines Angriffs (ohne seine Turmbesatzung) plus «Mehr Stärke».</p>
+        <div class="felder">
+          <div class="feld"><label for="f_defPlus">Mehr Stärke als du</label><input type="number" id="f_defPlus" data-k="defPlus" min="0" step="1"></div>
+          <div class="feld"><label for="f_noOutput">Danach … s keine Einheiten</label><input type="number" id="f_noOutput" data-k="noOutput" min="0" step="1"></div>
+          <div class="feld"><label for="f_defMage">Magier ab … benötigter Stärke</label><input type="number" id="f_defMage" data-k="defMage" min="0" step="1"><small>99 = nie.</small></div>
+          <div class="feld"><label for="f_defMageAtt">Magier, wenn du ≥ … Stärke hast</label><input type="number" id="f_defMageAtt" data-k="defMageAtt" min="0" step="1" placeholder="leer"><small>Leer = aus.</small></div>
+          <div class="feld"><label for="f_defDiggerAt">Tunnelgräber ab … Schützen</label><input type="number" id="f_defDiggerAt" data-k="defDiggerAt" min="0" step="1" placeholder="leer"><small>Wenn du so viele Bogenschützen + Magier hast. Leer = aus.</small></div>
+          <div class="feld"><label for="f_defDiggerVsCatapult">Tunnelgräber gegen Katapult</label><input type="number" id="f_defDiggerVsCatapult" data-k="defDiggerVsCatapult" min="0" step="1" placeholder="leer"><small>Mindestens so viele, wenn du ein Katapult auf dem Feld hast. Leer = aus.</small></div>
+        </div>
+        <div class="feld" style="margin-top:10px"><label>Erlaubte Verteidiger</label><div class="pool" id="pool"></div></div>
+      </section>
+    </div>
+  </div>
+
+  <aside>
+    <section class="karte">
+      <h2>Ins Spiel übernehmen</h2>
+      <p class="hilfe">Kopieren und im Chat einfügen. Entwürfe bleiben in diesem Browser gespeichert, bis du sie zurücksetzt.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="prim" id="kopierBtn">Diesen Bot kopieren</button>
+        <button type="button" id="alleBtn">Alle geänderten kopieren</button>
+      </div>
+      <p class="status" id="kopierStatus"></p>
+      <h2 style="margin-top:8px">Änderungen</h2>
+      <ul class="aend" id="aenderungen"></ul>
+      <h2>Code</h2>
+      <pre id="code"></pre>
+    </section>
+  </aside>
+</main>
+<script>
+(function () {
+/*DATEN*/
+  var P = { me: '#2a64b8', foe: '#c23a2e' };
+  var $ = function (id) { return document.getElementById(id); };
+  var KAUF = Object.keys(CONFIG.units).filter(function (t) { var u = CONFIG.units[t]; return !u.hidden && u.cost > 0 && t !== 'wall' && t !== 'farmer'; });
+  function uName(t) { var u = CONFIG.units[t]; return u ? u.name : t; }
+  function preis(t) { var u = CONFIG.units[t]; return u ? u.cost : 0; }
+  function staerke(t) { var u = CONFIG.units[t]; return u && u.staerke !== undefined ? u.staerke : 1; }
+  function kopie(o) { return JSON.parse(JSON.stringify(o)); }
+  var SPEICHER = 'stronghold-bot-editor';
+
+  // ----- Daten: Original aus dem Spiel, Entwürfe aus dem Browser -----
+  function ausSpiel(b) {
+    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', kx: b.karte ? b.karte.x : '', ky: b.karte ? b.karte.y : '', logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
+  }
+  var ORIG = {}; BOT_DB.forEach(function (b) { ORIG[b.id] = ausSpiel(b); });
+  var ENTW = {}; try { ENTW = JSON.parse(localStorage.getItem(SPEICHER) || '{}') || {}; } catch (e) { ENTW = {}; }
+  function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify(ENTW)); } catch (e) {} }
+  function alleIds() { var ids = BOT_DB.map(function (b) { return b.id; }); Object.keys(ENTW).forEach(function (k) { if (ids.indexOf(k) < 0) ids.push(k); }); return ids; }
+  function bot(id) { return ENTW[id] || ORIG[id]; }
+  var akt = null, cur = null; // aktuelle ID und bearbeitete Kopie
+
+  // ----- Auswahl -----
+  function botListe() {
+    var s = $('botSel'), v = akt;
+    s.innerHTML = '';
+    var g1 = document.createElement('optgroup'), g2 = document.createElement('optgroup'), g3 = document.createElement('optgroup');
+    g1.label = 'Im Spiel'; g2.label = 'Ohne Logik'; g3.label = 'Neu (nur Entwurf)';
+    alleIds().forEach(function (id) {
+      var b = bot(id), o = document.createElement('option');
+      o.value = id; o.textContent = b.name + (ENTW[id] ? ' ✎' : '');
+      (b.neu ? g3 : b.logik ? g1 : g2).appendChild(o);
+    });
+    [g1, g2, g3].forEach(function (g) { if (g.children.length) s.appendChild(g); });
+    if (v) s.value = v;
+    var vs = $('vorlageSel'); vs.innerHTML = '';
+    alleIds().forEach(function (id) { var b = bot(id); if (b.logik) { var o = document.createElement('option'); o.value = id; o.textContent = 'Vorlage: ' + b.name; vs.appendChild(o); } });
+  }
+  function laden(id) { akt = id; cur = kopie(bot(id)); $('botSel').value = id; fuellen(); }
+
+  // ----- Formular füllen -----
+  var KOENIG_IDS = Object.keys(KOENIGE);
+  function optUnits(sel, wert, mitLeer) {
+    var h = mitLeer ? '<option value="">' + mitLeer + '</option>' : '';
+    KAUF.forEach(function (t) { h += '<option value="' + t + '"' + (t === wert ? ' selected' : '') + '>' + uName(t) + ' (' + preis(t) + ')</option>'; });
+    sel.innerHTML = h;
+  }
+  function fuellen() {
+    $('f_name').value = cur.name; $('f_id').value = cur.id; $('f_platz').value = cur.platz; $('f_kx').value = cur.kx; $('f_ky').value = cur.ky;
+    $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
+    $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
+    koenigZeigen();
+    var L = cur.logik;
+    $('logik').hidden = !L; $('ohneLogik').hidden = !!L; $('logikWegBtn').hidden = !L;
+    $('logikTag').innerHTML = L ? '<span class="tag ja">vorhanden' + (cur.logikKey ? ' · CONFIG.BOTS.' + cur.logikKey : '') + '</span>' : '<span class="tag nein">leer</span>';
+    if (L) {
+      ['farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'repairAt', 'attackGold', 'lockSecs', 'defPlus', 'noOutput', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
+      $('f_wallStage').value = L.wallStage ? String(L.wallStage) : '';
+      $('f_towerSiege').innerHTML = '<option value="">Katapult (Standard)</option>' + ['trebuchet', 'onager', 'baliste'].map(function (t) { return '<option value="' + t + '"' + (L.towerSiege === t ? ' selected' : '') + '>' + uName(t) + '</option>'; }).join('');
+      $('f_wallClear').checked = !!L.wallClear;
+      zeilenMalen(); poolMalen();
+    }
+    markieren(); ausgabe();
+  }
+  function koenigLabel(k) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].koenig === k) return BOT_DB[i].name; for (var j = 0; j < KOENIG_SPIELER.length; j++) if (KOENIG_SPIELER[j].id === k) return KOENIG_SPIELER[j].name + ' (Spieler)'; return k; }
+  function koenigZeigen() {
+    var cv = $('koenigBild'), dpr = window.devicePixelRatio || 1; cv.width = 72 * dpr; cv.height = 72 * dpr;
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, 72, 72);
+    var r = 24; c.translate(36 + r * 0.4, 36); koenigMalen(c, koenigOptik(cur.koenig), r, P.foe, { ohneWaffe: true });
+  }
+
+  // ----- Tabellen (Jagd, später, Angriff) -----
+  function flach(liste) { var z = []; (liste || []).forEach(function (s) { s.buy.forEach(function (b) { z.push({ s: s.after, t: b[0], n: b[1] }); }); }); return z; }
+  function gruppiert(z) {
+    var m = {}, keys = [];
+    z.slice().sort(function (a, b) { return a.s - b.s; }).forEach(function (r) { if (!(r.s in m)) { m[r.s] = []; keys.push(r.s); } m[r.s].push([r.t, r.n]); });
+    return keys.map(function (k) { return { after: +k, buy: m[k] }; });
+  }
+  var rows = { hunt: [], later: [], attack: [] };
+  function zeilenMalen() {
+    var L = cur.logik;
+    rows.hunt = (L.hunt || []).map(function (b) { return { t: b[0], n: b[1] }; });
+    rows.later = flach(L.huntLater); rows.attack = flach(L.attack);
+    tabelle('hunt'); tabelle('later'); tabelle('attack');
+  }
+  function tabelle(art) {
+    var tb = $(art === 'hunt' ? 'huntRows' : art === 'later' ? 'laterRows' : 'attackRows'); tb.innerHTML = '';
+    rows[art].forEach(function (r, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = (art === 'hunt' ? '' : '<td><input type="number" min="0" step="0.5" value="' + r.s + '" data-f="s" aria-label="Sekunde"></td>') +
+        '<td><select data-f="t" aria-label="Einheit"></select></td><td><input type="number" min="1" step="1" value="' + r.n + '" data-f="n" aria-label="Anzahl"></td>' +
+        '<td class="kosten">' + preis(r.t) * r.n + ' Gold</td><td><button type="button" class="weg" aria-label="Zeile löschen" title="Löschen">✕</button></td>';
+      optUnits(tr.querySelector('select'), r.t);
+      tr.addEventListener('input', function (e) { var f = e.target.getAttribute('data-f'); if (!f) return; r[f] = f === 't' ? e.target.value : +e.target.value; tr.querySelector('.kosten').textContent = preis(r.t) * r.n + ' Gold'; zurueck(art); });
+      tr.querySelector('.weg').addEventListener('click', function () { rows[art].splice(i, 1); tabelle(art); zurueck(art); });
+      tb.appendChild(tr);
+    });
+    summen();
+  }
+  function zurueck(art) { // Tabelle -> Logik
+    var L = cur.logik;
+    if (art === 'hunt') L.hunt = rows.hunt.map(function (r) { return [r.t, r.n]; });
+    if (art === 'later') { var g = gruppiert(rows.later); if (g.length) L.huntLater = g; else delete L.huntLater; }
+    if (art === 'attack') L.attack = gruppiert(rows.attack);
+    geaendert();
+  }
+  function summen() {
+    if (!cur.logik) return;
+    var hs = rows.hunt.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0) + rows.later.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0);
+    $('huntSum').textContent = hs;
+    var as = rows.attack.reduce(function (a, r) { return a + preis(r.t) * r.n; }, 0), st = rows.attack.reduce(function (a, r) { return a + staerke(r.t) * r.n; }, 0), sg = +cur.logik.attackGold || 0, d = sg - as;
+    $('attSum').textContent = as + ' Gold'; $('attStart').textContent = sg + ' Gold'; $('attStaerke').textContent = st;
+    $('attDiff').textContent = (d >= 0 ? '+' : '') + d + ' Gold'; $('attDiff').className = d < 0 ? 'rot' : 'gruen';
+  }
+  $('huntAdd').addEventListener('click', function () { rows.hunt.push({ t: 'spear', n: 1 }); tabelle('hunt'); zurueck('hunt'); });
+  $('laterAdd').addEventListener('click', function () { var l = rows.later[rows.later.length - 1]; rows.later.push({ s: l ? l.s + 1 : 3, t: 'archer', n: 1 }); tabelle('later'); zurueck('later'); });
+  $('attackAdd').addEventListener('click', function () { var l = rows.attack[rows.attack.length - 1]; rows.attack.push({ s: l ? l.s + 1 : 0, t: 'spear', n: 1 }); tabelle('attack'); zurueck('attack'); });
+  $('attackSort').addEventListener('click', function () { rows.attack.sort(function (a, b) { return a.s - b.s; }); tabelle('attack'); zurueck('attack'); });
+
+  function poolMalen() {
+    var L = cur.logik, h = '';
+    KAUF.forEach(function (t) { var an = L.defPool.indexOf(t) >= 0; h += '<label class="' + (an ? 'an' : '') + '"><input type="checkbox" value="' + t + '"' + (an ? ' checked' : '') + '>' + uName(t) + ' <span class="status">(' + preis(t) + ' · St. ' + staerke(t) + ')</span></label>'; });
+    $('pool').innerHTML = h;
+  }
+  $('pool').addEventListener('change', function (e) {
+    var t = e.target.value, L = cur.logik, i = L.defPool.indexOf(t);
+    if (e.target.checked && i < 0) L.defPool.push(t); else if (!e.target.checked && i >= 0) L.defPool.splice(i, 1);
+    e.target.parentNode.classList.toggle('an', e.target.checked); geaendert();
+  });
+
+  // ----- Einzelne Felder -----
+  var ZAHL_OPTIONAL = ['defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult'];
+  document.querySelector('main').addEventListener('input', function (e) {
+    var k = e.target.getAttribute('data-k'); if (!k) return;
+    var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) {
+      if (k === 'id') { v = String(v).toLowerCase().replace(/[^a-z0-9]/g, ''); if (cur.neu) cur.logikKey = v; }
+      cur[k] = (k === 'platz' || k === 'kx' || k === 'ky') ? (v === '' ? '' : +v) : v;
+      if (k === 'koenig') koenigZeigen();
+    } else if (cur.logik) {
+      var L = cur.logik;
+      if (k === 'wallClear') L.wallClear = !!v;
+      else if (k === 'wallStage') { if (v) L.wallStage = +v; else delete L.wallStage; }
+      else if (k === 'towerSiege') { if (v) L.towerSiege = v; else delete L.towerSiege; }
+      else if (ZAHL_OPTIONAL.indexOf(k) >= 0) { if (v === '') delete L[k]; else L[k] = +v; }
+      else L[k] = v === '' ? 0 : +v;
+      if (k === 'attackGold') summen();
+    }
+    geaendert();
+  });
+
+  // ----- Vorlage, Logik entfernen, neu, zurücksetzen -----
+  $('vorlageBtn').addEventListener('click', function () {
+    var q = bot($('vorlageSel').value); if (!q || !q.logik) return;
+    if (cur.logik && !confirm('Die Logik dieses Bots durch die von «' + q.name + '» ersetzen?')) return;
+    cur.logik = kopie(q.logik); if (!cur.logikKey) cur.logikKey = cur.id; fuellen(); geaendert();
+  });
+  $('logikWegBtn').addEventListener('click', function () { if (!confirm('Die Logik dieses Bots entfernen? Er ist dann nicht mehr spielbar.')) return; cur.logik = null; fuellen(); geaendert(); });
+  $('neuBtn').addEventListener('click', function () {
+    var n = 1, id; do { id = 'neuerbot' + n++; } while (bot(id));
+    ENTW[id] = { id: id, name: 'Neuer Bot', koenig: 'standard', platz: '', kx: '', ky: '', logikKey: id, logik: kopie(CONFIG.BOTS.bauern), neu: true };
+    speichern(); akt = id; botListe(); laden(id);
+  });
+  $('resetBtn').addEventListener('click', function () {
+    if (!ENTW[akt]) return;
+    if (!confirm('Alle Änderungen an «' + cur.name + '» verwerfen?')) return;
+    var war = ENTW[akt].neu; delete ENTW[akt]; speichern();
+    if (war) akt = BOT_DB[0].id;
+    botListe(); laden(akt);
+  });
+  $('botSel').addEventListener('change', function () { laden(this.value); });
+
+  // ----- Änderungen speichern und anzeigen -----
+  function gleich(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  function geaendert() {
+    var o = ORIG[akt];
+    if (o && gleich(normal(cur), normal(o))) delete ENTW[akt]; else ENTW[akt] = kopie(cur);
+    speichern(); markieren(); ausgabe();
+    var sel = $('botSel').selectedOptions[0]; if (sel) sel.textContent = cur.name + (ENTW[akt] ? ' ✎' : '');
+  }
+  function normal(b) { var c = kopie(b); if (c.logik) { c.logik.attack = gruppiert(flach(c.logik.attack)); } return c; }
+  function markieren() {
+    var o = ORIG[akt];
+    document.querySelectorAll('[data-k]').forEach(function (el) {
+      var k = el.getAttribute('data-k'), a, b;
+      if (!o) { el.classList.add('chg'); return; }
+      if (['name', 'id', 'koenig', 'platz', 'kx', 'ky'].indexOf(k) >= 0) { a = cur[k]; b = o[k]; }
+      else { a = cur.logik ? cur.logik[k] : undefined; b = o.logik ? o.logik[k] : undefined; }
+      el.classList.toggle('chg', String(a === undefined ? '' : a) !== String(b === undefined ? '' : b));
+    });
+    $('status').textContent = ENTW[akt] ? '✎ geändert (Entwurf gespeichert)' : 'unverändert';
+  }
+  function aenderungen(b) {
+    var o = ORIG[b.id], l = [];
+    if (!o) return ['Neuer Bot'];
+    ['name', 'koenig', 'platz'].forEach(function (k) { if (String(b[k]) !== String(o[k])) l.push(k + ': ' + (o[k] === '' ? 'leer' : o[k]) + ' → ' + (b[k] === '' ? 'leer' : b[k])); });
+    if (String(b.kx) !== String(o.kx) || String(b.ky) !== String(o.ky)) l.push('Karte: ' + o.kx + '/' + o.ky + ' → ' + b.kx + '/' + b.ky);
+    if (!o.logik && b.logik) l.push('Logik neu');
+    else if (o.logik && !b.logik) l.push('Logik entfernt');
+    else if (b.logik) {
+      var ks = {}; Object.keys(o.logik).concat(Object.keys(b.logik)).forEach(function (k) { ks[k] = 1; });
+      Object.keys(ks).forEach(function (k) { if (!gleich(k === 'attack' ? gruppiert(flach(o.logik[k])) : o.logik[k], b.logik[k])) l.push(k === 'attack' ? 'Angriffswelle' : k === 'hunt' ? 'Jagdtrupp' : k === 'huntLater' ? 'Jagd später' : k === 'defPool' ? 'Verteidiger' : k + ': ' + fmt(o.logik[k]) + ' → ' + fmt(b.logik[k])); });
+    }
+    return l;
+  }
+  function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
+
+  // ----- Code für das Spiel -----
+  var REIHE = ['farmers', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'repairAt', 'wallStage', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'noOutput'];
+  function js(v) { return JSON.stringify(v).replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
+  function logikCode(b) {
+    var L = b.logik, teile = [];
+    REIHE.forEach(function (k) { if (L[k] !== undefined) teile.push(k + ': ' + (k === 'attack' || k === 'huntLater' ? '[' + L[k].map(function (s) { return '{ after: ' + s.after + ', buy: ' + js(s.buy) + ' }'; }).join(', ') + ']' : js(L[k]))); });
+    Object.keys(L).forEach(function (k) { if (REIHE.indexOf(k) < 0) teile.push(k + ': ' + js(L[k])); });
+    return '      ' + (b.logikKey || b.id) + ': { ' + teile.join(', ') + ' }';
+  }
+  function dbCode(b) {
+    return "    { id: '" + b.id + "', name: '" + String(b.name).replace(/'/g, "\\'") + "', koenig: '" + b.koenig + "', platz: " + (b.platz === '' ? 'null' : b.platz) +
+      ', karte: ' + (b.kx === '' || b.ky === '' ? 'null' : '{ x: ' + b.kx + ', y: ' + b.ky + ' }') + ', logik: ' + (b.logik ? "'" + (b.logikKey || b.id) + "'" : 'null') + ' }';
+  }
+  function text(b) {
+    var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;
+    return 'Bot «' + b.name + '» (' + b.id + ')' + (a.length ? ': ' + a.join('; ') : ': unverändert') + (b.logik ? '\nAngriffswelle ' + wk + ' Gold (Start ab ' + b.logik.attackGold + ' Gold)' : '') +
+      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '');
+  }
+  function ausgabe() {
+    var a = aenderungen(cur);
+    $('aenderungen').innerHTML = (ENTW[akt] ? a : ['keine']).map(function (x) { return '<li>' + x.replace(/</g, '&lt;') + '</li>'; }).join('');
+    $('code').textContent = text(cur);
+  }
+  function kopieren(t, wo) {
+    var fertig = function (ok) { $('kopierStatus').textContent = ok ? wo + ' kopiert – jetzt im Chat einfügen.' : 'Kopieren ging nicht – bitte den Code von Hand markieren.'; };
+    try { navigator.clipboard.writeText(t).then(function () { fertig(true); }, function () { fertig(false); }); } catch (e) { fertig(false); }
+  }
+  $('kopierBtn').addEventListener('click', function () { kopieren('Bitte diesen Bot ins Spiel übernehmen (aus dem Bot-Editor):\n\n' + text(cur), 'Bot'); });
+  $('alleBtn').addEventListener('click', function () {
+    var ids = Object.keys(ENTW); if (!ids.length) { $('kopierStatus').textContent = 'Keine geänderten Bots.'; return; }
+    kopieren('Bitte diese Bots ins Spiel übernehmen (aus dem Bot-Editor):\n\n' + ids.map(function (id) { return text(ENTW[id]); }).join('\n\n'), ids.length + ' Bots');
+  });
+
+  $('status').textContent = '';
+  botListe(); laden(BOT_DB[0].id);
+  document.title = 'Stronghold Mini – Bot-Editor (Stand ' + STAND + ')';
+})();
+</script>
+</body>
+</html>
