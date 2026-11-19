@@ -491,12 +491,15 @@
       c.strokeStyle = '#5e3b18'; c.lineWidth = Math.max(2.5, r * 0.2);
       c.beginPath(); c.moveTo(r * 0.1, r * 0.1); c.lineTo(r * 1.45, r * 0.1); c.stroke(); // Schaft
       var cbs = 1.0 - 0.1 * A.tens;
+      // Laufen (settled = 0): Bogenarme nach hinten an den Schaft geklappt, ohne Bolzen; beim Abknien klappt er sie auf
+      var cfd = type === 'crossbow' && typeof settled === 'number' ? 1 - cbk : 0;
+      var bax = r * lerp(1.15, 0.78, cfd), bay1 = r * lerp(-0.75, -0.12, cfd), bay2 = r * lerp(0.95, 0.32, cfd), bcx = r * lerp(1.55 - 0.1 * (1 - A.str), 1.42, cfd);
       c.strokeStyle = '#6f7680'; c.lineWidth = Math.max(2.5, r * 0.18);
-      c.beginPath(); c.moveTo(r * 1.15, -r * 0.75); c.quadraticCurveTo(r * (1.55 - 0.1 * (1 - A.str)), r * 0.1, r * 1.15, r * 0.95); c.stroke(); // Bogen (Stahl)
-      var cmx = r * (0.65 + 0.5 * A.str);
+      c.beginPath(); c.moveTo(bax, bay1); c.quadraticCurveTo(bcx, r * 0.1, bax, bay2); c.stroke(); // Bogen (Stahl)
+      var cmx = r * lerp(0.65 + 0.5 * A.str, 0.95, cfd);
       c.strokeStyle = '#e8e0cc'; c.lineWidth = 1.2;
-      c.beginPath(); c.moveTo(r * 1.15, -r * 0.75); c.lineTo(cmx, r * 0.1 + A.vib * r); c.lineTo(r * 1.15, r * 0.95); c.stroke();
-      if (A.arrow > 0) { c.globalAlpha = A.arrow; c.strokeStyle = '#4a3b2a'; c.lineWidth = 2; c.beginPath(); c.moveTo(cmx, r * 0.1); c.lineTo(r * 1.55, r * 0.1); c.stroke(); c.fillStyle = '#9aa3a6'; c.beginPath(); c.moveTo(r * 1.8, r * 0.1); c.lineTo(r * 1.5, -r * 0.05); c.lineTo(r * 1.5, r * 0.25); c.closePath(); c.fill(); c.globalAlpha = 1; }
+      c.beginPath(); c.moveTo(bax, bay1); c.lineTo(cmx, r * 0.1 + A.vib * r); c.lineTo(bax, bay2); c.stroke();
+      if (A.arrow * (1 - cfd) > 0) { c.globalAlpha = A.arrow * (1 - cfd); c.strokeStyle = '#4a3b2a'; c.lineWidth = 2; c.beginPath(); c.moveTo(cmx, r * 0.1); c.lineTo(r * 1.55, r * 0.1); c.stroke(); c.fillStyle = '#9aa3a6'; c.beginPath(); c.moveTo(r * 1.8, r * 0.1); c.lineTo(r * 1.5, -r * 0.05); c.lineTo(r * 1.5, r * 0.25); c.closePath(); c.fill(); c.globalAlpha = 1; }
       c.restore();
       c.fillStyle = '#8d9399'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.68, 0, Math.PI * 2); c.fill(); // Krempe
       c.strokeStyle = '#5f666c'; c.lineWidth = Math.max(1.5, r * 0.08); c.stroke();
