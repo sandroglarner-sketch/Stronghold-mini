@@ -368,6 +368,7 @@
   // Preis des nächsten Kaufs: Gebäude = nächste Stufe (Infinity = schon höchste Stufe, im Bau oder kein Platz frei)
   function preisVon(team, type) {
     var d = CONFIG.units[type]; if (!d) return Infinity;
+    if (d.karawane) { var nk = 0; for (var ki = 0; ki < units.length; ki++) if (units[ki].team === team && units[ki].type === type && units[ki].hp > 0) nk++; return d.cost + d.karawane.steigt * nk; } // Karawane: teurer mit jeder lebenden
     if (!d.gebaeude) return d.cost;
     var g = meinGebaeude(team, type), st = d.gebaeude.stufen;
     if (!g) return gebPlaetze(team).length ? st[0].cost : Infinity;

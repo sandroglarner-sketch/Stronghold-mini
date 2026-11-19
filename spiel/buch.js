@@ -30,11 +30,11 @@
     if (d.gebaeude) { var GBt = d.gebaeude; // Gebäude: keine Leben (stehen oben), immer «alle … s»
       a.push(GBt.art === 'zins' ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.prozent + ' % deines Goldes</b> (aufgerundet).'
         : GBt.art === 'dieb' ? 'Alle ' + GBt.alle + ' s klaut ein Dieb <b>' + GBt.prozent + ' % des gegnerischen Goldes</b> (aufgerundet).'
-        : GBt.art === 'kirche' ? 'Nochmals kaufen: ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter</b> über das gegnerische Drittel: alle ' + GBt.blitz.alle + ' s ein Blitz mit ' + GBt.blitz.schaden + ' Schaden im Umkreis ' + GBt.blitz.radius + ', jeder ' + GBt.blitz.koenig + '. zielt auf den König (in der Burg geschützt) – bis die Kirche zerstört ist.'
+        : GBt.art === 'kirche' ? 'Nochmals kaufen: ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter</b> über das gegnerische Drittel: alle ' + GBt.blitz.alle + ' s ein Blitz mit ' + GBt.blitz.schaden + ' Schaden im Umkreis ' + GBt.blitz.radius + ', jeder ' + GBt.blitz.koenig + '. zielt auf den König (in der Burg geschützt, sonst 25 % als Fernkampf) – bis die Kirche zerstört ist.'
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
-    if (d.karawane) a.push('Geht zum Teich, füllt in ' + d.karawane.fuellen + ' s alle Töpfe mit Wasser und bringt sie zur Burg: <b>+' + d.karawane.gold + ' Gold</b> pro Gang. Dann wieder von vorn.');
+    if (d.karawane) a.push('Geht zum Teich, füllt in ' + d.karawane.fuellen + ' s alle Töpfe mit Wasser und bringt sie zur Burg: <b>+' + d.karawane.gold + ' Gold</b> pro Gang. Dann wieder von vorn. Die 1. kostet ' + d.cost + ' Gold, jede weitere ' + d.karawane.steigt + ' Gold mehr (stirbt eine, sinkt der Preis wieder).');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');
@@ -232,10 +232,11 @@
       BUY_TYPES.forEach(function (t) { btns[t].classList.toggle('poor', gm < preisVon(ME, t)); });
     }
     BUY_TYPES.forEach(function (t) { // Gebäude: Preis der nächsten Stufe (– = höchste Stufe, im Bau oder kein Platz)
-      if (!CONFIG.units[t].gebaeude) return;
+      if (!CONFIG.units[t].gebaeude && !CONFIG.units[t].karawane) return; // Karawane: Preis steigt mit jeder lebenden
       var gp = state === 'playing' || state === 'paused' ? preisVon(ME, t) : CONFIG.units[t].cost, gk = gp + '|' + gm;
       if (ui['geb_' + t] === gk) return; ui['geb_' + t] = gk;
       var gc = btns[t].querySelector('.cost'); if (gc) gc.innerHTML = COIN_SVG + (isFinite(gp) ? gp : '–');
+      if (!CONFIG.units[t].gebaeude) { btns[t].classList.toggle('poor', gm < gp); return; }
       var gg = state === 'playing' || state === 'paused' ? meinGebaeude(ME, t) : null, nst = Math.min(CONFIG.units[t].gebaeude.stufen.length, gg ? gg.stufe + (gg.bau ? 0 : 1) : 1); // Bild: nächste Stufe
       if (CONFIG.units[t].gebaeude.gebet && gg && !gg.bau) nst = 'priester'; // fertige Kirche: Knopf zeigt den Priester
       if (ui['gebB_' + t] !== nst) { ui['gebB_' + t] = nst; var ic = icons[t].getContext('2d'), ext = ICON_EXT[t] || [1, 2], span = ext[0] + ext[1], ir = Math.min(24, 78 / span); ic.clearRect(0, 0, 88, 88); if (nst === 'priester') drawUnit(ic, 'priester', 44, 44, 20, ME, 1, 0); else drawUnit(ic, t, (88 - span * ir) / 2 + ext[0] * ir, 44, ir, 0, 1, 0, { bau: 1, stufe: nst, phase: -1, nx: 0, ny: 1 }, undefined, 0); }

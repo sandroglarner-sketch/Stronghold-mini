@@ -138,7 +138,7 @@
                 var bx1 = u.team === 0 ? W * 2 / 3 : 0.3, bx2 = u.team === 0 ? W - 0.3 : W / 3, blx = bx1 + simRand() * (bx2 - bx1), bly = 0.4 + simRand() * (H - 0.8);
                 u.blitzN = (u.blitzN || 0) + 1;
                 if (u.blitzN % GD.blitz.koenig === 0) { // jeder 4. Blitz zielt genau auf den gegnerischen König
-                  for (var kb = 0; kb < units.length; kb++) { var kgu = units[kb]; if (kgu.type === 'king' && kgu.team !== u.team && kgu.hp > 0) { blx = kgu.x; bly = kgu.y; if (!kgu.inCastle) { hurt(kgu, GD.blitz.schaden, { range: 0 }); kgu.hit = 0.15; kgu.lastHit = clock; } break; } } // zielt auf den König; in der Burg ist er geschützt, sonst voller Schaden
+                  for (var kb = 0; kb < units.length; kb++) { var kgu = units[kb]; if (kgu.type === 'king' && kgu.team !== u.team && kgu.hp > 0) { blx = kgu.x; bly = kgu.y; if (!kgu.inCastle) { hurt(kgu, GD.blitz.schaden, { range: 99 }); /* Fernkampf: König nimmt nur 25 % */ kgu.hit = 0.15; kgu.lastHit = clock; } break; } } // zielt auf den König; in der Burg ist er geschützt, sonst voller Schaden
                 }
                 applySplash(u.team, blx, -1, blx, bly, { atk: GD.blitz.schaden, splash: GD.blitz.radius, range: 99 }, null, false, false); // trifft alles vom Gegner im Umkreis
                 effects.push({ kind: 'blitz', x: blx, y: bly, t: 0, dur: 0.45, seed: Math.floor(simRand() * 1000) });
@@ -336,7 +336,7 @@
       if (d.karawane) { // Karawane: zum Teich, Töpfe füllen, zurück zur Burg, Gold abliefern, von vorn
         var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12;
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
-        var kzx = u.kz === 'zurueck' ? (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) : W / 2 + ksg * 1.95, kzy = u.kz === 'zurueck' ? (kb0.y1 + kb0.y2) / 2 + kof * 1.5 : 1.45 + kof;
+        var kzx = u.kz === 'zurueck' ? (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) : W / 2 + ksg * 0.35 + kof, kzy = u.kz === 'zurueck' ? (kb0.y1 + kb0.y2) / 2 + kof * 1.5 : 2.6; // Teich: in der Mitte unterhalb andocken (dort sieht der Gegner sie)
         if (u.kz === 'fuellen') {
           u.voll = Math.min(1, u.voll + dt / KW.fuellen);
           if (u.voll >= 1) u.kz = 'zurueck';

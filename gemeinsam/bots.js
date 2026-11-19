@@ -16,7 +16,7 @@
   function countFarmers(team) {
     var n = 0;
     for (var i = 0; i < units.length; i++) {
-      if (units[i].team === team && units[i].type === 'farmer' && units[i].hp > 0) n++;
+      if (units[i].team === team && (units[i].type === 'farmer' || units[i].type === 'karawane') && units[i].hp > 0) n++; // Karawane zählt (für die Jagd) wie ein Bauer
     }
     return n;
   }
