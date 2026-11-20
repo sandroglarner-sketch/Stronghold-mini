@@ -3,14 +3,14 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 6, logik: 'bauern', nr: 1 },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 8, logik: 'bauern', nr: 1 },
     { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz', nr: 2 },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 7, logik: 'baron', nr: 4 },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 9, logik: 'baron', nr: 4 },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
-    { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, logik: null },
+    { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: 6, logik: 'loewenherz', nr: 8 }, // seit 20.11. 13:58, braucht ein Konto
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
-    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: null, logik: null },
+    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: 7, logik: 'waldkoenig', nr: 9 }, // seit 20.11. 13:58, braucht ein Konto
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, logik: null },
     { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: 1, logik: 'tollpatsch', nr: 5 }, // seit 20.11. erster Story-Gegner
