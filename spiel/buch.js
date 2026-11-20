@@ -81,7 +81,17 @@
     if (ch) neuSpeichern();
   }
   function istNeu(t) { return NEU.neu.indexOf(t) >= 0 && !unitLocked(t); }
-  function neuGesehen(t) { var i = NEU.neu.indexOf(t); if (i < 0) return; NEU.neu.splice(i, 1); neuSpeichern(); document.querySelectorAll('[data-show="' + t + '"] .neu').forEach(function (n) { n.remove(); }); }
+  function neuZahl() { // grüne Zahl am Kartenbuch-Knopf: so viele Karten tragen noch ein «neu»
+    var el = $('neuZahl'); if (!el || !NEU) return; // NEU ist erst nach dem Laden von buch.js gesetzt
+    neuPruefen();
+    var n = BUY_TYPES.filter(istNeu).length;
+    el.textContent = n; el.hidden = !n; el.title = n === 1 ? '1 neue Karte' : n + ' neue Karten';
+  }
+  function ersteKarte(list) { // beim Öffnen/Filtern nie eine «neu»-Karte vorwählen (sonst wäre ihr «neu» weg, ohne dass man es sieht)
+    for (var i = 0; i < list.length; i++) if (!istNeu(list[i])) return list[i];
+    return list[0];
+  }
+  function neuGesehen(t) { var i = NEU.neu.indexOf(t); if (i < 0) return; NEU.neu.splice(i, 1); neuSpeichern(); neuZahl(); document.querySelectorAll('[data-show="' + t + '"] .neu').forEach(function (n) { n.remove(); }); }
   // Goldmünze: ein Symbol für Burg-Anzeige, Deck-Knöpfe, Buch (Mini- und Grosskarte) und die aufpoppenden +Gold-Zahlen
   function cardHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0, c = cardCat(d), ab = abilityText(d);
@@ -176,7 +186,7 @@
   }
   function openBook(on) {
     $('book').hidden = !on;
-    if (on) { $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel]) book.sel = bookTypes()[0]; renderBook(); $('bookClose').focus(); }
+    if (on) { $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel] || istNeu(book.sel)) book.sel = ersteKarte(bookTypes()); renderBook(); $('bookClose').focus(); }
   }
   function bookClick(e) {
     var b = e.target.closest ? e.target.closest('[data-pick]') : null;
@@ -208,7 +218,7 @@
     book.filter = b.getAttribute('data-f'); book.page = 0;
     $('bookFilter').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
     var list = bookTypes();
-    if (list.length && list.indexOf(book.sel) < 0) { book.sel = list[0]; renderDetail(); }
+    if (list.length && list.indexOf(book.sel) < 0) { book.sel = ersteKarte(list); renderDetail(); }
     fillPage($('bookPage'));
   });
   $('bookDetail').addEventListener('click', bookClick);
@@ -225,7 +235,7 @@
   })();
   window.addEventListener('resize', function () { if (!$('book').hidden) { if (book.finish) book.finish(); renderBook(); } });
   $('bookBtn').addEventListener('click', function () { openBook(true); });
-  $('bookClose').addEventListener('click', function () { openBook(false); $('bookBtn').focus(); });
+  $('bookClose').addEventListener('click', function () { openBook(false); neuZahl(); $('bookBtn').focus(); });
   document.addEventListener('keydown', function (e) {
     if ($('book').hidden) return;
     if (e.key === 'Escape') openBook(false);

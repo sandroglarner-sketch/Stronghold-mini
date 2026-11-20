@@ -203,7 +203,7 @@
   .overlay:not(.menu) .ovtop, .overlay:not(.menu) .ovmodes, .overlay:not(.menu) #sandBtn { display: none; }
   .ovtop { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .ovright { display: flex; gap: 8px; align-items: center; }
-  .ovtop .ghost { height: 40px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 10px; background: var(--panel); font-weight: 600; font-size: 0.85rem; color: var(--fg); }
+  .ovtop .ghost, .storykopf .ovleft .ghost { height: 40px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 10px; background: var(--panel); font-weight: 600; font-size: 0.85rem; color: var(--fg); }
   .ovdeck { font-weight: 500; color: var(--muted); }
   .ovbadge { min-width: 20px; height: 20px; border-radius: 10px; background: #1d7a3a; color: #fff; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; box-sizing: border-box; }
   .ovbadge[hidden] { display: none; }
@@ -224,7 +224,9 @@
   .story { position: absolute; inset: 0; z-index: 5; background: var(--grass-a); overflow: hidden; border-radius: 10px; }
   .story[hidden] { display: none; }
   .storymap { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .storykopf { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .storykopf { position: absolute; left: 14px; right: 14px; top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; } /* gleiche Lage wie .ovtop im Menü (Padding 12px 14px), damit Kartenbuch und König nicht springen */
+  .storykopf .ovleft + .ghost { margin-right: auto; margin-left: 0; } /* «‹ Menü» rückt rechts neben Kartenbuch und König */
+  .storykopf b { margin-right: auto; }
   .storykopf .ghost { height: 40px; background: var(--panel); border-radius: 10px; font-weight: 600; }
   .storykopf b { padding: 7px 14px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); font-family: var(--display); font-size: 1.05rem; }
   .storyleer { width: 80px; }
@@ -308,7 +310,7 @@
   .augen { position: absolute; right: 10px; bottom: 46px; z-index: 3; height: 32px; padding: 0 11px; border-radius: 16px; background: rgba(23, 32, 35, 0.72); color: #fff; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; pointer-events: none; }
   .augen[hidden] { display: none; }
   html.zuschauer .units, html.zuschauer #fsGive, html.zuschauer #giveBtn { display: none !important; }
-  @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
+  @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck), .storykopf .ovleft .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
     .konto {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
     display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
@@ -576,8 +578,11 @@
   html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsGive,
   html.phone .stage:has(.story:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.story:not([hidden])) .fsbar #fsGive { display: none; }
   html.phone .overlay.menu .ovtop { padding-right: 76px; }
-  html.phone .storykopf { right: 84px; }
-  html.phone .ovtop .ghost { height: 32px; font-size: 0.78rem; padding: 0 9px; }
+  html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
+  .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
+  html.phone .storykopf .ghost { padding: 0 9px; }
+  html.phone .storykopf b { font-size: 0.85rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  html.phone .ovtop .ghost, html.phone .storykopf .ghost { height: 32px; font-size: 0.78rem; padding: 0 9px; }
   html.phone .ovmodes { gap: 8px; }
   html.phone .ovmode { padding: 8px 10px; gap: 2px; border-radius: 12px; }
   html.phone .ovmode b { font-size: 1rem; margin-top: 2px; }

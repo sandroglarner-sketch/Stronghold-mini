@@ -223,7 +223,7 @@
   .overlay:not(.menu) .ovtop, .overlay:not(.menu) .ovmodes, .overlay:not(.menu) #sandBtn { display: none; }
   .ovtop { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .ovright { display: flex; gap: 8px; align-items: center; }
-  .ovtop .ghost { height: 40px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 10px; background: var(--panel); font-weight: 600; font-size: 0.85rem; color: var(--fg); }
+  .ovtop .ghost, .storykopf .ovleft .ghost { height: 40px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 10px; background: var(--panel); font-weight: 600; font-size: 0.85rem; color: var(--fg); }
   .ovdeck { font-weight: 500; color: var(--muted); }
   .ovbadge { min-width: 20px; height: 20px; border-radius: 10px; background: #1d7a3a; color: #fff; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; box-sizing: border-box; }
   .ovbadge[hidden] { display: none; }
@@ -244,7 +244,9 @@
   .story { position: absolute; inset: 0; z-index: 5; background: var(--grass-a); overflow: hidden; border-radius: 10px; }
   .story[hidden] { display: none; }
   .storymap { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .storykopf { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .storykopf { position: absolute; left: 14px; right: 14px; top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; } /* gleiche Lage wie .ovtop im Menü (Padding 12px 14px), damit Kartenbuch und König nicht springen */
+  .storykopf .ovleft + .ghost { margin-right: auto; margin-left: 0; } /* «‹ Menü» rückt rechts neben Kartenbuch und König */
+  .storykopf b { margin-right: auto; }
   .storykopf .ghost { height: 40px; background: var(--panel); border-radius: 10px; font-weight: 600; }
   .storykopf b { padding: 7px 14px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); font-family: var(--display); font-size: 1.05rem; }
   .storyleer { width: 80px; }
@@ -328,7 +330,7 @@
   .augen { position: absolute; right: 10px; bottom: 46px; z-index: 3; height: 32px; padding: 0 11px; border-radius: 16px; background: rgba(23, 32, 35, 0.72); color: #fff; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; pointer-events: none; }
   .augen[hidden] { display: none; }
   html.zuschauer .units, html.zuschauer #fsGive, html.zuschauer #giveBtn { display: none !important; }
-  @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
+  @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck), .storykopf .ovleft .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
     .konto {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
     display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
@@ -596,8 +598,11 @@
   html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsGive,
   html.phone .stage:has(.story:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.story:not([hidden])) .fsbar #fsGive { display: none; }
   html.phone .overlay.menu .ovtop { padding-right: 76px; }
-  html.phone .storykopf { right: 84px; }
-  html.phone .ovtop .ghost { height: 32px; font-size: 0.78rem; padding: 0 9px; }
+  html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
+  .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
+  html.phone .storykopf .ghost { padding: 0 9px; }
+  html.phone .storykopf b { font-size: 0.85rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  html.phone .ovtop .ghost, html.phone .storykopf .ghost { height: 32px; font-size: 0.78rem; padding: 0 9px; }
   html.phone .ovmodes { gap: 8px; }
   html.phone .ovmode { padding: 8px 10px; gap: 2px; border-radius: 12px; }
   html.phone .ovmode b { font-size: 1rem; margin-top: 2px; }
@@ -708,7 +713,7 @@
     <div class="overlay menu" id="overlay">
       <div class="ovtop">
         <span class="ovleft">
-        <button class="ghost ovbook" id="bookBtn" type="button" title="Kartenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Kartenbuch</span><span class="ovdeck" id="deckZahl"></span></button>
+        <button class="ghost ovbook" id="bookBtn" type="button" title="Kartenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Kartenbuch</span><span class="ovdeck" id="deckZahl"></span><span class="ovbadge" id="neuZahl" hidden title="Neu freigeschaltete Karten"></span></button>
           <button class="ghost ovkoenig" id="koenigBtn" type="button" title="Dein König: wähle sein Aussehen"><canvas id="koenigIcon" width="30" height="30" aria-hidden="true"></canvas><span>König</span></button>
         </span>
         <span class="ovright">
@@ -1166,7 +1171,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'e6009c9eb5'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'e6c86d2db4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -4662,7 +4667,17 @@
     if (ch) neuSpeichern();
   }
   function istNeu(t) { return NEU.neu.indexOf(t) >= 0 && !unitLocked(t); }
-  function neuGesehen(t) { var i = NEU.neu.indexOf(t); if (i < 0) return; NEU.neu.splice(i, 1); neuSpeichern(); document.querySelectorAll('[data-show="' + t + '"] .neu').forEach(function (n) { n.remove(); }); }
+  function neuZahl() { // grüne Zahl am Kartenbuch-Knopf: so viele Karten tragen noch ein «neu»
+    var el = $('neuZahl'); if (!el || !NEU) return; // NEU ist erst nach dem Laden von buch.js gesetzt
+    neuPruefen();
+    var n = BUY_TYPES.filter(istNeu).length;
+    el.textContent = n; el.hidden = !n; el.title = n === 1 ? '1 neue Karte' : n + ' neue Karten';
+  }
+  function ersteKarte(list) { // beim Öffnen/Filtern nie eine «neu»-Karte vorwählen (sonst wäre ihr «neu» weg, ohne dass man es sieht)
+    for (var i = 0; i < list.length; i++) if (!istNeu(list[i])) return list[i];
+    return list[0];
+  }
+  function neuGesehen(t) { var i = NEU.neu.indexOf(t); if (i < 0) return; NEU.neu.splice(i, 1); neuSpeichern(); neuZahl(); document.querySelectorAll('[data-show="' + t + '"] .neu').forEach(function (n) { n.remove(); }); }
   // Goldmünze: ein Symbol für Burg-Anzeige, Deck-Knöpfe, Buch (Mini- und Grosskarte) und die aufpoppenden +Gold-Zahlen
   function cardHtml(t) {
     var d = CONFIG.units[t], on = DECK.indexOf(t) >= 0, c = cardCat(d), ab = abilityText(d);
@@ -4757,7 +4772,7 @@
   }
   function openBook(on) {
     $('book').hidden = !on;
-    if (on) { $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel]) book.sel = bookTypes()[0]; renderBook(); $('bookClose').focus(); }
+    if (on) { $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel] || istNeu(book.sel)) book.sel = ersteKarte(bookTypes()); renderBook(); $('bookClose').focus(); }
   }
   function bookClick(e) {
     var b = e.target.closest ? e.target.closest('[data-pick]') : null;
@@ -4789,7 +4804,7 @@
     book.filter = b.getAttribute('data-f'); book.page = 0;
     $('bookFilter').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
     var list = bookTypes();
-    if (list.length && list.indexOf(book.sel) < 0) { book.sel = list[0]; renderDetail(); }
+    if (list.length && list.indexOf(book.sel) < 0) { book.sel = ersteKarte(list); renderDetail(); }
     fillPage($('bookPage'));
   });
   $('bookDetail').addEventListener('click', bookClick);
@@ -4806,7 +4821,7 @@
   })();
   window.addEventListener('resize', function () { if (!$('book').hidden) { if (book.finish) book.finish(); renderBook(); } });
   $('bookBtn').addEventListener('click', function () { openBook(true); });
-  $('bookClose').addEventListener('click', function () { openBook(false); $('bookBtn').focus(); });
+  $('bookClose').addEventListener('click', function () { openBook(false); neuZahl(); $('bookBtn').focus(); });
   document.addEventListener('keydown', function (e) {
     if ($('book').hidden) return;
     if (e.key === 'Escape') openBook(false);
@@ -5606,7 +5621,9 @@
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   // ----- Startmenü -----
+  function ovleftZurueck() { var l = document.querySelector('.ovleft'), top = document.querySelector('.ovtop'); if (l.parentNode !== top) top.insertBefore(l, top.firstChild); }
   function zeigeMenu() {
+    ovleftZurueck();
     if (pvp.on) return;
     overlay.classList.add('menu');
     overlay.hidden = false;
@@ -5617,7 +5634,7 @@
     sozialStatus('menu');
   }
   function menuAktuell() {
-    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX;
+    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();
     var n = storyAnzahl(), d = $('storyDots'), h = '', nx = storyNaechster();
     for (var i = 0; i < STORY.length; i++) h += '<i class="' + (istBesiegt(STORY[i].id) ? 'voll' : '') + '"></i>';
     d.innerHTML = h + '<em>' + n + ' von ' + STORY.length + ' besiegt</em>';
@@ -5662,6 +5679,8 @@
     storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
     storySeite = Math.floor(Math.min(n, STORY.length - 1) / STORY_PRO_SEITE); // Seite mit dem aktuellen Gegner
     $('story').hidden = false;
+    var kopf = document.querySelector('.storykopf'); kopf.insertBefore(document.querySelector('.ovleft'), kopf.firstChild); // Kartenbuch und König auch im Story-Modus, an derselben Stelle wie im Menü
+    neuZahl();
     storyMalen();
   }
   function storyMalen() {

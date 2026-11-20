@@ -12,7 +12,9 @@
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   // ----- Startmenü -----
+  function ovleftZurueck() { var l = document.querySelector('.ovleft'), top = document.querySelector('.ovtop'); if (l.parentNode !== top) top.insertBefore(l, top.firstChild); }
   function zeigeMenu() {
+    ovleftZurueck();
     if (pvp.on) return;
     overlay.classList.add('menu');
     overlay.hidden = false;
@@ -23,7 +25,7 @@
     sozialStatus('menu');
   }
   function menuAktuell() {
-    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX;
+    $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();
     var n = storyAnzahl(), d = $('storyDots'), h = '', nx = storyNaechster();
     for (var i = 0; i < STORY.length; i++) h += '<i class="' + (istBesiegt(STORY[i].id) ? 'voll' : '') + '"></i>';
     d.innerHTML = h + '<em>' + n + ' von ' + STORY.length + ' besiegt</em>';
@@ -68,6 +70,8 @@
     storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
     storySeite = Math.floor(Math.min(n, STORY.length - 1) / STORY_PRO_SEITE); // Seite mit dem aktuellen Gegner
     $('story').hidden = false;
+    var kopf = document.querySelector('.storykopf'); kopf.insertBefore(document.querySelector('.ovleft'), kopf.firstChild); // Kartenbuch und König auch im Story-Modus, an derselben Stelle wie im Menü
+    neuZahl();
     storyMalen();
   }
   function storyMalen() {
