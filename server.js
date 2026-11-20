@@ -48,7 +48,25 @@ function storyAus(s) {
   return (STORY_ALT[v] || STORY_ALT[1] || []).slice(0, n);
 }
 function storyEin(ids) { let m = 0; (ids || []).forEach((id) => { if (STORY_NR[id]) m |= 1 << (STORY_NR[id] - 1); }); return m ? 1000 + m : 0; }
-function storyIds(l) { return Array.isArray(l) ? l.filter((id) => typeof id === 'string' && STORY_NR[id]) : []; } // nur bekannte Story-Gegner
+// Spalte spieler.besiegt (Text, ids mit Komma, ohne Grenze). Fehlt sie noch (SQL nicht ausgeführt), bleibt es bei der Bitmaske in spieler.story.
+let SPALTE_BESIEGT = true;
+async function besiegtLesen(userId, mitName) {
+  const sel = 'name,story' + (SPALTE_BESIEGT ? ',besiegt' : '');
+  let l;
+  try { l = await db('GET', 'spieler?select=' + sel + '&user_id=eq.' + encodeURIComponent(userId)); }
+  catch (e) { if (SPALTE_BESIEGT && e.status === 400) { SPALTE_BESIEGT = false; return besiegtLesen(userId, mitName); } throw e; }
+  if (!l || !l.length) return null;
+  const b = storyAus(l[0].story);
+  String(l[0].besiegt || '').split(',').forEach((id) => { if (id && b.indexOf(id) < 0) b.push(id); });
+  return { name: l[0].name, story: l[0].story | 0, besiegt: b, liste: String(l[0].besiegt || '') };
+}
+async function besiegtSchreiben(userId, ids) {
+  const body = { story: storyEin(ids) };
+  if (SPALTE_BESIEGT) body.besiegt = ids.join(',');
+  try { await db('PATCH', 'spieler?user_id=eq.' + encodeURIComponent(userId), body); }
+  catch (e) { if (SPALTE_BESIEGT && e.status === 400) { SPALTE_BESIEGT = false; return besiegtSchreiben(userId, ids); } throw e; }
+}
+function storyIds(l) { return Array.isArray(l) ? l.filter((id) => typeof id === 'string' && STORY_IDS.indexOf(id) >= 0) : []; } // nur bekannte Story-Gegner
 try {
   const ctx = { CONFIG: {} }; vm.createContext(ctx);
   vm.runInContext(['daten/freischalten.js', 'daten/botdatenbank.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n') + '\nthis.__BOT = BOT_DB;', ctx);
@@ -71,11 +89,11 @@ function freiGast(besiegt) { // ohne Konto: nur Regeln mit Story-Siegen (der Bro
 async function freischaltungen(userId, besiegtGemeldet) {
   const [ein, sp, tab] = await Promise.all([
     db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
-    db('GET', 'spieler?select=story&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
+    besiegtLesen(userId).catch(() => null),
     freischaltungenTabelle(userId).catch(() => [])]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const b = sp && sp.length ? storyAus(sp[0].story) : [];
+  const b = sp ? sp.besiegt.slice() : [];
   storyIds(besiegtGemeldet).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
   const st = { konto: true, freunde, besiegt: b };
   const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
@@ -357,8 +375,9 @@ async function sozial(c, m) {
     online.get(c.user.id).add(c);
     let besiegt = [];
     if (KONTO_SECRET) {
-      const l = await db('GET', 'spieler?select=name,story&user_id=eq.' + c.user.id).catch(() => []);
-      if (l && l.length) { besiegt = storyAus(l[0].story); if ((l[0].story | 0) > 0 && (l[0].story | 0) < 1000) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(besiegt) }).catch(() => {}); /* alter Stand (Anzahl): als Liste zurückschreiben */ c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
+      const l = await besiegtLesen(c.user.id).catch(() => null);
+      if (l) { besiegt = l.besiegt; c.user.name = l.name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {});
+        if (besiegt.length && ((l.story > 0 && l.story < 1000) || (SPALTE_BESIEGT && l.liste !== besiegt.join(',')))) besiegtSchreiben(c.user.id, besiegt).catch(() => {}); } // alter Stand oder Liste fehlt: zurückschreiben
       else await db('POST', 'spieler', { user_id: c.user.id, name: c.user.name }, 'resolution=ignore-duplicates').catch(() => {});
       c.frei = await freischaltungen(c.user.id).catch(() => []);
     }
@@ -368,10 +387,10 @@ async function sozial(c, m) {
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
   if (m.k === 'story') { // neue Siege dazunehmen (nie etwas wegnehmen)
-    const l = await db('GET', 'spieler?select=story&user_id=eq.' + c.user.id).catch(() => []);
-    const b = l && l.length ? storyAus(l[0].story) : [];
+    const l = await besiegtLesen(c.user.id).catch(() => null);
+    const b = l ? l.besiegt : [];
     storyIds(m.ids).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
-    await db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(b) });
+    await besiegtSchreiben(c.user.id, b);
     return;
   }
   if (m.k === 'freunde') return freundesliste(c);

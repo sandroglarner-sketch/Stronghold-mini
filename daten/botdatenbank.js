@@ -42,7 +42,7 @@
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null } // (Onager)
   ];
-  // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer, höchstens 30).
+  // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer; nur für die alte Speicherung in spieler.story, seit 20.11. steht die Liste in spieler.besiegt ohne Grenze).
   // Ein später weiter vorne eingefügter Bot gilt für bestehende Spieler NICHT als besiegt: er ist spielbar, trägt «neu», seine Belohnungskarte gibt es erst nach einem Sieg.
   // Alte Spielstände (nur Anzahl, je nach Story-Version) werden einmal umgerechnet: STORY_ALT[version] = Reihenfolge damals.
   var STORY_ALT = { 1: ['bandit', 'prinz', 'feldherr', 'rabenstein'], 2: ['tollpatsch', 'bandit', 'prinz', 'feldherr', 'rabenstein'], 3: ['tollpatsch', 'hauptmannschildwall', 'bandit', 'prinz', 'feldherr', 'rabenstein'] };
