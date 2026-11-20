@@ -39,8 +39,13 @@
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 5, buy: [['spear', 2]] }, { after: 6, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 8]] }],
                defPlus: 1, defPool: ['knight', 'archer', 'spear', 'digger'], defMage: 99, noOutput: 10,
                defDiggerVsCatapult: 2 }, // hat der Gegner ein Katapult auf dem Feld (nicht auf dem Turm), sind mindestens so viele Tunnelgräber in der Verteidigung
-      // «Knappe Tollpatsch» (erster Story-Gegner, seit 20.11.): 4 Bauern, Mauer ohne Türme, greift bei 120 Gold an, spielt selbst Leiterträger (Belohnung: Leiterträger)
-      tollpatsch: { income: 10, incomeEvery: 5, farmers: 4, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 120, lockSecs: 15,
+      // «Knappe Tollpatsch» (erster Story-Gegner, seit 20.11.): 2 Bauern, Mauer ohne Türme, greift bei 120 Gold an, spielt selbst Leiterträger (Belohnung: Leiterträger)
+      tollpatsch: { income: 10, incomeEvery: 5, farmers: 2, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 120, lockSecs: 15,
                     attack: [{ after: 0, buy: [['knight', 1]] }, { after: 5, buy: [['spear', 6]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['ladder', 6]] }, { after: 9, buy: [['ladder', 10]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, noOutput: 10 },
+      // «Hauptmann Schildwall» (zweiter Story-Gegner, seit 20.11.): 4 Bauern, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt mit 1 Bogenschützen, greift bei 150 Gold an,
+      // spielt selbst den Belagerungsschild (Belohnung: Belagerungsschild)
+      hauptmannschildwall: { income: 10, incomeEvery: 5, farmers: 4, huntLead: 20, hunt: [['archer', 1]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 10, buy: [['spear', 10]] }],
+                    defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 }
   };

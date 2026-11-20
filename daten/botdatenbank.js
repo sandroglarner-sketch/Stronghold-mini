@@ -3,10 +3,10 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 2, logik: 'bauern' },
-    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz' },
-    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 4, logik: 'feldherr' },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 5, logik: 'baron' },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 3, logik: 'bauern' },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 4, logik: 'prinz' },
+    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr' },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron' },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, logik: null },
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
@@ -36,7 +36,7 @@
     { id: 'drachenkoenig', name: 'Der Drachenkönig', koenig: 'drachenkoenig', platz: null, logik: null },
     { id: 'schattenkoenigin', name: 'Die Schattenkönigin', koenig: 'schattenkoenigin', platz: null, logik: null },
     // neue Bots (20.11.), noch ohne Logik. Idee: jeder Bot spielt selbst die Karte, die man durch einen Sieg gegen ihn freischaltet (Vorschlag in Klammern)
-    { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: null, logik: null }, // (Belagerungsschild)
+    { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: 2, logik: 'hauptmannschildwall' }, // Belohnung: Belagerungsschild
     { id: 'glutmeisterin', name: 'Die Glutmeisterin', koenig: 'glutmeisterin', platz: null, logik: null }, // (Fackelwerfer)
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
@@ -45,8 +45,8 @@
   // Story-Umbau: gespeichert ist die Anzahl besiegter Gegner (der Reihe nach). Wird ein Bot weiter vorne eingefügt, steht hier ein Eintrag:
   // v = neue Story-Version, platz = wo eingefügt. Gespeicherte Stände älterer Versionen werden umgerechnet: wer schon einen Gegner hinter
   // dem Einfügeplatz besiegt hat, gilt auch als Sieger gegen den eingefügten Bot (Spiel: sozial.js, Server: server.js).
-  var STORY_UMBAU = [{ v: 2, platz: 1 }]; // 20.11.: Knappe Tollpatsch vor dem Banditen
-  var STORY_VERSION = 2;
+  var STORY_UMBAU = [{ v: 2, platz: 1 }, { v: 3, platz: 2 }]; // 20.11.: Knappe Tollpatsch (1), Hauptmann Schildwall (2) vor dem Banditen
+  var STORY_VERSION = 3;
   function storyUmrechnen(n, vonV) { STORY_UMBAU.forEach(function (u) { if (u.v > vonV && n > u.platz - 1) n++; }); return n; }
   // Story-Modus: alle Bots mit Platz und Logik, nach Platz sortiert (bot = Logik-Schlüssel). Lage auf der Karte automatisch: STORY_LAGE[i % 4], Seite = i / 4
   var STORY_PRO_SEITE = 4, STORY_LAGE = [{ x: 13, y: 73 }, { x: 34, y: 47 }, { x: 56, y: 69 }, { x: 80, y: 40 }]; // passt zum Weg in der SVG-Karte (spiel/index.html)
