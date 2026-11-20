@@ -101,7 +101,8 @@
     var n = storyStand();
     if (storyIdx === n && n < STORY.length) {
       storySpeichern(n + 1);
-      return n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!';
+      var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === STORY[n].id && CONFIG.units[t] && !unitLocked(t); }).map(function (t) { return CONFIG.units[t].name; }); // Belohnung: Karte(n) für diesen Sieg
+      return (karten.length ? ' Neue Karte: ' + karten.join(', ') + '!' : '') + (n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!');
     }
     return '';
   }

@@ -1101,7 +1101,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ef54933241'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '70c2b8d897'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5541,7 +5541,8 @@
     var n = storyStand();
     if (storyIdx === n && n < STORY.length) {
       storySpeichern(n + 1);
-      return n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!';
+      var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === STORY[n].id && CONFIG.units[t] && !unitLocked(t); }).map(function (t) { return CONFIG.units[t].name; }); // Belohnung: Karte(n) für diesen Sieg
+      return (karten.length ? ' Neue Karte: ' + karten.join(', ') + '!' : '') + (n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!');
     }
     return '';
   }
