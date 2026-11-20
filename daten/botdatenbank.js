@@ -3,10 +3,10 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: null, logik: 'bauern', nr: 1 },
+    { id: 'bandit2', name: 'Der Bandit', koenig: 'bandit', platz: null, logik: 'bauern', nr: 10 }, // 20.11. 14:11 zurückgesetzt: neue id und nr (alte id 'bandit' / nr 1 nie wieder verwenden), alte Siege zählen nicht mehr
     { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz', nr: 2 },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: null, logik: 'baron', nr: 4 },
+    { id: 'rabenstein2', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: null, logik: 'baron', nr: 11 }, // 20.11. 14:11 zurückgesetzt: neue id und nr (alte id 'rabenstein' / nr 4 nie wieder verwenden), alte Siege zählen nicht mehr
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: 6, logik: 'loewenherz', nr: 8 }, // seit 20.11. 13:58, braucht ein Konto
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
