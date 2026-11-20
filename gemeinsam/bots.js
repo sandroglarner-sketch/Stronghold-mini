@@ -199,7 +199,7 @@
     while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
-    while (guard++ < 3 && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
+    while (guard++ < 3 && clock < 120 /* ab 120 s Spielzeit keine neuen Holzfäller mehr (alle Bots) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
