@@ -24,3 +24,12 @@
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
     AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 40 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
+
+  // Bäume (Ressourcen für Holzfäller): nur im unteren Bereich, spiegelbildlich zur Mitte (x -> W - x). Wald unten in der Mitte, je 2 Bäume näher an jeder Burg.
+  // holz = so viel Gold gibt ein Baum höchstens, dann ist er gefällt (Stumpf). Feld: 22 × 10 Kacheln.
+  CONFIG.BAEUME = (function () {
+    var links = [[3.6, 8.0], [4.5, 8.75], [8.5, 8.45], [9.2, 7.95], [9.15, 8.95], [10.15, 7.6], [10.1, 8.6]], l = [], W0 = 22;
+    links.forEach(function (p) { l.push({ x: p[0], y: p[1] }); l.push({ x: W0 - p[0], y: p[1] }); });
+    l.push({ x: W0 / 2, y: 8.15 }); // ein Baum genau in der Mitte
+    return { holz: 20, liste: l };
+  })();

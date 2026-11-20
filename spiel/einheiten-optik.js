@@ -146,7 +146,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
+    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -719,6 +719,17 @@
           }
         }
       }
+    } else if (type === 'holzfaeller') {
+      // Holzfäller: rote Wollmütze, Bart, Axt; beim Fällen schwingt er die Axt (settled.hackt)
+      var HS = settled && typeof settled === 'object' ? settled : { hackt: false }, hsw = HS.hackt ? Math.sin(performance.now() / 1000 * Math.PI * 2 / 1.0) : 0;
+      c.fillStyle = '#b8322a'; c.beginPath(); c.arc(0, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke(); // Mütze
+      c.fillStyle = '#f2ece0'; c.beginPath(); c.arc(-r * 0.12, 0, r * 0.2, 0, Math.PI * 2); c.fill(); // Bommel
+      c.fillStyle = '#6b4a2b'; c.beginPath(); c.arc(r * 0.45, 0, r * 0.22, -Math.PI / 2, Math.PI / 2); c.fill(); // Bart
+      c.save(); c.translate(r * 0.2, r * 0.55); c.rotate(-0.9 * Math.max(0, hsw) + 0.5 * Math.max(0, -hsw)); // Axt schwingt
+      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.18); c.beginPath(); c.moveTo(0, 0); c.lineTo(r * 1.35, 0); c.stroke();
+      c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 1.1, -r * 0.1); c.lineTo(r * 1.5, -r * 0.35); c.lineTo(r * 1.55, r * 0.15); c.lineTo(r * 1.1, r * 0.12); c.closePath(); c.fill();
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.15, 0, r * 0.14, 0, Math.PI * 2); c.fill(); // Hand
+      c.restore();
     } else if (type === 'farmer') {
       // Strohhut und Heugabel. Unterwegs blass, am Standplatz kräftig (dann zählt der Bonus).
       if (!settled) {

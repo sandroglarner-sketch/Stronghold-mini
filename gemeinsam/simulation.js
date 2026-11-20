@@ -338,6 +338,33 @@
         }
         continue;
       }
+      if (d.holz) { // Holzfäller: zum nächsten Baum mit Holz, fällen (alle 3 s +1 Gold), ist der Baum leer, zum nächsten
+        var HZ = d.holz, hb = u.baum !== undefined ? baeume[u.baum] : null;
+        if (!hb || hb.holz <= 0) { // neuen Baum suchen: der nächste mit Holz
+          u.baum = undefined; u.hackT = 0; var hbd = 1e9;
+          for (var hi = 0; hi < baeume.length; hi++) { var hbb = baeume[hi]; if (hbb.holz <= 0) continue; var hdd = hyp(hbb.x - u.x, hbb.y - u.y); if (hdd < hbd - 1e-9) { hbd = hdd; u.baum = hi; } }
+          hb = u.baum !== undefined ? baeume[u.baum] : null;
+        }
+        u.hackt = false;
+        if (hb) {
+          var hw = ((u.id * 53) % 6) * Math.PI / 3, hsx = hb.x + Math.cos(hw) * (hb.r + 0.3), hsy = hb.y + Math.sin(hw) * (hb.r + 0.3) * 0.7; // Platz rund um den Stamm
+          var hdx = hsx - u.x, hdy = hsy - u.y, hdl = hyp(hdx, hdy);
+          if (hdl > 0.05) { var hv = umGebaeude(u, hdx / hdl, hdy / hdl, null), hs = Math.min(spd * dt, hdl); u.x += hv.x * hs; u.y += hv.y * hs; if (Math.abs(hv.x) > 0.1) u.face = hv.x > 0 ? 1 : -1; u.hackT = 0; }
+          else {
+            u.hackt = true; u.face = hb.x > u.x ? 1 : -1; u.hackT = (u.hackT || 0) + dt;
+            if (u.hackT >= HZ.alle) {
+              u.hackT -= HZ.alle;
+              var hg = Math.min(HZ.gold, hb.holz); hb.holz -= hg;
+              gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + hg);
+              effects.push({ kind: 'text', text: '+' + hg, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
+              effects.push({ kind: 'spaene', x: hb.x, y: hb.y, t: 0, dur: 0.5 });
+              if (hb.holz <= 0) effects.push({ kind: 'puff', x: hb.x, y: hb.y, team: u.team, t: 0, dur: 0.6 }); // Baum fällt
+            }
+          }
+        }
+        u.settled = { hackt: u.hackt, ziel: hb ? Math.atan2(hb.y - u.y, hb.x - u.x) : 0 }; // nur für die Zeichnung
+        continue;
+      }
       if (d.karawane) { // Karawane: zum Teich, Töpfe füllen, zurück zur Burg, Gold abliefern, von vorn
         var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12;
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }

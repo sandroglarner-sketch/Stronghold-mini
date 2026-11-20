@@ -320,6 +320,10 @@
         ctx.beginPath(); ctx.moveTo(Math.cos(frot + 0.6), Math.sin(frot + 0.6)); ctx.lineTo(Math.cos(frot - 1.5) * 4.5, Math.sin(frot - 1.5) * 4.5); ctx.stroke();
         ctx.fillStyle = 'rgba(255,240,200,0.35)'; ctx.beginPath(); ctx.arc(-2, -2.5, 1.6, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+      } else if (e.kind === 'spaene') { // Holzspäne fliegen beim Hacken
+        ctx.globalAlpha = 1 - k; ctx.fillStyle = '#d9b77a';
+        for (var sp2 = 0; sp2 < 5; sp2++) { var spa = sp2 * 1.26 + 0.4; ctx.fillRect(e.x * T + Math.cos(spa) * (6 + 16 * k), e.y * T + Math.sin(spa) * (4 + 12 * k) - 10 * k, 3, 2); }
+        ctx.globalAlpha = 1;
       } else if (e.kind === 'fackel') { // fliegende Fackel: Holzstiel, brennender Kopf, dreht sich im Flug, Funkenschweif
         var fkx = lerp(e.x1, e.x2, k) * T, fky = lerp(e.y1, e.y2, k) * T - Math.sin(k * Math.PI) * 16, fka = k * Math.PI * 3;
         ctx.save(); ctx.translate(fkx, fky); ctx.rotate(fka); ctx.lineCap = 'round';
@@ -468,10 +472,29 @@
     }
     return u.rang;
   }
+  // Bäume (Ressource): Krone mit Schatten, je weniger Holz desto kleiner; gefällt = Baumstumpf mit Jahresringen
+  function drawBaeume() {
+    for (var bi = 0; bi < baeume.length; bi++) {
+      var b = baeume[bi], bx = b.x * T, by = b.y * T, tr = b.r * T;
+      if (b.holz <= 0) {
+        ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(bx + 3, by + 4, tr * 0.45, tr * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#7a5a34'; ctx.beginPath(); ctx.arc(bx, by, tr * 0.38, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#c9a36a'; ctx.beginPath(); ctx.arc(bx, by, tr * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(122,90,52,0.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx, by, tr * 0.18, 0, Math.PI * 2); ctx.moveTo(bx + tr * 0.08, by); ctx.arc(bx, by, tr * 0.08, 0, Math.PI * 2); ctx.stroke();
+        continue;
+      }
+      var tk = 0.7 + 0.3 * b.holz / CONFIG.BAEUME.holz; tr *= tk;
+      ctx.fillStyle = P.shade; ctx.beginPath(); ctx.ellipse(bx + 5, by + 8, tr, tr * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.tree; ctx.beginPath(); ctx.arc(bx, by, tr, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P['tree-hi']; ctx.beginPath(); ctx.arc(bx - tr * 0.2, by - tr * 0.25, tr * 0.55, 0, Math.PI * 2); ctx.fill();
+      if (b.holz < CONFIG.BAEUME.holz) { ctx.fillStyle = '#c9a36a'; ctx.beginPath(); ctx.arc(bx + tr * 0.45, by + tr * 0.35, tr * 0.12, 0, Math.PI * 2); ctx.fill(); } // Kerbe: wird gefällt
+    }
+  }
   function render() {
     var nowR = performance.now(); renderDt = lastRender ? Math.min(0.1, (nowR - lastRender) / 1000) : 0; lastRender = nowR;
     if (state !== 'playing') renderDt = state === 'paused' ? 0 : renderDt;
     ctx.drawImage(back, 0, 0);
+    drawBaeume();
     drawBase(bases[0]);
     drawBase(bases[1]);
     if (walls[0]) drawWall(walls[0]);

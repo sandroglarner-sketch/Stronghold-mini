@@ -1,4 +1,5 @@
   // ---------- Spielzustand ----------
+  var baeume = []; // Bäume im Spiel: { x, y, holz, r } (aus CONFIG.BAEUME, holz 0 = Stumpf)
   var units, effects, bases, gold, payT, payT1 = 0, clock, nextId, produced; // payT1 = eigener Gold-Takt des Bots (income/incomeEvery)
   var walls = [null, null]; // pro Seite höchstens eine Mauer
   var shots = []; // Geschosse im Flug: der Schaden folgt erst nach delay Sekunden
@@ -13,6 +14,7 @@
   function reset() {
     deploys = [];
     units = [];
+    baeume = CONFIG.BAEUME.liste.map(function (b, i) { return { x: b.x, y: b.y, holz: CONFIG.BAEUME.holz, r: 0.36 + ((i * 7) % 5) * 0.035 }; });
     effects = [];
     shots = [];
     bases = [makeBase(0), makeBase(1)];
@@ -147,7 +149,7 @@
       hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
-    if (d.passive && !d.karawane) pickSpot(units[units.length - 1]);
+    if (d.passive && !d.karawane && !d.holz) pickSpot(units[units.length - 1]);
     if (d.range > 1.5 && !d.king && !d.ram) seekSlot(units[units.length - 1]); // Fernkämpfer: Turmplatz suchen (welche Typen wo stehen dürfen, steht in WALL.tower.levels)
     if (d.dig) units[units.length - 1].dig = pickDigTarget(team);
     if (d.ladder || d.belfry) { // läuft direkt zur gegnerischen Mauer
@@ -246,7 +248,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren

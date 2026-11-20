@@ -44,23 +44,7 @@
     c.lineWidth = 3;
     c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
     c.beginPath(); c.ellipse((W / 2 - 0.4) * T, 1.3 * T, 0.7 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
-    // Bäume an den Rändern, die Wege bleiben frei
-    var tries = 0, placed = 0;
-    while (placed < 24 && tries < 200) {
-      tries++;
-      var tx = rnd() * W;
-      var ty = rnd() < 0.5 ? 0.35 + rnd() * 2.2 : 7.5 + rnd() * 2.2;
-      var dx = (tx - W / 2) / 2.3, dy = (ty - 1.45) / 1.2;
-      if (dx * dx + dy * dy < 1) continue;
-      var tr = (0.32 + rnd() * 0.2) * T;
-      c.fillStyle = P.shade;
-      c.beginPath(); c.ellipse(tx * T + 5, ty * T + 8, tr, tr * 0.7, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = P.tree;
-      c.beginPath(); c.arc(tx * T, ty * T, tr, 0, Math.PI * 2); c.fill();
-      c.fillStyle = P['tree-hi'];
-      c.beginPath(); c.arc(tx * T - tr * 0.2, ty * T - tr * 0.25, tr * 0.55, 0, Math.PI * 2); c.fill();
-      placed++;
-    }
+    // Bäume: nicht mehr im Hintergrund, sondern als Ressource im Spiel (CONFIG.BAEUME, gezeichnet in zeichnen.js)
     // Steine
     for (i = 0; i < 9; i++) {
       var sx = (3.5 + rnd() * (W - 7)) * T;
