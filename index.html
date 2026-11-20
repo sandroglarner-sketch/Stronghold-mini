@@ -667,6 +667,11 @@
   .ovkarte canvas { width: 64px; height: 64px; }
   .ovkarte b { font-size: 0.9rem; color: var(--fg); }
   .ovkarte span { position: absolute; left: 4px; top: 4px; background: #2f8a3e; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 6px; }
+  .sneu { position: absolute; transform: translate(-50%, -50%); background: #2f8a3e; color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 8px; pointer-events: none; animation: sneuwipp 1.4s ease-in-out infinite; box-shadow: 0 2px 6px rgba(0,0,0,0.25); } /* später eingefügter Gegner */
+  .sneu::after { content: ''; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #2f8a3e; border-bottom: 0; }
+  @keyframes sneuwipp { 0%, 100% { margin-top: 0; } 50% { margin-top: -4px; } }
+  .sneupfeil { position: absolute; top: 50%; transform: translateY(-50%); background: #2f8a3e; color: #fff; border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25); z-index: 3; }
+  .sneupfeil.links { left: 64px; } .sneupfeil.rechts { right: 64px; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -1040,17 +1045,17 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 3, logik: 'bauern' },
-    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 4, logik: 'prinz' },
-    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr' },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron' },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 3, logik: 'bauern', nr: 1 },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 4, logik: 'prinz', nr: 2 },
+    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron', nr: 4 },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, logik: null },
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
     { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: null, logik: null },
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, logik: null },
-    { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: 1, logik: 'tollpatsch' }, // seit 20.11. erster Story-Gegner
+    { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: 1, logik: 'tollpatsch', nr: 5 }, // seit 20.11. erster Story-Gegner
     // weitere Bots, noch ohne Logik
     { id: 'raubritterkuno', name: 'Raubritter Kuno', koenig: 'raubritterkuno', platz: null, logik: null },
     { id: 'graefineisenhand', name: 'Gräfin Eisenhand', koenig: 'graefineisenhand', platz: null, logik: null },
@@ -1073,22 +1078,20 @@
     { id: 'drachenkoenig', name: 'Der Drachenkönig', koenig: 'drachenkoenig', platz: null, logik: null },
     { id: 'schattenkoenigin', name: 'Die Schattenkönigin', koenig: 'schattenkoenigin', platz: null, logik: null },
     // neue Bots (20.11.), noch ohne Logik. Idee: jeder Bot spielt selbst die Karte, die man durch einen Sieg gegen ihn freischaltet (Vorschlag in Klammern)
-    { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: 2, logik: 'hauptmannschildwall' }, // Belohnung: Belagerungsschild
+    { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: 2, logik: 'hauptmannschildwall', nr: 6 }, // Belohnung: Belagerungsschild
     { id: 'glutmeisterin', name: 'Die Glutmeisterin', koenig: 'glutmeisterin', platz: null, logik: null }, // (Fackelwerfer)
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null } // (Onager)
   ];
-  // Story-Umbau: gespeichert ist die Anzahl besiegter Gegner (der Reihe nach). Wird ein Bot weiter vorne eingefügt, steht hier ein Eintrag:
-  // v = neue Story-Version, platz = wo eingefügt. Gespeicherte Stände älterer Versionen werden umgerechnet: wer schon einen Gegner hinter
-  // dem Einfügeplatz besiegt hat, gilt auch als Sieger gegen den eingefügten Bot (Spiel: sozial.js, Server: server.js).
-  var STORY_UMBAU = [{ v: 2, platz: 1 }, { v: 3, platz: 2 }]; // 20.11.: Knappe Tollpatsch (1), Hauptmann Schildwall (2) vor dem Banditen
-  var STORY_VERSION = 3;
-  function storyUmrechnen(n, vonV) { STORY_UMBAU.forEach(function (u) { if (u.v > vonV && n > u.platz - 1) n++; }); return n; }
+  // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer, höchstens 30).
+  // Ein später weiter vorne eingefügter Bot gilt für bestehende Spieler NICHT als besiegt: er ist spielbar, trägt «neu», seine Belohnungskarte gibt es erst nach einem Sieg.
+  // Alte Spielstände (nur Anzahl, je nach Story-Version) werden einmal umgerechnet: STORY_ALT[version] = Reihenfolge damals.
+  var STORY_ALT = { 1: ['bandit', 'prinz', 'feldherr', 'rabenstein'], 2: ['tollpatsch', 'bandit', 'prinz', 'feldherr', 'rabenstein'], 3: ['tollpatsch', 'hauptmannschildwall', 'bandit', 'prinz', 'feldherr', 'rabenstein'] };
   // Story-Modus: alle Bots mit Platz und Logik, nach Platz sortiert (bot = Logik-Schlüssel). Lage auf der Karte automatisch: STORY_LAGE[i % 4], Seite = i / 4
   var STORY_PRO_SEITE = 4, STORY_LAGE = [{ x: 13, y: 73 }, { x: 34, y: 47 }, { x: 56, y: 69 }, { x: 80, y: 40 }]; // passt zum Weg in der SVG-Karte (spiel/index.html)
   var STORY = BOT_DB.filter(function (b) { return b.platz && b.logik; }).sort(function (a, b) { return a.platz - b.platz; })
-    .map(function (b, i) { var l = STORY_LAGE[i % STORY_PRO_SEITE]; return { id: b.id, bot: b.logik, name: b.name, koenig: b.koenig, x: l.x, y: l.y, seite: Math.floor(i / STORY_PRO_SEITE) }; });
+    .map(function (b, i) { var l = STORY_LAGE[i % STORY_PRO_SEITE]; return { id: b.id, nr: b.nr, bot: b.logik, name: b.name, koenig: b.koenig, x: l.x, y: l.y, seite: Math.floor(i / STORY_PRO_SEITE) }; });
   // Name und König eines Bots aus seinem Logik-Schlüssel (für Sandbox, Tutorial usw.)
   function botEintrag(logik) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].logik === logik) return BOT_DB[i]; return { name: 'Gegner', koenig: 'standard' }; }
   // ---------- Freischaltungen (EINE Stelle für alle Sperren) ----------
@@ -1135,7 +1138,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ee67028be4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'e75c18c0e8'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -4889,14 +4892,14 @@
     if (!r) return true;
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
-    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) return false; }
+    if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) return false;
     return true;
   }
   function regelText(r, kurz) { // «benötigt Account und 2 eingeladene Freunde» / «Sieg gegen …»
     var k = konto || {}, l = [];
     if ((r.konto || r.freunde) && !k.user) l.push('Account');
     if (r.freunde && (k.freunde | 0) < r.freunde) l.push(r.freunde === 1 ? 'einen eingeladenen Freund' : r.freunde + ' eingeladene Freunde');
-    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) l.push('einen Sieg gegen ' + botName(r.besiegt)); }
+    if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) l.push('einen Sieg gegen ' + botName(r.besiegt));
     return l.join(' und ');
   }
   function unitLocked(t) {
@@ -5284,7 +5287,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig(), story: storyStand() }; /* Story-Stand: schaltet Karten mit «besiegt» auch ohne Konto frei */ if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig(), besiegt: storyBesiegt() }; /* besiegte Story-Gegner: schalten Karten mit «besiegt» auch ohne Konto frei */ if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   // Der Server hat eine neuere Spielversion: Seite neu laden (nicht mitten in einer Partie; höchstens einmal pro Version)
   var neueVersion = '';
   function veraltet(v) {
@@ -5504,31 +5507,39 @@
   }
   function menuAktuell() {
     $('deckZahl').textContent = DECK.length + '/' + DECK_MAX;
-    var n = storyStand(), d = $('storyDots'), h = '';
-    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (i < n ? 'voll' : '') + '"></i>';
-    d.innerHTML = h + '<em>' + Math.min(n, STORY.length) + ' von ' + STORY.length + ' besiegt</em>';
-    $('storyText').textContent = n >= STORY.length ? 'Alle Gegner besiegt – spiele sie nochmals' : 'Weiter gegen: ' + STORY[n].name;
+    var n = storyAnzahl(), d = $('storyDots'), h = '', nx = storyNaechster();
+    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (istBesiegt(STORY[i].id) ? 'voll' : '') + '"></i>';
+    d.innerHTML = h + '<em>' + n + ' von ' + STORY.length + ' besiegt</em>';
+    $('storyText').textContent = nx < 0 ? 'Alle Gegner besiegt – spiele sie nochmals' : (storyNeu(nx) ? 'Neuer Gegner: ' : 'Weiter gegen: ') + STORY[nx].name;
     var on = sozial.liste.filter(function (f) { return f.status !== 'offline'; }).length;
     $('freundeZahl').hidden = !on; $('freundeZahl').textContent = on;
   }
 
   // ----- Story-Modus -----
-  (function () { // gespeicherten Story-Stand auf die aktuelle Story-Version umrechnen (STORY_UMBAU), einmal beim Laden
-    try { var v = parseInt(localStorage.getItem('stronghold-story-v') || '1', 10) || 1, n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0;
-      if (v < STORY_VERSION) { localStorage.setItem('stronghold-story', String(storyUmrechnen(n, v))); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } } catch (e) {}
+  // Story-Fortschritt: Liste der besiegten Gegner (ids), im Browser 'stronghold-besiegt' und mit Konto auf dem Server
+  (function () { // alter Spielstand (nur Anzahl) einmal in die Liste umrechnen
+    try { if (localStorage.getItem('stronghold-besiegt') === null && localStorage.getItem('stronghold-story') !== null) {
+      var n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0, v = parseInt(localStorage.getItem('stronghold-story-v') || '1', 10) || 1;
+      localStorage.setItem('stronghold-besiegt', JSON.stringify((STORY_ALT[v] || STORY_ALT[1]).slice(0, n))); } } catch (e) {}
   })();
-  function storyStand() {
-    var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
-    if (sozial && sozial.ich && sozial.ich.story > n) n = sozial.ich.story; // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
-    return Math.max(0, Math.min(STORY.length, n));
+  function storyBesiegt() { // alle besiegten Story-Gegner (Browser und Server zusammen)
+    var l = []; try { l = JSON.parse(localStorage.getItem('stronghold-besiegt') || '[]') || []; } catch (e) {}
+    if (sozial && sozial.ich && sozial.ich.besiegt) sozial.ich.besiegt.forEach(function (id) { if (l.indexOf(id) < 0) l.push(id); }); // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
+    return l;
   }
-  function storySpeichern(n) {
-    try { localStorage.setItem('stronghold-story', String(n)); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } catch (e) {}
-    if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
+  function istBesiegt(id) { return storyBesiegt().indexOf(id) >= 0; }
+  function storyAnzahl() { var b = storyBesiegt(); return STORY.filter(function (g) { return b.indexOf(g.id) >= 0; }).length; }
+  function storyFront() { var b = storyBesiegt(), f = 0; STORY.forEach(function (g, i) { if (b.indexOf(g.id) >= 0) f = i + 1; }); return f; } // erster Platz hinter dem letzten Sieg
+  function storyNeu(i) { return i < storyFront() && !istBesiegt(STORY[i].id); } // später weiter vorne eingefügt: spielbar, «neu»
+  function storyNaechster() { var f = storyFront(); if (f < STORY.length) return f; for (var i = 0; i < STORY.length; i++) if (!istBesiegt(STORY[i].id)) return i; return -1; }
+  function storySpeichern(id) {
+    var l = storyBesiegt(); if (l.indexOf(id) < 0) l.push(id);
+    try { localStorage.setItem('stronghold-besiegt', JSON.stringify(l)); } catch (e) {}
+    if (sozial.ich) { sozial.ich.besiegt = l.slice(); pvpSend({ k: 'story', ids: l }); }
   }
   function storySperre(i) { // '' = spielbar, sonst warum nicht (Reihenfolge oder Regel aus daten/freischalten.js)
     if (tester) return '';
-    if (i > storyStand()) return 'Besiege zuerst: ' + STORY[i - 1].name;
+    var fr = storyFront(); if (i > fr) return 'Besiege zuerst: ' + STORY[fr].name;
     var FS = CONFIG.FREI.story, ab = FS.kontoAb ? storyIndex(FS.kontoAb) : -1, r = FS.gegner[STORY[i].id] || {};
     if (ab >= 0 && i >= ab) r = { konto: true, freunde: r.freunde, besiegt: r.besiegt };
     return regelErfuellt(r) ? '' : 'Benötigt ' + regelText(r);
@@ -5536,24 +5547,28 @@
   function storyFrei(i) { return !storySperre(i); }
   function i_konto(i) { var s = storySperre(i); return s && s.indexOf('Account') >= 0 && !(konto && konto.user); } // fehlt nur das Konto: Knopf öffnet die Anmeldung
   function storyOpen() {
-    var n = storyStand();
+    var n = storyFront();
     storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
     storySeite = Math.floor(Math.min(n, STORY.length - 1) / STORY_PRO_SEITE); // Seite mit dem aktuellen Gegner
     $('story').hidden = false;
     storyMalen();
   }
   function storyMalen() {
-    var n = storyStand(), h = '';
+    var n = storyFront(), h = '', bs = storyBesiegt();
     var seiten = Math.ceil(STORY.length / STORY_PRO_SEITE);
-    $('storyTitel').textContent = 'Story-Modus · ' + Math.min(n, STORY.length) + ' von ' + STORY.length + (seiten > 1 ? ' · Seite ' + (storySeite + 1) + '/' + seiten : '');
+    $('storyTitel').textContent = 'Story-Modus · ' + storyAnzahl() + ' von ' + STORY.length + (seiten > 1 ? ' · Seite ' + (storySeite + 1) + '/' + seiten : '');
     $('storyZurueck').hidden = storySeite <= 0; $('storyWeiter').hidden = storySeite >= seiten - 1;
     $('storyRein').style.display = storySeite > 0 ? '' : 'none'; $('storyRaus').style.display = storySeite < seiten - 1 ? '' : 'none';
     STORY.forEach(function (g, i) {
       if (g.seite !== storySeite) return; // nur die Gegner dieser Seite
-      var cls = i < n ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = i < n ? ICON.haken : storyFrei(i) ? '' : ICON.schloss;
+      var bes = bs.indexOf(g.id) >= 0, cls = bes ? 'besiegt' : storyFrei(i) ? 'offen' : 'gesperrt', ic = bes ? ICON.haken : storyFrei(i) ? '' : ICON.schloss;
+      if (storyNeu(i)) h += '<div class="sneu" style="left:' + g.x + '%;top:calc(' + g.y + '% - 50px)">neu</div>'; // später eingefügter Gegner
       h += '<button type="button" class="sknoten ' + cls + (i === storySel ? ' sel' : '') + '" data-i="' + i + '" style="left:' + g.x + '%;top:' + g.y + '%" aria-label="' + esc((i + 1) + '. ' + g.name) + '"><canvas data-bild="' + g.koenig + '"' + (cls === 'gesperrt' ? ' data-grau="1"' : '') + '></canvas>' + (ic ? '<i>' + SVG(ic, '#ffffff', 14) + '</i>' : '') + '</button>' +
-        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (i < n ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
+        '<div class="sname" style="left:' + g.x + '%;top:calc(' + g.y + '% + 38px)"><b>' + (i + 1) + ' · ' + esc(g.name) + '</b>' + (bes ? 'besiegt' : storyFrei(i) ? '' : 'gesperrt') + '</div>';
     });
+    var nz = []; STORY.forEach(function (g, i) { if (storyNeu(i) && g.seite !== storySeite) nz.push(g.seite); }); // neue Gegner auf anderen Seiten: grüner Pfeil
+    if (nz.length) { var zl = nz.filter(function (p) { return p < storySeite; }), zs = zl.length ? zl[zl.length - 1] : nz[0];
+      h += '<button type="button" class="sneupfeil ' + (zs < storySeite ? 'links' : 'rechts') + '" data-seite="' + zs + '">' + (zs < storySeite ? '‹ ' : '') + 'Neue Gegner' + (zs < storySeite ? '' : ' ›') + '</button>'; }
     var fi = Math.min(n, STORY.length - 1), f = STORY[fi];
     if (f.seite === storySeite) h += '<div class="sfigur" style="left:' + f.x + '%;top:calc(' + f.y + '% - 36px)"><canvas data-mein="1"></canvas></div>'; // dein König im blauen Kreis
     $('storyKnoten').innerHTML = h;
@@ -5568,7 +5583,7 @@
     k.style.right = links ? 'calc(' + (100 - g.x) + '% + 40px)' : '';
     k.style.top = g.y + '%';
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
-      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal' : 'Kämpfen') + '</button>'
+      (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (bs.indexOf(g.id) >= 0 ? 'Nochmal' : 'Kämpfen') + '</button>'
         : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;
   }
@@ -5582,21 +5597,19 @@
   // nach einer Story-Partie: Sieg gegen den aktuellen Gegner schaltet den nächsten frei; Text für das Ergebnisfenster
   function storyErgebnis(w) {
     if (spielArt !== 'story' || w !== 0) return '';
-    var n = storyStand();
-    if (storyIdx === n && n < STORY.length) {
-      storySpeichern(n + 1);
-      var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === STORY[n].id && CONFIG.units[t] && !unitLocked(t); }); // Belohnung: Karte(n) für diesen Sieg
-      ovKarten = karten; // showOverlay zeigt sie mit Bild
-      return (karten.length ? ' Neue Karte: ' + karten.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '!' : '') + (n + 1 < STORY.length ? '' : ' Du hast alle Gegner besiegt!');
-    }
-    return '';
+    var g = STORY[storyIdx];
+    if (!g || istBesiegt(g.id)) return '';
+    storySpeichern(g.id);
+    var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t] && !unitLocked(t); }); // Belohnung: Karte(n) für diesen Sieg
+    ovKarten = karten; // showOverlay zeigt sie mit Bild
+    return (karten.length ? ' Neue Karte: ' + karten.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '!' : '') + (storyAnzahl() >= STORY.length ? ' Du hast alle Gegner besiegt!' : '');
   }
   $('storyBtn').addEventListener('click', storyOpen);
   $('storyZu').addEventListener('click', function () { $('story').hidden = true; zeigeMenu(); });
   function storyBlaettern(d) { storySeite = Math.max(0, Math.min(Math.ceil(STORY.length / STORY_PRO_SEITE) - 1, storySeite + d)); storySel = -1; storyMalen(); }
   $('storyZurueck').addEventListener('click', function () { storyBlaettern(-1); });
   $('storyWeiter').addEventListener('click', function () { storyBlaettern(1); });
-  $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
+  $('storyKnoten').addEventListener('click', function (e) { var pf = e.target.closest ? e.target.closest('[data-seite]') : null; if (pf) { storyBlaettern(+pf.getAttribute('data-seite') - storySeite); return; } var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); else if (e.target.id === 'storyKonto') kontoOpen(true); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 
@@ -5694,8 +5707,13 @@
   function sozialMsg(m) {
     if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
     if (m.k === 'ich') {
-      sozial.ich = m.id ? { id: m.id, name: m.name, story: m.story | 0 } : null;
-      if (sozial.ich) { var lokal = 0; try { lokal = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {} if (lokal > sozial.ich.story) storySpeichern(lokal); freundeHolen(); }
+      sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [] } : null;
+      if (sozial.ich) { // Siege aus dem Browser, die der Server noch nicht kennt, nachtragen
+        var lokal = []; try { lokal = JSON.parse(localStorage.getItem('stronghold-besiegt') || '[]') || []; } catch (e) {}
+        var fehlt = lokal.filter(function (id) { return sozial.ich.besiegt.indexOf(id) < 0; });
+        try { localStorage.setItem('stronghold-besiegt', JSON.stringify(storyBesiegt())); } catch (e) {}
+        if (fehlt.length) pvpSend({ k: 'story', ids: storyBesiegt() });
+        freundeHolen(); }
       if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
       sozialStatus(state === 'playing' && !pvp.on ? (tut.on ? 'tutorial' : 'story') : 'menu', spielArt === 'story' && state === 'playing' ? 'Story gegen ' + STORY[storyIdx].name : '');
       return;
@@ -5744,8 +5762,7 @@
   function koenigFrei(id) {
     if (tester) return !!KOENIGE[id];
     for (var i = 0; i < KOENIG_SPIELER.length; i++) if (KOENIG_SPIELER[i].id === id) return true;
-    var n = storyStand();
-    for (var j = 0; j < n && j < STORY.length; j++) if (STORY[j].koenig === id) return true;
+    for (var j = 0; j < STORY.length; j++) if (STORY[j].koenig === id && istBesiegt(STORY[j].id)) return true;
     return false;
   }
   function meinKoenig() {

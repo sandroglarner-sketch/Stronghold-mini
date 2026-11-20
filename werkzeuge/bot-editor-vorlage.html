@@ -215,7 +215,7 @@
     return !!((FS.gegner[id] && FS.gegner[id].konto) || (ab >= 0 && i >= ab));
   }
   function ausSpiel(b) {
-    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', storyKonto: storyKontoIst(b.id), belohnung: belohnungIst(b.id), logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
+    return { id: b.id, nr: b.nr || 0, name: b.name, koenig: b.koenig, platz: b.platz || '', storyKonto: storyKontoIst(b.id), belohnung: belohnungIst(b.id), logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
   }
   var ORIG = {}; BOT_DB.forEach(function (b) { ORIG[b.id] = ausSpiel(b); });
   var ENTW = {}; try { ENTW = JSON.parse(localStorage.getItem(SPEICHER) || '{}') || {}; } catch (e) { ENTW = {}; }
@@ -505,7 +505,7 @@
   }
   function dbCode(b) {
     return "    { id: '" + b.id + "', name: '" + String(b.name).replace(/'/g, "\\'") + "', koenig: '" + b.koenig + "', platz: " + (b.platz === '' ? 'null' : b.platz) +
-      ', logik: ' + (b.logik ? "'" + (b.logikKey || b.id) + "'" : 'null') + ' }';
+      ', logik: ' + (b.logik ? "'" + (b.logikKey || b.id) + "'" : 'null') + (b.nr ? ', nr: ' + b.nr : '') + ' }'; // nr = feste Speichernummer (nie ändern)
   }
   function text(b) {
     var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;

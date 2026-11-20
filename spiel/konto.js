@@ -14,14 +14,14 @@
     if (!r) return true;
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
-    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) return false; }
+    if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) return false;
     return true;
   }
   function regelText(r, kurz) { // «benötigt Account und 2 eingeladene Freunde» / «Sieg gegen …»
     var k = konto || {}, l = [];
     if ((r.konto || r.freunde) && !k.user) l.push('Account');
     if (r.freunde && (k.freunde | 0) < r.freunde) l.push(r.freunde === 1 ? 'einen eingeladenen Freund' : r.freunde + ' eingeladene Freunde');
-    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) l.push('einen Sieg gegen ' + botName(r.besiegt)); }
+    if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) l.push('einen Sieg gegen ' + botName(r.besiegt));
     return l.join(' und ');
   }
   function unitLocked(t) {

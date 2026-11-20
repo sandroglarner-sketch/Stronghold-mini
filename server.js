@@ -38,36 +38,46 @@ function db(method, pfad, body, prefer) {
 }
 function freischaltungenTabelle(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); } // von Hand vergebene (und alte) Freischaltungen
 // Regeln aus daten/freischalten.js (dieselbe Datei wie im Spiel) und Story-Reihenfolge aus daten/botdatenbank.js
-let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_V = 1, storyUmrechnen = (n) => n;
-// spieler.story speichert Version * 100 + Anzahl besiegter Gegner (alte Werte unter 100 = Version 1); ältere Versionen werden umgerechnet (STORY_UMBAU in daten/botdatenbank.js)
-function storyAus(s) { s = s | 0; const v = s >= 100 ? Math.floor(s / 100) : 1, n = s >= 100 ? s % 100 : s; return v < STORY_V ? storyUmrechnen(n, v) : n; }
-function storyEin(n) { return STORY_V * 100 + Math.max(0, Math.min(99, n | 0)); }
+let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_NR = {}, STORY_ALT = { 1: [] };
+// spieler.story: besiegte Story-Gegner als 1000 + Bitmaske über die festen Nummern (BOT_DB nr, höchstens 30): 1000 + Summe 2^(nr-1);
+// alte Werte (nur Anzahl): 1–99 = Version 1, ab 100 = Version*100 + Anzahl -> die ersten n Gegner der damaligen Reihenfolge (STORY_ALT)
+function storyAus(s) {
+  s = s | 0;
+  if (s >= 1000) { const m = s - 1000; return Object.keys(STORY_NR).filter((id) => m & (1 << (STORY_NR[id] - 1))); }
+  const v = s >= 100 ? Math.floor(s / 100) : 1, n = s >= 100 ? s % 100 : s;
+  return (STORY_ALT[v] || STORY_ALT[1] || []).slice(0, n);
+}
+function storyEin(ids) { let m = 0; (ids || []).forEach((id) => { if (STORY_NR[id]) m |= 1 << (STORY_NR[id] - 1); }); return m ? 1000 + m : 0; }
+function storyIds(l) { return Array.isArray(l) ? l.filter((id) => typeof id === 'string' && STORY_NR[id]) : []; } // nur bekannte Story-Gegner
 try {
   const ctx = { CONFIG: {} }; vm.createContext(ctx);
   vm.runInContext(['daten/freischalten.js', 'daten/botdatenbank.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n') + '\nthis.__BOT = BOT_DB;', ctx);
   FREI = ctx.CONFIG.FREI;
   STORY_IDS = ctx.__BOT.filter((b) => b.platz && b.logik).sort((a, b) => a.platz - b.platz).map((b) => b.id);
-  STORY_V = ctx.STORY_VERSION || 1; storyUmrechnen = ctx.storyUmrechnen;
+  ctx.__BOT.forEach((b) => { if (b.nr && b.nr <= 30) STORY_NR[b.id] = b.nr; });
+  STORY_ALT = ctx.STORY_ALT || STORY_ALT;
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
-function regelOk(r, st) { // st = { konto, freunde, story }
+function regelOk(r, st) { // st = { konto, freunde, besiegt: [ids] }
   if ((r.konto || r.freunde) && !st.konto) return false;
   if (r.freunde && st.freunde < r.freunde) return false;
-  if (r.besiegt) { const i = STORY_IDS.indexOf(r.besiegt); if (i >= 0 && st.story <= i) return false; }
+  if (r.besiegt && STORY_IDS.indexOf(r.besiegt) >= 0 && st.besiegt.indexOf(r.besiegt) < 0) return false;
   return true;
 }
 // Freigeschaltete Karten eines Spielers: alle Regeln aus daten/freischalten.js, die er erfüllt, plus Einträge der Tabelle freischaltungen
-function freiGast(story) { // ohne Konto: nur Regeln mit Story-Siegen (der Browser meldet seinen Story-Stand)
-  const st = { konto: false, freunde: 0, story: Math.max(0, Math.min(STORY_IDS.length, story | 0)) };
+function freiGast(besiegt) { // ohne Konto: nur Regeln mit Story-Siegen (der Browser meldet seine besiegten Gegner)
+  const st = { konto: false, freunde: 0, besiegt: storyIds(besiegt) };
   return Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
 }
-async function freischaltungen(userId, storyGemeldet) {
+async function freischaltungen(userId, besiegtGemeldet) {
   const [ein, sp, tab] = await Promise.all([
     db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     db('GET', 'spieler?select=story&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     freischaltungenTabelle(userId).catch(() => [])]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const st = { konto: true, freunde, story: Math.max(sp && sp.length ? storyAus(sp[0].story) : 0, Math.min(STORY_IDS.length, storyGemeldet | 0)) };
+  const b = sp && sp.length ? storyAus(sp[0].story) : [];
+  storyIds(besiegtGemeldet).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
+  const st = { konto: true, freunde, besiegt: b };
   const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
   (tab || []).forEach((t) => { if (l.indexOf(t) < 0) l.push(t); });
   return l;
@@ -229,9 +239,9 @@ class Client {
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
       this.koenig = koenigId(m.koenig);
       if (typeof m.token === 'string' && m.token.length < 4096) {
-        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id, m.story).catch(() => freiGast(m.story)) : freiGast(m.story); })
+        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id, m.besiegt).catch(() => freiGast(m.besiegt)) : freiGast(m.besiegt); })
           .then((frei) => { this.frei = frei; if (this.alive) enqueue(this); });
-      } else { this.acc = false; this.frei = freiGast(m.story); enqueue(this); }
+      } else { this.acc = false; this.frei = freiGast(m.besiegt); enqueue(this); }
       return;
     }
     if (m.k === 'cancel') { dequeue(this); return; }
@@ -345,19 +355,25 @@ async function sozial(c, m) {
     if (!c.user) return c.send({ k: 'ich', id: null });
     if (!online.has(c.user.id)) online.set(c.user.id, new Set());
     online.get(c.user.id).add(c);
-    let story = 0;
+    let besiegt = [];
     if (KONTO_SECRET) {
       const l = await db('GET', 'spieler?select=name,story&user_id=eq.' + c.user.id).catch(() => []);
-      if (l && l.length) { story = storyAus(l[0].story); if ((l[0].story | 0) > 0 && (l[0].story | 0) !== storyEin(story)) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(story) }).catch(() => {}); /* alter Stand: umgerechnet zurückschreiben */ c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
+      if (l && l.length) { besiegt = storyAus(l[0].story); if ((l[0].story | 0) > 0 && (l[0].story | 0) < 1000) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(besiegt) }).catch(() => {}); /* alter Stand (Anzahl): als Liste zurückschreiben */ c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
       else await db('POST', 'spieler', { user_id: c.user.id, name: c.user.name }, 'resolution=ignore-duplicates').catch(() => {});
       c.frei = await freischaltungen(c.user.id).catch(() => []);
     }
-    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, story });
+    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt });
   }
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
-  if (m.k === 'story') { const n = storyEin(m.n); await db('PATCH', 'spieler?user_id=eq.' + c.user.id + '&story=lt.' + n, { story: n }); return; }
+  if (m.k === 'story') { // neue Siege dazunehmen (nie etwas wegnehmen)
+    const l = await db('GET', 'spieler?select=story&user_id=eq.' + c.user.id).catch(() => []);
+    const b = l && l.length ? storyAus(l[0].story) : [];
+    storyIds(m.ids).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
+    await db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(b) });
+    return;
+  }
   if (m.k === 'freunde') return freundesliste(c);
   if (m.k === 'freund') { // Freund per Code hinzufügen (beide Richtungen)
     const code = String(m.code || '').toUpperCase().trim();

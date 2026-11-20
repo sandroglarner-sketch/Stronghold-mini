@@ -3,8 +3,7 @@
   function koenigFrei(id) {
     if (tester) return !!KOENIGE[id];
     for (var i = 0; i < KOENIG_SPIELER.length; i++) if (KOENIG_SPIELER[i].id === id) return true;
-    var n = storyStand();
-    for (var j = 0; j < n && j < STORY.length; j++) if (STORY[j].koenig === id) return true;
+    for (var j = 0; j < STORY.length; j++) if (STORY[j].koenig === id && istBesiegt(STORY[j].id)) return true;
     return false;
   }
   function meinKoenig() {
