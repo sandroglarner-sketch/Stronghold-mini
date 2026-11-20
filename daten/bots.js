@@ -56,10 +56,10 @@
                     wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 180, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'catapult', 'rider', 'knight'], defMage: 99, noOutput: 10, defMax: { catapult: 1 } },
-      // «Löwenherz» (Story-Platz 6, braucht ein Konto): 9 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (alle 40 s), greift bei 210 Gold an
+      // «Löwenherz» (Story-Platz 6, braucht ein Konto): 9 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (alle 40 s), greift bei 200 Gold an (20 Leiterträger)
       // und spielt selbst den Schwertkämpfer (Belohnung: Schwertkämpfer); in einer Verteidigung höchstens 1 Katapult
-      loewenherz: { income: 10, incomeEvery: 5, farmers: 9, huntLead: 20, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 210, lockSecs: 15,
-                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1], ['catapult', 1]] }, { after: 4, buy: [['sword', 6]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['ladder', 6]] }, { after: 15, buy: [['rider', 8]] }],
+      loewenherz: { income: 10, incomeEvery: 5, farmers: 9, huntLead: 20, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 200, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1], ['catapult', 1]] }, { after: 4, buy: [['sword', 6]] }, { after: 5, buy: [['archer', 4]] }, { after: 10, buy: [['ladder', 20]] }],
                     defPlus: 1, defPool: ['archer', 'sword', 'catapult', 'rider'], defMage: 99, noOutput: 10, defMax: { catapult: 1 } },
       // «Waldkönig» (Story-Platz 7, braucht ein Konto): 6 Bauern und 4 Holzfäller (Belohnung: Holzfäller), Mauer ohne Türme, jagt mit 3 Speerkämpfern (alle 30 s),
       // greift bei 160 Gold an (6 Schwertkämpfer, 6 Bogenschützen, 8 Speerkämpfer, 15 Leiterträger)
