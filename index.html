@@ -662,6 +662,11 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
+  .ovkarten { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+  .ovkarte { position: relative; display: flex; flex-direction: column; align-items: center; background: var(--panel); border: 2px solid #2f8a3e; border-radius: 10px; padding: 6px 10px 6px; min-width: 96px; animation: bookpop 0.3s ease-out; }
+  .ovkarte canvas { width: 64px; height: 64px; }
+  .ovkarte b { font-size: 0.9rem; color: var(--fg); }
+  .ovkarte span { position: absolute; left: 4px; top: 4px; background: #2f8a3e; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 6px; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -1101,7 +1106,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '70c2b8d897'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '570672b51b'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -4719,6 +4724,7 @@
     }
   }
 
+  var ovKarten = []; // neue Karten nach einem Story-Sieg (gesetzt von storyErgebnis)
   function showOverlay(title, text, btnText, withChoice) {
     // Ergebnis-, Pausen- und Suchfenster (das Startmenü zeigt zeigeMenu() in sozial.js)
     overlay.classList.remove('menu');
@@ -4729,6 +4735,11 @@
     if (!pvp.on && state === 'over') sozialStatus('menu');
     ovTitle.textContent = title;
     ovText.textContent = text;
+    if (ovKarten.length) { // neu freigeschaltete Karte(n) mit Bild unter der Meldung
+      var kd = document.createElement('div'); kd.className = 'ovkarten';
+      kd.innerHTML = ovKarten.map(function (t) { return '<div class="ovkarte"><canvas width="88" height="88" data-t="' + t + '"></canvas><b>' + CONFIG.units[t].name + '</b><span>neu</span></div>'; }).join('');
+      ovText.appendChild(kd); drawCardIcons(kd); ovKarten = [];
+    }
     ovBtn.textContent = btnText;
     if (title === 'Sieg!') jingle('win');
     else if (title === 'Niederlage' || title === 'Aufgegeben' || title === 'Unentschieden') jingle('lose');
@@ -5541,8 +5552,9 @@
     var n = storyStand();
     if (storyIdx === n && n < STORY.length) {
       storySpeichern(n + 1);
-      var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === STORY[n].id && CONFIG.units[t] && !unitLocked(t); }).map(function (t) { return CONFIG.units[t].name; }); // Belohnung: Karte(n) für diesen Sieg
-      return (karten.length ? ' Neue Karte: ' + karten.join(', ') + '!' : '') + (n + 1 < STORY.length ? ' Neuer Gegner freigeschaltet: ' + STORY[n + 1].name + '!' : ' Du hast alle Gegner besiegt!');
+      var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === STORY[n].id && CONFIG.units[t] && !unitLocked(t); }); // Belohnung: Karte(n) für diesen Sieg
+      ovKarten = karten; // showOverlay zeigt sie mit Bild
+      return (karten.length ? ' Neue Karte: ' + karten.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '!' : '') + (n + 1 < STORY.length ? '' : ' Du hast alle Gegner besiegt!');
     }
     return '';
   }

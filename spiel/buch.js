@@ -284,6 +284,7 @@
     }
   }
 
+  var ovKarten = []; // neue Karten nach einem Story-Sieg (gesetzt von storyErgebnis)
   function showOverlay(title, text, btnText, withChoice) {
     // Ergebnis-, Pausen- und Suchfenster (das Startmenü zeigt zeigeMenu() in sozial.js)
     overlay.classList.remove('menu');
@@ -294,6 +295,11 @@
     if (!pvp.on && state === 'over') sozialStatus('menu');
     ovTitle.textContent = title;
     ovText.textContent = text;
+    if (ovKarten.length) { // neu freigeschaltete Karte(n) mit Bild unter der Meldung
+      var kd = document.createElement('div'); kd.className = 'ovkarten';
+      kd.innerHTML = ovKarten.map(function (t) { return '<div class="ovkarte"><canvas width="88" height="88" data-t="' + t + '"></canvas><b>' + CONFIG.units[t].name + '</b><span>neu</span></div>'; }).join('');
+      ovText.appendChild(kd); drawCardIcons(kd); ovKarten = [];
+    }
     ovBtn.textContent = btnText;
     if (title === 'Sieg!') jingle('win');
     else if (title === 'Niederlage' || title === 'Aufgegeben' || title === 'Unentschieden') jingle('lose');

@@ -642,3 +642,8 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
+  .ovkarten { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+  .ovkarte { position: relative; display: flex; flex-direction: column; align-items: center; background: var(--panel); border: 2px solid #2f8a3e; border-radius: 10px; padding: 6px 10px 6px; min-width: 96px; animation: bookpop 0.3s ease-out; }
+  .ovkarte canvas { width: 64px; height: 64px; }
+  .ovkarte b { font-size: 0.9rem; color: var(--fg); }
+  .ovkarte span { position: absolute; left: 4px; top: 4px; background: #2f8a3e; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 6px; }
