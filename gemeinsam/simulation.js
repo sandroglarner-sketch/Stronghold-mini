@@ -340,14 +340,20 @@
       }
       if (d.holz) { // Holzfäller: zum nächsten Baum mit Holz, fällen (alle 3 s +1 Gold), ist der Baum leer, zum nächsten
         var HZ = d.holz, hb = u.baum !== undefined ? baeume[u.baum] : null;
-        if (!hb || hb.holz <= 0) { // neuen Baum suchen: der nächste mit Holz
-          u.baum = undefined; u.hackT = 0; var hbd = 1e9;
-          for (var hi = 0; hi < baeume.length; hi++) { var hbb = baeume[hi]; if (hbb.holz <= 0) continue; var hdd = hyp(hbb.x - u.x, hbb.y - u.y); if (hdd < hbd - 1e-9) { hbd = hdd; u.baum = hi; } }
+        if (!hb || hb.holz <= 0) { // neuen Baum suchen: der nächste mit Holz und freiem Platz (höchstens proBaum Holzfäller, beide Teams zusammen)
+          u.baum = undefined; u.hackT = 0; var hbd = 1e9, hpl = 0;
+          for (var hi = 0; hi < baeume.length; hi++) {
+            var hbb = baeume[hi]; if (hbb.holz <= 0) continue;
+            var hbes = [], hdd; for (var hj = 0; hj < units.length; hj++) { var ho = units[hj]; if (ho !== u && ho.hp > 0 && ho.baum === hi && CONFIG.units[ho.type].holz) hbes.push(ho.platz); }
+            if (hbes.length >= (HZ.proBaum || 2)) continue;
+            hdd = hyp(hbb.x - u.x, hbb.y - u.y); if (hdd < hbd - 1e-9) { hbd = hdd; u.baum = hi; hpl = hbes.indexOf(0) < 0 ? 0 : 1; }
+          }
+          u.platz = hpl;
           hb = u.baum !== undefined ? baeume[u.baum] : null;
         }
         u.hackt = false;
         if (hb) {
-          var hw = ((u.id * 53) % 6) * Math.PI / 3, hsx = hb.x + Math.cos(hw) * (hb.r + 0.3), hsy = hb.y + Math.sin(hw) * (hb.r + 0.3) * 0.7; // Platz rund um den Stamm
+          var hw = u.platz ? 0 : Math.PI, hsx = hb.x + Math.cos(hw) * (hb.r + 0.32), hsy = hb.y; // Platz links (0) oder rechts (1) vom Stamm
           var hdx = hsx - u.x, hdy = hsy - u.y, hdl = hyp(hdx, hdy);
           if (hdl > 0.05) { var hv = umGebaeude(u, hdx / hdl, hdy / hdl, null), hs = Math.min(spd * dt, hdl); u.x += hv.x * hs; u.y += hv.y * hs; if (Math.abs(hv.x) > 0.1) u.face = hv.x > 0 ? 1 : -1; u.hackT = 0; }
           else {
@@ -576,15 +582,15 @@
     var k = Math.min(1, dt * 12);
     for (i = 0; i < units.length; i++) {
       var a = units[i];
-      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || CONFIG.units[a.type].passive || CONFIG.units[a.type].worker) continue;
+      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || (CONFIG.units[a.type].passive && !CONFIG.units[a.type].holz) || CONFIG.units[a.type].worker) continue; // Holzfäller haben einen Körper
       for (j = i + 1; j < units.length; j++) {
         var b = units[j];
-        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || CONFIG.units[b.type].passive || CONFIG.units[b.type].worker) continue;
+        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz) || CONFIG.units[b.type].worker) continue; // Holzfäller haben einen Körper
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
           var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
-          var ma = a.dock || a.atSpot || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var ma = a.dock || a.atSpot || a.hackt || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
           var nx = dx / dist, ny = dy / dist;
           a.x -= nx * pa; a.y -= ny * pa;
           b.x += nx * pb; b.y += ny * pb;
