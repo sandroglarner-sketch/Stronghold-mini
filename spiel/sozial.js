@@ -134,6 +134,10 @@
   $('storyZurueck').addEventListener('click', function () { storyBlaettern(-1); });
   $('storyWeiter').addEventListener('click', function () { storyBlaettern(1); });
   $('storyKnoten').addEventListener('click', function (e) { var pf = e.target.closest ? e.target.closest('[data-seite]') : null; if (pf) { storyBlaettern(+pf.getAttribute('data-seite') - storySeite); return; } var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
+  $('story').addEventListener('click', function (e) { // Klick ins Leere (nicht auf Kreis, Infofeld oder Knopf): Infofeld schliessen, kein Gegner gewählt
+    if (storySel < 0 || !e.target.closest || e.target.closest('.sknoten, #storyKarte, button, [data-seite]')) return;
+    storySel = -1; storyMalen();
+  });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); else if (e.target.id === 'storyKonto') kontoOpen(true); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 

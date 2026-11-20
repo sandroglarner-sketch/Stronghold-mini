@@ -1185,7 +1185,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '870a2033a8'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '741be3827d'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5764,6 +5764,10 @@
   $('storyZurueck').addEventListener('click', function () { storyBlaettern(-1); });
   $('storyWeiter').addEventListener('click', function () { storyBlaettern(1); });
   $('storyKnoten').addEventListener('click', function (e) { var pf = e.target.closest ? e.target.closest('[data-seite]') : null; if (pf) { storyBlaettern(+pf.getAttribute('data-seite') - storySeite); return; } var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
+  $('story').addEventListener('click', function (e) { // Klick ins Leere (nicht auf Kreis, Infofeld oder Knopf): Infofeld schliessen, kein Gegner gewählt
+    if (storySel < 0 || !e.target.closest || e.target.closest('.sknoten, #storyKarte, button, [data-seite]')) return;
+    storySel = -1; storyMalen();
+  });
   $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); else if (e.target.id === 'storyKonto') kontoOpen(true); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 
