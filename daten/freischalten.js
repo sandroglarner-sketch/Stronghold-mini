@@ -16,7 +16,8 @@
       trebuchet: { konto: true },
       crossbow: { konto: true, freunde: 1 },
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
-      shield: { besiegt: 'hauptmannschildwall' } // Belohnung für den zweiten Story-Gegner
+      shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
+      schmiede: { besiegt: 'meisterglutfaust' } // gilt erst, wenn Meister Glutfaust einen Story-Platz hat
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)

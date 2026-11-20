@@ -1036,6 +1036,7 @@
     glutmeisterin: {krone: 'kapuze', kf: '#5a1f1a', umhang: '#6e2a22', muster: 'zacken', ruestung: '#4a3b30', haut: '#e2b08a', haar: '#c8401c', bart: '', waffe: 'kolben', wf: '#e8641e', bogen: {holz: '#3a2e28', enden: '#e8641e', sehne: '#d8cfb8', form: 1, deko: 'flamme'}},  // Russige Kapuze, rotes Haar, glühende Keule
     haendlerfuerstgoldsand: {krone: 'turban', kf: '#e0b23a', umhang: '#2e6a8a', muster: 'streifen', ruestung: '#c9a87a', haut: '#c98a5e', haar: '', bart: 'voll', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#8a6538', enden: '#e0b23a', sehne: '#d8cfb8', form: 1, deko: 'tau'}},  // Goldener Turban, blau gestreifter Mantel
     abtglockenklang: {krone: 'reif', kf: '#c9c2b0', umhang: '#3a3a52', muster: 'kreuz', ruestung: '#8a7a6a', haut: '#ecc09a', haar: '#d9d4c8', bart: 'lang', waffe: 'zepter', wf: '#e2b13c', bogen: {holz: '#efe7d4', enden: '#e2b13c', sehne: '#e8e0cc', form: 2, deko: 'kreuz'}},  // Schlichter Silberreif, Kutte, weisser Bart
+    meisterglutfaust: {krone: 'zacken', kf: '#6e767f', umhang: '#7a3a22', muster: 'zacken', ruestung: '#5a4636', haut: '#d29a68', haar: '#2b1b10', bart: 'schnauz', waffe: 'kolben', wf: '#5e6670', bogen: {holz: '#4a3b2a', enden: '#6e767f', sehne: '#d8cfb8', form: 0, dc: '#e8641e', deko: 'baender'}},  // Eiserne Zackenkrone, Lederschürze, Schmiedehammer, glühende Bänder am Bogen
     steinmetzbrocken: {krone: 'pelz', kf: '#8a8a82', umhang: '#5a5a52', muster: 'flicken', ruestung: '#7a7268', haut: '#cf9a70', haar: '#3a2e24', bart: 'voll', waffe: 'kolben', wf: '#9aa0a4', bogen: {holz: '#7a6a5a', enden: '#8a8a82', sehne: '#d8cfb8', form: 0, deko: 'horn'}},  // Steinstaub-Mütze, Hammer, breiter Bart
   };
   // Zu Beginn hat der Spieler nur den Standard-König; alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
@@ -1082,7 +1083,8 @@
     { id: 'glutmeisterin', name: 'Die Glutmeisterin', koenig: 'glutmeisterin', platz: null, logik: null }, // (Fackelwerfer)
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
-    { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null } // (Onager)
+    { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null }, // (Onager)
+    { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: null, logik: null } // Belohnung: Schmiede (daten/freischalten.js)
   ];
   // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer; nur für die alte Speicherung in spieler.story, seit 20.11. steht die Liste in spieler.besiegt ohne Grenze).
   // Ein später weiter vorne eingefügter Bot gilt für bestehende Spieler NICHT als besiegt: er ist spielbar, trägt «neu», seine Belohnungskarte gibt es erst nach einem Sieg.
@@ -1112,7 +1114,8 @@
       trebuchet: { konto: true },
       crossbow: { konto: true, freunde: 1 },
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
-      shield: { besiegt: 'hauptmannschildwall' } // Belohnung für den zweiten Story-Gegner
+      shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
+      schmiede: { besiegt: 'meisterglutfaust' } // gilt erst, wenn Meister Glutfaust einen Story-Platz hat
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
@@ -1138,7 +1141,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'b012b3f07d'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'ed28cf4864'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
