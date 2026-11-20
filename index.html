@@ -1010,12 +1010,12 @@
       shield: { cat: 'siege', name: 'Belagerungsschild', cost: 25, staerke: 2, hp: 12, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
       // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
       // fire = Katapult: Feuerbälle mit Flächenschaden (splash), ignoriert Mauern (nichts blockiert Ziel oder Schuss), schießt nur alle cd Sekunden
-      catapult: { cat: 'siege', name: 'Katapult', cost: 50, staerke: 4, hp: 2, atk: 2, range: 6, speed: 0.6, cd: 3, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
+      catapult: { cat: 'siege', name: 'Katapult', cost: 50, staerke: 4, hp: 4, atk: 2, range: 6, speed: 0.6, cd: 3, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
       // baliste = Kriegsmaschine: ein schwerer Bolzen auf ein Ziel, trifft nach delay Sekunden, wird von Mauern aufgehalten wie ein Pfeil; passt wie das Katapult auf den großen Turm
       baliste: { cat: 'siege', name: 'Baliste', cost: 45, staerke: 2, hp: 4, atk: 12, range: 4, speed: 0.6, cd: 2, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
       // onager = kleines Belagerungskatapult: greift nur Mauern und Burgen an (ram), fährt zusammengebaut, muss setup Sekunden stillstehen (aufbauen),
       // dann wirft er alle cd Sekunden einen Stein, der gerade (ohne Bogen) fliegt und nach delay Sekunden trifft; Mauern blockieren ihn nicht (Ziel ist die Mauer selbst)
-      onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 2, atk: 20, range: 5, speed: 0.6, cd: 3, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
+      onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 4, atk: 20, range: 5, speed: 0.6, cd: 3, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
       // Schwertkämpfer: Helm wie der Ritter, Holzschild mit Eisenrand
       // Schmiede (Typ Gebäude, cat 'building'; höchstens 2 Gebäude im Deck, 2 Gebäudeplätze): steht auf einem von 2 Gebäudeplätzen (auf einem Bogen wie die Mauer, oben und unten, die Mitte mit dem Weg bleibt frei); ein Arbeiter baut sie
       // (gleich schnell wie die Mauer: WALL.rate Leben pro Sekunde). Nochmals kaufen = nächste Stufe (stufen: Preis, Leben, Gold). Fertig: alle «alle» Sekunden Gold (der Schmied schmiedet 3 s vor dem
@@ -1220,7 +1220,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '34183daf40'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '27642d030b'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
