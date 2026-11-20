@@ -33,7 +33,7 @@
     if (!ONLINE || pvp.ws || pvp.on || pvp.searching) return;
     pvpOpen(function () {});
   }
-  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig() }; if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
+  function pvpQueue() { if (!pvp.searching) return; ovText.textContent = 'Du wartest in der Warteschlange. Sobald ein zweiter Spieler da ist, geht es los.'; var q = { k: 'queue', v: VERSION, koenig: meinKoenig(), story: storyStand() }; /* Story-Stand: schaltet Karten mit «besiegt» auch ohne Konto frei */ if (konto.token) q.token = konto.token; pvpSend(q); } // mit Konto: der Server prüft es und sagt beiden Spielern, wer eines hat
   // Der Server hat eine neuere Spielversion: Seite neu laden (nicht mitten in einer Partie; höchstens einmal pro Version)
   var neueVersion = '';
   function veraltet(v) {

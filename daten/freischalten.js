@@ -4,7 +4,7 @@
   //   konto: true        = angemeldet (Gratis-Konto)
   //   freunde: n         = mindestens n eingeladene Freunde, die über den Link gespielt haben (braucht ein Konto)
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
-  //                        ohne Konto zählt der Sieg nur offline (online kennt der Server ihn sonst nicht)
+  //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
   // Karten ohne Eintrag sind für alle frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
     einheiten: {

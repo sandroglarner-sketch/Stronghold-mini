@@ -52,14 +52,18 @@ function regelOk(r, st) { // st = { konto, freunde, story }
   return true;
 }
 // Freigeschaltete Karten eines Spielers: alle Regeln aus daten/freischalten.js, die er erfüllt, plus Einträge der Tabelle freischaltungen
-async function freischaltungen(userId) {
+function freiGast(story) { // ohne Konto: nur Regeln mit Story-Siegen (der Browser meldet seinen Story-Stand)
+  const st = { konto: false, freunde: 0, story: Math.max(0, Math.min(STORY_IDS.length, story | 0)) };
+  return Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
+}
+async function freischaltungen(userId, storyGemeldet) {
   const [ein, sp, tab] = await Promise.all([
     db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     db('GET', 'spieler?select=story&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     freischaltungenTabelle(userId).catch(() => [])]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const st = { konto: true, freunde, story: sp && sp.length ? sp[0].story | 0 : 0 };
+  const st = { konto: true, freunde, story: Math.max(sp && sp.length ? sp[0].story | 0 : 0, Math.min(STORY_IDS.length, storyGemeldet | 0)) };
   const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
   (tab || []).forEach((t) => { if (l.indexOf(t) < 0) l.push(t); });
   return l;
@@ -221,9 +225,9 @@ class Client {
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
       this.koenig = koenigId(m.koenig);
       if (typeof m.token === 'string' && m.token.length < 4096) {
-        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id).catch(() => []) : []; })
+        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id, m.story).catch(() => freiGast(m.story)) : freiGast(m.story); })
           .then((frei) => { this.frei = frei; if (this.alive) enqueue(this); });
-      } else { this.acc = false; this.frei = []; enqueue(this); }
+      } else { this.acc = false; this.frei = freiGast(m.story); enqueue(this); }
       return;
     }
     if (m.k === 'cancel') { dequeue(this); return; }
