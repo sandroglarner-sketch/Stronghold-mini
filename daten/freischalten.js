@@ -17,7 +17,7 @@
       baliste: { besiegt: 'feldherr' }, // Belohnung für den Feldherrn (Story-Platz 5)
       sword: { besiegt: 'loewenherz' }, // Belohnung für Löwenherz (Story-Platz 6, braucht ein Konto)
       holzfaeller: { besiegt: 'waldkoenig' }, // Belohnung für den Waldkönig (Story-Platz 8, braucht ein Konto)
-      brand: { besiegt: 'strohkoenig' } // Belohnung für Bauer Hannes, den Strohkönig (Story-Platz 7, braucht ein Konto)
+      brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
