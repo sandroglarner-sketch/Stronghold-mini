@@ -923,6 +923,10 @@
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
       mage:   { cat: 'ranged', name: 'Magier',        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
+      // Schwarzer Ritter: wie der Ritter, aber Angriff 2 (Optik: schwarzer Helm und schwarzer Schild)
+      schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 25, staerke: 1, hp: 20, atk: 2, range: 1, speed: 0.7, cd: 1, r: 0.38 },
+      // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
+      raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1 } },
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
@@ -1141,14 +1145,14 @@
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
     story: { kontoAb: '', gegner: {} }
   };
-  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller'];
+  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'building' Gebäude, 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
   var BUY_TYPES = (function () {
-    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller'];
+    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber'];
     var grp = function (t) { var c = CONFIG.units[t].cat; return c === 'building' ? 0 : c === 'eco' ? 1 : c === 'siege' ? 3 : 2; }; // nach der Mauer: Gebäude, Wirtschaft, Kampfeinheiten, Belagerung
     all.sort(function (a, b) { return grp(a) - grp(b) || CONFIG.units[a].cost - CONFIG.units[b].cost || 0; });
-    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j'];
+    var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'];
     list.forEach(function (t, i) { CONFIG.units[t].key = keys[i] || ''; });
     return list;
   })();
@@ -1161,7 +1165,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '60751b61fe'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'ced9bb47ad'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1925,7 +1929,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', schwarzritter: 'K', raeuber: 'R' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -1980,11 +1984,13 @@
     }
     return false;
   }
+  // Bandit: unsichtbar, ausser kurz nach einem eigenen Angriff (dann sichtbar.sichtbar Sekunden lang); unsichtbar = kann nicht anvisiert werden (Flächenschaden trifft trotzdem)
+  function unsichtbar(u) { var d = CONFIG.units[u.type]; return !!(d && d.unsichtbar && (u.atkT === undefined || clock - u.atkT >= d.unsichtbar.sichtbar)); }
   // Hat u einen angreifbaren Gegner in Reichweite? Dann kämpft es zuerst, statt in den Turm zu laufen.
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue;
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;
@@ -2519,7 +2525,7 @@
             var vic = null, vd = 1e9;
             for (j = 0; j < units.length; j++) {
               var en = units[j];
-              if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
+              if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || unsichtbar(en) || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
               var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
               if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; }
             }
@@ -2553,7 +2559,7 @@
         var kt = null, kdd = 1e9;
         for (j = 0; j < units.length; j++) {
           var ke = units[j];
-          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower) continue;
+          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower || unsichtbar(ke)) continue;
           if (hyp(ke.x - kcx, ke.y - kcy) > KL + d.range) continue; // weiter als 5 Kacheln von der Burg: ignoriert
           var kde = hyp(ke.x - u.x, ke.y - u.y);
           if (kde < kdd) { kdd = kde; kt = ke; }
@@ -2804,7 +2810,7 @@
       var best = null, bd = 1e9, bt = null, btd = 1e9, rngd = d.range > 1.5 && !d.ram; // bt = nächster Gegner im Turm (nur für Fernkämpfer)
       for (j = 0; j < units.length; j++) {
         var e = units[j];
-        if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
+        if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen
@@ -3055,7 +3061,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.32, after: 0.25 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -3078,7 +3084,8 @@
     if (type === 'spear') P0.off = swing(at, W, F, -0.5 * r, 0.75 * r);
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
-    else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
+    else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
+    else if (type === 'knight' || type === 'sword' || type === 'schwarzritter') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
     else if (type === 'king') P0.rot = swing(at, W, F, -1.0, 0.45);
     else if (type === 'digger') P0.rot = swing(at, W, F, 1.1, -0.35);
@@ -3146,7 +3153,7 @@
       c.restore(); priesterMalen(c, x - r * 0.15, y, r, 0); return;
     }
     var A = attackPose(type, at, r);
-    if (type === 'knight') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
+    if (type === 'knight' || type === 'schwarzritter') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
     var col = team === 0 ? P.me : P.foe;
     c.save();
     c.translate(x, y);
@@ -3185,7 +3192,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
+    var bodyR = type === 'knight' || type === 'schwarzritter' ? r * 0.9 : type === 'raeuber' ? r * 0.85 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -3901,15 +3908,25 @@
       c.fillStyle = P.steel;
       c.beginPath(); c.moveTo(r * 2.45, -r * 0.6); c.lineTo(r * 2.0, -r * 0.85); c.lineTo(r * 2.0, -r * 0.35); c.closePath(); c.fill();
       c.restore();
+    } else if (type === 'raeuber') {
+      // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)
+      c.fillStyle = '#34302c'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); // Kapuze
+      c.fillStyle = '#c99a72'; c.beginPath(); c.arc(r * 0.28, 0, r * 0.22, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
+      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.2, -0.9, 0.9); c.lineTo(r * 0.32, 0); c.fill(); // Halstuch
+      c.save(); c.translate(A.off, 0);
+      c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.16); c.beginPath(); c.moveTo(r * 0.35, r * 0.55); c.lineTo(r * 0.7, r * 0.55); c.stroke(); // Griff
+      c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 0.7, r * 0.45); c.lineTo(r * 1.35, r * 0.55); c.lineTo(r * 0.7, r * 0.65); c.closePath(); c.fill(); // Klinge
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.4, r * 0.55, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
+      c.restore();
     } else {
       // Ritter: grauer Topfhelm mit Sehschlitz, Schwert mit goldener Parierstange, grosser Wappenschild in Teamfarbe mit weissem Kreuz.
       // Der Schild ist nach vorne gekippt (Oberkante beim Helm, etwas breiter; Spitze vorne, verkürzt) und sitzt seitlich wie beim Schwertkämpfer.
-      var kg = '#8d9399', kd = '#5f666c';
+      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm und Schild
       c.fillStyle = kg; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.6, 0, Math.PI * 2); c.fill();
       c.strokeStyle = kd; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
       c.strokeStyle = '#2b3135'; c.lineWidth = Math.max(2, r * 0.12); c.lineCap = 'butt'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.5, -0.75, 0.75); c.stroke(); c.lineCap = 'round';
       c.lineWidth = Math.max(1.5, r * 0.07); c.beginPath(); c.moveTo(r * 0.12, 0); c.lineTo(r * 0.5, 0); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
+      c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
       c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
       c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * 1.9, -r * 0.75); c.stroke();
@@ -3924,8 +3941,8 @@
       kb([KW / 2, KH * 0.5], [0, 0], [KW / 2, KH * 0.12]); kb([0, 0], [-KW / 2, KH * 0.5], [-KW / 2, KH * 0.12]);
       var kpath = function (pts) { c.beginPath(); for (var ki = 0; ki < pts.length; ki++) { var q = km(pts[ki][0], pts[ki][1]); if (ki) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); } c.closePath(); };
       c.save(); c.translate(r * 0.12, r * 0.12); kpath(kpts); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
-      kpath(kpts); c.fillStyle = col; c.fill();
-      c.save(); kpath(kpts); c.clip(); c.fillStyle = '#ffffff';
+      kpath(kpts); c.fillStyle = swz ? '#1c1e22' : col; c.fill();
+      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? col : '#ffffff'; // Schwarzer Ritter: Kreuz in Teamfarbe
       kpath([[-0.1, -1], [0.1, -1], [0.1, 3], [-0.1, 3]]); c.fill();
       kpath([[-2, KH * 0.62], [2, KH * 0.62], [2, KH * 0.76], [-2, KH * 0.76]]); c.fill();
       c.restore();
@@ -4473,6 +4490,10 @@
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
         drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
+      } else if (unsichtbar(u)) { // unsichtbarer Bandit: Deckkraft schwankt zwischen 50 % und 80 %
+        ctx.save(); ctx.globalAlpha = 0.65 + 0.15 * Math.sin(performance.now() / 1000 * 3 + u.id);
+        drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
+        ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
       if (u.dummy) { ctx.save(); ctx.strokeStyle = P.gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
@@ -4525,7 +4546,7 @@
   });
 
   // Ausdehnung der Figuren links und rechts vom Mittelpunkt (in Vielfachen des Radius), damit jedes Symbol groß und mittig steht
-  var ICON_EXT = { schmiede: [1.25, 1.25], adel: [1.25, 1.25], bank: [1.2, 1.2], dieb: [1.2, 1.2], brand: [1.2, 1.2], kirche: [1.2, 1.2], karawane: [1.75, 2.35], onager: [1.7, 1.5], javelin: [1.15, 1.75], fackel: [1.0, 1.6], holzfaeller: [0.9, 1.7], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
+  var ICON_EXT = { schmiede: [1.25, 1.25], adel: [1.25, 1.25], bank: [1.2, 1.2], dieb: [1.2, 1.2], brand: [1.2, 1.2], kirche: [1.2, 1.2], karawane: [1.75, 2.35], onager: [1.7, 1.5], javelin: [1.15, 1.75], fackel: [1.0, 1.6], holzfaeller: [0.9, 1.7], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], schwarzritter: [0.85, 1.65], raeuber: [0.9, 1.6], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
   // Symbol des Mauer-Knopfs, solange die eigene Burg zerstört ist: eine kleine Burg (der Knopf baut sie dann wieder auf)
   function drawCastleIcon(c) {
     var col = P.me, st = '#8d9396', dk = '#585f63', x = 14, y = 12, w = 60, h = 64;
@@ -4593,6 +4614,7 @@
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
+    if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
     if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>. Kosten steigen mit jeder weiteren Karawane.');
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');

@@ -16,7 +16,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.32, after: 0.25 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -39,7 +39,8 @@
     if (type === 'spear') P0.off = swing(at, W, F, -0.5 * r, 0.75 * r);
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
-    else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
+    else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
+    else if (type === 'knight' || type === 'sword' || type === 'schwarzritter') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
     else if (type === 'king') P0.rot = swing(at, W, F, -1.0, 0.45);
     else if (type === 'digger') P0.rot = swing(at, W, F, 1.1, -0.35);
@@ -107,7 +108,7 @@
       c.restore(); priesterMalen(c, x - r * 0.15, y, r, 0); return;
     }
     var A = attackPose(type, at, r);
-    if (type === 'knight') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
+    if (type === 'knight' || type === 'schwarzritter') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
     var col = team === 0 ? P.me : P.foe;
     c.save();
     c.translate(x, y);
@@ -146,7 +147,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' ? r * 0.9 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
+    var bodyR = type === 'knight' || type === 'schwarzritter' ? r * 0.9 : type === 'raeuber' ? r * 0.85 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -862,15 +863,25 @@
       c.fillStyle = P.steel;
       c.beginPath(); c.moveTo(r * 2.45, -r * 0.6); c.lineTo(r * 2.0, -r * 0.85); c.lineTo(r * 2.0, -r * 0.35); c.closePath(); c.fill();
       c.restore();
+    } else if (type === 'raeuber') {
+      // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)
+      c.fillStyle = '#34302c'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); // Kapuze
+      c.fillStyle = '#c99a72'; c.beginPath(); c.arc(r * 0.28, 0, r * 0.22, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
+      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.2, -0.9, 0.9); c.lineTo(r * 0.32, 0); c.fill(); // Halstuch
+      c.save(); c.translate(A.off, 0);
+      c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.16); c.beginPath(); c.moveTo(r * 0.35, r * 0.55); c.lineTo(r * 0.7, r * 0.55); c.stroke(); // Griff
+      c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 0.7, r * 0.45); c.lineTo(r * 1.35, r * 0.55); c.lineTo(r * 0.7, r * 0.65); c.closePath(); c.fill(); // Klinge
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.4, r * 0.55, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
+      c.restore();
     } else {
       // Ritter: grauer Topfhelm mit Sehschlitz, Schwert mit goldener Parierstange, grosser Wappenschild in Teamfarbe mit weissem Kreuz.
       // Der Schild ist nach vorne gekippt (Oberkante beim Helm, etwas breiter; Spitze vorne, verkürzt) und sitzt seitlich wie beim Schwertkämpfer.
-      var kg = '#8d9399', kd = '#5f666c';
+      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm und Schild
       c.fillStyle = kg; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.6, 0, Math.PI * 2); c.fill();
       c.strokeStyle = kd; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
       c.strokeStyle = '#2b3135'; c.lineWidth = Math.max(2, r * 0.12); c.lineCap = 'butt'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.5, -0.75, 0.75); c.stroke(); c.lineCap = 'round';
       c.lineWidth = Math.max(1.5, r * 0.07); c.beginPath(); c.moveTo(r * 0.12, 0); c.lineTo(r * 0.5, 0); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
+      c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
       c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
       c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * 1.9, -r * 0.75); c.stroke();
@@ -885,8 +896,8 @@
       kb([KW / 2, KH * 0.5], [0, 0], [KW / 2, KH * 0.12]); kb([0, 0], [-KW / 2, KH * 0.5], [-KW / 2, KH * 0.12]);
       var kpath = function (pts) { c.beginPath(); for (var ki = 0; ki < pts.length; ki++) { var q = km(pts[ki][0], pts[ki][1]); if (ki) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); } c.closePath(); };
       c.save(); c.translate(r * 0.12, r * 0.12); kpath(kpts); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
-      kpath(kpts); c.fillStyle = col; c.fill();
-      c.save(); kpath(kpts); c.clip(); c.fillStyle = '#ffffff';
+      kpath(kpts); c.fillStyle = swz ? '#1c1e22' : col; c.fill();
+      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? col : '#ffffff'; // Schwarzer Ritter: Kreuz in Teamfarbe
       kpath([[-0.1, -1], [0.1, -1], [0.1, 3], [-0.1, 3]]); c.fill();
       kpath([[-2, KH * 0.62], [2, KH * 0.62], [2, KH * 0.76], [-2, KH * 0.76]]); c.fill();
       c.restore();

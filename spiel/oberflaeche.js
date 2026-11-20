@@ -24,7 +24,7 @@
   });
 
   // Ausdehnung der Figuren links und rechts vom Mittelpunkt (in Vielfachen des Radius), damit jedes Symbol groß und mittig steht
-  var ICON_EXT = { schmiede: [1.25, 1.25], adel: [1.25, 1.25], bank: [1.2, 1.2], dieb: [1.2, 1.2], brand: [1.2, 1.2], kirche: [1.2, 1.2], karawane: [1.75, 2.35], onager: [1.7, 1.5], javelin: [1.15, 1.75], fackel: [1.0, 1.6], holzfaeller: [0.9, 1.7], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
+  var ICON_EXT = { schmiede: [1.25, 1.25], adel: [1.25, 1.25], bank: [1.2, 1.2], dieb: [1.2, 1.2], brand: [1.2, 1.2], kirche: [1.2, 1.2], karawane: [1.75, 2.35], onager: [1.7, 1.5], javelin: [1.15, 1.75], fackel: [1.0, 1.6], holzfaeller: [0.9, 1.7], crossbow: [0.75, 1.85], trebuchet: [2.4, 1.3], sword: [0.9, 2.0], ladder: [1.5, 1.7], belfry: [1.25, 1.4], farmer: [0.9, 2.0], spear: [0.9, 2.35], archer: [0.9, 1.5], rider: [1.8, 2.45], mage: [0.9, 2.25], knight: [0.85, 1.65], schwarzritter: [0.85, 1.65], raeuber: [0.9, 1.6], digger: [0.9, 2.1], ram: [1.0, 2.7], shield: [1.44, 1.2], catapult: [1.7, 1.5], baliste: [1.4, 1.2] };
   // Symbol des Mauer-Knopfs, solange die eigene Burg zerstört ist: eine kleine Burg (der Knopf baut sie dann wieder auf)
   function drawCastleIcon(c) {
     var col = P.me, st = '#8d9396', dk = '#585f63', x = 14, y = 12, w = 60, h = 64;

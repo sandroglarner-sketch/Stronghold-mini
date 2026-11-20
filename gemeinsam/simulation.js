@@ -186,7 +186,7 @@
             var vic = null, vd = 1e9;
             for (j = 0; j < units.length; j++) {
               var en = units[j];
-              if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
+              if (en.team === u.team || en.hp <= 0 || en.dig || en.inCastle || unsichtbar(en) || wallBlocks(u.team, kcx, kcy, en.x, en.y) || (en.bfTower && belfryManned(en))) continue;
               var np = nearestOnRect(en, kb), nd = hyp(np.x - en.x, np.y - en.y);
               if (nd <= CONFIG.BASE_RANGE && nd < vd) { vd = nd; vic = en; }
             }
@@ -220,7 +220,7 @@
         var kt = null, kdd = 1e9;
         for (j = 0; j < units.length; j++) {
           var ke = units[j];
-          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower) continue;
+          if (ke.team === u.team || ke.hp <= 0 || ke.dig || ke.tower || unsichtbar(ke)) continue;
           if (hyp(ke.x - kcx, ke.y - kcy) > KL + d.range) continue; // weiter als 5 Kacheln von der Burg: ignoriert
           var kde = hyp(ke.x - u.x, ke.y - u.y);
           if (kde < kdd) { kdd = kde; kt = ke; }
@@ -471,7 +471,7 @@
       var best = null, bd = 1e9, bt = null, btd = 1e9, rngd = d.range > 1.5 && !d.ram; // bt = nächster Gegner im Turm (nur für Fernkämpfer)
       for (j = 0; j < units.length; j++) {
         var e = units[j];
-        if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
+        if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen

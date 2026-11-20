@@ -532,6 +532,10 @@
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
         drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
+      } else if (unsichtbar(u)) { // unsichtbarer Bandit: Deckkraft schwankt zwischen 50 % und 80 %
+        ctx.save(); ctx.globalAlpha = 0.65 + 0.15 * Math.sin(performance.now() / 1000 * 3 + u.id);
+        drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
+        ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
       if (u.dummy) { ctx.save(); ctx.strokeStyle = P.gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }

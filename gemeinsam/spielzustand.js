@@ -248,7 +248,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', schwarzritter: 'K', raeuber: 'R' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -303,11 +303,13 @@
     }
     return false;
   }
+  // Bandit: unsichtbar, ausser kurz nach einem eigenen Angriff (dann sichtbar.sichtbar Sekunden lang); unsichtbar = kann nicht anvisiert werden (Flächenschaden trifft trotzdem)
+  function unsichtbar(u) { var d = CONFIG.units[u.type]; return !!(d && d.unsichtbar && (u.atkT === undefined || clock - u.atkT >= d.unsichtbar.sichtbar)); }
   // Hat u einen angreifbaren Gegner in Reichweite? Dann kämpft es zuerst, statt in den Turm zu laufen.
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || (e.tower && d.range <= 1.5)) continue;
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;
