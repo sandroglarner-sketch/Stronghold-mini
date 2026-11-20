@@ -99,7 +99,7 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 2 }, // setup: muss nach jedem Stillstand erst 2 s einrichten (auch im Turm)
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 4, range: 4, speed: 0.8, cd: 2, r: 0.3, delay: 0.3, setup: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
