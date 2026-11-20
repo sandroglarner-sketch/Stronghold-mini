@@ -172,9 +172,15 @@
     // Gebäude (keine Einheit, die Sperre gilt nicht): R.gebaeude = Liste von Käufen { type, gold } in Reihenfolge; die n-te Zeile eines Gebäudes ist sein n-ter Kauf
     // (1. = Bau, 2. = Stufe 2 …, bei der Kirche jede weitere Zeile = ein Gebet). Gekauft wird der nächste fällige Kauf, sobald er so viel Gold frei hat; wird ein Gebäude zerstört, baut er es wieder.
     if (R.gebaeude && R.gebaeude.length && !bases[1].down && !enemyInMyHalf()) { // nur ohne gegnerische Einheit in seiner Spielfeldhälfte
-      var gn = {};
-      for (i = 0; i < R.gebaeude.length; i++) {
-        var ge = R.gebaeude[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
+      var gn = {}, gl = R.gebaeude.slice(), gz = {};
+      R.gebaeude.forEach(function (x) { gz[x.type] = x; }); // letzte Zeile je Gebäude
+      Object.keys(gz).forEach(function (t) { // immer voll ausbauen: fehlende Stufen kommen hinten dazu (mit dem Gold der letzten Zeile; nicht bei der Kirche)
+        var G = CONFIG.units[t] && CONFIG.units[t].gebaeude; if (!G || G.gebet) return;
+        var n = R.gebaeude.filter(function (x) { return x.type === t; }).length;
+        for (; n < G.stufen.length; n++) gl.push({ type: t, gold: gz[t].gold });
+      });
+      for (i = 0; i < gl.length; i++) {
+        var ge = gl[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
         if (!CONFIG.units[ge.type] || gk !== gebKaeufe(1, ge.type) + 1) continue;
         if (spendable() >= Math.max(ge.gold || 0, preisVon(1, ge.type))) { buy(1, ge.type); break; }
       }
