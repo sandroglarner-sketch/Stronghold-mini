@@ -103,10 +103,13 @@
     k.style.left = links ? '' : 'calc(' + g.x + '% + 40px)';
     k.style.right = links ? 'calc(' + (100 - g.x) + '% + 40px)' : '';
     k.style.top = g.y + '%';
+    var bel = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t]; }); // Karte(n), die ein Sieg gegen diesen Gegner freischaltet
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
+      (bel.length ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; })) : '') +
       (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (bs.indexOf(g.id) >= 0 ? 'Nochmal' : 'Kämpfen') + '</button>'
         : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;
+    drawCardIcons(k);
   }
   function storyStart(i) {
     storyIdx = i; spielArt = 'story';
@@ -157,6 +160,12 @@
   function freundeMalen() {
     var l = $('freundListe'), angemeldet = !!konto.user;
     $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
+    var fk = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].freunde && CONFIG.units[t]; }), ik = $('inviteKarten'); // Karten, die nur über eingeladene Freunde frei werden
+    ik.hidden = !kontoAn() || !fk.length;
+    if (!ik.hidden) {
+      ik.innerHTML = '<span class="blabel">Freund einladen und ' + (fk.length === 1 ? 'diese Karte' : 'diese Karten') + ' freischalten:</span>' + belohnungHtml(fk.map(function (t) { return [t, regelErfuellt(CONFIG.FREI.einheiten[t])]; }));
+      drawCardIcons(ik);
+    }
     $('meinCode').textContent = !ONLINE ? 'Freunde gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'
       : !angemeldet ? 'Melde dich an (👤 Konto), um Freunde hinzuzufügen, herauszufordern und ihnen zuzuschauen.'
       : sozial.code ? 'Dein Code: ' + sozial.code + ' – gib ihn Freunden, oder schick ihnen deinen Einladungslink.' : '';

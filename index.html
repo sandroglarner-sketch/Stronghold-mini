@@ -677,6 +677,20 @@
   @keyframes sneuwipp { 0%, 100% { margin-top: 0; } 50% { margin-top: -4px; } }
   .sneupfeil { position: absolute; top: 50%; transform: translateY(-50%); background: #2f8a3e; color: #fff; border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25); z-index: 3; }
   .sneupfeil.links { left: 64px; } .sneupfeil.rechts { right: 64px; }
+
+  /* Belohnungskarten (20.11. 12:53): Story-Feld und Freunde; ausgegraut = noch nicht freigeschaltet, klar mit grünem Haken = freigeschaltet */
+  .blabel { font-size: 0.75rem; font-weight: 600; color: var(--muted); position: relative; }
+  .belohn { display: flex; flex-wrap: wrap; gap: 6px; position: relative; }
+  .bkarte { position: relative; display: flex; flex-direction: column; align-items: center; background: color-mix(in srgb, var(--fg) 5%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px; min-width: 70px; }
+  .bkarte canvas { width: 48px; height: 48px; filter: grayscale(1); opacity: 0.45; }
+  .bkarte .bname { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+  .bkarte.ok { border-color: #2f8a3e; background: color-mix(in srgb, #2f8a3e 8%, transparent); }
+  .bkarte.ok canvas { filter: none; opacity: 1; }
+  .bkarte.ok .bname { color: var(--fg); }
+  .bhaken { position: absolute; right: -6px; top: -6px; width: 20px; height: 20px; border-radius: 10px; background: #2f8a3e; color: #fff; font-style: normal; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .invkarten { display: grid; gap: 6px; }
+  .invkarten[hidden] { display: none; }
+  html.phone .bkarte canvas { width: 38px; height: 38px; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -764,7 +778,7 @@
     </div>
     <div class="freunde" id="freunde" hidden role="dialog" aria-label="Freunde">
       <div class="frkopf"><b>Freunde</b><button class="kontox frzu" id="freundeZu" type="button" aria-label="Schliessen">✕</button></div>
-      <button class="frein" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--me)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freund einladen</span></button>
+      <button class="frein" id="inviteBtn" type="button" hidden title="Schick einem Freund deinen Einladungslink: spielt er eine Partie, bekommst du den Armbrustschützen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--me)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freund einladen</span></button><div class="invkarten" id="inviteKarten" hidden></div>
       <form class="frcode" id="freundForm" novalidate hidden><input type="text" id="freundCode" maxlength="6" placeholder="Code eines Freundes" aria-label="Code eines Freundes" autocomplete="off"><button class="ghost" type="submit">Hinzufügen</button></form>
       <p class="frmein" id="meinCode"></p>
       <div class="frliste" id="freundListe"></div>
@@ -1171,7 +1185,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'e6c86d2db4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '870a2033a8'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -4882,6 +4896,13 @@
     }
   }
 
+  // Belohnungskarten mit Bild (Story-Feld, Freunde): liste = [[typ, erreicht], ...]; nicht erreicht = ausgegraut, erreicht = klar mit grünem Haken
+  function belohnungHtml(liste) {
+    return '<div class="belohn">' + liste.map(function (e) {
+      var t = e[0], ok = !!e[1];
+      return '<span class="bkarte' + (ok ? ' ok' : '') + '" title="' + CONFIG.units[t].name + (ok ? ' (freigeschaltet)' : ' (noch nicht freigeschaltet)') + '"><canvas width="88" height="88" data-t="' + t + '"></canvas><span class="bname">' + CONFIG.units[t].name + '</span>' + (ok ? '<i class="bhaken" aria-label="freigeschaltet">✓</i>' : '') + '</span>';
+    }).join('') + '</div>';
+  }
   var ovKarten = []; // neue Karten nach einem Story-Sieg (gesetzt von storyErgebnis)
   function showOverlay(title, text, btnText, withChoice) {
     // Ergebnis-, Pausen- und Suchfenster (das Startmenü zeigt zeigeMenu() in sozial.js)
@@ -5712,10 +5733,13 @@
     k.style.left = links ? '' : 'calc(' + g.x + '% + 40px)';
     k.style.right = links ? 'calc(' + (100 - g.x) + '% + 40px)' : '';
     k.style.top = g.y + '%';
+    var bel = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t]; }); // Karte(n), die ein Sieg gegen diesen Gegner freischaltet
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
+      (bel.length ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; })) : '') +
       (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (bs.indexOf(g.id) >= 0 ? 'Nochmal' : 'Kämpfen') + '</button>'
         : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;
+    drawCardIcons(k);
   }
   function storyStart(i) {
     storyIdx = i; spielArt = 'story';
@@ -5766,6 +5790,12 @@
   function freundeMalen() {
     var l = $('freundListe'), angemeldet = !!konto.user;
     $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
+    var fk = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].freunde && CONFIG.units[t]; }), ik = $('inviteKarten'); // Karten, die nur über eingeladene Freunde frei werden
+    ik.hidden = !kontoAn() || !fk.length;
+    if (!ik.hidden) {
+      ik.innerHTML = '<span class="blabel">Freund einladen und ' + (fk.length === 1 ? 'diese Karte' : 'diese Karten') + ' freischalten:</span>' + belohnungHtml(fk.map(function (t) { return [t, regelErfuellt(CONFIG.FREI.einheiten[t])]; }));
+      drawCardIcons(ik);
+    }
     $('meinCode').textContent = !ONLINE ? 'Freunde gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'
       : !angemeldet ? 'Melde dich an (👤 Konto), um Freunde hinzuzufügen, herauszufordern und ihnen zuzuschauen.'
       : sozial.code ? 'Dein Code: ' + sozial.code + ' – gib ihn Freunden, oder schick ihnen deinen Einladungslink.' : '';

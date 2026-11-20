@@ -657,3 +657,17 @@
   @keyframes sneuwipp { 0%, 100% { margin-top: 0; } 50% { margin-top: -4px; } }
   .sneupfeil { position: absolute; top: 50%; transform: translateY(-50%); background: #2f8a3e; color: #fff; border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25); z-index: 3; }
   .sneupfeil.links { left: 64px; } .sneupfeil.rechts { right: 64px; }
+
+  /* Belohnungskarten (20.11. 12:53): Story-Feld und Freunde; ausgegraut = noch nicht freigeschaltet, klar mit grünem Haken = freigeschaltet */
+  .blabel { font-size: 0.75rem; font-weight: 600; color: var(--muted); position: relative; }
+  .belohn { display: flex; flex-wrap: wrap; gap: 6px; position: relative; }
+  .bkarte { position: relative; display: flex; flex-direction: column; align-items: center; background: color-mix(in srgb, var(--fg) 5%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px; min-width: 70px; }
+  .bkarte canvas { width: 48px; height: 48px; filter: grayscale(1); opacity: 0.45; }
+  .bkarte .bname { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+  .bkarte.ok { border-color: #2f8a3e; background: color-mix(in srgb, #2f8a3e 8%, transparent); }
+  .bkarte.ok canvas { filter: none; opacity: 1; }
+  .bkarte.ok .bname { color: var(--fg); }
+  .bhaken { position: absolute; right: -6px; top: -6px; width: 20px; height: 20px; border-radius: 10px; background: #2f8a3e; color: #fff; font-style: normal; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .invkarten { display: grid; gap: 6px; }
+  .invkarten[hidden] { display: none; }
+  html.phone .bkarte canvas { width: 38px; height: 38px; }
