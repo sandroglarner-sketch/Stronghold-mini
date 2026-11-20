@@ -16,12 +16,13 @@
                 attackGold: 130, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Kleiner Prinz»: wie Der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) 
-      prinz: { income: 10, incomeEvery: 5, farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
+      // «Kleiner Prinz» (Story-Platz 3): 5 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, Jagd alle 40 s, greift bei 200 Gold an,
+      // spielt selbst das Katapult (Belohnung: Katapult), verteidigt auch mit Rittern und Katapult
+      prinz: { income: 10, incomeEvery: 5, farmers: 5, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 40,
                wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true,
-               attackGold: 180, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
-               defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
+               attackGold: 200, lockSecs: 15,
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 10, buy: [['ladder', 10]] }],
+               defPlus: 1, defPool: ['spear', 'archer', 'knight', 'catapult'], defMage: 99, noOutput: 10 },
       // «Der Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
       feldherr: { income: 10, incomeEvery: 5, farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,

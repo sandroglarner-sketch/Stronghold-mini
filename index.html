@@ -857,12 +857,13 @@
                 attackGold: 130, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Kleiner Prinz»: wie Der Bandit, aber 6 Bauern, Mauer bis Stufe 3 (wallStage) 
-      prinz: { income: 10, incomeEvery: 5, farmers: 6, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 30,
+      // «Kleiner Prinz» (Story-Platz 3): 5 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, Jagd alle 40 s, greift bei 200 Gold an,
+      // spielt selbst das Katapult (Belohnung: Katapult), verteidigt auch mit Rittern und Katapult
+      prinz: { income: 10, incomeEvery: 5, farmers: 5, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 40,
                wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true,
-               attackGold: 180, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 6]] }],
-               defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
+               attackGold: 200, lockSecs: 15,
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 10, buy: [['ladder', 10]] }],
+               defPlus: 1, defPool: ['spear', 'archer', 'knight', 'catapult'], defMage: 99, noOutput: 10 },
       // «Der Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
       // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
       feldherr: { income: 10, incomeEvery: 5, farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
@@ -1046,8 +1047,8 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 3, logik: 'bauern', nr: 1 },
-    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 4, logik: 'prinz', nr: 2 },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 4, logik: 'bauern', nr: 1 },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz', nr: 2 },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
     { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron', nr: 4 },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
@@ -1115,6 +1116,7 @@
       crossbow: { konto: true, freunde: 1 },
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
+      catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen
       schmiede: { besiegt: 'meisterglutfaust' } // gilt erst, wenn Meister Glutfaust einen Story-Platz hat
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
@@ -1141,7 +1143,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ed28cf4864'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '55f09b84cb'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).

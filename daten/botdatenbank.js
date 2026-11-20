@@ -3,8 +3,8 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 3, logik: 'bauern', nr: 1 },
-    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 4, logik: 'prinz', nr: 2 },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 4, logik: 'bauern', nr: 1 },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz', nr: 2 },
     { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
     { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron', nr: 4 },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
