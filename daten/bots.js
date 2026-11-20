@@ -81,5 +81,10 @@
       fuerstbischofgerold: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 6, gebaeude: [{ type: 'kirche', gold: 120 }], gebetAb: 50, keinAngriff: true, huntLead: 20, hunt: [['archer', 2]], huntEvery: 40,
                     wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 999, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 },
+      // «König Rotbart» (Story-Platz 11, braucht ein Konto): 8 Bauern, Schmiede ab 50 Gold (nur Stufe 1), Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (15 s Vorsprung, alle 40 s),
+      // greift bei 220 Gold an (Belagerungsschild, 2 Rammböcke, 8 Schwertkämpfer, 6 Bogenschützen, 8 Reiter); verteidigt mit Bogenschützen, Tunnelgräbern, Schwertkämpfern (Belohnung: Tunnelgräber)
+      koenigrotbart: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 220, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 6, buy: [['archer', 6]] }, { after: 15, buy: [['rider', 8]] }],
+                    defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
   };

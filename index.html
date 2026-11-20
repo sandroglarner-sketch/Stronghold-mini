@@ -962,7 +962,12 @@
       fuerstbischofgerold: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 6, gebaeude: [{ type: 'kirche', gold: 120 }], gebetAb: 50, keinAngriff: true, huntLead: 20, hunt: [['archer', 2]], huntEvery: 40,
                     wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 999, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 },
+      // «König Rotbart» (Story-Platz 11, braucht ein Konto): 8 Bauern, Schmiede ab 50 Gold (nur Stufe 1), Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (15 s Vorsprung, alle 40 s),
+      // greift bei 220 Gold an (Belagerungsschild, 2 Rammböcke, 8 Schwertkämpfer, 6 Bogenschützen, 8 Reiter); verteidigt mit Bogenschützen, Tunnelgräbern, Schwertkämpfern (Belohnung: Tunnelgräber)
+      koenigrotbart: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 220, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 6, buy: [['archer', 6]] }, { after: 15, buy: [['rider', 8]] }],
+                    defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1143,7 +1148,7 @@
     { id: 'baerenfuerst', name: 'Der Bärenfürst', koenig: 'baerenfuerst', platz: null, logik: null },
     { id: 'herzognebelwald', name: 'Herzog Nebelwald', koenig: 'herzognebelwald', platz: null, logik: null },
     { id: 'sumpfhexe', name: 'Die Sumpfhexe', koenig: 'sumpfhexe', platz: null, logik: null },
-    { id: 'koenigrotbart', name: 'König Rotbart', koenig: 'koenigrotbart', platz: null, logik: null },
+    { id: 'koenigrotbart', name: 'König Rotbart', koenig: 'koenigrotbart', platz: 11, logik: 'koenigrotbart', nr: 15 }, // seit 20.11. 16:56, braucht ein Konto
     { id: 'markgrafmoorstein', name: 'Markgraf Moorstein', koenig: 'markgrafmoorstein', platz: null, logik: null },
     { id: 'wolfsjarl', name: 'Der Wolfsjarl', koenig: 'wolfsjarl', platz: 9, logik: 'wolfsjarl', nr: 13 }, // seit 20.11. 16:23, braucht ein Konto
     { id: 'kalifsandsturm', name: 'Kalif Sandsturm', koenig: 'kalifsandsturm', platz: null, logik: null },
@@ -1196,12 +1201,13 @@
       sword: { besiegt: 'loewenherz' }, // Belohnung für Löwenherz (Story-Platz 6, braucht ein Konto)
       holzfaeller: { besiegt: 'waldkoenig' }, // Belohnung für den Waldkönig (Story-Platz 8, braucht ein Konto)
       javelin: { besiegt: 'wolfsjarl' },
-      kirche: { besiegt: 'fuerstbischofgerold' }, // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
+      kirche: { besiegt: 'fuerstbischofgerold' },
+      digger: { besiegt: 'koenigrotbart' }, // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
@@ -1227,7 +1233,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '39595e3a3c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '8c5126d66e'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
