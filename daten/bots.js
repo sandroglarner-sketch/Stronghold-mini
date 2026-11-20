@@ -43,9 +43,9 @@
       tollpatsch: { income: 10, incomeEvery: 5, farmers: 2, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 120, lockSecs: 15,
                     attack: [{ after: 0, buy: [['knight', 1]] }, { after: 5, buy: [['spear', 6]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['ladder', 6]] }, { after: 9, buy: [['ladder', 10]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, noOutput: 10 },
-      // «Hauptmann Schildwall» (zweiter Story-Gegner, seit 20.11.): 4 Bauern, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt mit 1 Bogenschützen, greift bei 150 Gold an,
+      // «Hauptmann Schildwall» (zweiter Story-Gegner, seit 20.11.): 4 Bauern, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt mit 1 Bogenschützen, greift bei 160 Gold an (mit 4 Leiterträgern),
       // spielt selbst den Belagerungsschild (Belohnung: Belagerungsschild)
-      hauptmannschildwall: { income: 10, incomeEvery: 5, farmers: 4, huntLead: 20, hunt: [['archer', 1]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
-                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 10, buy: [['spear', 10]] }],
+      hauptmannschildwall: { income: 10, incomeEvery: 5, farmers: 4, huntLead: 20, hunt: [['archer', 1]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 160, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 8, buy: [['ladder', 4]] }, { after: 10, buy: [['spear', 10]] }],
                     defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 }
   };
