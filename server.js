@@ -38,12 +38,16 @@ function db(method, pfad, body, prefer) {
 }
 function freischaltungenTabelle(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); } // von Hand vergebene (und alte) Freischaltungen
 // Regeln aus daten/freischalten.js (dieselbe Datei wie im Spiel) und Story-Reihenfolge aus daten/botdatenbank.js
-let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [];
+let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_V = 1, storyUmrechnen = (n) => n;
+// spieler.story speichert Version * 100 + Anzahl besiegter Gegner (alte Werte unter 100 = Version 1); ältere Versionen werden umgerechnet (STORY_UMBAU in daten/botdatenbank.js)
+function storyAus(s) { s = s | 0; const v = s >= 100 ? Math.floor(s / 100) : 1, n = s >= 100 ? s % 100 : s; return v < STORY_V ? storyUmrechnen(n, v) : n; }
+function storyEin(n) { return STORY_V * 100 + Math.max(0, Math.min(99, n | 0)); }
 try {
   const ctx = { CONFIG: {} }; vm.createContext(ctx);
   vm.runInContext(['daten/freischalten.js', 'daten/botdatenbank.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n') + '\nthis.__BOT = BOT_DB;', ctx);
   FREI = ctx.CONFIG.FREI;
   STORY_IDS = ctx.__BOT.filter((b) => b.platz && b.logik).sort((a, b) => a.platz - b.platz).map((b) => b.id);
+  STORY_V = ctx.STORY_VERSION || 1; storyUmrechnen = ctx.storyUmrechnen;
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
 function regelOk(r, st) { // st = { konto, freunde, story }
   if ((r.konto || r.freunde) && !st.konto) return false;
@@ -63,7 +67,7 @@ async function freischaltungen(userId, storyGemeldet) {
     freischaltungenTabelle(userId).catch(() => [])]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const st = { konto: true, freunde, story: Math.max(sp && sp.length ? sp[0].story | 0 : 0, Math.min(STORY_IDS.length, storyGemeldet | 0)) };
+  const st = { konto: true, freunde, story: Math.max(sp && sp.length ? storyAus(sp[0].story) : 0, Math.min(STORY_IDS.length, storyGemeldet | 0)) };
   const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
   (tab || []).forEach((t) => { if (l.indexOf(t) < 0) l.push(t); });
   return l;
@@ -344,7 +348,7 @@ async function sozial(c, m) {
     let story = 0;
     if (KONTO_SECRET) {
       const l = await db('GET', 'spieler?select=name,story&user_id=eq.' + c.user.id).catch(() => []);
-      if (l && l.length) { story = l[0].story | 0; c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
+      if (l && l.length) { story = storyAus(l[0].story); if ((l[0].story | 0) > 0 && (l[0].story | 0) !== storyEin(story)) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { story: storyEin(story) }).catch(() => {}); /* alter Stand: umgerechnet zurückschreiben */ c.user.name = l[0].name || c.user.name; db('PATCH', 'spieler?user_id=eq.' + c.user.id, { gesehen: new Date().toISOString() }).catch(() => {}); }
       else await db('POST', 'spieler', { user_id: c.user.id, name: c.user.name }, 'resolution=ignore-duplicates').catch(() => {});
       c.frei = await freischaltungen(c.user.id).catch(() => []);
     }
@@ -353,7 +357,7 @@ async function sozial(c, m) {
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
-  if (m.k === 'story') { const n = Math.max(0, Math.min(99, m.n | 0)); await db('PATCH', 'spieler?user_id=eq.' + c.user.id + '&story=lt.' + n, { story: n }); return; }
+  if (m.k === 'story') { const n = storyEin(m.n); await db('PATCH', 'spieler?user_id=eq.' + c.user.id + '&story=lt.' + n, { story: n }); return; }
   if (m.k === 'freunde') return freundesliste(c);
   if (m.k === 'freund') { // Freund per Code hinzufügen (beide Richtungen)
     const code = String(m.code || '').toUpperCase().trim();

@@ -33,13 +33,17 @@
   }
 
   // ----- Story-Modus -----
+  (function () { // gespeicherten Story-Stand auf die aktuelle Story-Version umrechnen (STORY_UMBAU), einmal beim Laden
+    try { var v = parseInt(localStorage.getItem('stronghold-story-v') || '1', 10) || 1, n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0;
+      if (v < STORY_VERSION) { localStorage.setItem('stronghold-story', String(storyUmrechnen(n, v))); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } } catch (e) {}
+  })();
   function storyStand() {
     var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
     if (sozial && sozial.ich && sozial.ich.story > n) n = sozial.ich.story; // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
     return Math.max(0, Math.min(STORY.length, n));
   }
   function storySpeichern(n) {
-    try { localStorage.setItem('stronghold-story', String(n)); } catch (e) {}
+    try { localStorage.setItem('stronghold-story', String(n)); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } catch (e) {}
     if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
   }
   function storySperre(i) { // '' = spielbar, sonst warum nicht (Reihenfolge oder Regel aus daten/freischalten.js)

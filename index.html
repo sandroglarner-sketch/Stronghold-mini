@@ -874,7 +874,11 @@
                attackGold: 230, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 5, buy: [['spear', 2]] }, { after: 6, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 8]] }],
                defPlus: 1, defPool: ['knight', 'archer', 'spear', 'digger'], defMage: 99, noOutput: 10,
-               defDiggerVsCatapult: 2 } // hat der Gegner ein Katapult auf dem Feld (nicht auf dem Turm), sind mindestens so viele Tunnelgräber in der Verteidigung
+               defDiggerVsCatapult: 2 }, // hat der Gegner ein Katapult auf dem Feld (nicht auf dem Turm), sind mindestens so viele Tunnelgräber in der Verteidigung
+      // «Knappe Tollpatsch» (erster Story-Gegner, seit 20.11.): 4 Bauern, Mauer ohne Türme, greift bei 120 Gold an, spielt selbst Leiterträger (Belohnung: Leiterträger)
+      tollpatsch: { income: 10, incomeEvery: 5, farmers: 4, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 120, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['knight', 1]] }, { after: 5, buy: [['spear', 6]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['ladder', 6]] }, { after: 9, buy: [['ladder', 10]] }],
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMage: 99, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1031,17 +1035,17 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 1, logik: 'bauern' },
-    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 2, logik: 'prinz' },
-    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 3, logik: 'feldherr' },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 4, logik: 'baron' },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 2, logik: 'bauern' },
+    { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz' },
+    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 4, logik: 'feldherr' },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 5, logik: 'baron' },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, logik: null },
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
     { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: null, logik: null },
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, logik: null },
-    { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: null, logik: null },
+    { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: 1, logik: 'tollpatsch' }, // seit 20.11. erster Story-Gegner
     // weitere Bots, noch ohne Logik
     { id: 'raubritterkuno', name: 'Raubritter Kuno', koenig: 'raubritterkuno', platz: null, logik: null },
     { id: 'graefineisenhand', name: 'Gräfin Eisenhand', koenig: 'graefineisenhand', platz: null, logik: null },
@@ -1070,6 +1074,12 @@
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null } // (Onager)
   ];
+  // Story-Umbau: gespeichert ist die Anzahl besiegter Gegner (der Reihe nach). Wird ein Bot weiter vorne eingefügt, steht hier ein Eintrag:
+  // v = neue Story-Version, platz = wo eingefügt. Gespeicherte Stände älterer Versionen werden umgerechnet: wer schon einen Gegner hinter
+  // dem Einfügeplatz besiegt hat, gilt auch als Sieger gegen den eingefügten Bot (Spiel: sozial.js, Server: server.js).
+  var STORY_UMBAU = [{ v: 2, platz: 1 }]; // 20.11.: Knappe Tollpatsch vor dem Banditen
+  var STORY_VERSION = 2;
+  function storyUmrechnen(n, vonV) { STORY_UMBAU.forEach(function (u) { if (u.v > vonV && n > u.platz - 1) n++; }); return n; }
   // Story-Modus: alle Bots mit Platz und Logik, nach Platz sortiert (bot = Logik-Schlüssel). Lage auf der Karte automatisch: STORY_LAGE[i % 4], Seite = i / 4
   var STORY_PRO_SEITE = 4, STORY_LAGE = [{ x: 13, y: 73 }, { x: 34, y: 47 }, { x: 56, y: 69 }, { x: 80, y: 40 }]; // passt zum Weg in der SVG-Karte (spiel/index.html)
   var STORY = BOT_DB.filter(function (b) { return b.platz && b.logik; }).sort(function (a, b) { return a.platz - b.platz; })
@@ -1092,7 +1102,8 @@
       dieb: { konto: true },
       belfry: { konto: true },
       trebuchet: { konto: true },
-      crossbow: { konto: true, freunde: 1 }
+      crossbow: { konto: true, freunde: 1 },
+      ladder: { besiegt: 'tollpatsch' } // Belohnung für den ersten Story-Gegner
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
@@ -1118,7 +1129,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '95e19d1cd4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '555b66e86c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5496,13 +5507,17 @@
   }
 
   // ----- Story-Modus -----
+  (function () { // gespeicherten Story-Stand auf die aktuelle Story-Version umrechnen (STORY_UMBAU), einmal beim Laden
+    try { var v = parseInt(localStorage.getItem('stronghold-story-v') || '1', 10) || 1, n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0;
+      if (v < STORY_VERSION) { localStorage.setItem('stronghold-story', String(storyUmrechnen(n, v))); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } } catch (e) {}
+  })();
   function storyStand() {
     var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
     if (sozial && sozial.ich && sozial.ich.story > n) n = sozial.ich.story; // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
     return Math.max(0, Math.min(STORY.length, n));
   }
   function storySpeichern(n) {
-    try { localStorage.setItem('stronghold-story', String(n)); } catch (e) {}
+    try { localStorage.setItem('stronghold-story', String(n)); localStorage.setItem('stronghold-story-v', String(STORY_VERSION)); } catch (e) {}
     if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
   }
   function storySperre(i) { // '' = spielbar, sonst warum nicht (Reihenfolge oder Regel aus daten/freischalten.js)
