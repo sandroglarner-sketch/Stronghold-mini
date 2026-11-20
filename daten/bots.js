@@ -24,13 +24,13 @@
                attackGold: 200, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 10, buy: [['ladder', 10]] }],
                defPlus: 1, defPool: ['spear', 'archer', 'knight', 'catapult'], defMage: 99, noOutput: 10, defMax: { catapult: 1 } }, // in einer Verteidigung höchstens 1 Katapult
-      // «Der Feldherr»: wie der Kleine Prinz, aber 12 Bauern, Mauer bis Stufe 2, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 25 s Pause),
-      // verteidigt mit Bogenschützen, Speerkämpfern und Reitern, greift bei 210 Gold an
-      feldherr: { income: 10, incomeEvery: 5, farmers: 12, huntLead: 15, hunt: [['rider', 1]], huntEvery: 25,
+      // «Der Feldherr» (Story-Platz 5): 10 Bauern, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt nach 15 s Bauern-Vorsprung mit 1 Reiter (dann 30 s Pause),
+      // greift bei 210 Gold an und spielt selbst die Baliste (Belohnung: Baliste); in einer Verteidigung höchstens 1 Baliste
+      feldherr: { income: 10, incomeEvery: 5, farmers: 10, huntLead: 15, hunt: [['rider', 1]], huntEvery: 30,
                wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true,
                attackGold: 210, lockSecs: 15,
-               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['catapult', 1], ['ram', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 13, buy: [['rider', 4]] }],
-               defPlus: 1, defPool: ['archer', 'spear', 'rider'], defMage: 99, noOutput: 10 },
+               attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['baliste', 1]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 5]] }, { after: 14, buy: [['rider', 8]] }],
+               defPlus: 1, defPool: ['archer', 'spear', 'rider', 'baliste', 'knight'], defMage: 99, noOutput: 10, defMax: { baliste: 1 } },
       // «Baron Rabenstein»: wie der Feldherr, aber 9 Bauern, Mauer bis Stufe 5 (die Türme besetzt er wie alle Gegner komplett: je 3 Bogenschützen und auf dem Belagerungsplatz ein Trebuchet, towerSiege),
       // jagt nach 20 s Bauern-Vorsprung (35 s Pause) mit 1 Ritter, 3 s später 2 Bogenschützen, 1 s danach 2 Speerkämpfer (huntLater, after = Sekunden nach dem Beginn der Jagd),
       // verteidigt mit Rittern, Bogenschützen, Speerkämpfern und Tunnelgräbern, greift bei 230 Gold an

@@ -18,7 +18,8 @@
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen
-      schmiede: { besiegt: 'meisterglutfaust' } // Belohnung für Meister Glutfaust (Story-Platz 4)
+      schmiede: { besiegt: 'meisterglutfaust' }, // Belohnung für Meister Glutfaust (Story-Platz 4)
+      baliste: { besiegt: 'feldherr' } // Belohnung für den Feldherrn (Story-Platz 5)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
