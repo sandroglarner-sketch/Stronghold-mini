@@ -187,6 +187,8 @@
         if (spendable() >= Math.max(ge.gold || 0, preisVon(1, ge.type))) { buy(1, ge.type); break; }
       }
     }
+    // Gebete: steht seine Kirche, lässt er einen Priester beten, sobald er gebetAb Gold frei hat (preisVon ist Infinity, solange gerade jemand betet oder die Gunst voll ist)
+    if (R.gebetAb && gebKaeufe(1, 'kirche') >= 1 && spendable() >= Math.max(R.gebetAb, preisVon(1, 'kirche'))) buy(1, 'kirche');
     if (!free) return;
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
@@ -218,7 +220,7 @@
       ai.huntCool = R.huntEvery;
     }
     // Angriff: ab attackGold Gold; der erste Schritt sofort, die weiteren pünktlich danach (ihr Gold bleibt zurückgelegt)
-    if (!ai.wave && spendable() >= R.attackGold) {
+    if (!ai.wave && !R.keinAngriff && spendable() >= R.attackGold) { // keinAngriff: Bot greift nie an (nur Verteidigung und Jagd)
       var first = R.attack[0], later = R.attack.slice(1);
       for (i = 0; i < first.buy.length; i++) for (j = 0; j < first.buy[i][1]; j++) if (!buy(1, first.buy[i][0])) break;
       ai.attackLock = clock + R.lockSecs;

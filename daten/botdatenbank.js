@@ -24,7 +24,7 @@
     { id: 'markgrafmoorstein', name: 'Markgraf Moorstein', koenig: 'markgrafmoorstein', platz: null, logik: null },
     { id: 'wolfsjarl', name: 'Der Wolfsjarl', koenig: 'wolfsjarl', platz: 9, logik: 'wolfsjarl', nr: 13 }, // seit 20.11. 16:23, braucht ein Konto
     { id: 'kalifsandsturm', name: 'Kalif Sandsturm', koenig: 'kalifsandsturm', platz: null, logik: null },
-    { id: 'fuerstbischofgerold', name: 'Fürstbischof Gerold', koenig: 'fuerstbischofgerold', platz: null, logik: null },
+    { id: 'fuerstbischofgerold', name: 'Fürstbischof Gerold', koenig: 'fuerstbischofgerold', platz: 10, logik: 'fuerstbischofgerold', nr: 14 }, // seit 20.11. 16:41, braucht ein Konto
     { id: 'schwarzeritter', name: 'Der Schwarze Ritter', koenig: 'schwarzeritter', platz: null, logik: null },
     { id: 'zarinfrostmantel', name: 'Zarin Frostmantel', koenig: 'zarinfrostmantel', platz: null, logik: null },
     { id: 'junkerhabgier', name: 'Junker Habgier', koenig: 'junkerhabgier', platz: null, logik: null },
