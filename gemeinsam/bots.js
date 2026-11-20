@@ -177,11 +177,12 @@
       R.gebaeude.forEach(function (x) { gz[x.type] = x; }); // letzte Zeile je Gebäude
       Object.keys(gz).forEach(function (t) { // immer voll ausbauen: fehlende Stufen kommen hinten dazu (mit dem Gold der letzten Zeile; nicht bei der Kirche)
         var G = CONFIG.units[t] && CONFIG.units[t].gebaeude; if (!G || G.gebet) return;
-        var n = R.gebaeude.filter(function (x) { return x.type === t; }).length;
-        for (; n < G.stufen.length; n++) gl.push({ type: t, gold: gz[t].gold });
+        var n = R.gebaeude.filter(function (x) { return x.type === t; }).length, bis = R.gebMax && R.gebMax[t] ? Math.min(R.gebMax[t], G.stufen.length) : G.stufen.length; // gebMax { typ: höchste Stufe }
+        for (; n < bis; n++) gl.push({ type: t, gold: gz[t].gold });
       });
       for (i = 0; i < gl.length; i++) {
         var ge = gl[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
+        if (R.gebMax && R.gebMax[ge.type] && gk > R.gebMax[ge.type] && !CONFIG.units[ge.type].gebaeude.gebet) continue; // nicht über die erlaubte Stufe
         if (!CONFIG.units[ge.type] || gk !== gebKaeufe(1, ge.type) + 1) continue;
         if (spendable() >= Math.max(ge.gold || 0, preisVon(1, ge.type))) { buy(1, ge.type); break; }
       }

@@ -951,7 +951,12 @@
       // jagt nach 15 s Vorsprung mit 2 Speerkämpfern (alle 30 s), greift bei 200 Gold an (2 Belagerungsschilde, 2 Rammböcke, 6 Bogenschützen, 6 + 15 Speerkämpfer); verteidigt mit Speer, Bogen, Baliste
       strohkoenig: { income: 10, incomeEvery: 5, farmers: 6, gebaeude: [{ type: 'brand', gold: 50 }], huntLead: 15, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 200, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 2]] }, { after: 3, buy: [['ram', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 8, buy: [['spear', 6]] }, { after: 11, buy: [['spear', 15]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'baliste'], defMage: 99, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'baliste'], defMage: 99, noOutput: 10 },
+      // «Der Wolfsjarl» (Story-Platz 9, braucht ein Konto): 6 Bauern, baut ab 50 Gold eine Schmiede (nur Stufe 1, gebMax), Mauer ohne Türme, jagt nach 15 s Vorsprung mit 2 Speerwerfern (alle 30 s),
+      // greift bei 150 Gold an (Belagerungsschild, 2 Ritter, 8 Speerkämpfer, 8 Speerwerfer, 15 Leiterträger), spielt selbst den Speerwerfer (Belohnung: Speerwerfer); in einer Verteidigung höchstens 1 Katapult
+      wolfsjarl: { income: 10, incomeEvery: 5, farmers: 6, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['javelin', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 150, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 8, buy: [['spear', 8]] }, { after: 9, buy: [['javelin', 8]] }, { after: 13, buy: [['ladder', 15]] }],
+                    defPlus: 1, defPool: ['catapult', 'spear', 'javelin'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1134,7 +1139,7 @@
     { id: 'sumpfhexe', name: 'Die Sumpfhexe', koenig: 'sumpfhexe', platz: null, logik: null },
     { id: 'koenigrotbart', name: 'König Rotbart', koenig: 'koenigrotbart', platz: null, logik: null },
     { id: 'markgrafmoorstein', name: 'Markgraf Moorstein', koenig: 'markgrafmoorstein', platz: null, logik: null },
-    { id: 'wolfsjarl', name: 'Der Wolfsjarl', koenig: 'wolfsjarl', platz: null, logik: null },
+    { id: 'wolfsjarl', name: 'Der Wolfsjarl', koenig: 'wolfsjarl', platz: 9, logik: 'wolfsjarl', nr: 13 }, // seit 20.11. 16:23, braucht ein Konto
     { id: 'kalifsandsturm', name: 'Kalif Sandsturm', koenig: 'kalifsandsturm', platz: null, logik: null },
     { id: 'fuerstbischofgerold', name: 'Fürstbischof Gerold', koenig: 'fuerstbischofgerold', platz: null, logik: null },
     { id: 'schwarzeritter', name: 'Der Schwarze Ritter', koenig: 'schwarzeritter', platz: null, logik: null },
@@ -1184,11 +1189,12 @@
       baliste: { besiegt: 'feldherr' }, // Belohnung für den Feldherrn (Story-Platz 5)
       sword: { besiegt: 'loewenherz' }, // Belohnung für Löwenherz (Story-Platz 6, braucht ein Konto)
       holzfaeller: { besiegt: 'waldkoenig' }, // Belohnung für den Waldkönig (Story-Platz 8, braucht ein Konto)
+      javelin: { besiegt: 'wolfsjarl' }, // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
@@ -1214,7 +1220,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '6523403ef5'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '34183daf40'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2332,11 +2338,12 @@
       R.gebaeude.forEach(function (x) { gz[x.type] = x; }); // letzte Zeile je Gebäude
       Object.keys(gz).forEach(function (t) { // immer voll ausbauen: fehlende Stufen kommen hinten dazu (mit dem Gold der letzten Zeile; nicht bei der Kirche)
         var G = CONFIG.units[t] && CONFIG.units[t].gebaeude; if (!G || G.gebet) return;
-        var n = R.gebaeude.filter(function (x) { return x.type === t; }).length;
-        for (; n < G.stufen.length; n++) gl.push({ type: t, gold: gz[t].gold });
+        var n = R.gebaeude.filter(function (x) { return x.type === t; }).length, bis = R.gebMax && R.gebMax[t] ? Math.min(R.gebMax[t], G.stufen.length) : G.stufen.length; // gebMax { typ: höchste Stufe }
+        for (; n < bis; n++) gl.push({ type: t, gold: gz[t].gold });
       });
       for (i = 0; i < gl.length; i++) {
         var ge = gl[i], gk = gn[ge.type] = (gn[ge.type] || 0) + 1;
+        if (R.gebMax && R.gebMax[ge.type] && gk > R.gebMax[ge.type] && !CONFIG.units[ge.type].gebaeude.gebet) continue; // nicht über die erlaubte Stufe
         if (!CONFIG.units[ge.type] || gk !== gebKaeufe(1, ge.type) + 1) continue;
         if (spendable() >= Math.max(ge.gold || 0, preisVon(1, ge.type))) { buy(1, ge.type); break; }
       }

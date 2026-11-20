@@ -395,7 +395,7 @@
     $('turmSumme').innerHTML = '<span>Schützenplätze: <b class="' + (s > p.schuetzen ? 'rot' : '') + '">' + s + ' von ' + p.schuetzen + '</b></span><span>Belagerungsplätze: <b class="' + (b > p.belagerung ? 'rot' : '') + '">' + b + ' von ' + p.belagerung + '</b></span>' +
       (s > p.schuetzen || b > p.belagerung ? '<span class="rot">Mehr als Plätze vorhanden (bei dieser Ausbaustufe).</span>' : '');
   }
-  var SPEZIAL_TEXT = { defMax: function (v) { return 'in einer Verteidigung höchstens ' + Object.keys(v).map(function (t) { return v[t] + ' ' + uName(t); }).join(', '); }, defMage: function (v) { return v >= 99 ? null : 'Magier in der Verteidigung ab ' + v + ' benötigter Stärke'; }, defMageAtt: function (v) { return 'Magier in der Verteidigung, wenn du mindestens ' + v + ' Stärke hast'; },
+  var SPEZIAL_TEXT = { gebMax: function (v) { return 'Gebäude höchstens bis Stufe ' + Object.keys(v).map(function (t) { return v[t] + ' (' + uName(t) + ')'; }).join(', '); }, defMax: function (v) { return 'in einer Verteidigung höchstens ' + Object.keys(v).map(function (t) { return v[t] + ' ' + uName(t); }).join(', '); }, defMage: function (v) { return v >= 99 ? null : 'Magier in der Verteidigung ab ' + v + ' benötigter Stärke'; }, defMageAtt: function (v) { return 'Magier in der Verteidigung, wenn du mindestens ' + v + ' Stärke hast'; },
     defDiggerAt: function (v) { return 'Tunnelgräber in der Verteidigung, wenn du ' + v + ' Bogenschützen + Magier hast'; }, defDiggerVsCatapult: function (v) { return 'mindestens ' + v + ' Tunnelgräber in der Verteidigung, wenn du ein Katapult auf dem Feld hast'; } };
   function spezialAlt() {
     var L = cur.logik, l = [];
