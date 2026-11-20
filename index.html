@@ -1202,7 +1202,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'af4c0081a4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '9e986441b4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5425,7 +5425,8 @@
   // Beide Browser rechnen dieselbe Partie (gleicher Startwert, feste Schrittlänge) und tauschen nur Kaufbefehle aus.
   // Jeder Befehl wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später), so ist es für beide gleich schnell.
   // Der Server stellt nur die Paarung her und leitet die Nachrichten weiter.
-  var STEP = 0.05, PVP_DELAY = 7, menuTitle = ovTitle.textContent, menuText = ovText.textContent;
+  var STEP = 0.05, BL_STEP = 1 / 60, PVP_DELAY = 7, // BL_STEP: Bot-Partien rechnen 60 Schritte pro Sekunde (flüssig wie früher), online 20
+      menuTitle = ovTitle.textContent, menuText = ovText.textContent;
   $('pvpBtn').hidden = false;
   if (ONLINE) presenceOpen();
   function pvpSend(o) { if (pvp.ws && pvp.ws.readyState === 1) pvp.ws.send(JSON.stringify(o)); }
@@ -5576,10 +5577,11 @@
   }
   function pvpFrame(rdt) {
     // Zuschauer: sendet nichts; liegt er zurück (Einstieg mitten in der Partie), rechnet er schnell nach (bis 300 Schritte pro Bild)
+    var ST = pvp.bot ? BL_STEP : STEP; // Zuschauer einer Bot-Partie: dieselbe Schrittlänge wie der Spieler
     var nach = pvp.zuschauer && pvp.letzte - pvp.tick > PVP_DELAY + 4, maxS = nach ? 300 : 8;
-    pvp.acc = nach ? Math.max(pvp.acc, (pvp.letzte - pvp.tick - PVP_DELAY) * STEP) : Math.min(pvp.acc + rdt, 0.5);
+    pvp.acc = nach ? Math.max(pvp.acc, (pvp.letzte - pvp.tick - PVP_DELAY) * ST) : Math.min(pvp.acc + rdt, 0.5);
     var steps = 0, waited = false;
-    while (pvp.acc >= STEP && steps < maxS && state === 'playing') {
+    while (pvp.acc >= ST && steps < maxS && state === 'playing') {
       var T = pvp.tick;
       if (!pvp.zuschauer && !pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
       var box = pvp.inbox[T];
@@ -5588,10 +5590,10 @@
       if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
       pvpApply(0, box[0]); pvpApply(1, box[1]);
-      if (state === 'playing') update(STEP);
+      if (state === 'playing') update(ST);
       if (pvp.bot && pvp.zh[T] !== undefined) { if (state === 'playing' && pvp.zh[T] !== pvpHash()) pvpDesync(); delete pvp.zh[T]; } // Prüfsumme des Spielers
       pvp.tick = T + 1; delete pvp.inbox[T]; delete pvp.sent[T];
-      pvp.acc -= STEP; steps++;
+      pvp.acc -= ST; steps++;
     }
     if (pvp.bot && pvp.botEnde && state === 'playing' && pvp.tick > pvp.letzte) { // Spieler hat aufgegeben oder die Partie verlassen
       state = 'over'; pvp.ended = true;
@@ -5600,7 +5602,7 @@
     pvp.stall = waited ? pvp.stall + rdt : 0;
     if (nach && !waited) pvp.acc = 0;
     if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
-    pvp.alpha = Math.min(1, pvp.acc / STEP);
+    pvp.alpha = Math.min(1, pvp.acc / ST);
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
   function pvpRender() {
@@ -5661,7 +5663,7 @@
 
 
   // ---------- Bot-Partie (Story, Einzelspiel) ----------
-  // Läuft wie online in festen Schritten (STEP) mit festem Zufalls-Startwert. Mit Konto und Verbindung meldet der Browser Startwert, Bot und seine Käufe
+  // Läuft wie online in festen Schritten (BL_STEP = 1/60 s, damit es so flüssig ist wie früher) mit festem Zufalls-Startwert. Mit Konto und Verbindung meldet der Browser Startwert, Bot und seine Käufe
   // je Schritt an den Server (mindestens jede Sekunde, mit Prüfsumme); Freunde können so zuschauen. Der Spieler wartet dabei nie auf den Server.
   // Tutorial und Sandbox laufen wie bisher (ohne Zuschauen).
   var bl = { on: false, live: false, tick: 0, acc: 0, seed: 0, gesendet: -1 };
@@ -5688,22 +5690,22 @@
   }
   function blFrame(rdt) {
     bl.acc = Math.min(bl.acc + rdt, 0.5);
-    while (bl.acc >= STEP && state === 'playing') {
+    while (bl.acc >= BL_STEP && state === 'playing') {
       var T = bl.tick, cmds = [];
       for (var dj = 0; dj < deploys.length; dj++) { // fällige Käufe in diesem Schritt
-        var dpl = deploys[dj]; dpl.t += STEP;
+        var dpl = deploys[dj]; dpl.t += BL_STEP;
         if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(0, dpl.type); }
       }
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
-      if (state === 'playing') update(STEP);
-      bl.tick = T + 1; bl.acc -= STEP;
-      if (bl.live && (cmds.length || T % 20 === 0 || state !== 'playing')) {
+      if (state === 'playing') update(BL_STEP);
+      bl.tick = T + 1; bl.acc -= BL_STEP;
+      if (bl.live && (cmds.length || T % 60 === 0 || state !== 'playing')) {
         var msg = { k: 'bt', t: T, c: cmds.slice(0, 6) };
-        if (T % 20 === 0 && state === 'playing') msg.h = pvpHash();
+        if (T % 60 === 0 && state === 'playing') msg.h = pvpHash();
         pvpSend(msg); bl.gesendet = T;
       }
     }
-    pvp.alpha = Math.min(1, bl.acc / STEP);
+    pvp.alpha = Math.min(1, bl.acc / BL_STEP);
   }
   // ---------- Menü, Story-Modus, Freunde, Herausfordern, Zuschauen (19.11.) ----------
   // spielArt = was zuletzt gestartet wurde ('story' | 'sandbox' | 'tut' | ''), für «Nochmal» und «Zur Karte»
