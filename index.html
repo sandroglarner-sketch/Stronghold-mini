@@ -691,6 +691,13 @@
   .invkarten { display: grid; gap: 6px; }
   .invkarten[hidden] { display: none; }
   html.phone .bkarte canvas { width: 38px; height: 38px; }
+
+  /* Spielername im Konto-Fenster (20.11.) */
+  .kontoname { display: grid; gap: 6px; text-align: left; }
+  .kontoname label { font-weight: 600; font-size: 0.85rem; }
+  .kontoname input { flex: 1; min-width: 0; }
+  .kontohinweis { margin: 0; padding: 6px 9px; border-radius: 8px; background: color-mix(in srgb, #c76a00 12%, transparent); color: #8a4a00; font-size: 0.8rem; }
+  .kontohinweis[hidden] { display: none; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -800,6 +807,11 @@
     <div class="konto" id="konto" hidden role="dialog" aria-label="Konto">
       <h3 id="kontoTitel">Konto</h3>
       <p id="kontoText"></p>
+      <form class="kontoname" id="kontoNameForm" novalidate hidden>
+        <label for="kontoName">Spielername</label>
+        <p class="kontohinweis" id="kontoNameHint" hidden>Wähle einen Spielernamen. Sonst sehen andere den Anfang deiner E-Mail-Adresse.</p>
+        <div class="kontorow"><input type="text" id="kontoName" maxlength="16" autocomplete="nickname" placeholder="3–16 Zeichen"><button class="primary" type="submit" id="kontoNameSave">Speichern</button></div>
+      </form>
       <form id="kontoForm" novalidate>
         <input type="email" id="kontoMail" placeholder="E-Mail" autocomplete="email" required>
         <input type="password" id="kontoPw" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" minlength="6" required>
@@ -1202,7 +1214,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '9e986441b4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '6523403ef5'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5124,7 +5136,7 @@
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
     $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
-    kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
+    kb.textContent = konto.user ? '👤 ' + (sozial && sozial.ich ? sozial.ich.name : konto.user.split('@')[0]) : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
       if (rest.length !== DECK.length) { DECK = rest.length ? rest : DECK_START.slice(); saveDeck(); }
@@ -5159,6 +5171,12 @@
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
       on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto kannst du Freunde einladen und so weitere Karten freischalten.';
     $('kontoForm').hidden = on;
+    var nf = $('kontoNameForm'), meinN = sozial && sozial.ich ? sozial.ich.name : '';
+    nf.hidden = !on || pw || !ONLINE || !meinN; // Name ändern geht über den Server (nur online, angemeldet)
+    if (!nf.hidden) {
+      if (document.activeElement !== $('kontoName')) $('kontoName').value = meinN;
+      $('kontoNameHint').hidden = meinN !== konto.user.split('@')[0].slice(0, 24); // noch der Name aus der E-Mail
+    }
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;
     var inv = on && !pw && ONLINE && !!konto.code;
@@ -5308,6 +5326,16 @@
   kontoChanged();
   if (kontoAn() && konto.refresh) kontoRefresh(); else kontoServer();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);
+
+  // Spielername ändern (jederzeit; der Server prüft und speichert ihn im Profil)
+  $('kontoNameForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var n = $('kontoName').value.replace(/\s+/g, ' ').trim();
+    if (n.length < 3 || n.length > 16) { kontoMsg('Der Name muss 3 bis 16 Zeichen lang sein.'); return; }
+    if (!/^[\p{L}\p{N} _-]+$/u.test(n)) { kontoMsg('Erlaubt sind Buchstaben, Zahlen, Leerzeichen, - und _.'); return; }
+    if (!pvp.ws || pvp.ws.readyState !== 1) { kontoMsg('Keine Verbindung zum Server. Versuche es gleich noch einmal.'); return; }
+    pvpSend({ k: 'name', name: n }); kontoMsg('Wird gespeichert …', true);
+  });
   // ---------- Tutorial ----------
   // Geführte Partie gegen einen Trainingsgegner mit König und Burg. Er tut nur das, was das Tutorial verlangt.
   // Grüne Pfeile zeigen, welchen Knopf man drücken soll. Das Gold läuft ganz normal (es gibt nie extra Gold).
@@ -5954,6 +5982,8 @@
   // ----- Nachrichten vom Server (alles ausser Partie selbst) -----
   function sozialMsg(m) {
     if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
+    if (m.k === 'name_ok') { if (sozial.ich) sozial.ich.name = m.name; $('kontoName').value = m.name; kontoMsg('Gespeichert: ' + m.name, true); kontoView(); return; }
+    if (m.k === 'name_fehler') { kontoMsg(m.text || 'Name nicht gespeichert.'); return; }
     if (m.k === 'ich') {
       sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [] } : null;
       if (sozial.ich) { // Siege aus dem Browser, die der Server noch nicht kennt, nachtragen
@@ -6111,16 +6141,18 @@
   $('koenigGrid').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('kwkarte')) { e.preventDefault(); kwWaehlen(e.target); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('koenigWahl').hidden) koenigWahlOpen(false); });
 
-  // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg, fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
+  // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg über und unter «vs» (Mitte), fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
   var intro = { t: 0, namen: ['', ''] }, INTRO = 2.3;
   function startIntro(n0, n1) { intro.namen = [n0, n1]; intro.t = INTRO; }
   function zeichneIntro() {
     var e = INTRO - intro.t, ein = Math.min(1, e / 0.25), flug = Math.max(0, Math.min(1, (e - 1.35) / 0.8)), f = flug * flug * (3 - 2 * flug);
     ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.globalAlpha = 0.25 * ein * (1 - f); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W * T, H * T);
-    for (var t = 0; t < 2; t++) {
-      var b = bases[t], zx = (b.x1 + b.x2) / 2 * T, zy = b.y1 * T - 18, sx = W * T * (t === 0 ? 0.28 : 0.72), sy = H * T * 0.45;
-      var x = sx + (zx - sx) * f, y = sy + (zy - sy) * f, s = 1 - 0.7 * f;
+    for (var t = 0; t < 2; t++) { // Namen über und unter «vs» (Mitte), lange Namen werden kleiner, damit sie aufs Feld passen
+      var b = bases[t], zx = (b.x1 + b.x2) / 2 * T, zy = b.y1 * T - 18, sx = W * T / 2, sy = H * T * (t === 0 ? 0.3 : 0.6);
+      var x = sx + (zx - sx) * f, y = sy + (zy - sy) * f;
+      ctx.font = '700 46px "Space Grotesk", system-ui, sans-serif';
+      var passt = Math.min(1, W * T * 0.86 / Math.max(1, ctx.measureText(intro.namen[t]).width)), s = passt * (1 - 0.7 * f);
       ctx.globalAlpha = ein * (1 - flug * flug);
       ctx.font = '700 ' + Math.round(46 * s) + 'px "Space Grotesk", system-ui, sans-serif';
       ctx.lineWidth = 8 * s; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.strokeText(intro.namen[t], x, y);
@@ -6128,7 +6160,7 @@
     }
     ctx.globalAlpha = ein * (1 - Math.min(1, flug * 3));
     ctx.font = '600 26px "Space Grotesk", system-ui, sans-serif'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.strokeText('gegen', W * T / 2, H * T * 0.45); ctx.fillStyle = '#2b3437'; ctx.fillText('gegen', W * T / 2, H * T * 0.45);
+    ctx.strokeText('vs', W * T / 2, H * T * 0.45); ctx.fillStyle = '#2b3437'; ctx.fillText('vs', W * T / 2, H * T * 0.45);
     ctx.restore();
   }
   menuKoenig();

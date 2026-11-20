@@ -245,6 +245,8 @@
   // ----- Nachrichten vom Server (alles ausser Partie selbst) -----
   function sozialMsg(m) {
     if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
+    if (m.k === 'name_ok') { if (sozial.ich) sozial.ich.name = m.name; $('kontoName').value = m.name; kontoMsg('Gespeichert: ' + m.name, true); kontoView(); return; }
+    if (m.k === 'name_fehler') { kontoMsg(m.text || 'Name nicht gespeichert.'); return; }
     if (m.k === 'ich') {
       sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [] } : null;
       if (sozial.ich) { // Siege aus dem Browser, die der Server noch nicht kennt, nachtragen

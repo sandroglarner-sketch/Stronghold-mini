@@ -336,6 +336,16 @@ function starteMatch(a, b) {
 // ---------- Freunde, Herausfordern, Zuschauen, Story ----------
 const online = new Map(); // user_id -> Set der Verbindungen dieses Spielers
 const forderungen = new Map(); // id -> { von: Client, an: user_id, timer }
+// Spielername (20.11.): 3–16 Zeichen, Buchstaben, Zahlen, Leerzeichen, - und _; keine reservierten oder groben Wörter. Muss nicht einmalig sein.
+const NAME_VERBOTEN = ['admin', 'moderator', 'support', 'system', 'stronghold', 'arsch', 'fick', 'fotze', 'hure', 'nazi', 'hitler', 'wichser', 'schlampe', 'nutte', 'penis', 'fuck', 'shit', 'bitch', 'cunt'];
+function nameCheck(x) {
+  const n = String(x || '').replace(/\s+/g, ' ').trim();
+  if (n.length < 3 || n.length > 16) return { fehler: 'Der Name muss 3 bis 16 Zeichen lang sein.' };
+  if (!/^[\p{L}\p{N} _-]+$/u.test(n)) return { fehler: 'Erlaubt sind Buchstaben, Zahlen, Leerzeichen, - und _.' };
+  const k = n.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  if (NAME_VERBOTEN.some((w) => k.includes(w))) return { fehler: 'Diesen Namen kannst du nicht verwenden.' };
+  return { name: n };
+}
 function nameAus(email) { return String(email || 'Spieler').split('@')[0].slice(0, 24) || 'Spieler'; }
 function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; [ma.a, ma.b].forEach((c) => c && c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
 function matchAus(ma) {
@@ -418,6 +428,13 @@ async function sozial(c, m) {
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
+  if (m.k === 'name') { // eigenen Spielernamen ändern (jederzeit)
+    const r = nameCheck(m.name);
+    if (r.fehler) return c.send({ k: 'name_fehler', text: r.fehler });
+    await db('PATCH', 'spieler?user_id=eq.' + c.user.id, { name: r.name });
+    for (const z of online.get(c.user.id) || []) { if (z.user) z.user.name = r.name; z.send({ k: 'name_ok', name: r.name }); }
+    return;
+  }
   if (m.k === 'story') { // neue Siege dazunehmen (nie etwas wegnehmen)
     const l = await besiegtLesen(c.user.id).catch(() => null);
     const b = l ? l.besiegt : [];

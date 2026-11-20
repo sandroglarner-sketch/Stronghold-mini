@@ -79,7 +79,7 @@
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
     $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
-    kb.textContent = konto.user ? '👤 ' + konto.user.split('@')[0] : '👤 Konto';
+    kb.textContent = konto.user ? '👤 ' + (sozial && sozial.ich ? sozial.ich.name : konto.user.split('@')[0]) : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
       if (rest.length !== DECK.length) { DECK = rest.length ? rest : DECK_START.slice(); saveDeck(); }
@@ -114,6 +114,12 @@
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
       on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto kannst du Freunde einladen und so weitere Karten freischalten.';
     $('kontoForm').hidden = on;
+    var nf = $('kontoNameForm'), meinN = sozial && sozial.ich ? sozial.ich.name : '';
+    nf.hidden = !on || pw || !ONLINE || !meinN; // Name ändern geht über den Server (nur online, angemeldet)
+    if (!nf.hidden) {
+      if (document.activeElement !== $('kontoName')) $('kontoName').value = meinN;
+      $('kontoNameHint').hidden = meinN !== konto.user.split('@')[0].slice(0, 24); // noch der Name aus der E-Mail
+    }
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;
     var inv = on && !pw && ONLINE && !!konto.code;
@@ -263,3 +269,13 @@
   kontoChanged();
   if (kontoAn() && konto.refresh) kontoRefresh(); else kontoServer();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);
+
+  // Spielername ändern (jederzeit; der Server prüft und speichert ihn im Profil)
+  $('kontoNameForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var n = $('kontoName').value.replace(/\s+/g, ' ').trim();
+    if (n.length < 3 || n.length > 16) { kontoMsg('Der Name muss 3 bis 16 Zeichen lang sein.'); return; }
+    if (!/^[\p{L}\p{N} _-]+$/u.test(n)) { kontoMsg('Erlaubt sind Buchstaben, Zahlen, Leerzeichen, - und _.'); return; }
+    if (!pvp.ws || pvp.ws.readyState !== 1) { kontoMsg('Keine Verbindung zum Server. Versuche es gleich noch einmal.'); return; }
+    pvpSend({ k: 'name', name: n }); kontoMsg('Wird gespeichert …', true);
+  });

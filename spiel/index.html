@@ -113,6 +113,11 @@
     <div class="konto" id="konto" hidden role="dialog" aria-label="Konto">
       <h3 id="kontoTitel">Konto</h3>
       <p id="kontoText"></p>
+      <form class="kontoname" id="kontoNameForm" novalidate hidden>
+        <label for="kontoName">Spielername</label>
+        <p class="kontohinweis" id="kontoNameHint" hidden>Wähle einen Spielernamen. Sonst sehen andere den Anfang deiner E-Mail-Adresse.</p>
+        <div class="kontorow"><input type="text" id="kontoName" maxlength="16" autocomplete="nickname" placeholder="3–16 Zeichen"><button class="primary" type="submit" id="kontoNameSave">Speichern</button></div>
+      </form>
       <form id="kontoForm" novalidate>
         <input type="email" id="kontoMail" placeholder="E-Mail" autocomplete="email" required>
         <input type="password" id="kontoPw" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" minlength="6" required>

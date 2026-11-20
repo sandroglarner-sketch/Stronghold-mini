@@ -104,16 +104,18 @@
   $('koenigGrid').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('kwkarte')) { e.preventDefault(); kwWaehlen(e.target); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('koenigWahl').hidden) koenigWahlOpen(false); });
 
-  // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg, fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
+  // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg über und unter «vs» (Mitte), fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
   var intro = { t: 0, namen: ['', ''] }, INTRO = 2.3;
   function startIntro(n0, n1) { intro.namen = [n0, n1]; intro.t = INTRO; }
   function zeichneIntro() {
     var e = INTRO - intro.t, ein = Math.min(1, e / 0.25), flug = Math.max(0, Math.min(1, (e - 1.35) / 0.8)), f = flug * flug * (3 - 2 * flug);
     ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.globalAlpha = 0.25 * ein * (1 - f); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W * T, H * T);
-    for (var t = 0; t < 2; t++) {
-      var b = bases[t], zx = (b.x1 + b.x2) / 2 * T, zy = b.y1 * T - 18, sx = W * T * (t === 0 ? 0.28 : 0.72), sy = H * T * 0.45;
-      var x = sx + (zx - sx) * f, y = sy + (zy - sy) * f, s = 1 - 0.7 * f;
+    for (var t = 0; t < 2; t++) { // Namen über und unter «vs» (Mitte), lange Namen werden kleiner, damit sie aufs Feld passen
+      var b = bases[t], zx = (b.x1 + b.x2) / 2 * T, zy = b.y1 * T - 18, sx = W * T / 2, sy = H * T * (t === 0 ? 0.3 : 0.6);
+      var x = sx + (zx - sx) * f, y = sy + (zy - sy) * f;
+      ctx.font = '700 46px "Space Grotesk", system-ui, sans-serif';
+      var passt = Math.min(1, W * T * 0.86 / Math.max(1, ctx.measureText(intro.namen[t]).width)), s = passt * (1 - 0.7 * f);
       ctx.globalAlpha = ein * (1 - flug * flug);
       ctx.font = '700 ' + Math.round(46 * s) + 'px "Space Grotesk", system-ui, sans-serif';
       ctx.lineWidth = 8 * s; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.strokeText(intro.namen[t], x, y);
@@ -121,7 +123,7 @@
     }
     ctx.globalAlpha = ein * (1 - Math.min(1, flug * 3));
     ctx.font = '600 26px "Space Grotesk", system-ui, sans-serif'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.strokeText('gegen', W * T / 2, H * T * 0.45); ctx.fillStyle = '#2b3437'; ctx.fillText('gegen', W * T / 2, H * T * 0.45);
+    ctx.strokeText('vs', W * T / 2, H * T * 0.45); ctx.fillStyle = '#2b3437'; ctx.fillText('vs', W * T / 2, H * T * 0.45);
     ctx.restore();
   }
   menuKoenig();
