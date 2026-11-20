@@ -3,10 +3,10 @@
   // logik = Schlüssel in CONFIG.BOTS (daten/bots.js) mit dem ganzen Verhalten; null = noch keine Logik (Bot ist dann nicht im Spiel).
   // Gegen einen Bot kämpft man im Story-Modus, sobald der Bot mit dem Platz davor besiegt ist. Ein Sieg schaltet seinen König frei.
   var BOT_DB = [
-    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 4, logik: 'bauern', nr: 1 },
+    { id: 'bandit', name: 'Der Bandit', koenig: 'bandit', platz: 5, logik: 'bauern', nr: 1 },
     { id: 'prinz', name: 'Kleiner Prinz', koenig: 'prinz', platz: 3, logik: 'prinz', nr: 2 },
-    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 5, logik: 'feldherr', nr: 3 },
-    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 6, logik: 'baron', nr: 4 },
+    { id: 'feldherr', name: 'Der Feldherr', koenig: 'feldherr', platz: 6, logik: 'feldherr', nr: 3 },
+    { id: 'rabenstein', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: 7, logik: 'baron', nr: 4 },
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: null, logik: null },
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
@@ -41,7 +41,7 @@
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: null, logik: null }, // (Onager)
-    { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: null, logik: null } // Belohnung: Schmiede (daten/freischalten.js)
+    { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: 4, logik: 'meisterglutfaust', nr: 7 } // Belohnung: Schmiede (daten/freischalten.js)
   ];
   // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer; nur für die alte Speicherung in spieler.story, seit 20.11. steht die Liste in spieler.besiegt ohne Grenze).
   // Ein später weiter vorne eingefügter Bot gilt für bestehende Spieler NICHT als besiegt: er ist spielbar, trägt «neu», seine Belohnungskarte gibt es erst nach einem Sieg.

@@ -161,7 +161,8 @@
         nDef = Math.max(nDef, R.defDiggerVsCatapult);
         while (iStart < R.defDiggerVsCatapult && spendable() >= CONFIG.units.digger.cost && buy(1, 'digger')) { nBought++; iStart++; }
       }
-      for (i = iStart; i < nDef && (tDef = randomAffordable(pool, spendable())); i += defW(tDef)) { if (!buy(1, tDef)) break; nBought++; } // eigene Belagerungsmaschinen zählen mehrfach
+      var dmZ = {}; // defMax: höchstens so viele je Einheit pro Verteidigung (z. B. { catapult: 1 })
+      for (i = iStart; i < nDef && (tDef = randomAffordable(R.defMax ? pool.filter(function (t) { return !(R.defMax[t] !== undefined && (dmZ[t] || 0) >= R.defMax[t]); }) : pool, spendable())); i += defW(tDef)) { if (!buy(1, tDef)) break; nBought++; dmZ[tDef] = (dmZ[tDef] || 0) + 1; } // eigene Belagerungsmaschinen zählen mehrfach
       defHold = nDef > 0;
       if (nBought) { ai.defCool = R.noOutput; free = false; } // die Sperre gilt nur, wenn wirklich verteidigt wurde
     }
@@ -186,6 +187,9 @@
     // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
+    // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
+    guard = 0;
+    while (guard++ < 3 && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
