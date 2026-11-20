@@ -220,7 +220,26 @@
   }
   var ORIG = {}; BOT_DB.forEach(function (b) { ORIG[b.id] = ausSpiel(b); });
   var ENTW = {}; try { ENTW = JSON.parse(localStorage.getItem(SPEICHER) || '{}') || {}; } catch (e) { ENTW = {}; }
-  function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify(ENTW)); } catch (e) {} }
+  // BASIS = Stand des Spiels, als der Entwurf entstand. Hat sich das Spiel seither geändert (z. B. Entwurf schon übernommen), werden nur die selbst geänderten Felder auf den neuen Stand gelegt;
+  // was dann gleich ist wie im Spiel, fällt weg. Entwürfe ohne BASIS (vor dem 20.11. 14:21) und Entwürfe zu Bots, die es so nicht mehr gibt, werden verworfen.
+  var BASIS = {}; try { BASIS = JSON.parse(localStorage.getItem(SPEICHER + '-basis') || '{}') || {}; } catch (e) { BASIS = {}; }
+  function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify(ENTW)); localStorage.setItem(SPEICHER + '-basis', JSON.stringify(BASIS)); } catch (e) {} }
+  function entwuerfeAbgleichen() {
+    Object.keys(ENTW).forEach(function (id) {
+      var d = ENTW[id], o = ORIG[id], b = BASIS[id];
+      if (d.neu) { if (o) { delete ENTW[id]; delete BASIS[id]; } return; } // neuer Bot ist inzwischen im Spiel
+      if (!o || !b) { delete ENTW[id]; delete BASIS[id]; return; }
+      if (gleich(normal(b), normal(o))) return; // Spiel unverändert seit dem Entwurf
+      var m = kopie(o), dl = d.logik || {}, bl = b.logik || {};
+      Object.keys(d).concat(Object.keys(b)).forEach(function (k) { if (k !== 'logik' && !gleich(d[k], b[k])) { if (d[k] === undefined) delete m[k]; else m[k] = kopie(d[k]); } });
+      if (d.logik || b.logik) {
+        if (!m.logik) m.logik = {};
+        Object.keys(dl).concat(Object.keys(bl)).forEach(function (k) { if (!gleich(dl[k], bl[k])) { if (dl[k] === undefined) delete m.logik[k]; else m.logik[k] = kopie(dl[k]); } });
+      }
+      if (gleich(normal(m), normal(o))) { delete ENTW[id]; delete BASIS[id]; } else { ENTW[id] = m; BASIS[id] = kopie(o); }
+    });
+    speichern();
+  }
   function alleIds() { var ids = BOT_DB.map(function (b) { return b.id; }); Object.keys(ENTW).forEach(function (k) { if (ids.indexOf(k) < 0) ids.push(k); }); return ids; }
   function bot(id) { return ENTW[id] || ORIG[id]; }
   var akt = null, cur = null; // aktuelle ID und bearbeitete Kopie
@@ -460,7 +479,7 @@
   function gleich(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   function geaendert() {
     var o = ORIG[akt];
-    if (o && gleich(normal(cur), normal(o))) delete ENTW[akt]; else ENTW[akt] = kopie(cur);
+    if (o && gleich(normal(cur), normal(o))) { delete ENTW[akt]; delete BASIS[akt]; } else { if (!ENTW[akt] || !BASIS[akt]) BASIS[akt] = o ? kopie(o) : null; ENTW[akt] = kopie(cur); }
     speichern(); markieren(); ausgabe();
     var sel = $('botSel').selectedOptions[0]; if (sel) sel.textContent = cur.name + (ENTW[akt] ? ' ✎' : '');
   }
@@ -529,6 +548,7 @@
   });
 
   $('status').textContent = '';
+  entwuerfeAbgleichen();
   botListe(); laden(BOT_DB[0].id);
   document.title = 'Stronghold Mini – Bot-Editor (Stand ' + STAND + ')';
 })();

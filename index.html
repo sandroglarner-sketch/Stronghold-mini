@@ -934,7 +934,12 @@
       // greift bei 160 Gold an (6 Schwertkämpfer, 6 Bogenschützen, 8 Speerkämpfer, 15 Leiterträger)
       waldkoenig: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 4, huntLead: 20, hunt: [['spear', 3]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 160, lockSecs: 15,
                     attack: [{ after: 0, buy: [['sword', 6]] }, { after: 2, buy: [['archer', 6]] }, { after: 3, buy: [['spear', 8]] }, { after: 8, buy: [['ladder', 15]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'sword'], defMage: 99, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'sword'], defMage: 99, noOutput: 10 },
+      // «Bauer Hannes, der Strohkönig» (Story-Platz 7, braucht ein Konto): 10 Bauern, baut ab 50 Gold ein Brandstifterhaus (Belohnung: Brandstifterhaus), Mauer ohne Türme,
+      // jagt nach 15 s Vorsprung mit 2 Speerkämpfern (alle 30 s), greift bei 200 Gold an (2 Belagerungsschilde, 2 Rammböcke, 6 Bogenschützen, 6 + 15 Speerkämpfer)
+      strohkoenig: { income: 10, incomeEvery: 5, farmers: 10, gebaeude: [{ type: 'brand', gold: 50 }], huntLead: 15, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 200, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 2]] }, { after: 3, buy: [['ram', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 8, buy: [['spear', 6]] }, { after: 11, buy: [['spear', 15]] }],
+                    defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1105,9 +1110,9 @@
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: 6, logik: 'loewenherz', nr: 8 }, // seit 20.11. 13:58, braucht ein Konto
     { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
-    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: 7, logik: 'waldkoenig', nr: 9 }, // seit 20.11. 13:58, braucht ein Konto
+    { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: 8, logik: 'waldkoenig', nr: 9 }, // seit 20.11. 13:58, braucht ein Konto
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
-    { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: null, logik: null },
+    { id: 'strohkoenig', name: 'Bauer Hannes, der Strohkönig', koenig: 'strohkoenig', platz: 7, logik: 'strohkoenig', nr: 12 }, // seit 20.11. 14:21, braucht ein Konto
     { id: 'tollpatsch', name: 'Knappe Tollpatsch', koenig: 'tollpatsch', platz: 1, logik: 'tollpatsch', nr: 5 }, // seit 20.11. erster Story-Gegner
     // weitere Bots, noch ohne Logik
     { id: 'raubritterkuno', name: 'Raubritter Kuno', koenig: 'raubritterkuno', platz: null, logik: null },
@@ -1166,11 +1171,12 @@
       schmiede: { besiegt: 'meisterglutfaust' }, // Belohnung für Meister Glutfaust (Story-Platz 4)
       baliste: { besiegt: 'feldherr' }, // Belohnung für den Feldherrn (Story-Platz 5)
       sword: { besiegt: 'loewenherz' }, // Belohnung für Löwenherz (Story-Platz 6, braucht ein Konto)
-      holzfaeller: { besiegt: 'waldkoenig' } // Belohnung für den Waldkönig (Story-Platz 7, braucht ein Konto)
+      holzfaeller: { besiegt: 'waldkoenig' }, // Belohnung für den Waldkönig (Story-Platz 8, braucht ein Konto)
+      brand: { besiegt: 'strohkoenig' } // Belohnung für Bauer Hannes, den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
@@ -1196,7 +1202,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '71ad1e3785'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'fbae4b588e'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).

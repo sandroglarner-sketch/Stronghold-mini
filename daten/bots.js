@@ -65,5 +65,10 @@
       // greift bei 160 Gold an (6 Schwertkämpfer, 6 Bogenschützen, 8 Speerkämpfer, 15 Leiterträger)
       waldkoenig: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 4, huntLead: 20, hunt: [['spear', 3]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 160, lockSecs: 15,
                     attack: [{ after: 0, buy: [['sword', 6]] }, { after: 2, buy: [['archer', 6]] }, { after: 3, buy: [['spear', 8]] }, { after: 8, buy: [['ladder', 15]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'sword'], defMage: 99, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'sword'], defMage: 99, noOutput: 10 },
+      // «Bauer Hannes, der Strohkönig» (Story-Platz 7, braucht ein Konto): 10 Bauern, baut ab 50 Gold ein Brandstifterhaus (Belohnung: Brandstifterhaus), Mauer ohne Türme,
+      // jagt nach 15 s Vorsprung mit 2 Speerkämpfern (alle 30 s), greift bei 200 Gold an (2 Belagerungsschilde, 2 Rammböcke, 6 Bogenschützen, 6 + 15 Speerkämpfer)
+      strohkoenig: { income: 10, incomeEvery: 5, farmers: 10, gebaeude: [{ type: 'brand', gold: 50 }], huntLead: 15, hunt: [['spear', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 200, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 2]] }, { after: 3, buy: [['ram', 2]] }, { after: 7, buy: [['archer', 6]] }, { after: 8, buy: [['spear', 6]] }, { after: 11, buy: [['spear', 15]] }],
+                    defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 }
   };
