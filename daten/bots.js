@@ -88,8 +88,8 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 6, buy: [['archer', 6]] }, { after: 15, buy: [['rider', 8]] }],
                     defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 },
       // «Jungkönig» (Story-Platz 12, braucht ein Konto): 10 Bauern und 4 Holzfäller, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Reitern (alle 40 s), greift bei 200 Gold an
-      // (2 Ritter, Trebuchet, 4 Bogenschützen, 4 + 4 Speerkämpfer, 15 Leiterträger), spielt selbst das Trebuchet (Belohnung: Trebuchet); verteidigt mit Speer, Bogen, Ritter, Reiter
+      // (2 Ritter, s2 Trebuchet, 4 Bogenschützen, 3x 4 Speerkämpfer, s18 15 Leiterträger), spielt selbst das Trebuchet (Belohnung: Trebuchet); verteidigt mit Speer, Bogen, Ritter, Reiter
       jungkoenig: { income: 10, incomeEvery: 5, farmers: 10, holzfaeller: 4, huntLead: 20, hunt: [['rider', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 200, lockSecs: 15,
-                    attack: [{ after: 0, buy: [['knight', 2]] }, { after: 4, buy: [['trebuchet', 1]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 8, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
+                    attack: [{ after: 0, buy: [['knight', 2]] }, { after: 2, buy: [['trebuchet', 1]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 8, buy: [['spear', 4]] }, { after: 10, buy: [['spear', 4]] }, { after: 18, buy: [['ladder', 15]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'knight', 'rider'], defMage: 99, noOutput: 10 }
   };
