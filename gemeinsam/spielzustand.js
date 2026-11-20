@@ -19,12 +19,12 @@
     shots = [];
     bases = [makeBase(0), makeBase(1)];
     walls = [null, null];
+    nextId = 1; // vor den Königen: sonst hängen die Nummern von der vorigen Partie ab (Online/Zuschauer würden auseinanderlaufen)
     spawnKing(0); spawnKing(1);
     gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
     sandbox = false;
     payT = 0; payT1 = 0;
     clock = 0;
-    nextId = 1;
     produced = 0;
     winner = -1;
     aiRoll();

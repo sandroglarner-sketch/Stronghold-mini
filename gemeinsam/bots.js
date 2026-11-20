@@ -7,8 +7,9 @@
   var botEl = $('botType');
   botEl.addEventListener('change', function () { botType = CONFIG.BOTS[botEl.value] ? botEl.value : 'bauern'; aiRoll(); });
 
-  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
-  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+  // Bots würfeln mit simRand (fester Startwert je Partie), damit Zuschauer die Partie samt Bot exakt nachrechnen können
+  function randInt(a, b) { return a + Math.floor(simRand() * (b - a + 1)); }
+  function pick(list) { return list[Math.floor(simRand() * list.length)]; }
   function randomAffordable(types, budget) {
     var ok = types.filter(function (t) { return CONFIG.units[t].cost <= budget; });
     return ok.length ? pick(ok) : null;
@@ -132,7 +133,7 @@
     ai.think -= dt;
     if (ai.think > 0) return;
     var T = CONFIG.AI.think;
-    ai.think = T[0] + Math.random() * (T[1] - T[0]);
+    ai.think = T[0] + simRand() * (T[1] - T[0]);
     // Burg zerstört (gilt für alle Gegner): sobald das Gold reicht, wird sie mit dem Mauer-Knopf wieder aufgebaut (nicht doppelt, solange Arbeiter dran sind)
     if (bases[1].down && clock - bases[1].downAt >= CONFIG.AI.castleWait && gold[1] >= CONFIG.units.wall.cost && !units.some(function (w) { return w.team === 1 && w.castle && w.hp > 0; })) buy(1, 'wall');
     if (clock < ai.attackLock) return; // nach Beginn des Angriffs lockSecs Sekunden lang nichts kaufen, ausser den Schritten des Angriffs

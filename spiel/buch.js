@@ -408,6 +408,7 @@
 
   function start(keepTut) {
     if (keepTut !== true) tut.on = false;
+    blVorbereiten(sandbox); // Bot-Partie: fester Startwert (vor reset), feste Spielschritte
     reset();
     disarmGive();
     state = 'playing';
@@ -421,5 +422,6 @@
     applyDeck();
     pauseBtn.textContent = 'Pause';
     ui.gm = ui.gf = ui.sec = ui.inc = -1;
+    blLos(); // Freunde können zuschauen (mit Konto, online)
   }
 

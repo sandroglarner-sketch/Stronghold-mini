@@ -69,7 +69,7 @@
 
   // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
   function botEinkommen() {
-    if (pvp && pvp.on) return null;
+    if (pvp && pvp.on && !pvp.bot) return null; // Online-Partie: kein Bot (Zuschauer einer Bot-Partie: doch)
     var R = CONFIG.BOTS[botType]; if (!R) return null;
     return { gold: R.income === undefined ? income(1) : R.income, alle: Math.max(0.5, R.incomeEvery || CONFIG.GOLD_EVERY) };
   }
@@ -108,7 +108,7 @@
         gu.grabT = clock; // nur für die Darstellung: gräbt kurz mit der Heugabel
       }
     }
-    if (!tut.on && !pvp.on) aiUpdate(dt);
+    if (!tut.on && (!pvp.on || pvp.bot)) aiUpdate(dt);
 
     var i, j;
     for (i = 0; i < units.length; i++) {

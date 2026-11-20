@@ -15,6 +15,7 @@
   function ovleftZurueck() { var l = document.querySelector('.ovleft'), top = document.querySelector('.ovtop'); if (l.parentNode !== top) top.insertBefore(l, top.firstChild); }
   function zeigeMenu() {
     ovleftZurueck();
+    if (bl.live && state !== 'playing') blStop(gaveUp ? 'aufgegeben' : state === 'over' ? 'fertig' : 'verlassen');
     if (pvp.on) return;
     overlay.classList.add('menu');
     overlay.hidden = false;
@@ -212,17 +213,21 @@
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
     pvp.namen = m.namen || ['', ''];
     pvp.koenige = m.koenige;
+    pvp.bot = !!m.bot; pvp.botEnde = null; // Bot-Partie: der Bot rechnet hier mit
+    if (pvp.bot) { botType = CONFIG.BOTS[m.bot] ? m.bot : 'bauern'; pvp.frei = [[], []]; }
     startPvp(0, m.seed | 0);
     intro.t = 0; // Zuschauer: ohne Namens-Einblendung, gleich nachrechnen
     pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0;
     document.documentElement.classList.remove('guest');
     document.documentElement.classList.add('zuschauer');
-    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2]); });
+    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2], e[3]); });
+    if (pvp.bot && typeof m.letzte === 'number' && m.letzte > pvp.letzte) pvp.letzte = m.letzte;
     $('zText').textContent = 'Du schaust ' + pvp.namen[0] + ' gegen ' + pvp.namen[1] + ' zu';
     $('zBanner').hidden = false;
   }
-  function zuschauTick(team, t, c) {
+  function zuschauTick(team, t, c, h) {
     if (team !== 0 && team !== 1 || typeof t !== 'number') return;
+    if (pvp.bot && typeof h === 'number') pvp.zh[t] = h;
     var box = pvp.inbox[t] = pvp.inbox[t] || {};
     box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
     if (t > pvp.letzte) pvp.letzte = t;
@@ -231,7 +236,7 @@
   $('zRaus').addEventListener('click', function () { pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); pvpLeave(); });
   function augen(n) {
     sozial.zuschauer = n | 0;
-    var a = $('augen'); a.hidden = !(pvp.on && sozial.zuschauer > 0);
+    var a = $('augen'); a.hidden = !((pvp.on || bl.live) && sozial.zuschauer > 0);
     $('augenZahl').textContent = sozial.zuschauer;
     a.setAttribute('aria-label', sozial.zuschauer + (sozial.zuschauer === 1 ? ' Zuschauer' : ' Zuschauer'));
     if (!a.hidden) augenPlatz();
@@ -275,8 +280,8 @@
     }
     if (m.k === 'forderung_weg') { if (sozial.forderungRein && sozial.forderungRein.id === m.id) toastWeg(); return; }
     if (m.k === 'zuschau') { if (state !== 'playing' && !pvp.on) startZuschauen(m); return; }
-    if (m.k === 'zt') { if (pvp.zuschauer) zuschauTick(m.p, m.t, m.c); return; }
-    if (m.k === 'zende') { if (pvp.zuschauer && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Partie beendet', 'Ein Spieler hat die Partie verlassen.', 'Zum Menü', false); } return; }
+    if (m.k === 'zt') { if (pvp.zuschauer) zuschauTick(m.p, m.t, m.c, m.h); return; }
+    if (m.k === 'zende') { if (pvp.zuschauer && pvp.bot) { pvp.botEnde = m.grund || 'verlassen'; return; } if (pvp.zuschauer && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Partie beendet', 'Ein Spieler hat die Partie verlassen.', 'Zum Menü', false); } return; }
     if (m.k === 'zuschauer') { augen(m.n); return; }
   }
 

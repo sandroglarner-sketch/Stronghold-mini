@@ -57,7 +57,7 @@
     pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
     setTimeout(presenceOpen, 300);
     zuschauenEnde(); augen(0);
-    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random;
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
     showMenu();
@@ -74,12 +74,13 @@
       if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
     else sozialMsg(m);
   }
   function startPvp(me, seed) {
+    blStop('verlassen');
     pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; pvp.zuschauer = false; augen(0);
     document.documentElement.classList.toggle('guest', me === 1);
     simRand = mulberry32(seed);
@@ -96,7 +97,7 @@
     koenigTeam = Array.isArray(pvp.koenige) ? [String(pvp.koenige[0]), String(pvp.koenige[1])] : ['standard', 'standard'];
     intro.t = 0; spielArt = 'pvp';
     startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot');
-    pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
+    pvp.zh = {}; pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
     for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
   }
   function pvpHash() {
@@ -110,6 +111,7 @@
   function pvpDesync() {
     if (state !== 'playing') return;
     state = 'over'; pvp.ended = true;
+    if (pvp.bot) { showOverlay('Synchronisationsfehler', 'Deine Ansicht ist von der Partie abgewichen. Schau einfach noch einmal zu.', 'Zum Menü', false); return; }
     showOverlay('Synchronisationsfehler', 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
   }
   function pvpCheck(t, h) {
@@ -133,6 +135,7 @@
   }
   // Darf dieses Team diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für beide Browser gleich)
   function pvpErlaubt(team, type) {
+    if (pvp.bot) return true; // Zuschauer einer Bot-Partie: der Spieler hat schon geprüft
     var d = CONFIG.units[type];
     if (!d || !KONTO.url) return true;
     if (!CONFIG.FREI.regel(type)) return true; // keine Regel: für alle frei (Tutorial-Karten, Mauer); Karten in Entwicklung nur, wenn der Server sie bestätigt
@@ -158,12 +161,18 @@
       if (!pvp.zuschauer && !pvp.sent[T + PVP_DELAY]) pvpSendTick(T);
       var box = pvp.inbox[T];
       if (state !== 'playing') break;
+      if (pvp.bot && T <= pvp.letzte) { box = pvp.inbox[T] = box || {}; box[0] = box[0] || []; box[1] = []; } // Bot-Partie: Schritte bis zur letzten Meldung sind vollständig (ohne Eintrag = kein Kauf)
       if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
       pvpApply(0, box[0]); pvpApply(1, box[1]);
       if (state === 'playing') update(STEP);
+      if (pvp.bot && pvp.zh[T] !== undefined) { if (state === 'playing' && pvp.zh[T] !== pvpHash()) pvpDesync(); delete pvp.zh[T]; } // Prüfsumme des Spielers
       pvp.tick = T + 1; delete pvp.inbox[T]; delete pvp.sent[T];
       pvp.acc -= STEP; steps++;
+    }
+    if (pvp.bot && pvp.botEnde && state === 'playing' && pvp.tick > pvp.letzte) { // Spieler hat aufgegeben oder die Partie verlassen
+      state = 'over'; pvp.ended = true;
+      showOverlay('Partie beendet', pvp.namen[0] + (pvp.botEnde === 'aufgegeben' ? ' hat aufgegeben.' : ' hat die Partie verlassen.'), 'Zum Menü', false);
     }
     pvp.stall = waited ? pvp.stall + rdt : 0;
     if (nach && !waited) pvp.acc = 0;
@@ -227,3 +236,49 @@
     }
   }
 
+
+  // ---------- Bot-Partie (Story, Einzelspiel) ----------
+  // Läuft wie online in festen Schritten (STEP) mit festem Zufalls-Startwert. Mit Konto und Verbindung meldet der Browser Startwert, Bot und seine Käufe
+  // je Schritt an den Server (mindestens jede Sekunde, mit Prüfsumme); Freunde können so zuschauen. Der Spieler wartet dabei nie auf den Server.
+  // Tutorial und Sandbox laufen wie bisher (ohne Zuschauen).
+  var bl = { on: false, live: false, tick: 0, acc: 0, seed: 0, gesendet: -1 };
+  function blVorbereiten(sb) {
+    blStop('verlassen');
+    bl.on = !tut.on && !sb && !pvp.on; bl.tick = 0; bl.acc = 0; bl.gesendet = -1;
+    if (!bl.on) { simRand = Math.random; return; }
+    bl.seed = 1 + Math.floor(Math.random() * 2147483646);
+    simRand = mulberry32(bl.seed);
+  }
+  function blLos() {
+    if (!bl.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return;
+    bl.live = true;
+    var name = spielArt === 'story' && STORY[storyIdx] ? STORY[storyIdx].name : botEintrag(botType).name;
+    pvpSend({ k: 'bstart', v: VERSION, seed: bl.seed, bot: botType, art: spielArt === 'story' ? 'story' : '', gegner: name, koenige: koenigTeam });
+  }
+  function blStop(grund) {
+    if (bl.live) {
+      if (bl.tick - 1 > bl.gesendet) pvpSend({ k: 'bt', t: bl.tick - 1, c: [] }); // letzter Schritt, damit Zuschauer bis zum Ende rechnen
+      pvpSend({ k: 'bende', grund: grund });
+      augen(0);
+    }
+    bl.live = false; bl.on = false;
+  }
+  function blFrame(rdt) {
+    bl.acc = Math.min(bl.acc + rdt, 0.5);
+    while (bl.acc >= STEP && state === 'playing') {
+      var T = bl.tick, cmds = [];
+      for (var dj = 0; dj < deploys.length; dj++) { // fällige Käufe in diesem Schritt
+        var dpl = deploys[dj]; dpl.t += STEP;
+        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(0, dpl.type); }
+      }
+      for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
+      if (state === 'playing') update(STEP);
+      bl.tick = T + 1; bl.acc -= STEP;
+      if (bl.live && (cmds.length || T % 20 === 0 || state !== 'playing')) {
+        var msg = { k: 'bt', t: T, c: cmds.slice(0, 6) };
+        if (T % 20 === 0 && state === 'playing') msg.h = pvpHash();
+        pvpSend(msg); bl.gesendet = T;
+      }
+    }
+    pvp.alpha = Math.min(1, bl.acc / STEP);
+  }

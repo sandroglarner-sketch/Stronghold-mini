@@ -206,6 +206,7 @@ class Client {
     this.status = 'menu'; this.info = ''; // was der Spieler gerade macht (Menü, Story, Tutorial; Online-Partie kennt der Server selbst)
     this.match = null;  // laufende Online-Partie (für Zuschauer)
     this.schaut = null; // Partie, der dieser Client zuschaut
+    this.botma = null;  // laufende Partie gegen einen Bot (Story/Einzelspiel), der Freunde zuschauen können
     this.v = '';        // Spielversion
     socket.on('data', (d) => this.onData(d));
     socket.on('close', () => this.onClose());
@@ -275,6 +276,7 @@ class Client {
       }
       return;
     }
+    if (m.k === 'bstart' || m.k === 'bt' || m.k === 'bende') { botLive(this, m); return; } // Bot-Partie mit Zuschauern (der Spieler wartet nie auf den Server)
     sozial(this, m).catch((e) => { console.error('sozial', m.k, e.message); if (['freund', 'freunde', 'fordern', 'zuschauen'].includes(m.k)) this.send({ k: 'sozialfehler', text: 'Serverfehler (' + (e.status || e.message) + '). Ist die Datenbank eingerichtet (schema.sql)?' }); });
   }
   onClose() {
@@ -285,6 +287,7 @@ class Client {
     this.peer = null;
     if (p) { p.peer = null; p.send({ k: 'left' }); }
     matchAus(this.match);
+    botAus(this, 'verlassen');
     if (this.schaut) zuschauenAus(this);
     if (this.user) { const set = online.get(this.user.id); if (set) { set.delete(this); if (!set.size) online.delete(this.user.id); } }
     clients.delete(this);
@@ -334,13 +337,40 @@ function starteMatch(a, b) {
 const online = new Map(); // user_id -> Set der Verbindungen dieses Spielers
 const forderungen = new Map(); // id -> { von: Client, an: user_id, timer }
 function nameAus(email) { return String(email || 'Spieler').split('@')[0].slice(0, 24) || 'Spieler'; }
-function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; [ma.a, ma.b].forEach((c) => c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
+function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; [ma.a, ma.b].forEach((c) => c && c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
 function matchAus(ma) {
   if (!ma || ma.aus) return;
   if (ma.a.alive && ma.a.match === ma && ma.b.alive && ma.b.match === ma) return; // läuft noch
   ma.aus = true;
   for (const s of ma.zuschauer) { s.schaut = null; s.send({ k: 'zende' }); }
   ma.zuschauer.clear();
+}
+// ---------- Bot-Partien zum Zuschauen ----------
+// Der Spieler meldet Startwert und Bot (bstart) und danach seine Käufe je Spielschritt (bt, mindestens 1x pro Sekunde, ab und zu mit Prüfsumme h).
+// Zuschauer bekommen das wie bei Online-Partien ('zuschau' mit allen bisherigen Käufen, dann 'zt'); ihr Browser rechnet die Partie samt Bot selbst nach.
+function botAus(c, grund) {
+  const ma = c.botma; if (!ma) return;
+  c.botma = null; ma.aus = true;
+  for (const s of ma.zuschauer) { s.schaut = null; s.send({ k: 'zende', bot: true, grund }); }
+  ma.zuschauer.clear();
+}
+function botLive(c, m) {
+  if (m.k === 'bstart') {
+    botAus(c, 'verlassen');
+    if (!c.user || (SPIEL_V && m.v !== SPIEL_V)) return; // nur mit Konto (Freunde) und aktueller Spielversion
+    const bot = String(m.bot || ''), seed = m.seed | 0;
+    if (!/^[a-z0-9_]{1,40}$/.test(bot) || !seed) return;
+    const koenige = Array.isArray(m.koenige) ? [koenigId(m.koenige[0]), koenigId(m.koenige[1])] : ['standard', 'standard'];
+    c.botma = { a: c, b: null, bot, seed, art: m.art === 'story' ? 'story' : '', namen: [c.user.name, String(m.gegner || 'Bot').slice(0, 40)], koenige, log: [], letzte: -1, zuschauer: new Set(), start: Date.now() };
+    return;
+  }
+  const ma = c.botma; if (!ma) return;
+  if (m.k === 'bende') return botAus(c, m.grund === 'aufgegeben' ? 'aufgegeben' : m.grund === 'fertig' ? 'fertig' : 'verlassen');
+  if (typeof m.t !== 'number' || m.t < ma.letzte || ma.log.length > 20000) return;
+  const cmds = Array.isArray(m.c) ? m.c.filter((x) => typeof x === 'string' && x.length < 30).slice(0, 6) : [];
+  ma.letzte = m.t;
+  if (cmds.length || typeof m.h === 'number') ma.log.push([0, m.t, cmds, typeof m.h === 'number' ? m.h : undefined]);
+  if (ma.zuschauer.size) { const z = JSON.stringify({ k: 'zt', p: 0, t: m.t, c: cmds, h: typeof m.h === 'number' ? m.h : undefined }); for (const s of ma.zuschauer) s.sendRaw(z); }
 }
 function zuschauenAus(c) { const ma = c.schaut; c.schaut = null; if (ma) { ma.zuschauer.delete(c); zuschauerMelden(ma); } }
 async function sindFreunde(a, b) { if (!KONTO_SECRET) return false; const l = await db('GET', 'freunde?select=freund_id&user_id=eq.' + a + '&freund_id=eq.' + b); return !!(l && l.length); }
@@ -355,6 +385,7 @@ async function freundesliste(c) {
     if (v) {
       const ma = v.match && !v.match.aus && v.peer ? v.match : null;
       if (ma) { const ich = ma.a === v ? 0 : 1; e.status = 'pvp'; e.info = 'gegen ' + ma.namen[1 - ich]; e.seit = ma.start; e.zuschauer = ma.zuschauer.size; }
+      else if (v.botma && !v.botma.aus) { e.status = 'pvp'; e.info = (v.botma.art === 'story' ? 'Story gegen ' : 'gegen ') + v.botma.namen[1]; e.seit = v.botma.start; e.zuschauer = v.botma.zuschauer.size; } // Bot-Partie: auch zuschaubar
       else if (v.status === 'story' || v.status === 'tutorial') { e.status = 'spiel'; e.info = v.info || (v.status === 'tutorial' ? 'Tutorial' : 'Story'); }
       else e.status = 'menu';
     }
@@ -432,12 +463,13 @@ async function sozial(c, m) {
     return starteMatch(f.von, c);
   }
   if (m.k === 'zuschauen') {
-    const ziel = String(m.id || ''), v = verbindung(ziel), ma = v && v.peer ? v.match : null;
+    const ziel = String(m.id || ''), v = verbindung(ziel), ma = v && v.peer ? v.match : v && v.botma && !v.botma.aus ? v.botma : null;
     if (!(await sindFreunde(c.user.id, ziel))) return;
     if (!ma || ma.aus) return c.send({ k: 'sozialfehler', text: 'Diese Partie ist schon vorbei.' });
     if (c.schaut) zuschauenAus(c);
     c.schaut = ma; ma.zuschauer.add(c);
-    c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
+    if (ma.bot) c.send({ k: 'zuschau', bot: ma.bot, art: ma.art, seed: ma.seed, namen: ma.namen, koenige: ma.koenige, log: ma.log, letzte: ma.letzte, v: SPIEL_V });
+    else c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
     return zuschauerMelden(ma);
   }
   if (m.k === 'nichtzuschauen') return zuschauenAus(c);
