@@ -35,14 +35,22 @@
   // ----- Story-Modus -----
   function storyStand() {
     var n = 0; try { n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0; } catch (e) {}
-    if (sozial.ich && sozial.ich.story > n) n = sozial.ich.story;
+    if (sozial && sozial.ich && sozial.ich.story > n) n = sozial.ich.story; // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
     return Math.max(0, Math.min(STORY.length, n));
   }
   function storySpeichern(n) {
     try { localStorage.setItem('stronghold-story', String(n)); } catch (e) {}
     if (sozial.ich) { sozial.ich.story = Math.max(sozial.ich.story || 0, n); pvpSend({ k: 'story', n: n }); }
   }
-  function storyFrei(i) { return tester || i <= storyStand(); }
+  function storySperre(i) { // '' = spielbar, sonst warum nicht (Reihenfolge oder Regel aus daten/freischalten.js)
+    if (tester) return '';
+    if (i > storyStand()) return 'Besiege zuerst: ' + STORY[i - 1].name;
+    var FS = CONFIG.FREI.story, ab = FS.kontoAb ? storyIndex(FS.kontoAb) : -1, r = FS.gegner[STORY[i].id] || {};
+    if (ab >= 0 && i >= ab) r = { konto: true, freunde: r.freunde, besiegt: r.besiegt };
+    return regelErfuellt(r) ? '' : 'Benötigt ' + regelText(r);
+  }
+  function storyFrei(i) { return !storySperre(i); }
+  function i_konto(i) { var s = storySperre(i); return s && s.indexOf('Account') >= 0 && !(konto && konto.user); } // fehlt nur das Konto: Knopf öffnet die Anmeldung
   function storyOpen() {
     var n = storyStand();
     storySel = -1; // Feld erscheint erst beim Antippen eines Kreises
@@ -77,7 +85,7 @@
     k.style.top = g.y + '%';
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
       (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (storySel < n ? 'Nochmal' : 'Kämpfen') + '</button>'
-        : '<button class="primary" type="button" disabled>Besiege zuerst: ' + esc(STORY[storySel - 1].name) + '</button>');
+        : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;
   }
   function storyStart(i) {
@@ -103,7 +111,7 @@
   $('storyZurueck').addEventListener('click', function () { storyBlaettern(-1); });
   $('storyWeiter').addEventListener('click', function () { storyBlaettern(1); });
   $('storyKnoten').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-i]') : null; if (!b) return; var i = +b.getAttribute('data-i'); storySel = storySel === i ? -1 : i; storyMalen(); });
-  $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); });
+  $('storyKarte').addEventListener('click', function (e) { if (e.target.id === 'storyLos') storyStart(storySel); else if (e.target.id === 'storyKonto') kontoOpen(true); });
   $('menuBtn').addEventListener('click', function () { if (spielArt === 'story') { zeigeMenu(); storyOpen(); } else zeigeMenu(); });
 
   // ----- Server-Verbindung: wer bin ich, was mache ich -----

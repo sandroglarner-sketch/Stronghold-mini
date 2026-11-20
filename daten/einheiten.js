@@ -3,8 +3,7 @@
     // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
   // staerke = interner Stärkewert (nur für die Bots): Kampfeinheiten 1, Belagerungsmaschinen mindestens 2 (Katapult 4, Trebuchet 6, Belagerungsturm 8), Bauer 0.
   //   Die Bots verteidigen mit Stärke des Angriffs (ohne seine Turmbesatzung) + defPlus (= 1); eigene Einheiten zählen dabei mit ihrem Stärkewert.
-  // account: true = nur mit (gratis) Konto spielbar; ohne Konto im Buch ausgegraut, nicht ins Deck wählbar
-  // invite: true = wird freigeschaltet, sobald ein eingeladener Freund über den eigenen Einladungslink eine Partie gespielt hat (braucht Konto; nur online)
+  // Gesperrte Karten (Konto, Freunde, Story-Siege): siehe daten/freischalten.js
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4, staerke: 0,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       // Karawane (Wirtschaft): 1. kostet 5 Gold, jede weitere 5 mehr (stirbt eine, sinkt der Preis wieder); geht (Tempo 0.8) zur Mitte unterhalb des Teichs, füllt in 3 s (Annahme) alle 4 Töpfe mit Wasser, geht zurück zur Burg: +10 Gold; dann wieder von vorn.
@@ -12,7 +11,7 @@
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
-      mage:   { cat: 'ranged', name: 'Magier', account: true,        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
+      mage:   { cat: 'ranged', name: 'Magier',        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
@@ -61,11 +60,11 @@
       adel: { cat: 'building', name: 'Adelshaus', cost: 100, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.2, h: 1.0, alle: 15, steigt: 5, stufen: [{ cost: 100, hp: 20, gold: 5 }] } }, // 1. Auszahlung 5 Gold, jede weitere 5 mehr
       // Bank (Typ Gebäude): 80 Gold, 20 Leben; alle 10 s +10 % deines Goldes (aufgerundet). Ein Geschäftsmann geht zum König (2 s), zurück, 1 s in der Bank.
-      bank: { cat: 'building', name: 'Bank', account: true, cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+      bank: { cat: 'building', name: 'Bank', cost: 80, staerke: 0, hp: 20, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.1, alle: 10, art: 'zins', prozent: 10, stufen: [{ cost: 80, hp: 20, gold: 0 }] } },
       // Diebeshaus (Typ Gebäude): 50 Gold, 10 Leben; alle 30 s klaut ein Dieb 30 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
       // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
-      dieb: { cat: 'building', name: 'Diebeshaus', account: true, cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+      dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
               gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
       // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 40 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
@@ -76,7 +75,7 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 120, staerke: 0, hp: 30, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 120, hp: 30, gold: 0 }] } },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', account: true, cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
       ladder: { cat: 'melee', name: 'Leiterträger', cost: 4, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.08, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,08 = sehr kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
@@ -84,17 +83,17 @@
       // troops × every Sekunden klettern troops Schwertkämpfer über die Mauer. Oben archers Bogenschützen (25 % Fernkampfschaden,
       // nur von Fernkämpfern angreifbar, werden von gegnerischen Fernkämpfern vor dem Turm anvisiert). mass wie der Rammbock; push = Druckradius im Gedränge
       // (Standard 0,275 je Einheit): drückt Einheiten aus seiner Fläche, Türme überlappen sich nie; angedockt bewegt er sich nicht mehr
-      belfry: { cat: 'siege', name: 'Belagerungsturm', account: true, cost: 80, staerke: 8, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
+      belfry: { cat: 'siege', name: 'Belagerungsturm', cost: 80, staerke: 8, hp: 40, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.55, mass: 40, push: 0.65, belfry: { stay: 5, troops: 8, every: 0.5, archers: 2 } },
       // Trebuchet: muss setup Sekunden stillstehen (aufbauen), bevor es schiesst; ein Schuss = multi.n Steine, die sich zufällig im Umkreis
       // multi.spread um das Ziel verteilen (je Flächenschaden splash), fliegen über Mauern (fire). Zwei Arten: bekommt es beim Kauf einen Platz auf dem grossen Turm (Mauer 5),
       // baut es sich dort auf und schiesst auf Gegner in Reichweite. Sonst (spot): fährt es zu einem zufälligen Punkt spot.dist vom Zielpunkt entfernt (Richtung eigene Seite,
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
-      trebuchet: { cat: 'siege', name: 'Trebuchet', account: true, cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
+      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', invite: true, cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 2 }, // setup: muss nach jedem Stillstand erst 2 s einrichten (auch im Turm)
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 2 }, // setup: muss nach jedem Stillstand erst 2 s einrichten (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }

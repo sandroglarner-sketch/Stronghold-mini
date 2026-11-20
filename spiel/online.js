@@ -135,9 +135,8 @@
   function pvpErlaubt(team, type) {
     var d = CONFIG.units[type];
     if (!d || !KONTO.url) return true;
-    if (d.account && !(pvp.konten && pvp.konten[team])) return false;
-    if (d.invite && !(pvp.konten && pvp.konten[team] && pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0)) return false;
-    return true;
+    if (!CONFIG.FREI.einheiten[type]) return true; // keine Regel: für alle frei
+    return !!(pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0); // der Server hat nach daten/freischalten.js geprüft
   }
   function pvpApply(team, cmds) {
     for (var i = 0; i < cmds.length && state === 'playing'; i++) {

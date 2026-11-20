@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const vm = require('vm');
 
 const PORT = process.env.PORT || 3000;
 const ROOT_INDEX = path.join(__dirname, 'index.html'); // index.html liegt entweder direkt neben server.js oder im Ordner public
@@ -35,7 +36,34 @@ function db(method, pfad, body, prefer) {
   return mitZeit(6000, (signal) => fetch(KONTO_URL + '/rest/v1/' + pfad, { method, headers, body: body ? JSON.stringify(body) : undefined, signal })
     .then((r) => r.text().then((t) => { if (!r.ok) { const e = new Error('DB ' + r.status + ' ' + t); e.status = r.status; throw e; } return t ? JSON.parse(t) : null; })));
 }
-function freischaltungen(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); }
+function freischaltungenTabelle(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); } // von Hand vergebene (und alte) Freischaltungen
+// Regeln aus daten/freischalten.js (dieselbe Datei wie im Spiel) und Story-Reihenfolge aus daten/botdatenbank.js
+let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [];
+try {
+  const ctx = { CONFIG: {} }; vm.createContext(ctx);
+  vm.runInContext(['daten/freischalten.js', 'daten/botdatenbank.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n') + '\nthis.__BOT = BOT_DB;', ctx);
+  FREI = ctx.CONFIG.FREI;
+  STORY_IDS = ctx.__BOT.filter((b) => b.platz && b.logik).sort((a, b) => a.platz - b.platz).map((b) => b.id);
+} catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
+function regelOk(r, st) { // st = { konto, freunde, story }
+  if ((r.konto || r.freunde) && !st.konto) return false;
+  if (r.freunde && st.freunde < r.freunde) return false;
+  if (r.besiegt) { const i = STORY_IDS.indexOf(r.besiegt); if (i >= 0 && st.story <= i) return false; }
+  return true;
+}
+// Freigeschaltete Karten eines Spielers: alle Regeln aus daten/freischalten.js, die er erfüllt, plus Einträge der Tabelle freischaltungen
+async function freischaltungen(userId) {
+  const [ein, sp, tab] = await Promise.all([
+    db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
+    db('GET', 'spieler?select=story&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
+    freischaltungenTabelle(userId).catch(() => [])]);
+  let freunde = 0;
+  if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
+  const st = { konto: true, freunde, story: sp && sp.length ? sp[0].story | 0 : 0 };
+  const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
+  (tab || []).forEach((t) => { if (l.indexOf(t) < 0) l.push(t); });
+  return l;
+}
 const CODE_ZEICHEN = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function neuerCode() { let c = ''; for (let i = 0; i < 6; i++) c += CODE_ZEICHEN[crypto.randomInt(CODE_ZEICHEN.length)]; return c; }
 async function eigenerCode(userId) {
@@ -62,7 +90,7 @@ async function apiKonto(req, res) {
   const [besuche, einheiten] = await Promise.all([db('GET', 'einladung_besuche?select=geraet&code=eq.' + code), freischaltungen(u.id)]);
   json(res, 200, { code, freunde: (besuche || []).length, einheiten });
 }
-// /api/besuch: ein Freund hat über einen Einladungslink eine Partie gespielt -> der Einladende bekommt den Armbrustschützen
+// /api/besuch: ein Freund hat über einen Einladungslink eine Partie gespielt -> zählt als eingeladener Freund (Freischaltungen: daten/freischalten.js)
 async function apiBesuch(req, res) {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   if (zuViel(ip, 10)) return json(res, 429, { fehler: 'zu viele Anfragen' });
@@ -74,7 +102,6 @@ async function apiBesuch(req, res) {
   const besitzer = l[0].user_id, ich = await kontoUser(bearer(req));
   if (ich && ich.id === besitzer) return json(res, 200, { ok: false, grund: 'selbst' }); // sich selbst einladen zählt nicht
   await db('POST', 'einladung_besuche', { code, geraet }, 'resolution=ignore-duplicates');
-  await db('POST', 'freischaltungen', { user_id: besitzer, einheit: 'crossbow', grund: 'einladung' }, 'resolution=ignore-duplicates');
   json(res, 200, { ok: true });
 }
 
@@ -257,7 +284,7 @@ function starteMatch(a, b) {
   a.peer = b; b.peer = a;
   const seed = crypto.randomInt(1, 2147483647); // gemeinsamer Zufalls-Startwert: beide Browser rechnen dieselbe Partie
   const acc = [!!a.acc, !!b.acc]; // wer ein Konto hat (für Konto-Einheiten), beide bekommen dieselbe Liste
-  const frei = [a.frei || [], b.frei || []]; // freigeschaltete Einheiten (z. B. Armbrustschütze durch Einladung)
+  const frei = [a.frei || [], b.frei || []]; // freigeschaltete Karten nach daten/freischalten.js
   const namen = [a.user ? a.user.name : 'Gast', b.user ? b.user.name : 'Gast'];
   const koenige = [a.koenig || 'standard', b.koenig || 'standard']; // Aussehen der Könige (nur Optik)
   const ma = { a, b, seed, acc, frei, namen, koenige, log: [], zuschauer: new Set(), start: Date.now() };

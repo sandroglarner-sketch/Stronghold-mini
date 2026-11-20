@@ -4,6 +4,7 @@ daten/einheiten.js
 daten/konto.js
 daten/koenige.js
 daten/botdatenbank.js
+daten/freischalten.js
 spiel/grundlagen.js
 gemeinsam/mathe.js
 spiel/landschaft.js

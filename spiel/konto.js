@@ -1,23 +1,40 @@
   // ---------- Konto (Supabase) ----------
-  // Gratis-Konto mit E-Mail und Passwort. Mit Konto sind Einheiten mit account: true frei (Liste: kontoKarten()).
+  // Gratis-Konto mit E-Mail und Passwort. Welche Karten ein Konto, Freunde oder Story-Siege brauchen, steht in daten/freischalten.js.
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
   // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
   // Einladungen (nur auf der Online-Seite, der Render-Server führt Buch): konto.code = eigener Einladungscode, konto.freunde = Anzahl Freunde,
   // die über den Link gespielt haben, konto.einheiten = freigeschaltete Einheiten (z. B. 'crossbow')
   var konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] };
   function kontoAn() { return !!KONTO.url; }
-  function unitLocked(t) {
-    var d = CONFIG.units[t], k = konto || {};
-    if (!d || !kontoAn() || tester) return false; // Tester-Modus: alles frei
-    if (d.account && !k.user) return true;
-    if (d.invite && !(k.user && (k.einheiten || []).indexOf(t) >= 0)) return true; // auch im Artifact gesperrt (wie online), frei nur im Tester-Modus
-    return false;
+  // Freischaltungen nach daten/freischalten.js
+  function storyIndex(botId) { for (var i = 0; i < STORY.length; i++) if (STORY[i].id === botId) return i; return -1; }
+  function botName(botId) { for (var i = 0; i < BOT_DB.length; i++) if (BOT_DB[i].id === botId) return BOT_DB[i].name; return botId; }
+  function regelErfuellt(r) { // alles in der Regel erfüllt? (Konto, Freunde, Story-Sieg)
+    var k = konto || {};
+    if (!r) return true;
+    if ((r.konto || r.freunde) && !k.user) return false;
+    if (r.freunde && (k.freunde | 0) < r.freunde) return false;
+    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) return false; }
+    return true;
   }
-  function kontoKarten() { var l = Object.keys(CONFIG.units).filter(function (t) { return CONFIG.units[t].account && !CONFIG.units[t].hidden; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die ein Konto freischaltet
+  function regelText(r, kurz) { // «benötigt Account und 2 eingeladene Freunde» / «Sieg gegen …»
+    var k = konto || {}, l = [];
+    if ((r.konto || r.freunde) && !k.user) l.push('Account');
+    if (r.freunde && (k.freunde | 0) < r.freunde) l.push(r.freunde === 1 ? 'einen eingeladenen Freund' : r.freunde + ' eingeladene Freunde');
+    if (r.besiegt) { var si = storyIndex(r.besiegt); if (si >= 0 && storyStand() <= si) l.push('einen Sieg gegen ' + botName(r.besiegt)); }
+    return l.join(' und ');
+  }
+  function unitLocked(t) {
+    var d = CONFIG.units[t], r = CONFIG.FREI.einheiten[t];
+    if (!d || !r || !kontoAn() || tester) return false; // Tester-Modus: alles frei
+    if (((konto || {}).einheiten || []).indexOf(t) >= 0) return false; // vom Server freigeschaltet (Regeln oder von Hand)
+    return !regelErfuellt(r);
+  }
+  function kontoKarten() { var l = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { var r = CONFIG.FREI.einheiten[t]; return CONFIG.units[t] && !CONFIG.units[t].hidden && r.konto && !r.freunde && !r.besiegt; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die allein ein Konto freischaltet
   function lockText(t) {
-    var d = CONFIG.units[t] || {};
-    if (d.invite) return konto.user ? 'Nicht freigeschaltet – lade einen Freund ein (👥 Freund einladen)' : 'Nicht freigeschaltet – benötigt Account und einen eingeladenen Freund';
-    return 'Nicht freigeschaltet – benötigt Account';
+    var r = CONFIG.FREI.einheiten[t] || {}, txt = regelText(r);
+    if (r.freunde && konto && konto.user && !r.besiegt) return 'Nicht freigeschaltet – lade ' + (r.freunde === 1 ? 'einen Freund' : r.freunde + ' Freunde') + ' ein (👥 Freund einladen)';
+    return 'Nicht freigeschaltet – benötigt ' + (txt || 'Account');
   }
   function kontoSave() {
     try { if (konto.user) localStorage.setItem('stronghold-konto', JSON.stringify(konto)); else localStorage.removeItem('stronghold-konto'); } catch (err) {}
@@ -84,7 +101,7 @@
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
       konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
       kontoSave(); kontoChanged();
-      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Dein Freund ist dabei! Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
+      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
       return true;
     }).catch(function (e) { kontoServerLaeuft = false; kontoServerFehler = 'keine Verbindung zum Server'; return false; });
   }

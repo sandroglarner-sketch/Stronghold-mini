@@ -82,6 +82,7 @@
         <div class="feld"><label for="f_id">ID</label><input type="text" id="f_id" data-k="id"><small>Interner Name, nur Kleinbuchstaben und Zahlen.</small></div>
         <div class="feld"><label for="f_koenig">König</label><div class="koenigwahl"><canvas id="koenigBild" width="72" height="72"></canvas><select id="f_koenig" data-k="koenig"></select></div><small>Aussehen des Königs; ein Sieg schaltet ihn für den Spieler frei.</small></div>
         <div class="feld"><label for="f_platz">Platz im Story-Modus</label><select id="f_platz" data-k="platz"></select><small>Der Bot wird an dieser Stelle eingefügt; alle Bots ab dort rücken einen Platz nach hinten (siehe Story-Reihenfolge unten). Die Lage auf der Karte ergibt sich von selbst (4 pro Seite).</small></div>
+        <div class="feld check"><label><input type="checkbox" id="f_storyKonto" data-k="storyKonto"> Story: braucht Account</label><small>Ohne Gratis-Konto ist dieser Gegner im Story-Modus gesperrt (daten/freischalten.js).</small></div>
       </div>
       <h2 style="margin-top:14px">Story-Reihenfolge</h2>
       <p class="hilfe">So sieht die Reihenfolge mit deiner Einstellung aus. Gelb = dieser Bot, «rückt nach» = sein Platz ändert sich dadurch. Bots ohne Logik zählen mit, erscheinen im Spiel aber erst, wenn sie Logik haben.</p>
@@ -206,8 +207,13 @@
   var SPEICHER = 'stronghold-bot-editor';
 
   // ----- Daten: Original aus dem Spiel, Entwürfe aus dem Browser -----
+  function storyKontoIst(id) { // braucht der Gegner im Story-Modus ein Konto? (daten/freischalten.js: kontoAb oder gegner[id].konto)
+    var FS = CONFIG.FREI.story, ids = BOT_DB.filter(function (x) { return x.platz && x.logik; }).sort(function (a, b) { return a.platz - b.platz; }).map(function (x) { return x.id; });
+    var ab = FS.kontoAb ? ids.indexOf(FS.kontoAb) : -1, i = ids.indexOf(id);
+    return !!((FS.gegner[id] && FS.gegner[id].konto) || (ab >= 0 && i >= ab));
+  }
   function ausSpiel(b) {
-    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
+    return { id: b.id, name: b.name, koenig: b.koenig, platz: b.platz || '', storyKonto: storyKontoIst(b.id), logikKey: b.logik || '', logik: b.logik && CONFIG.BOTS[b.logik] ? kopie(CONFIG.BOTS[b.logik]) : null, neu: false };
   }
   var ORIG = {}; BOT_DB.forEach(function (b) { ORIG[b.id] = ausSpiel(b); });
   var ENTW = {}; try { ENTW = JSON.parse(localStorage.getItem(SPEICHER) || '{}') || {}; } catch (e) { ENTW = {}; }
@@ -245,6 +251,7 @@
     $('f_name').value = cur.name; $('f_id').value = cur.id; platzOptionen();
     $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
     $('f_spezial').value = cur.spezial || '';
+    $('f_storyKonto').checked = !!cur.storyKonto;
     $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
     koenigZeigen();
     var L = cur.logik;
@@ -404,6 +411,7 @@
     var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     if (k === 'spezial') { if (v.trim()) cur.spezial = v; else delete cur.spezial; geaendert(); return; }
     if (k.indexOf('turm.') === 0 && cur.logik) { var tt = k.slice(5), n = Math.max(0, Math.floor(+v || 0)); if (n) cur.logik.turm[tt] = n; else delete cur.logik.turm[tt]; turmSumme(); geaendert(); return; }
+    if (k === 'storyKonto') { cur.storyKonto = !!v; geaendert(); return; }
     if (['name', 'id', 'koenig', 'platz'].indexOf(k) >= 0) {
       if (k === 'id') { v = String(v).toLowerCase().replace(/[^a-z0-9]/g, ''); if (cur.neu) cur.logikKey = v; }
       cur[k] = (k === 'platz') ? (v === '' ? '' : +v) : v;
@@ -466,6 +474,7 @@
   function aenderungen(b) {
     var o = ORIG[b.id], l = [];
     if (!o) return ['Neuer Bot'].concat(b.spezial ? ['Spezialregeln (Text)'] : []);
+    if (!!b.storyKonto !== !!o.storyKonto) l.push('Story braucht Account: ' + (b.storyKonto ? 'ja' : 'nein'));
     ['name', 'koenig', 'platz'].forEach(function (k) { if (String(b[k]) !== String(o[k])) l.push(k + ': ' + (o[k] === '' ? 'leer' : o[k]) + ' → ' + (b[k] === '' ? 'leer' : b[k])); });
     if (!o.logik && b.logik) l.push('Logik neu');
     else if (o.logik && !b.logik) l.push('Logik entfernt');
@@ -494,7 +503,7 @@
   function text(b) {
     var a = aenderungen(b), wk = b.logik ? b.logik.attack.reduce(function (s, x) { return s + x.buy.reduce(function (t, y) { return t + preis(y[0]) * y[1]; }, 0); }, 0) : 0;
     return 'Bot «' + b.name + '» (' + b.id + ')' + (a.length ? ': ' + a.join('; ') : ': unverändert') + (b.logik ? '\nAngriffswelle ' + wk + ' Gold (Start ab ' + b.logik.attackGold + ' Gold)' : '') +
-      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '') + (b.spezial ? '\nSpezialregeln (bitte einbauen):\n' + b.spezial : '') + (b === cur ? reiheText() : '');
+      '\nBOT_DB:\n' + dbCode(b) + (b.logik ? '\nCONFIG.BOTS:\n' + logikCode(b) : '') + (b.storyKonto ? '\nFREI.story.gegner: ' + b.id + ': { konto: true }' : '') + (b.spezial ? '\nSpezialregeln (bitte einbauen):\n' + b.spezial : '') + (b === cur ? reiheText() : '');
   }
   function ausgabe() {
     var a = aenderungen(cur);
