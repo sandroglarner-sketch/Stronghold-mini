@@ -5,15 +5,10 @@
   //   freunde: n         = mindestens n eingeladene Freunde, die über den Link gespielt haben (braucht ein Konto)
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
   //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
-  // Karten ohne Eintrag sind für alle frei. Im Tester-Modus ist alles frei.
+  //   entwicklung: true  = noch in Entwicklung (für niemanden frei; nur von Hand über die Tabelle freischaltungen)
+  // Karten ohne Eintrag sind gesperrt (noch in Entwicklung), ausser sie stehen in FREI.frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
     einheiten: {
-      mage: { konto: true },
-      sword: { konto: true },
-      bank: { konto: true },
-      dieb: { konto: true },
-      belfry: { konto: true },
-      trebuchet: { konto: true },
       crossbow: { konto: true, freunde: 1 },
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
@@ -23,5 +18,9 @@
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: {} }
+    story: { kontoAb: '', gegner: {} },
+    // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
+    frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
+    // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
+    regel: function (t) { return CONFIG.FREI.einheiten[t] || (CONFIG.FREI.frei.indexOf(t) >= 0 ? null : { entwicklung: true }); }
   };

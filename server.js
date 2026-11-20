@@ -76,6 +76,7 @@ try {
   STORY_ALT = ctx.STORY_ALT || STORY_ALT;
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
 function regelOk(r, st) { // st = { konto, freunde, besiegt: [ids] }
+  if (r.entwicklung) return false;
   if ((r.konto || r.freunde) && !st.konto) return false;
   if (r.freunde && st.freunde < r.freunde) return false;
   if (r.besiegt && STORY_IDS.indexOf(r.besiegt) >= 0 && st.besiegt.indexOf(r.besiegt) < 0) return false;

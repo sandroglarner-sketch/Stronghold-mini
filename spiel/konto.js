@@ -12,6 +12,7 @@
   function regelErfuellt(r) { // alles in der Regel erfüllt? (Konto, Freunde, Story-Sieg)
     var k = konto || {};
     if (!r) return true;
+    if (r.entwicklung) return false; // noch in Entwicklung
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
     if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) return false;
@@ -25,14 +26,15 @@
     return l.join(' und ');
   }
   function unitLocked(t) {
-    var d = CONFIG.units[t], r = CONFIG.FREI.einheiten[t];
+    var d = CONFIG.units[t], r = CONFIG.FREI.regel(t);
     if (!d || !r || !kontoAn() || tester) return false; // Tester-Modus: alles frei
     if (((konto || {}).einheiten || []).indexOf(t) >= 0) return false; // vom Server freigeschaltet (Regeln oder von Hand)
     return !regelErfuellt(r);
   }
   function kontoKarten() { var l = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { var r = CONFIG.FREI.einheiten[t]; return CONFIG.units[t] && !CONFIG.units[t].hidden && r.konto && !r.freunde && !r.besiegt; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die allein ein Konto freischaltet
   function lockText(t) {
-    var r = CONFIG.FREI.einheiten[t] || {}, txt = regelText(r);
+    var r = CONFIG.FREI.regel(t) || {}, txt = regelText(r);
+    if (r.entwicklung) return 'Diese Karte befindet sich noch in Entwicklung';
     if (r.freunde && konto && konto.user && !r.besiegt) return 'Nicht freigeschaltet – lade ' + (r.freunde === 1 ? 'einen Freund' : r.freunde + ' Freunde') + ' ein (👥 Freund einladen)';
     return 'Nicht freigeschaltet – benötigt ' + (txt || 'Account');
   }
@@ -110,7 +112,7 @@
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
-      on ? 'Angemeldet als ' + konto.user + '. ' + kontoKarten() + ' sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.';
+      on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto kannst du Freunde einladen und so weitere Karten freischalten.';
     $('kontoForm').hidden = on;
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;

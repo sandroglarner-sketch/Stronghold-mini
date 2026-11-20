@@ -135,7 +135,7 @@
   function pvpErlaubt(team, type) {
     var d = CONFIG.units[type];
     if (!d || !KONTO.url) return true;
-    if (!CONFIG.FREI.einheiten[type]) return true; // keine Regel: für alle frei
+    if (!CONFIG.FREI.regel(type)) return true; // keine Regel: für alle frei (Tutorial-Karten, Mauer); Karten in Entwicklung nur, wenn der Server sie bestätigt
     return !!(pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0); // der Server hat nach daten/freischalten.js geprüft
   }
   function pvpApply(team, cmds) {

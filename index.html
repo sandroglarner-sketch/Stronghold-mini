@@ -1145,15 +1145,10 @@
   //   freunde: n         = mindestens n eingeladene Freunde, die über den Link gespielt haben (braucht ein Konto)
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
   //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
-  // Karten ohne Eintrag sind für alle frei. Im Tester-Modus ist alles frei.
+  //   entwicklung: true  = noch in Entwicklung (für niemanden frei; nur von Hand über die Tabelle freischaltungen)
+  // Karten ohne Eintrag sind gesperrt (noch in Entwicklung), ausser sie stehen in FREI.frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
     einheiten: {
-      mage: { konto: true },
-      sword: { konto: true },
-      bank: { konto: true },
-      dieb: { konto: true },
-      belfry: { konto: true },
-      trebuchet: { konto: true },
       crossbow: { konto: true, freunde: 1 },
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
@@ -1163,7 +1158,11 @@
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: {} }
+    story: { kontoAb: '', gegner: {} },
+    // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
+    frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
+    // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
+    regel: function (t) { return CONFIG.FREI.einheiten[t] || (CONFIG.FREI.frei.indexOf(t) >= 0 ? null : { entwicklung: true }); }
   };
   var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
@@ -1185,7 +1184,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '741be3827d'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'f00a8a8a24'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5037,6 +5036,7 @@
   function regelErfuellt(r) { // alles in der Regel erfüllt? (Konto, Freunde, Story-Sieg)
     var k = konto || {};
     if (!r) return true;
+    if (r.entwicklung) return false; // noch in Entwicklung
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
     if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) return false;
@@ -5050,14 +5050,15 @@
     return l.join(' und ');
   }
   function unitLocked(t) {
-    var d = CONFIG.units[t], r = CONFIG.FREI.einheiten[t];
+    var d = CONFIG.units[t], r = CONFIG.FREI.regel(t);
     if (!d || !r || !kontoAn() || tester) return false; // Tester-Modus: alles frei
     if (((konto || {}).einheiten || []).indexOf(t) >= 0) return false; // vom Server freigeschaltet (Regeln oder von Hand)
     return !regelErfuellt(r);
   }
   function kontoKarten() { var l = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { var r = CONFIG.FREI.einheiten[t]; return CONFIG.units[t] && !CONFIG.units[t].hidden && r.konto && !r.freunde && !r.besiegt; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die allein ein Konto freischaltet
   function lockText(t) {
-    var r = CONFIG.FREI.einheiten[t] || {}, txt = regelText(r);
+    var r = CONFIG.FREI.regel(t) || {}, txt = regelText(r);
+    if (r.entwicklung) return 'Diese Karte befindet sich noch in Entwicklung';
     if (r.freunde && konto && konto.user && !r.besiegt) return 'Nicht freigeschaltet – lade ' + (r.freunde === 1 ? 'einen Freund' : r.freunde + ' Freunde') + ' ein (👥 Freund einladen)';
     return 'Nicht freigeschaltet – benötigt ' + (txt || 'Account');
   }
@@ -5135,7 +5136,7 @@
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
-      on ? 'Angemeldet als ' + konto.user + '. ' + kontoKarten() + ' sind freigeschaltet.' : 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.';
+      on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto kannst du Freunde einladen und so weitere Karten freischalten.';
     $('kontoForm').hidden = on;
     $('kontoPwForm').hidden = !pw;
     $('kontoIn').hidden = !on || pw;
@@ -5536,7 +5537,7 @@
   function pvpErlaubt(team, type) {
     var d = CONFIG.units[type];
     if (!d || !KONTO.url) return true;
-    if (!CONFIG.FREI.einheiten[type]) return true; // keine Regel: für alle frei
+    if (!CONFIG.FREI.regel(type)) return true; // keine Regel: für alle frei (Tutorial-Karten, Mauer); Karten in Entwicklung nur, wenn der Server sie bestätigt
     return !!(pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0); // der Server hat nach daten/freischalten.js geprüft
   }
   function pvpApply(team, cmds) {
