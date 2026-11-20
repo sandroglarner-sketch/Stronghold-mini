@@ -203,7 +203,7 @@
   }
 
   function preisOnline(type) { // Karawane: noch nicht gesetzte (reservierte) zählen beim Preis mit
-    var d = CONFIG.units[type]; return preisVon(ME, type) + (d && d.karawane ? d.karawane.steigt * deploys.filter(function (x) { return x.type === type; }).length : 0);
+    var d = CONFIG.units[type]; return preisVon(ME, type) + (d && d.steigt ? d.steigt * deploys.filter(function (x) { return x.type === type; }).length : 0);
   }
   function tryBuy(type, el) {
     if (state !== 'playing' || intro.t > 0) return; // während der Namen noch nichts kaufen

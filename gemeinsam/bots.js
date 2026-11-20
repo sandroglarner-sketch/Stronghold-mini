@@ -13,11 +13,11 @@
     var ok = types.filter(function (t) { return CONFIG.units[t].cost <= budget; });
     return ok.length ? pick(ok) : null;
   }
-  function countFarmers(team, jagd) { // jagd: eine Karawane zählt wie 2 Bauern (nur für den Jagd-Vergleich, auf beiden Seiten)
+  function countFarmers(team, jagd) { // jagd: eine Karawane zählt wie 2 Bauern, ein Holzfäller wie 1 (nur für den Jagd-Vergleich, auf beiden Seiten)
     var n = 0;
     for (var i = 0; i < units.length; i++) {
       if (units[i].team !== team || units[i].hp <= 0) continue;
-      if (units[i].type === 'farmer') n++; else if (jagd && units[i].type === 'karawane') n += 2;
+      if (units[i].type === 'farmer') n++; else if (jagd && units[i].type === 'karawane') n += 2; else if (jagd && units[i].type === 'holzfaeller') n++; // Jagd: Holzfäller zählt wie 1 Bauer
     }
     return n;
   }

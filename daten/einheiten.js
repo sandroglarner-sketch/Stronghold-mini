@@ -7,9 +7,9 @@
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4, staerke: 0,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       // Karawane (Wirtschaft): 1. kostet 5 Gold, jede weitere 5 mehr (stirbt eine, sinkt der Preis wieder); geht (Tempo 0.8) zur Mitte unterhalb des Teichs, füllt in 3 s (Annahme) alle 4 Töpfe mit Wasser, geht zurück zur Burg: +10 Gold; dann wieder von vorn.
-      karawane: { cat: 'eco', name: 'Karawane', cost: 5, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.34, passive: true, karawane: { gold: 10, fuellen: 3, toepfe: 4, steigt: 5 } }, // Preis: 5 Gold + 5 pro lebende eigene Karawane
-      // Holzfäller (Wirtschaft): geht zum nächsten Baum (CONFIG.BAEUME) und fällt ihn: alle 3 s +1 Gold; ein Baum gibt höchstens 20 Gold, dann bleibt der Stumpf (für den Rest des Spiels)
-      holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 4, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.27, passive: true, holz: { alle: 3, gold: 1 } },
+      karawane: { cat: 'eco', name: 'Karawane', cost: 5, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.34, passive: true, karawane: { gold: 10, fuellen: 3, toepfe: 4 }, steigt: 5 }, // Preis: 5 Gold + 5 pro lebende eigene Karawane
+      // Holzfäller (Wirtschaft): 1. kostet 3 Gold, jeder weitere 3 mehr (steigt, wie die Karawane); geht zum nächsten Baum (CONFIG.BAEUME) und fällt ihn: alle 5 s +2 Gold; ein Baum gibt höchstens 20 Gold, dann bleibt der Stumpf (für den Rest des Spiels)
+      holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 3, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2 }, steigt: 3 },
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
