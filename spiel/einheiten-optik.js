@@ -876,15 +876,16 @@
     } else {
       // Ritter: grauer Topfhelm mit Sehschlitz, Schwert mit goldener Parierstange, grosser Wappenschild in Teamfarbe mit weissem Kreuz.
       // Der Schild ist nach vorne gekippt (Oberkante beim Helm, etwas breiter; Spitze vorne, verkürzt) und sitzt seitlich wie beim Schwertkämpfer.
-      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm und Schild
+      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert; Schild wie Ritter, Kreuz schwarz
+      if (swz) { c.fillStyle = '#22252a'; c.strokeStyle = '#000'; c.lineWidth = 1; for (var sp = -1; sp <= 1; sp += 2) { var py = sp * r * 0.6; [[-0.35, 1], [-0.05, 1.15], [0.25, 1]].forEach(function (q) { c.beginPath(); c.moveTo(r * (q[0] - 0.12), py); c.lineTo(r * q[0], sp * r * q[1]); c.lineTo(r * (q[0] + 0.12), py); c.fill(); c.stroke(); }); c.beginPath(); c.arc(-r * 0.05, py, r * 0.3, 0, Math.PI * 2); c.fill(); c.stroke(); } }
       c.fillStyle = kg; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.6, 0, Math.PI * 2); c.fill();
       c.strokeStyle = kd; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
       c.strokeStyle = '#2b3135'; c.lineWidth = Math.max(2, r * 0.12); c.lineCap = 'butt'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.5, -0.75, 0.75); c.stroke(); c.lineCap = 'round';
       c.lineWidth = Math.max(1.5, r * 0.07); c.beginPath(); c.moveTo(r * 0.12, 0); c.lineTo(r * 0.5, 0); c.stroke();
       c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
-      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
-      c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * 1.9, -r * 0.75); c.stroke();
+      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * (swz ? 0.28 : 0.22));
+      c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * (swz ? 2.4 : 1.9), -r * 0.75); c.stroke();
       c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(r * 0.7, -r * 0.75); c.lineTo(r * 1.8, -r * 0.75); c.stroke();
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(2.5, r * 0.22);
       c.beginPath(); c.moveTo(r * 0.55, -r * 1.02); c.lineTo(r * 0.55, -r * 0.48); c.stroke();
@@ -896,12 +897,12 @@
       kb([KW / 2, KH * 0.5], [0, 0], [KW / 2, KH * 0.12]); kb([0, 0], [-KW / 2, KH * 0.5], [-KW / 2, KH * 0.12]);
       var kpath = function (pts) { c.beginPath(); for (var ki = 0; ki < pts.length; ki++) { var q = km(pts[ki][0], pts[ki][1]); if (ki) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); } c.closePath(); };
       c.save(); c.translate(r * 0.12, r * 0.12); kpath(kpts); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
-      kpath(kpts); c.fillStyle = swz ? '#1c1e22' : col; c.fill();
-      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? col : '#ffffff'; // Schwarzer Ritter: Kreuz in Teamfarbe
+      kpath(kpts); c.fillStyle = col; c.fill();
+      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? '#111316' : '#ffffff'; // Schwarzer Ritter: schwarzes Kreuz
       kpath([[-0.1, -1], [0.1, -1], [0.1, 3], [-0.1, 3]]); c.fill();
       kpath([[-2, KH * 0.62], [2, KH * 0.62], [2, KH * 0.76], [-2, KH * 0.76]]); c.fill();
       c.restore();
-      kpath(kpts); c.strokeStyle = kg; c.lineJoin = 'round'; c.lineWidth = Math.max(2, r * 0.12); c.stroke();
+      kpath(kpts); c.strokeStyle = '#8d9399'; c.lineJoin = 'round'; c.lineWidth = Math.max(2, r * 0.12); c.stroke();
     }
 
     if (hit > 0) {

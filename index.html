@@ -923,8 +923,8 @@
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
       mage:   { cat: 'ranged', name: 'Magier',        cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, secs: 3 } },
-      // Schwarzer Ritter: wie der Ritter, aber Angriff 2 (Optik: schwarzer Helm und schwarzer Schild)
-      schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 25, staerke: 1, hp: 20, atk: 2, range: 1, speed: 0.7, cd: 1, r: 0.38 },
+      // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
+      schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 25, staerke: 1, hp: 18, atk: 2, range: 1, speed: 0.7, cd: 1, r: 0.38 },
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
       raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1 } },
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
@@ -1165,7 +1165,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ced9bb47ad'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '6fffe95f99'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3921,15 +3921,16 @@
     } else {
       // Ritter: grauer Topfhelm mit Sehschlitz, Schwert mit goldener Parierstange, grosser Wappenschild in Teamfarbe mit weissem Kreuz.
       // Der Schild ist nach vorne gekippt (Oberkante beim Helm, etwas breiter; Spitze vorne, verkürzt) und sitzt seitlich wie beim Schwertkämpfer.
-      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm und Schild
+      var swz = type === 'schwarzritter', kg = swz ? '#2b2e33' : '#8d9399', kd = swz ? '#111316' : '#5f666c'; // Schwarzer Ritter: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert; Schild wie Ritter, Kreuz schwarz
+      if (swz) { c.fillStyle = '#22252a'; c.strokeStyle = '#000'; c.lineWidth = 1; for (var sp = -1; sp <= 1; sp += 2) { var py = sp * r * 0.6; [[-0.35, 1], [-0.05, 1.15], [0.25, 1]].forEach(function (q) { c.beginPath(); c.moveTo(r * (q[0] - 0.12), py); c.lineTo(r * q[0], sp * r * q[1]); c.lineTo(r * (q[0] + 0.12), py); c.fill(); c.stroke(); }); c.beginPath(); c.arc(-r * 0.05, py, r * 0.3, 0, Math.PI * 2); c.fill(); c.stroke(); } }
       c.fillStyle = kg; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.6, 0, Math.PI * 2); c.fill();
       c.strokeStyle = kd; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
       c.strokeStyle = '#2b3135'; c.lineWidth = Math.max(2, r * 0.12); c.lineCap = 'butt'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.5, -0.75, 0.75); c.stroke(); c.lineCap = 'round';
       c.lineWidth = Math.max(1.5, r * 0.07); c.beginPath(); c.moveTo(r * 0.12, 0); c.lineTo(r * 0.5, 0); c.stroke();
       c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
-      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * 0.22);
-      c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * 1.9, -r * 0.75); c.stroke();
+      c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * (swz ? 0.28 : 0.22));
+      c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * (swz ? 2.4 : 1.9), -r * 0.75); c.stroke();
       c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(r * 0.7, -r * 0.75); c.lineTo(r * 1.8, -r * 0.75); c.stroke();
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(2.5, r * 0.22);
       c.beginPath(); c.moveTo(r * 0.55, -r * 1.02); c.lineTo(r * 0.55, -r * 0.48); c.stroke();
@@ -3941,12 +3942,12 @@
       kb([KW / 2, KH * 0.5], [0, 0], [KW / 2, KH * 0.12]); kb([0, 0], [-KW / 2, KH * 0.5], [-KW / 2, KH * 0.12]);
       var kpath = function (pts) { c.beginPath(); for (var ki = 0; ki < pts.length; ki++) { var q = km(pts[ki][0], pts[ki][1]); if (ki) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); } c.closePath(); };
       c.save(); c.translate(r * 0.12, r * 0.12); kpath(kpts); c.fillStyle = 'rgba(0,0,0,0.22)'; c.fill(); c.restore();
-      kpath(kpts); c.fillStyle = swz ? '#1c1e22' : col; c.fill();
-      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? col : '#ffffff'; // Schwarzer Ritter: Kreuz in Teamfarbe
+      kpath(kpts); c.fillStyle = col; c.fill();
+      c.save(); kpath(kpts); c.clip(); c.fillStyle = swz ? '#111316' : '#ffffff'; // Schwarzer Ritter: schwarzes Kreuz
       kpath([[-0.1, -1], [0.1, -1], [0.1, 3], [-0.1, 3]]); c.fill();
       kpath([[-2, KH * 0.62], [2, KH * 0.62], [2, KH * 0.76], [-2, KH * 0.76]]); c.fill();
       c.restore();
-      kpath(kpts); c.strokeStyle = kg; c.lineJoin = 'round'; c.lineWidth = Math.max(2, r * 0.12); c.stroke();
+      kpath(kpts); c.strokeStyle = '#8d9399'; c.lineJoin = 'round'; c.lineWidth = Math.max(2, r * 0.12); c.stroke();
     }
 
     if (hit > 0) {
