@@ -967,7 +967,12 @@
       // greift bei 220 Gold an (Belagerungsschild, 2 Rammböcke, 8 Schwertkämpfer, 6 Bogenschützen, 8 Reiter); verteidigt mit Bogenschützen, Tunnelgräbern, Schwertkämpfern (Belohnung: Tunnelgräber)
       koenigrotbart: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 220, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 6, buy: [['archer', 6]] }, { after: 15, buy: [['rider', 8]] }],
-                    defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 }
+                    defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMage: 99, defMax: { catapult: 1 }, noOutput: 10 },
+      // «Jungkönig» (Story-Platz 12, braucht ein Konto): 10 Bauern und 4 Holzfäller, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Reitern (alle 40 s), greift bei 200 Gold an
+      // (2 Ritter, Trebuchet, 4 Bogenschützen, 4 + 4 Speerkämpfer, 15 Leiterträger), spielt selbst das Trebuchet (Belohnung: Trebuchet); verteidigt mit Speer, Bogen, Ritter, Reiter
+      jungkoenig: { income: 10, incomeEvery: 5, farmers: 10, holzfaeller: 4, huntLead: 20, hunt: [['rider', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 200, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['knight', 2]] }, { after: 4, buy: [['trebuchet', 1]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 8, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight', 'rider'], defMage: 99, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1137,7 +1142,7 @@
     { id: 'rabenstein2', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: null, logik: 'baron', nr: 11 }, // 20.11. 14:11 zurückgesetzt: neue id und nr (alte id 'rabenstein' / nr 4 nie wieder verwenden), alte Siege zählen nicht mehr
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: 6, logik: 'loewenherz', nr: 8 }, // seit 20.11. 13:58, braucht ein Konto
-    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
+    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: 12, logik: 'jungkoenig', nr: 16 }, // seit 20.11. 21:45, braucht ein Konto
     { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: 8, logik: 'waldkoenig', nr: 9 }, // seit 20.11. 13:58, braucht ein Konto
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Der Strohkönig', koenig: 'strohkoenig', platz: 7, logik: 'strohkoenig', nr: 12 }, // seit 20.11. 14:21, braucht ein Konto
@@ -1202,12 +1207,13 @@
       holzfaeller: { besiegt: 'waldkoenig' }, // Belohnung für den Waldkönig (Story-Platz 8, braucht ein Konto)
       javelin: { besiegt: 'wolfsjarl' },
       kirche: { besiegt: 'fuerstbischofgerold' },
-      digger: { besiegt: 'koenigrotbart' }, // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
+      digger: { besiegt: 'koenigrotbart' },
+      trebuchet: { besiegt: 'jungkoenig' }, // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
@@ -1233,7 +1239,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '84de2df174'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'cbc484762c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).

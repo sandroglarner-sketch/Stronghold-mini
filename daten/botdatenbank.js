@@ -9,7 +9,7 @@
     { id: 'rabenstein2', name: 'Baron Rabenstein', koenig: 'rabenstein', platz: null, logik: 'baron', nr: 11 }, // 20.11. 14:11 zurückgesetzt: neue id und nr (alte id 'rabenstein' / nr 4 nie wieder verwenden), alte Siege zählen nicht mehr
     // frühere Spieler-Könige, jetzt Bots, noch ohne Logik
     { id: 'loewenherz', name: 'Löwenherz', koenig: 'loewenherz', platz: 6, logik: 'loewenherz', nr: 8 }, // seit 20.11. 13:58, braucht ein Konto
-    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: null, logik: null },
+    { id: 'jungkoenig', name: 'Jungkönig', koenig: 'jungkoenig', platz: 12, logik: 'jungkoenig', nr: 16 }, // seit 20.11. 21:45, braucht ein Konto
     { id: 'waldkoenig', name: 'Waldkönig', koenig: 'waldkoenig', platz: 8, logik: 'waldkoenig', nr: 9 }, // seit 20.11. 13:58, braucht ein Konto
     // Anfänger-Bots (Vorschlag: vor dem Banditen), noch ohne Logik
     { id: 'strohkoenig', name: 'Der Strohkönig', koenig: 'strohkoenig', platz: 7, logik: 'strohkoenig', nr: 12 }, // seit 20.11. 14:21, braucht ein Konto
