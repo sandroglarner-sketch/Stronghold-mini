@@ -71,7 +71,7 @@
       // Diebeshaus (Typ Gebäude): 50 Gold, 10 Leben; alle 30 s klaut ein Dieb 30 % des gegnerischen Goldes (aufgerundet): er geht seitlich durch die Mauern am Spielfeldrand
       // entlang in die gegnerische Burg (dort wird geklaut) und denselben Weg zurück direkt ins Diebeshaus (dort kommt das Gold an).
       dieb: { cat: 'building', name: 'Diebeshaus', cost: 50, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-              gebaeude: { w: 1.1, h: 1.0, alle: 30, art: 'dieb', prozent: 30, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
+              gebaeude: { w: 1.1, h: 1.0, alle: 40, art: 'dieb', prozent: 40, klauen: 15, abladen: 28, stufen: [{ cost: 50, hp: 10, gold: 0 }] } },
       // Brandstifterhaus (Typ Gebäude): 40 Gold, 10 Leben; alle 30 s geht ein Brandstifter (halb durchsichtig wie der Dieb, mit Fackel) am Spielfeldrand zur gegnerischen Burg,
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 40 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
       brand: { cat: 'building', name: 'Brandstifterhaus', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
