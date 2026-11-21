@@ -17,9 +17,9 @@
                 attackGold: 130, lockSecs: 15,
                 attack: [{ after: 0, buy: [['ram', 1]] }, { after: 4, buy: [['spear', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 6]] }, { after: 9, buy: [['spear', 4]] }],
                 defPlus: 1, defPool: ['spear', 'archer'], defMage: 99, noOutput: 10 },
-      // «Kleiner Prinz» (Story-Platz 3): 5 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, Jagd alle 40 s, greift bei 200 Gold an,
+      // «Kleiner Prinz» (Story-Platz 3): 2 Bauern (seit 21.11.), Mauer bis Stufe 3 mit 4 Bogenschützen, Jagd alle 40 s, greift bei 200 Gold an,
       // spielt selbst das Katapult (Belohnung: Katapult), verteidigt auch mit Rittern und Katapult
-      prinz: { income: 10, incomeEvery: 5, farmers: 5, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 40,
+      prinz: { income: 10, incomeEvery: 5, farmers: 2, huntLead: 20, hunt: [['archer', 1], ['spear', 1]], huntEvery: 40,
                wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true,
                attackGold: 200, lockSecs: 15,
                attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 7, buy: [['archer', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 10, buy: [['ladder', 10]] }],
