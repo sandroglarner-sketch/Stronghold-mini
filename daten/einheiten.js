@@ -81,7 +81,7 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 120, staerke: 0, hp: 30, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 120, hp: 30, gold: 0 }] } },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
       ladder: { cat: 'melee', name: 'Leiterträger', cost: 4, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.08, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,08 = sehr kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
@@ -99,7 +99,7 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 4, range: 4, speed: 0.8, cd: 2, r: 0.3, delay: 0.3, setup: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten (auch im Turm)
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 2, r: 0.3, delay: 0.3, setup: 1, setupFrei: 0.5 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 0,5 Kacheln vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }

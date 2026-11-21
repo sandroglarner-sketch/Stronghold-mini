@@ -1057,7 +1057,7 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 120, staerke: 0, hp: 30, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 120, hp: 30, gold: 0 }] } },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
       ladder: { cat: 'melee', name: 'Leiterträger', cost: 4, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.08, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,08 = sehr kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
@@ -1075,7 +1075,7 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 4, range: 4, speed: 0.8, cd: 2, r: 0.3, delay: 0.3, setup: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten (auch im Turm)
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 3, range: 4, speed: 0.8, cd: 2, r: 0.3, delay: 0.3, setup: 1, setupFrei: 0.5 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 0,5 Kacheln vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
@@ -1239,7 +1239,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '11141e3293'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '586c3e0f75'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2933,7 +2933,13 @@
       var reach = wallT && d.range <= 1.5 ? 0.55 : d.range; // Nahkämpfer schlagen erst direkt an der Mauer zu
       if (d.setup) { // Trebuchet: zählt, wie lange es stillsteht (aufbauen); jede Bewegung baut es wieder ab
         var mvd = u.lx === undefined || hyp(u.x - u.lx, u.y - u.ly) > 0.01;
-        u.lx = u.x; u.ly = u.y; u.setupT = mvd ? 0 : (u.setupT || 0) + dt;
+        u.lx = u.x; u.ly = u.y;
+        if (d.setupFrei && u.sax !== undefined) { // aufgebaut: bis setupFrei Kacheln vom Aufbaupunkt bleibt er aufgebaut, weiter weg packt er ein
+          if (hyp(u.x - u.sax, u.y - u.say) > d.setupFrei) { u.sax = undefined; u.setupT = 0; } else u.setupT += dt;
+        } else {
+          u.setupT = mvd ? 0 : (u.setupT || 0) + dt;
+          if (d.setupFrei && u.setupT >= d.setup) { u.sax = u.x; u.say = u.y; } // fertig aufgebaut: Aufbaupunkt merken
+        }
       }
       var built = !d.setup || u.setupT >= d.setup;
       u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
@@ -4703,7 +4709,7 @@
     if (d.spot) a.push('<b>Auf dem grossen Turm</b> (Mauer 5) schiesst es auf Gegner in Reichweite. <b>Sonst</b> fährt es an einen Punkt ' + fmtN(d.spot.dist) + ' Kacheln vor das Ziel und beschiesst immer dieselbe Stelle: Mitte, ' + fmtN(d.spot.behind) + ' Kacheln hinter der gegnerischen Mauer.');
     if (d.fire && !d.multi) a.push('<b>Feuerbälle</b> mit Flächenschaden (Radius ' + fmtN(d.splash) + '), <b>fliegen über Mauern</b>.');
     if (d.ram && d.atk) a.push('Greift <b>nur Mauern und Burgen</b> an.' + (d.mass > 1 ? ' Schiebt Einheiten im Weg zur Seite.' : ''));
-    if (d.setup) a.push('Muss <b>' + d.setup + ' s stillstehen</b>, um sich aufzubauen, bevor er schiessen kann.');
+    if (d.setup) a.push('Muss <b>' + d.setup + ' s stillstehen</b>, um sich aufzubauen, bevor er schiessen kann.' + (d.setupFrei ? ' Aufgebaut darf er sich bis ' + fmtN(d.setupFrei) + ' Kacheln bewegen.' : ''));
     if (d.blast) a.push('Am Einschlagpunkt zusätzlich <b>Flächenschaden ' + d.blast.atk + '</b> (Radius ' + fmtN(d.blast.r) + ').');
     if (d.ram && !d.atk) a.push('Zieht zu Mauer oder Burg, richtet keinen Schaden an.');
     if (d.rangedTaken) a.push('Erleidet von Fernkämpfern nur <b>' + Math.round(d.rangedTaken * 100) + ' % Schaden</b>.');

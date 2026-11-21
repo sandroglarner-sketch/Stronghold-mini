@@ -45,7 +45,7 @@
     if (d.spot) a.push('<b>Auf dem grossen Turm</b> (Mauer 5) schiesst es auf Gegner in Reichweite. <b>Sonst</b> fährt es an einen Punkt ' + fmtN(d.spot.dist) + ' Kacheln vor das Ziel und beschiesst immer dieselbe Stelle: Mitte, ' + fmtN(d.spot.behind) + ' Kacheln hinter der gegnerischen Mauer.');
     if (d.fire && !d.multi) a.push('<b>Feuerbälle</b> mit Flächenschaden (Radius ' + fmtN(d.splash) + '), <b>fliegen über Mauern</b>.');
     if (d.ram && d.atk) a.push('Greift <b>nur Mauern und Burgen</b> an.' + (d.mass > 1 ? ' Schiebt Einheiten im Weg zur Seite.' : ''));
-    if (d.setup) a.push('Muss <b>' + d.setup + ' s stillstehen</b>, um sich aufzubauen, bevor er schiessen kann.');
+    if (d.setup) a.push('Muss <b>' + d.setup + ' s stillstehen</b>, um sich aufzubauen, bevor er schiessen kann.' + (d.setupFrei ? ' Aufgebaut darf er sich bis ' + fmtN(d.setupFrei) + ' Kacheln bewegen.' : ''));
     if (d.blast) a.push('Am Einschlagpunkt zusätzlich <b>Flächenschaden ' + d.blast.atk + '</b> (Radius ' + fmtN(d.blast.r) + ').');
     if (d.ram && !d.atk) a.push('Zieht zu Mauer oder Burg, richtet keinen Schaden an.');
     if (d.rangedTaken) a.push('Erleidet von Fernkämpfern nur <b>' + Math.round(d.rangedTaken * 100) + ' % Schaden</b>.');

@@ -516,7 +516,13 @@
       var reach = wallT && d.range <= 1.5 ? 0.55 : d.range; // Nahkämpfer schlagen erst direkt an der Mauer zu
       if (d.setup) { // Trebuchet: zählt, wie lange es stillsteht (aufbauen); jede Bewegung baut es wieder ab
         var mvd = u.lx === undefined || hyp(u.x - u.lx, u.y - u.ly) > 0.01;
-        u.lx = u.x; u.ly = u.y; u.setupT = mvd ? 0 : (u.setupT || 0) + dt;
+        u.lx = u.x; u.ly = u.y;
+        if (d.setupFrei && u.sax !== undefined) { // aufgebaut: bis setupFrei Kacheln vom Aufbaupunkt bleibt er aufgebaut, weiter weg packt er ein
+          if (hyp(u.x - u.sax, u.y - u.say) > d.setupFrei) { u.sax = undefined; u.setupT = 0; } else u.setupT += dt;
+        } else {
+          u.setupT = mvd ? 0 : (u.setupT || 0) + dt;
+          if (d.setupFrei && u.setupT >= d.setup) { u.sax = u.x; u.say = u.y; } // fertig aufgebaut: Aufbaupunkt merken
+        }
       }
       var built = !d.setup || u.setupT >= d.setup;
       u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
