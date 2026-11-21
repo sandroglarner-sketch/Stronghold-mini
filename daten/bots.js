@@ -106,5 +106,10 @@
       // jagt mit 1 Reiter (15 s Vorsprung, alle 30 s), greift bei 240 Gold an (Belagerungsschild, Rammbock + Katapult, 2 Ritter, 6 Bogen, 8 Speer, 20 Leiterträger)
       graefineisenhand: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 6, gebaeude: [{ type: 'adel', gold: 100 }], huntLead: 15, hunt: [['rider', 1]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 240, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1], ['catapult', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 6]] }, { after: 7, buy: [['spear', 8]] }, { after: 15, buy: [['ladder', 20]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'digger', 'knight', 'rider', 'mage'], noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'digger', 'knight', 'rider', 'mage'], noOutput: 10 },
+      // «Der Drachenkönig» (Story-Platz 16, braucht ein Konto): 8 Bauern, Brandstifter ab 50 Gold, Schmiede ab 40 Gold (höchstens Stufe 2),
+      // jagt mit 2 Fackelwerfern (20 s Vorsprung, alle 40 s), greift bei 240 Gold an (Belagerungsschild, Onager, 4 Ritter, 10 Fackelwerfer, 4 Speerträger, 20 Leitern)
+      drachenkoenig: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'brand', gold: 50 }, { type: 'schmiede', gold: 40 }], gebMax: { schmiede: 2 }, huntLead: 20, hunt: [['fackel', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 4, turm: { archer: 6 }, wallClear: true, attackGold: 240, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['onager', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 8, buy: [['fackel', 10]] }, { after: 9, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 20]] }],
+                    defPlus: 1, defPool: ['spear', 'fackel', 'knight'], noOutput: 10 }
   };
