@@ -238,12 +238,30 @@
       if (e.t < 0 || e.kind === 'dirt') continue;
       if (e.kind === 'orb') {
         var ox = lerp(e.x1, e.x2, k) * T, oy = lerp(e.y1, e.y2, k) * T;
-        ctx.fillStyle = 'rgba(155,107,255,0.35)';
-        ctx.beginPath(); ctx.arc(ox, oy, 11, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#b894ff';
-        ctx.beginPath(); ctx.arc(ox, oy, 6, 0, Math.PI * 2); ctx.fill();
+        // Frostkugel des Eismagiers: weiss-hellblau, Glitzerspur dahinter
+        var odx = (e.x2 - e.x1), ody = (e.y2 - e.y1), odl = Math.sqrt(odx * odx + ody * ody) || 1;
+        for (var oi = 1; oi < 5; oi++) { ctx.fillStyle = 'rgba(255,255,255,' + (0.8 - oi * 0.16) + ')'; ctx.beginPath(); ctx.arc(ox - odx / odl * oi * 7, oy - ody / odl * oi * 7, 2.4 - oi * 0.4, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = 'rgba(200,235,255,0.4)';
+        ctx.beginPath(); ctx.arc(ox, oy, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#eaf7ff';
+        ctx.beginPath(); ctx.arc(ox, oy, 7, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(ox - 1.5, oy - 1.5, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ox, oy, 4.5, 0, Math.PI * 2); ctx.fill();
+        var onow = performance.now() / 1000;
+        for (var oj = 0; oj < 4; oj++) { var oa = onow * 5 + oj * 1.57; ctx.beginPath(); ctx.arc(ox + Math.cos(oa) * 10, oy + Math.sin(oa) * 10, 1.4, 0, Math.PI * 2); ctx.fill(); }
+      } else if (e.kind === 'frost') { // Einschlag des Eismagiers: Frostfläche im ganzen Radius, Eiszacken wachsen aus dem Boden und schmelzen
+        var fsx = e.x * T, fsy = e.y * T, fsr = e.r * T, fup = Math.min(1, k * 3), fup2 = fup * fup * (3 - 2 * fup), ffd = 1 - Math.max(0, (k - 0.6) / 0.4);
+        ctx.fillStyle = 'rgba(205,235,255,' + (0.35 * ffd) + ')'; ctx.beginPath(); ctx.arc(fsx, fsy, fsr, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 1;
+        for (var fz = 0; fz < 14; fz++) {
+          var fza = fz * 0.449, fzd = fsr * (0.35 + 0.55 * ((fz * 7) % 5) / 4), fzx = fsx + Math.cos(fza) * fzd, fzy = fsy + Math.sin(fza) * fzd, fzh = (5 + 10 * fup2) * fsr / 60, fzr = -Math.PI / 2 + Math.sin(fz) * 0.4;
+          ctx.save(); ctx.translate(fzx, fzy); ctx.rotate(fzr);
+          ctx.fillStyle = 'rgba(185,228,252,' + ffd + ')'; ctx.strokeStyle = 'rgba(255,255,255,' + ffd + ')';
+          ctx.beginPath(); ctx.moveTo(fzh, 0); ctx.lineTo(0, -fzh * 0.32); ctx.lineTo(-fzh * 0.25, 0); ctx.lineTo(0, fzh * 0.32); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * ffd) + ')'; ctx.beginPath(); ctx.moveTo(fzh * 0.7, 0); ctx.lineTo(0, -fzh * 0.16); ctx.lineTo(0, 0); ctx.fill();
+          ctx.restore();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,' + (1 - k) + ')'; ctx.beginPath(); ctx.arc(fsx, fsy, 10 * (1 - k), 0, Math.PI * 2); ctx.fill();
       } else if (e.kind === 'feuer') { // Brand in der Burg: flackernde Flammen auf dem Dach, Funken und Rauch; blendet ein und aus
         var fa = Math.min(1, k * 6, (1 - k) * 4), fnow = performance.now() / 1000;
         ctx.globalAlpha = fa;

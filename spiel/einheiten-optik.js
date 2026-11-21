@@ -424,19 +424,23 @@
       c.fillStyle = P['stone-dark'];
       rr(c, r * 1.25, r * 0.38, r * 0.55, r * 0.64, 2); c.fill();
     } else if (type === 'mage') {
-      // Kapuze, Stab mit leuchtender Kugel
-      c.fillStyle = '#5b3fa8';
-      c.beginPath(); c.arc(0, 0, r * 0.6, 0, Math.PI * 2); c.fill();
-      c.fillStyle = '#3a2575';
-      c.beginPath(); c.moveTo(r * 0.55, 0); c.lineTo(-r * 0.25, -r * 0.4); c.lineTo(-r * 0.25, r * 0.4); c.closePath(); c.fill();
+      // Eismagier (21.11., Vorschlag A «Schneehut»): eisblaue Robe, hellblauer Spitzhut mit Schneerand, Holzstab mit Eisspitze; beim Aufladen kreist Glitzer, die Frostkugel wächst
+      var mq = r / 20, mg = A.glow || 0;
+      c.fillStyle = '#dfeef7'; c.beginPath(); c.arc(0, 0, 16 * mq, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#8fc8ee'; c.beginPath(); c.moveTo(15 * mq, 0); c.lineTo(-8 * mq, -11 * mq); c.lineTo(-8 * mq, 11 * mq); c.closePath(); c.fill();
+      c.strokeStyle = '#ffffff'; c.lineWidth = Math.max(1.5, 3 * mq); c.beginPath(); c.arc(-4 * mq, 0, 12 * mq, 1.9, 4.4); c.stroke();
+      c.fillStyle = '#ffffff'; c.beginPath(); c.arc(15 * mq, 0, 2.5 * mq, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(A.off, -A.off * 0.5); // Stab wird beim Zaubern nach vorne gestreckt
-      c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
-      c.beginPath(); c.moveTo(-r * 0.2, r * 0.6); c.lineTo(r * 1.5, r * 0.6); c.stroke();
-      c.fillStyle = 'rgba(155,107,255,' + (0.4 + 0.25 * A.glow) + ')'; // Kugel lädt sich auf (grösser, heller), ist nach dem Wurf klein
-      c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.6 * A.orb * (1 + 0.6 * A.glow), 0, Math.PI * 2); c.fill();
-      c.fillStyle = A.glow > 0.5 ? '#e4d6ff' : '#b894ff';
-      c.beginPath(); c.arc(r * 1.65, r * 0.6, r * 0.34 * A.orb * (1 + 0.3 * A.glow), 0, Math.PI * 2); c.fill();
-      if (A.glow > 0) { c.strokeStyle = 'rgba(200,170,255,' + (0.8 * A.glow) + ')'; c.lineWidth = 1.5; for (var mi = 0; mi < 5; mi++) { var ma = mi * 1.257 + A.spin; c.beginPath(); c.moveTo(r * 1.65 + Math.cos(ma) * r * 0.75, r * 0.6 + Math.sin(ma) * r * 0.75); c.lineTo(r * 1.65 + Math.cos(ma) * r * 1.05, r * 0.6 + Math.sin(ma) * r * 1.05); c.stroke(); } }
+      var msx = 0, msy = 11 * mq;
+      c.strokeStyle = '#8a5a32'; c.lineWidth = Math.max(2, 3.5 * mq); c.beginPath(); c.moveTo(msx - 6 * mq, msy); c.lineTo(msx + 28 * mq, msy); c.stroke();
+      var mh = (9 + 3 * mg) * mq; // Eisspitze am Stab
+      c.fillStyle = '#b9e4fc'; c.strokeStyle = '#ffffff'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(msx + 28 * mq + mh, msy); c.lineTo(msx + 28 * mq, msy - mh * 0.32); c.lineTo(msx + 28 * mq - mh * 0.25, msy); c.lineTo(msx + 28 * mq, msy + mh * 0.32); c.closePath(); c.fill(); c.stroke();
+      var mos = mg > 0 ? 0.4 + 0.6 * mg : 0.3 * (A.orb || 1), mox = msx + 34 * mq; // Frostkugel an der Spitze: lädt sich auf, nach dem Wurf klein
+      c.fillStyle = 'rgba(200,235,255,0.35)'; c.beginPath(); c.arc(mox, msy, 13 * mq * mos, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#eaf7ff'; c.beginPath(); c.arc(mox, msy, 8 * mq * mos, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#ffffff'; c.beginPath(); c.arc(mox, msy, 5 * mq * mos, 0, Math.PI * 2); c.fill();
+      if (mg > 0) { for (var mi = 0; mi < 6; mi++) { var ma = mi * 1.05 + (A.spin || 0), mr = (18 - 9 * mg) * mq; c.fillStyle = 'rgba(255,255,255,' + mg + ')'; c.beginPath(); c.arc(mox + Math.cos(ma) * mr, msy + Math.sin(ma) * mr, Math.max(1, 1.6 * mq), 0, Math.PI * 2); c.fill(); } }
       c.restore();
     } else if (type === 'schmiede') {
       // Schmiede von oben (man sieht nur das Dach): 1 = Strohdach, kleine Lehm-Esse, Wimpel; 2 = Holzdach, Stein-Esse, Banner, Fass; 3 = Steindach (Schiefer) mit

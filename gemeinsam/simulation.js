@@ -30,7 +30,7 @@
       var sG = CONFIG.units[sv.type] && CONFIG.units[sv.type].gebaeude; // Gebäude: Abstand zum Rand (w x h), nicht zur Mitte (wie bei der Burg)
       if ((sG ? hyp(Math.max(0, Math.abs(sv.x - cx) - sG.w / 2), Math.max(0, Math.abs(sv.y - cy) - sG.h / 2)) : hyp(sv.x - cx, sv.y - cy)) > d.splash) continue;
       if (sv !== exclude) { hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock; }
-      if (d.slow) sv.slow = d.slow.secs;
+      if (d.slow) { sv.slow = d.slow.secs; sv.slowF = d.slow.factor; } // Tempo während der Verlangsamung
     }
   }
   // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
@@ -174,7 +174,7 @@
       u.hit = Math.max(0, u.hit - dt);
       u.slow = Math.max(0, u.slow - dt);
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
-      var spd = d.speed * (u.slow > 0 ? 0.5 : 1);
+      var spd = d.speed * (u.slow > 0 ? (u.slowF || 0.5) : 1);
       if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
         var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
         if (u.inCastle) {
@@ -564,7 +564,7 @@
             effects.push({ kind: 'fblast', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.55 });
           } else {
             effects.push({ kind: 'orb', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: 0.5 });
-            effects.push({ kind: 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: 0.45 });
+            effects.push({ kind: u.type === 'mage' ? 'frost' : 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: u.type === 'mage' ? 1 : 0.45 }); // Eismagier: Eiszacken im Radius
           }
         } else if (d.ram) {
           if (d.atk > 0) effects.push({ kind: 'slam', x: tx, y: ty, t: 0, dur: 0.4 }); // Rammbock: Einschlag mit Staub und Splittern
