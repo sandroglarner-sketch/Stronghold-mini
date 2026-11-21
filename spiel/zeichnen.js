@@ -532,9 +532,9 @@
     for (var i = 0; i < order.length; i++) {
       var u = order[i], d = CONFIG.units[u.type], r = d.r * T;
       if (u.dig) { drawMound(u.x * T, u.y * T, r); continue; }
-      if (u.slow > 0) {
-        ctx.fillStyle = 'rgba(96,170,255,0.35)';
-        ctx.strokeStyle = 'rgba(96,170,255,0.9)';
+      if (u.slow > 0) { // vom Eismagier verlangsamt: eisige Fläche unter der Einheit (weiss-hellblau, weisser Reifrand)
+        ctx.fillStyle = 'rgba(205,235,255,0.55)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
@@ -556,6 +556,18 @@
         ctx.restore();
       } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
+      if (u.slow > 0) { // Frost auf der Einheit: heller Reif darüber und kleine Eiskristalle rundherum (blendet in der letzten halben Sekunde aus)
+        var fsl = Math.min(1, u.slow / 0.5), fsx = u.x * T, fsy = u.y * T, fsn = performance.now() / 1000;
+        ctx.fillStyle = 'rgba(225,244,255,' + (0.38 * fsl) + ')'; ctx.beginPath(); ctx.arc(fsx, fsy, r * 0.95, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 1;
+        for (var fsi = 0; fsi < 4; fsi++) {
+          var fsa = fsi * 1.571 + 0.4 + fsn * 0.6, fsh = Math.max(3, r * 0.42);
+          ctx.save(); ctx.translate(fsx + Math.cos(fsa) * r * 1.05, fsy + Math.sin(fsa) * r * 1.05); ctx.rotate(fsa);
+          ctx.fillStyle = 'rgba(185,228,252,' + fsl + ')'; ctx.strokeStyle = 'rgba(255,255,255,' + fsl + ')';
+          ctx.beginPath(); ctx.moveTo(fsh, 0); ctx.lineTo(0, -fsh * 0.32); ctx.lineTo(-fsh * 0.25, 0); ctx.lineTo(0, fsh * 0.32); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.restore();
+        }
+      }
       if (u.dummy) { ctx.save(); ctx.strokeStyle = P.gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.6, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
       if (u.hp < u.max && !(u.fade > 0)) {
         var bw = 30, bx = u.x * T - bw / 2, by = u.y * T - r - 12;
