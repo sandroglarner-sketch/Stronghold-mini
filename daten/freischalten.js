@@ -22,12 +22,13 @@
       digger: { besiegt: 'koenigrotbart' },
       trebuchet: { besiegt: 'jungkoenig' },
       mage: { besiegt: 'zarinfrostmantel' },
-      onager: { besiegt: 'steinmetzbrocken' }, // Belohnung für Steinmetz Brocken (Story-Platz 14, braucht ein Konto) // Belohnung für Zarin Frostmantel (Story-Platz 13, braucht ein Konto) // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
+      onager: { besiegt: 'steinmetzbrocken' },
+      adel: { besiegt: 'graefineisenhand' }, // Belohnung für Gräfin Eisenhand (Story-Platz 15, braucht ein Konto) // Belohnung für Steinmetz Brocken (Story-Platz 14, braucht ein Konto) // Belohnung für Zarin Frostmantel (Story-Platz 13, braucht ein Konto) // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)

@@ -101,5 +101,10 @@
       // greift bei 200 Gold an (Belagerungsschild, 2 Onager, 8 Schwertkämpfer, 8 Speerwerfer, 8 Reiter), spielt selbst den Onager (Belohnung: Onager); verteidigt mit Reitern, Speerwerfern, Schwertkämpfern
       steinmetzbrocken: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 2, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, huntLater: [{ after: 3, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 200, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 4, buy: [['onager', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 8, buy: [['javelin', 8]] }, { after: 16, buy: [['rider', 8]] }],
-                    defPlus: 1, defPool: ['rider', 'javelin', 'sword'], noOutput: 10 }
+                    defPlus: 1, defPool: ['rider', 'javelin', 'sword'], noOutput: 10 },
+      // «Gräfin Eisenhand» (Story-Platz 15, braucht ein Konto): 8 Bauern und 6 Holzfäller, Adelshaus ab 100 Gold (Belohnung: Adelshaus), Mauer bis Stufe 3 mit 4 Bogenschützen,
+      // jagt mit 1 Reiter (15 s Vorsprung, alle 30 s), greift bei 240 Gold an (Belagerungsschild, Rammbock + Katapult, 2 Ritter, 6 Bogen, 8 Speer, 20 Leiterträger)
+      graefineisenhand: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 6, gebaeude: [{ type: 'adel', gold: 100 }], huntLead: 15, hunt: [['rider', 1]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 240, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1], ['catapult', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 6]] }, { after: 7, buy: [['spear', 8]] }, { after: 15, buy: [['ladder', 20]] }],
+                    defPlus: 1, defPool: ['spear', 'archer', 'digger', 'knight', 'rider', 'mage'], noOutput: 10 }
   };
