@@ -47,3 +47,7 @@ create table if not exists public.freunde (
 alter table public.spieler enable row level security;
 alter table public.freunde enable row level security;
 grant all on public.spieler, public.freunde to service_role;
+
+-- 21.11.: Elo für Online-Partien (nur zwischen zwei Konten) und öffentliche Rangliste
+alter table public.spieler add column if not exists elo int not null default 1000;
+alter table public.spieler add column if not exists partien int not null default 0;

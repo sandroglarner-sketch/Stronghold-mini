@@ -50,6 +50,52 @@ function storyAus(s) {
 function storyEin(ids) { let m = 0; (ids || []).forEach((id) => { if (STORY_NR[id]) m |= 1 << (STORY_NR[id] - 1); }); return m ? 1000 + m : 0; }
 // Spalte spieler.besiegt (Text, ids mit Komma, ohne Grenze). Fehlt sie noch (SQL nicht ausgeführt), bleibt es bei der Bitmaske in spieler.story.
 let SPALTE_BESIEGT = true;
+// ---------- Elo (21.11.): Online-Partien zwischen zwei Konten; spieler.elo (Start 1000) und spieler.partien. Fehlen die Spalten, ist Elo aus (SPALTE_ELO false). ----------
+let SPALTE_ELO = true;
+const ELO_START = 1000, ELO_K = 32;
+function rangId(id) { return crypto.createHash('sha256').update(String(id)).digest('hex').slice(0, 10); } // öffentliche Kennung in der Rangliste (keine user_id)
+async function eloLesen(ids) {
+  if (!SPALTE_ELO || !KONTO_SECRET) return null;
+  try { return await db('GET', 'spieler?select=user_id,elo,partien&user_id=in.(' + ids.join(',') + ')'); }
+  catch (e) { if (e.status === 400) { SPALTE_ELO = false; return null; } throw e; }
+}
+function storyZahl(p) { const b = storyAus(p.story | 0); String(p.besiegt || '').split(',').forEach((id) => { if (id && b.indexOf(id) < 0) b.push(id); }); return b.filter((id) => STORY_IDS.indexOf(id) >= 0).length; }
+let rangCache = null, rangZeit = 0;
+async function bewerten(ma, w) { // w = Sieger-Team (0/1), -1 = unentschieden; nur wenn beide ein (verschiedenes) Konto haben
+  if (ma.bewertet) return; ma.bewertet = true;
+  const ua = ma.a.user, ub = ma.b.user;
+  if (!ua || !ub || ua.id === ub.id) return;
+  const rows = await eloLesen([ua.id, ub.id]); if (!rows) return;
+  const pa = rows.find((r) => r.user_id === ua.id) || {}, pb = rows.find((r) => r.user_id === ub.id) || {};
+  const ea = pa.elo === undefined || pa.elo === null ? ELO_START : pa.elo, eb = pb.elo === undefined || pb.elo === null ? ELO_START : pb.elo;
+  const erw = 1 / (1 + Math.pow(10, (eb - ea) / 400)), s = w === 0 ? 1 : w === 1 ? 0 : 0.5, d = Math.round(ELO_K * (s - erw));
+  await Promise.all([db('PATCH', 'spieler?user_id=eq.' + ua.id, { elo: ea + d, partien: (pa.partien | 0) + 1 }), db('PATCH', 'spieler?user_id=eq.' + ub.id, { elo: eb - d, partien: (pb.partien | 0) + 1 })]);
+  rangCache = null;
+  for (const z of online.get(ua.id) || []) z.send({ k: 'elo', elo: ea + d, diff: d, partien: (pa.partien | 0) + 1 });
+  for (const z of online.get(ub.id) || []) z.send({ k: 'elo', elo: eb - d, diff: -d, partien: (pb.partien | 0) + 1 });
+}
+function ergebnis(c, wRoh) { // ein Browser meldet das Ende der Online-Partie; gewertet wird, wenn beide dasselbe melden (oder der andere schon weg ist)
+  const ma = c.match; if (!ma || ma.bewertet) return;
+  const t = ma.a === c ? 0 : 1, w = wRoh === 0 || wRoh === 1 ? wRoh : -1, o = t === 0 ? ma.b : ma.a;
+  ma.erg = ma.erg || {}; ma.erg[t] = w;
+  if (ma.erg[1 - t] !== undefined) { if (ma.erg[1 - t] === w) bewerten(ma, w).catch((e) => console.error('elo', e.message)); else ma.bewertet = true; } // unterschiedlich: nicht werten
+  else if (!o.alive && w === t) bewerten(ma, w).catch((e) => console.error('elo', e.message));
+}
+function verlassen(c) { // Verbindung weg während einer Online-Partie: wer geht, verliert (ausser beide hatten das Ende schon gemeldet)
+  const ma = c.match; if (!ma || ma.bewertet || !ma.a.user || !ma.b.user) return;
+  const t = ma.a === c ? 0 : 1, w = ma.erg && ma.erg[1 - t] !== undefined ? ma.erg[1 - t] : ma.erg && ma.erg[t] !== undefined ? ma.erg[t] : 1 - t;
+  bewerten(ma, w).catch((e) => console.error('elo', e.message));
+}
+async function apiRangliste(res) {
+  if (!KONTO_SECRET || !SPALTE_ELO) return json(res, 200, { liste: [], aus: true });
+  if (!rangCache || Date.now() - rangZeit > 30000) {
+    let l;
+    try { l = await db('GET', 'spieler?select=user_id,name,elo,partien&partien=gt.0&order=elo.desc,partien.desc&limit=100'); }
+    catch (e) { if (e.status === 400) { SPALTE_ELO = false; return json(res, 200, { liste: [], aus: true }); } throw e; }
+    rangCache = (l || []).map((p) => ({ r: rangId(p.user_id), name: p.name || 'Spieler', elo: p.elo, partien: p.partien })); rangZeit = Date.now();
+  }
+  json(res, 200, { liste: rangCache });
+}
 async function besiegtLesen(userId, mitName) {
   const sel = 'name,story' + (SPALTE_BESIEGT ? ',besiegt' : '');
   let l;
@@ -155,6 +201,7 @@ const BILDER = {
 const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
+  if (req.method === 'GET' && url === '/api/rangliste') { apiRangliste(res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler' }); }); return; }
   if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch')) {
     (url === '/api/konto' ? apiKonto : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
     return;
@@ -276,6 +323,7 @@ class Client {
       }
       return;
     }
+    if (m.k === 'ergebnis') { ergebnis(this, m.w); return; } // Ende einer Online-Partie (für Elo)
     if (m.k === 'bstart' || m.k === 'bt' || m.k === 'bende') { botLive(this, m); return; } // Bot-Partie mit Zuschauern (der Spieler wartet nie auf den Server)
     sozial(this, m).catch((e) => { console.error('sozial', m.k, e.message); if (['freund', 'freunde', 'fordern', 'zuschauen'].includes(m.k)) this.send({ k: 'sozialfehler', text: 'Serverfehler (' + (e.status || e.message) + '). Ist die Datenbank eingerichtet (schema.sql)?' }); });
   }
@@ -286,6 +334,7 @@ class Client {
     const p = this.peer;
     this.peer = null;
     if (p) { p.peer = null; p.send({ k: 'left' }); }
+    verlassen(this); // Elo: wer mitten in der Partie geht, verliert
     matchAus(this.match);
     botAus(this, 'verlassen');
     if (this.schaut) zuschauenAus(this);
@@ -389,9 +438,14 @@ async function freundesliste(c) {
   if (!c.user || !KONTO_SECRET) return c.send({ k: 'freunde', liste: [], code: '' });
   const [rows, code] = await Promise.all([db('GET', 'freunde?select=freund_id&user_id=eq.' + c.user.id), eigenerCode(c.user.id).catch(() => '')]);
   const ids = (rows || []).map((r) => r.freund_id);
-  const profile = ids.length ? await db('GET', 'spieler?select=user_id,name,gesehen&user_id=in.(' + ids.join(',') + ')') : [];
+  let profile = [];
+  if (ids.length) {
+    const sel = 'user_id,name,gesehen,story' + (SPALTE_BESIEGT ? ',besiegt' : '') + (SPALTE_ELO ? ',elo,partien' : '');
+    try { profile = await db('GET', 'spieler?select=' + sel + '&user_id=in.(' + ids.join(',') + ')'); }
+    catch (e) { if (e.status !== 400) throw e; SPALTE_ELO = false; profile = await db('GET', 'spieler?select=user_id,name,gesehen,story&user_id=in.(' + ids.join(',') + ')'); }
+  }
   const liste = ids.map((id) => {
-    const p = (profile || []).find((x) => x.user_id === id) || {}, v = verbindung(id), e = { id, name: p.name || 'Spieler', gesehen: p.gesehen || null, status: 'offline' };
+    const p = (profile || []).find((x) => x.user_id === id) || {}, v = verbindung(id), e = { id, name: p.name || 'Spieler', gesehen: p.gesehen || null, status: 'offline', story: storyZahl(p), storyMax: STORY_IDS.length, elo: p.elo, partien: p.partien | 0 };
     if (v) {
       const ma = v.match && !v.match.aus && v.peer ? v.match : null;
       if (ma) { const ich = ma.a === v ? 0 : 1; e.status = 'pvp'; e.info = 'gegen ' + ma.namen[1 - ich]; e.seit = ma.start; e.zuschauer = ma.zuschauer.size; }
@@ -423,7 +477,10 @@ async function sozial(c, m) {
       else await db('POST', 'spieler', { user_id: c.user.id, name: c.user.name }, 'resolution=ignore-duplicates').catch(() => {});
       c.frei = await freischaltungen(c.user.id).catch(() => []);
     }
-    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt });
+    let elo = null, partien = 0;
+    const er = await eloLesen([c.user.id]).catch(() => null);
+    if (er && er[0]) { elo = er[0].elo; partien = er[0].partien | 0; }
+    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id) });
   }
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }

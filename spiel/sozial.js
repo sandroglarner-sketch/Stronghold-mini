@@ -187,11 +187,11 @@
       var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
         : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
       return '<div class="frzeile"><span class="frava" style="background:' + (f.status === 'offline' ? '#9aa3a6' : farbe) + '">' + esc(f.name.charAt(0).toUpperCase()) + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
-        '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '</span>' + knopf + '</div>';
+        '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '<span class="frwerte">' + (typeof f.elo === 'number' ? 'Elo ' + f.elo + (f.partien ? ' (' + f.partien + ' Partien)' : '') + ' · ' : '') + 'Story ' + (f.story | 0) + '/' + (f.storyMax | 0) + '</span></span>' + knopf + '</div>';
     }).join('');
   }
   function freundMsg(t, err) { var m = $('freundMsg'); m.textContent = t || ''; m.classList.toggle('err', !!err); }
-  $('freundeBtn').addEventListener('click', function () { freundeOpen(true); });
+  $('freundeBtn').addEventListener('click', function () { $('rangliste').hidden = true; freundeOpen(true); });
   $('freundeZu').addEventListener('click', function () { freundeOpen(false); });
   $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
   $('freundListe').addEventListener('click', function (e) {
@@ -246,10 +246,15 @@
   // ----- Nachrichten vom Server (alles ausser Partie selbst) -----
   function sozialMsg(m) {
     if (m.k === 'hello') { sozial.lastToken = undefined; sendeHallo(true); return; }
+    if (m.k === 'elo') { // nach einer gewerteten Online-Partie: neue Elo, Änderung im Ergebnisfenster
+      if (sozial.ich) { sozial.ich.elo = m.elo; sozial.ich.partien = m.partien | 0; }
+      if (!overlay.hidden && state === 'over') { var ez = document.createElement('div'); ez.className = 'ovelo'; ez.textContent = 'Elo: ' + m.elo + ' (' + (m.diff >= 0 ? '+' : '') + m.diff + ')'; ovText.appendChild(ez); }
+      return;
+    }
     if (m.k === 'name_ok') { if (sozial.ich) sozial.ich.name = m.name; $('kontoName').value = m.name; kontoMsg('Gespeichert: ' + m.name, true); kontoView(); return; }
     if (m.k === 'name_fehler') { kontoMsg(m.text || 'Name nicht gespeichert.'); return; }
     if (m.k === 'ich') {
-      sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [] } : null;
+      sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [], elo: typeof m.elo === 'number' ? m.elo : null, partien: m.partien | 0, rid: m.rid || '' } : null;
       if (sozial.ich) { // Siege aus dem Browser, die der Server noch nicht kennt, nachtragen
         var lokal = []; try { lokal = JSON.parse(localStorage.getItem('stronghold-besiegt') || '[]') || []; } catch (e) {}
         var fehlt = lokal.filter(function (id) { return sozial.ich.besiegt.indexOf(id) < 0; });
@@ -299,3 +304,23 @@
   window.addEventListener('resize', function () { if (!$('augen').hidden) augenPlatz(); });
   sandBtn.hidden = !tester;
   menuAktuell();
+
+  // ----- Rangliste (21.11.): öffentliche Liste nach Elo aus Online-Partien zwischen zwei Konten -----
+  function rangOpen(on) {
+    $('rangliste').hidden = !on;
+    if (!on) return;
+    $('rangliste').scrollTop = 0;
+    var ich = sozial && sozial.ich;
+    $('rangMein').textContent = !ONLINE ? 'Die Rangliste gibt es nur auf der Online-Seite.' : !ich ? 'Melde dich an (👤 Konto): Online-Partien zwischen zwei Konten zählen für die Elo.' : 'Deine Elo: ' + (typeof ich.elo === 'number' ? ich.elo : 1000) + ' · ' + (ich.partien | 0) + ' gewertete Partien';
+    var l = $('rangListe');
+    if (!ONLINE) { l.innerHTML = ''; return; }
+    l.innerHTML = '<p class="frmein">Lädt …</p>';
+    fetch('/api/rangliste').then(function (r) { return r.json(); }).then(function (d) {
+      if (d.aus) { l.innerHTML = '<p class="frmein">Die Rangliste ist noch nicht eingerichtet.</p>'; return; }
+      if (!d.liste || !d.liste.length) { l.innerHTML = '<p class="frmein">Noch keine gewerteten Partien. Spiel online gegen jemanden mit Konto!</p>'; return; }
+      var mein = ich && ich.rid;
+      l.innerHTML = d.liste.map(function (p, i) { return '<div class="rangzeile' + (p.r === mein ? ' ich' : '') + '"><span class="rp">' + (i + 1) + '.</span><span class="rn">' + esc(p.name) + '</span><span class="re">' + p.elo + '</span><span class="rs">' + p.partien + (p.partien === 1 ? ' Partie' : ' Partien') + '</span></div>'; }).join('');
+    }).catch(function () { l.innerHTML = '<p class="frmein">Die Rangliste konnte nicht geladen werden.</p>'; });
+  }
+  $('rangBtn').addEventListener('click', function () { freundeOpen(false); rangOpen(true); });
+  $('rangZu').addEventListener('click', function () { rangOpen(false); });

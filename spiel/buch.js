@@ -347,6 +347,7 @@
       showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
       return;
     }
+    if (pvp.on && !pvp.ended) pvpSend({ k: 'ergebnis', w: w }); // Ende an den Server melden (Elo); w = Sieger-Team, -1 = unentschieden
     if (pvp.on) { pvp.ended = true; if (pvp.me === 1 && w >= 0) w = 1 - w; } // im Online-Spiel immer aus deiner Sicht
     if (!pvp.on && note === undefined) { var neu = storyErgebnis(w); if (neu) note = (w === 0 ? 'Der gegnerische König ist gefallen.' : '') + neu; }
     state = 'over';
