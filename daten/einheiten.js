@@ -24,7 +24,7 @@
       // Die Grabspur bleibt trail Sekunden sichtbar. Danach ist er eine normale Einheit mit Marschtempo speed.
       digger: { cat: 'melee', name: 'Tunnelgräber', cost: 10, staerke: 1, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.30, key: '5', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
       // ram = greift nur Mauern und Kasernen an, keine Einheiten
-      ram: { cat: 'siege', name: 'Rammbock', cost: 35, staerke: 2, hp: 20, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
+      ram: { cat: 'siege', name: 'Rammbock', cost: 35, staerke: 2, hp: 25, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
       // wall = Mauer: im Abstand dist Kacheln um die eigene Kaserne herum gebogen, workers Arbeiter, die mit rate Leben pro Sekunde bis zu add Leben bringen
       // rate Leben pro Sekunde bauen (jeder). Erst wenn sie einmal fertig ist, blockiert sie gegnerische Einheiten.
       wall: { name: 'Mauer',     cost: 20, hp: 0, atk: 0, range: 0, speed: 0, cd: 1, r: 0.3, key: '8',
