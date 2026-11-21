@@ -105,8 +105,19 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('koenigWahl').hidden) koenigWahlOpen(false); });
 
   // ----- Namen zu Beginn: beide Namen in der Farbe ihrer Burg über und unter «vs» (Mitte), fliegen dann zur Burg und verschwinden; erst danach beginnt der Kampf -----
-  var intro = { t: 0, namen: ['', ''] }, INTRO = 2.3;
-  function startIntro(n0, n1) { intro.namen = [n0, n1]; intro.t = INTRO; }
+  var intro = { t: 0, namen: ['', ''], elos: [null, null] }, INTRO = 2.3;
+  function startIntro(n0, n1, elos) { intro.namen = [n0, n1]; intro.elos = Array.isArray(elos) ? elos : [null, null]; intro.t = INTRO; }
+  // Goldener Lorbeerkranz = Symbol für die Elo-Punkte (21.11.), als SVG für HTML und als Bild fürs Canvas
+  function kranzSvg(px) {
+    var bl = '', i, a, x, y, r = 8.2;
+    for (var sd = -1; sd <= 1; sd += 2) for (i = 0; i < 6; i++) {
+      a = (122 + i * 21) * Math.PI / 180; x = 12 + sd * Math.cos(a) * -r; y = 12.6 + Math.sin(a) * -r * -1;
+      bl += '<ellipse cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" rx="2.5" ry="1.15" transform="rotate(' + ((sd < 0 ? 180 - (122 + i * 21) : (122 + i * 21)) + 55 * sd).toFixed(1) + ' ' + x.toFixed(2) + ' ' + y.toFixed(2) + ')"/>';
+    }
+    return '<svg class="kranz" width="' + px + '" height="' + px + '" viewBox="0 0 24 24" aria-label="Elo" role="img"><g fill="#e2b33c" stroke="#9a6f12" stroke-width="0.5">' + bl +
+      '</g><path d="M11 20.2 L9.3 23 M13 20.2 L14.7 23" stroke="#c0392b" stroke-width="1.4" stroke-linecap="round"/><circle cx="12" cy="19.8" r="1.4" fill="#c0392b"/></svg>';
+  }
+  var kranzBild = new Image(); kranzBild.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kranzSvg(64).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '));
   function zeichneIntro() {
     var e = INTRO - intro.t, ein = Math.min(1, e / 0.25), flug = Math.max(0, Math.min(1, (e - 1.35) / 0.8)), f = flug * flug * (3 - 2 * flug);
     ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
@@ -120,6 +131,14 @@
       ctx.font = '700 ' + Math.round(46 * s) + 'px "Space Grotesk", system-ui, sans-serif';
       ctx.lineWidth = 8 * s; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.strokeText(intro.namen[t], x, y);
       ctx.fillStyle = t === 0 ? P.me : P.foe; ctx.fillText(intro.namen[t], x, y);
+      if (typeof intro.elos[t] === 'number') { // Elo unter dem Namen: goldener Kranz + Zahl
+        var ez = String(intro.elos[t]), eg = Math.round(28 * s), ey = y + 40 * s;
+        ctx.font = '700 ' + eg + 'px "Space Grotesk", system-ui, sans-serif';
+        var ew = ctx.measureText(ez).width, kg = eg * 1.25, ex = x - (kg + 6 * s + ew) / 2;
+        if (kranzBild.complete) ctx.drawImage(kranzBild, ex, ey - kg / 2, kg, kg);
+        ctx.textAlign = 'left'; ctx.lineWidth = 6 * s; ctx.strokeText(ez, ex + kg + 6 * s, ey);
+        ctx.fillStyle = '#a5780f'; ctx.fillText(ez, ex + kg + 6 * s, ey); ctx.textAlign = 'center';
+      }
     }
     ctx.globalAlpha = ein * (1 - Math.min(1, flug * 3));
     ctx.font = '600 26px "Space Grotesk", system-ui, sans-serif'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,255,255,0.9)';

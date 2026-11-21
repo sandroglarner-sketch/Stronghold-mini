@@ -698,3 +698,6 @@
   .rangzeile:nth-child(-n+3) .rp { color: #b8860b; }
   .frwerte { color: var(--muted); }
   .ovelo { margin-top: 8px; font-weight: 700; }
+  .kranz { vertical-align: -0.2em; }
+  .rangzeile .re { white-space: nowrap; }
+  .ovelo { display: flex; align-items: center; justify-content: center; gap: 4px; }

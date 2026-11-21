@@ -71,6 +71,7 @@ async function bewerten(ma, w) { // w = Sieger-Team (0/1), -1 = unentschieden; n
   const erw = 1 / (1 + Math.pow(10, (eb - ea) / 400)), s = w === 0 ? 1 : w === 1 ? 0 : 0.5, d = Math.round(ELO_K * (s - erw));
   await Promise.all([db('PATCH', 'spieler?user_id=eq.' + ua.id, { elo: ea + d, partien: (pa.partien | 0) + 1 }), db('PATCH', 'spieler?user_id=eq.' + ub.id, { elo: eb - d, partien: (pb.partien | 0) + 1 })]);
   rangCache = null;
+  for (const z of online.get(ua.id) || []) { if (z.user) z.user.elo = ea + d; } for (const z of online.get(ub.id) || []) { if (z.user) z.user.elo = eb - d; }
   for (const z of online.get(ua.id) || []) z.send({ k: 'elo', elo: ea + d, diff: d, partien: (pa.partien | 0) + 1 });
   for (const z of online.get(ub.id) || []) z.send({ k: 'elo', elo: eb - d, diff: -d, partien: (pb.partien | 0) + 1 });
 }
@@ -376,10 +377,11 @@ function starteMatch(a, b) {
   const frei = [a.frei || [], b.frei || []]; // freigeschaltete Karten nach daten/freischalten.js
   const namen = [a.user ? a.user.name : 'Gast', b.user ? b.user.name : 'Gast'];
   const koenige = [a.koenig || 'standard', b.koenig || 'standard']; // Aussehen der Könige (nur Optik)
-  const ma = { a, b, seed, acc, frei, namen, koenige, log: [], zuschauer: new Set(), start: Date.now() };
+  const elos = [a.user && typeof a.user.elo === 'number' ? a.user.elo : null, b.user && typeof b.user.elo === 'number' ? b.user.elo : null]; // Elo neben dem Namen im Intro (Gäste: null)
+  const ma = { a, b, seed, acc, frei, namen, elos, koenige, log: [], zuschauer: new Set(), start: Date.now() };
   a.match = b.match = ma;
-  a.send({ k: 'match', me: 0, seed, acc, frei, namen, koenige });
-  b.send({ k: 'match', me: 1, seed, acc, frei, namen, koenige });
+  a.send({ k: 'match', me: 0, seed, acc, frei, namen, elos, koenige });
+  b.send({ k: 'match', me: 1, seed, acc, frei, namen, elos, koenige });
   broadcastInfo();
 }
 // ---------- Freunde, Herausfordern, Zuschauen, Story ----------
@@ -480,6 +482,7 @@ async function sozial(c, m) {
     let elo = null, partien = 0;
     const er = await eloLesen([c.user.id]).catch(() => null);
     if (er && er[0]) { elo = er[0].elo; partien = er[0].partien | 0; }
+    c.user.elo = typeof elo === 'number' ? elo : (SPALTE_ELO && KONTO_SECRET ? ELO_START : null); // für die Anzeige vor Online-Partien
     return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id) });
   }
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
@@ -543,7 +546,7 @@ async function sozial(c, m) {
     if (c.schaut) zuschauenAus(c);
     c.schaut = ma; ma.zuschauer.add(c);
     if (ma.bot) c.send({ k: 'zuschau', bot: ma.bot, art: ma.art, seed: ma.seed, namen: ma.namen, koenige: ma.koenige, log: ma.log, letzte: ma.letzte, v: SPIEL_V });
-    else c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
+    else c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, elos: ma.elos, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
     return zuschauerMelden(ma);
   }
   if (m.k === 'nichtzuschauen') return zuschauenAus(c);
