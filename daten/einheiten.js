@@ -76,11 +76,11 @@
       // legt dort Feuer (13–15 s Brand), danach verliert der Gegner 40 % seines Goldes (aufgerundet; das Gold ist weg); dann zurück ins Haus.
       brand: { cat: 'building', name: 'Brandstifterhaus', cost: 40, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                gebaeude: { w: 1.1, h: 1.0, alle: 40, art: 'brand', prozent: 40, zuenden: 14, klauen: 15, stufen: [{ cost: 40, hp: 10, gold: 0 }] } },
-      // Kirche (Typ Gebäude): 50 Gold, 15 Leben (seit 21.11.). Fertig: nochmals kaufen = ein Priester betet 20 s (50 Gold), danach Gunst +1 (Balken über der Kirche).
+      // Kirche (Typ Gebäude): 60 Gold, 15 Leben (seit 21.11.). Fertig: nochmals kaufen = ein Priester betet 20 s (60 Gold), danach Gunst +1 (Balken über der Kirche).
       // Bei Gunst 5 kommt ein Unwetter über das gegnerische Drittel: jede Sekunde ein Blitz an einer zufälligen Stelle, 20 Schaden im Umkreis 1 an allem vom Gegner
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
-      kirche: { cat: 'building', name: 'Kirche', cost: 50, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-                gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 50, dauer: 20 }, gunstMax: 7, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 50, hp: 15, gold: 0 }] } },
+      kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
+                gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)

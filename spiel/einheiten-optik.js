@@ -92,8 +92,16 @@
     return P0;
   }
   // Betender Priester von oben (kniend, Kutte, weisser Kragen, gefaltete Hände); ang = Blickrichtung
-  function priesterMalen(c, x, y, psm, ang) {
+  function priesterMalen(c, x, y, psm, ang, geht) { // geht = läuft (Hände seitlich, wippt), sonst betet er (gefaltete Hände)
     c.save(); c.translate(x, y); c.rotate(ang);
+    if (geht) { // Laufen: Kutte, Kopf, Hände links und rechts, leichtes Wippen
+      var pw = Math.sin(performance.now() / 1000 * 10) * psm * 0.08;
+      c.fillStyle = '#3b2f2a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-psm * 0.15, 0, psm * 0.72, psm * 0.68, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.05 + pw, -psm * 0.62, psm * 0.14, 0, Math.PI * 2); c.arc(psm * 0.05 - pw, psm * 0.62, psm * 0.14, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#f2ece0'; c.fillRect(psm * 0.05, -psm * 0.12, psm * 0.3, psm * 0.24);
+      c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.15, 0, psm * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.restore(); return;
+    }
     c.fillStyle = '#3b2f2a'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(-psm * 0.15, 0, psm * 0.75, psm * 0.7, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Kutte
     c.fillStyle = '#f2ece0'; c.fillRect(psm * 0.05, -psm * 0.12, psm * 0.3, psm * 0.24); // Kragen
     c.fillStyle = '#e8b994'; c.beginPath(); c.arc(psm * 0.15, 0, psm * 0.36, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -717,10 +725,18 @@
             c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(gx0 + gi * gfw + 1, gy0, gfw - 2, 6);
             if (fill > 0) { c.fillStyle = gb >= gmax ? '#b9d4ff' : '#f0c63a'; c.fillRect(gx0 + gi * gfw + 1, gy0, (gfw - 2) * fill, 6); }
           }
-          if (KZ.gebet > 0) { // Priester kniet vor der Kirche und betet
-            var pext = Math.abs(kvy) * kh2 / 2 + Math.abs(kvx) * kw2 / 2, ppx = kvx * (pext + r * 0.4) + r * 0.35, ppy = kvy * (pext + r * 0.4), psm = r * CONFIG.units.farmer.r / CONFIG.units.kirche.r * 1.1, pg = 0.5 + 0.5 * Math.sin(know * 3);
-            c.fillStyle = 'rgba(255,240,170,' + (0.18 + 0.2 * pg) + ')'; c.beginPath(); c.arc(ppx, ppy, psm * 1.6, 0, Math.PI * 2); c.fill(); // Schein
-            priesterMalen(c, ppx, ppy, psm, Math.atan2(-kvy, -kvx)); // schaut zur Kirche
+          if (KZ.gebet > 0) { // Gebet (20 s): Priester kommt aus der Tür, dreht sich um, kniet und betet, steht auf und geht wieder hinein
+            var pext = Math.abs(kvy) * kh2 / 2 + Math.abs(kvx) * kw2 / 2, psm = r * CONFIG.units.farmer.r / CONFIG.units.kirche.r * 1.1, pg = 0.5 + 0.5 * Math.sin(know * 3);
+            var pdx = kvx * pext, pdy = kvy * pext, pzx = kvx * (pext + r * 0.75), pzy = kvy * (pext + r * 0.75); // Tür an der Vorderseite, Gebetsplatz davor
+            var pe = KG2.gebet.dauer - KZ.gebet, psm2 = function (q) { q = Math.max(0, Math.min(1, q)); return q * q * (3 - 2 * q); };
+            var pAus = Math.atan2(kvy, kvx), pEin = Math.atan2(-kvy, -kvx), ppx, ppy, pang, pgeht = true, pal = 1, pschein = 0;
+            if (pe < 2) { var pq = psm2(pe / 2); ppx = pdx + (pzx - pdx) * pq; ppy = pdy + (pzy - pdy) * pq; pang = pAus; pal = Math.min(1, pe / 0.4); } // kommt heraus
+            else if (pe < 2.8) { ppx = pzx; ppy = pzy; pang = pAus + Math.PI * psm2((pe - 2) / 0.8); pgeht = false; } // dreht sich zur Kirche um
+            else if (pe < 17.4) { ppx = pzx; ppy = pzy; pang = pEin; pgeht = false; pschein = Math.min(1, (pe - 2.8) / 0.6, (17.4 - pe) / 0.6); } // betet
+            else if (pe < 17.8) { ppx = pzx; ppy = pzy; pang = pEin; } // steht auf
+            else { var pq2 = psm2((pe - 17.8) / 2.2); ppx = pzx + (pdx - pzx) * pq2; ppy = pzy + (pdy - pzy) * pq2; pang = pEin; pal = Math.min(1, (KG2.gebet.dauer - pe) / 0.4); } // geht hinein
+            if (pschein > 0) { c.fillStyle = 'rgba(255,240,170,' + ((0.18 + 0.2 * pg) * pschein) + ')'; c.beginPath(); c.arc(ppx, ppy, psm * 1.6, 0, Math.PI * 2); c.fill(); } // Schein beim Beten
+            c.save(); c.globalAlpha *= pal; priesterMalen(c, ppx, ppy, psm * (pgeht ? 1 : 0.95), pang, pgeht); c.restore();
           }
         }
       }
