@@ -981,7 +981,12 @@
       // (2 Ritter, s2 Trebuchet, 4 Bogenschützen, 3x 4 Speerkämpfer, s18 15 Leiterträger), spielt selbst das Trebuchet (Belohnung: Trebuchet); verteidigt mit Speer, Bogen, Ritter, Reiter
       jungkoenig: { income: 10, incomeEvery: 5, farmers: 10, holzfaeller: 4, huntLead: 20, hunt: [['rider', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 200, lockSecs: 15,
                     attack: [{ after: 0, buy: [['knight', 2]] }, { after: 2, buy: [['trebuchet', 1]] }, { after: 5, buy: [['archer', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 8, buy: [['spear', 4]] }, { after: 10, buy: [['spear', 4]] }, { after: 18, buy: [['ladder', 15]] }],
-                    defPlus: 1, defPool: ['spear', 'archer', 'knight', 'rider'], defMage: 99, noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'archer', 'knight', 'rider'], defMage: 99, noOutput: 10 },
+      // «Zarin Frostmantel» (Story-Platz 13, braucht ein Konto): 8 Bauern, Schmiede ab 50 Gold (nur Stufe 1), Mauer bis Stufe 4 mit 6 Bogenschützen, jagt mit 1 Bogenschützen (alle 40 s),
+      // greift bei 210 Gold an (Belagerungsschild, Rammbock, 4 Ritter, Eismagier, 8 Speerwerfer, 15 Leiterträger), spielt selbst den Eismagier (Belohnung: Eismagier)
+      zarinfrostmantel: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 20, hunt: [['archer', 1]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 4, turm: { archer: 6 }, wallClear: true, attackGold: 210, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 6, buy: [['mage', 1]] }, { after: 8, buy: [['javelin', 8]] }, { after: 14, buy: [['ladder', 15]] }],
+                    defPlus: 1, defPool: ['archer', 'knight', 'mage', 'spear', 'digger'], defMage: 99, noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1168,7 +1173,7 @@
     { id: 'kalifsandsturm', name: 'Kalif Sandsturm', koenig: 'kalifsandsturm', platz: null, logik: null },
     { id: 'fuerstbischofgerold', name: 'Fürstbischof Gerold', koenig: 'fuerstbischofgerold', platz: 10, logik: 'fuerstbischofgerold', nr: 14 }, // seit 20.11. 16:41, braucht ein Konto
     { id: 'schwarzeritter', name: 'Der Schwarze Ritter', koenig: 'schwarzeritter', platz: null, logik: null },
-    { id: 'zarinfrostmantel', name: 'Zarin Frostmantel', koenig: 'zarinfrostmantel', platz: null, logik: null },
+    { id: 'zarinfrostmantel', name: 'Zarin Frostmantel', koenig: 'zarinfrostmantel', platz: 13, logik: 'zarinfrostmantel', nr: 17 }, // seit 21.11. 13:37, braucht ein Konto
     { id: 'junkerhabgier', name: 'Junker Habgier', koenig: 'junkerhabgier', platz: null, logik: null },
     { id: 'vogtgrimmbart', name: 'Vogt Grimmbart', koenig: 'vogtgrimmbart', platz: null, logik: null },
     { id: 'kaiseringoldfeder', name: 'Kaiserin Goldfeder', koenig: 'kaiseringoldfeder', platz: null, logik: null },
@@ -1217,12 +1222,13 @@
       javelin: { besiegt: 'wolfsjarl' },
       kirche: { besiegt: 'fuerstbischofgerold' },
       digger: { besiegt: 'koenigrotbart' },
-      trebuchet: { besiegt: 'jungkoenig' }, // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
+      trebuchet: { besiegt: 'jungkoenig' },
+      mage: { besiegt: 'zarinfrostmantel' }, // Belohnung für Zarin Frostmantel (Story-Platz 13, braucht ein Konto) // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true } } },
+    story: { kontoAb: '', gegner: { loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
@@ -1248,7 +1254,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '8b58713aea'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '6f8f5da1f9'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
