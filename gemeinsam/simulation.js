@@ -27,7 +27,8 @@
     for (var j = 0; j < units.length; j++) {
       var sv = units[j];
       if (sv.team === team || sv.hp <= 0 || sv.dig || sv.inCastle) continue;
-      if (hyp(sv.x - cx, sv.y - cy) > d.splash) continue;
+      var sG = CONFIG.units[sv.type] && CONFIG.units[sv.type].gebaeude; // Gebäude: Abstand zum Rand (w x h), nicht zur Mitte (wie bei der Burg)
+      if ((sG ? hyp(Math.max(0, Math.abs(sv.x - cx) - sG.w / 2), Math.max(0, Math.abs(sv.y - cy) - sG.h / 2)) : hyp(sv.x - cx, sv.y - cy)) > d.splash) continue;
       if (sv !== exclude) { hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock; }
       if (d.slow) sv.slow = d.slow.secs;
     }
