@@ -701,3 +701,6 @@
   .kranz { vertical-align: -0.2em; }
   .rangzeile .re { white-space: nowrap; }
   .ovelo { display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .frava.frkoenig { background: #e9eef0; }
+  .frava.frkoenig .fkrund { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; display: block; }
+  .frava.frkoenig canvas { width: 36px; height: 36px; display: block; transform: scale(1.45) translate(-1px, 2px); }

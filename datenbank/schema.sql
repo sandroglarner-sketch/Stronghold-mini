@@ -51,3 +51,6 @@ grant all on public.spieler, public.freunde to service_role;
 -- 21.11.: Elo für Online-Partien (nur zwischen zwei Konten) und öffentliche Rangliste
 alter table public.spieler add column if not exists elo int not null default 1000;
 alter table public.spieler add column if not exists partien int not null default 0;
+
+-- 21.11.: gewählter König (nur Optik) fürs Bild in der Freundesliste
+alter table public.spieler add column if not exists koenig text;

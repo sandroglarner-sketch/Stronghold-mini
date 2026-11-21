@@ -186,9 +186,10 @@
         : '<span style="color:var(--muted)">' + gesehen(f.gesehen) + '</span>';
       var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
         : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
-      return '<div class="frzeile"><span class="frava" style="background:' + (f.status === 'offline' ? '#9aa3a6' : farbe) + '">' + esc(f.name.charAt(0).toUpperCase()) + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
+      return '<div class="frzeile"><span class="frava frkoenig"><b class="fkrund"><canvas width="36" height="36" data-fk="' + esc(f.koenig || 'standard') + '"' + (f.status === 'offline' ? ' data-grau="1"' : '') + ' aria-hidden="true"></canvas></b>' + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
         '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '<span class="frwerte">' + (typeof f.elo === 'number' ? kranzSvg(15) + ' ' + f.elo + (f.partien ? ' (' + f.partien + ' Partien)' : '') + ' · ' : '') + 'Story ' + (f.story | 0) + '/' + (f.storyMax | 0) + '</span></span>' + knopf + '</div>';
     }).join('');
+    Array.prototype.forEach.call(l.querySelectorAll('canvas[data-fk]'), function (cv) { koenigBild(cv, cv.getAttribute('data-fk'), 0, !!cv.getAttribute('data-grau')); }); // Bild = gewählter König des Freundes
   }
   function freundMsg(t, err) { var m = $('freundMsg'); m.textContent = t || ''; m.classList.toggle('err', !!err); }
   $('freundeBtn').addEventListener('click', function () { $('rangliste').hidden = true; freundeOpen(true); });

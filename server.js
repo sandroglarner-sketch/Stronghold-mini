@@ -52,6 +52,15 @@ function storyEin(ids) { let m = 0; (ids || []).forEach((id) => { if (STORY_NR[i
 let SPALTE_BESIEGT = true;
 // ---------- Elo (21.11.): Online-Partien zwischen zwei Konten; spieler.elo (Start 1000) und spieler.partien. Fehlen die Spalten, ist Elo aus (SPALTE_ELO false). ----------
 let SPALTE_ELO = true;
+// Gewählter König (nur Optik) fürs Freundesbild: spieler.koenig (text); ohne Spalte nur solange der Server läuft (letzterKoenig)
+let SPALTE_KOENIG = true;
+const letzterKoenig = new Map();
+function koenigMerken(c) {
+  if (!c.user) return;
+  if (letzterKoenig.get(c.user.id) === c.koenig) return;
+  letzterKoenig.set(c.user.id, c.koenig);
+  if (KONTO_SECRET && SPALTE_KOENIG) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { koenig: c.koenig }).catch((e) => { if (e.status === 400) SPALTE_KOENIG = false; });
+}
 const ELO_START = 1000, ELO_K = 32;
 function rangId(id) { return crypto.createHash('sha256').update(String(id)).digest('hex').slice(0, 10); } // öffentliche Kennung in der Rangliste (keine user_id)
 async function eloLesen(ids) {
@@ -442,13 +451,18 @@ async function freundesliste(c) {
   const ids = (rows || []).map((r) => r.freund_id);
   let profile = [];
   if (ids.length) {
-    const sel = 'user_id,name,gesehen,story' + (SPALTE_BESIEGT ? ',besiegt' : '') + (SPALTE_ELO ? ',elo,partien' : '');
-    try { profile = await db('GET', 'spieler?select=' + sel + '&user_id=in.(' + ids.join(',') + ')'); }
-    catch (e) { if (e.status !== 400) throw e; SPALTE_ELO = false; profile = await db('GET', 'spieler?select=user_id,name,gesehen,story&user_id=in.(' + ids.join(',') + ')'); }
+    const sel = () => 'user_id,name,gesehen,story' + (SPALTE_BESIEGT ? ',besiegt' : '') + (SPALTE_ELO ? ',elo,partien' : '') + (SPALTE_KOENIG ? ',koenig' : '');
+    try { profile = await db('GET', 'spieler?select=' + sel() + '&user_id=in.(' + ids.join(',') + ')'); }
+    catch (e) {
+      if (e.status !== 400) throw e;
+      if (SPALTE_KOENIG) { SPALTE_KOENIG = false; try { profile = await db('GET', 'spieler?select=' + sel() + '&user_id=in.(' + ids.join(',') + ')'); } catch (e2) { if (e2.status !== 400) throw e2; profile = null; } }
+      if (!profile) { SPALTE_ELO = false; profile = await db('GET', 'spieler?select=user_id,name,gesehen,story&user_id=in.(' + ids.join(',') + ')'); }
+    }
   }
   const liste = ids.map((id) => {
-    const p = (profile || []).find((x) => x.user_id === id) || {}, v = verbindung(id), e = { id, name: p.name || 'Spieler', gesehen: p.gesehen || null, status: 'offline', story: storyZahl(p), storyMax: STORY_IDS.length, elo: p.elo, partien: p.partien | 0 };
+    const p = (profile || []).find((x) => x.user_id === id) || {}, v = verbindung(id), e = { id, name: p.name || 'Spieler', gesehen: p.gesehen || null, status: 'offline', story: storyZahl(p), storyMax: STORY_IDS.length, elo: p.elo, partien: p.partien | 0, koenig: koenigId(letzterKoenig.get(id) || p.koenig) };
     if (v) {
+      if (v.koenig) e.koenig = v.koenig;
       const ma = v.match && !v.match.aus && v.peer ? v.match : null;
       if (ma) { const ich = ma.a === v ? 0 : 1; e.status = 'pvp'; e.info = 'gegen ' + ma.namen[1 - ich]; e.seit = ma.start; e.zuschauer = ma.zuschauer.size; }
       else if (v.botma && !v.botma.aus) { e.status = 'pvp'; e.info = (v.botma.art === 'story' ? 'Story gegen ' : 'gegen ') + v.botma.namen[1]; e.seit = v.botma.start; e.zuschauer = v.botma.zuschauer.size; } // Bot-Partie: auch zuschaubar
@@ -482,10 +496,11 @@ async function sozial(c, m) {
     let elo = null, partien = 0;
     const er = await eloLesen([c.user.id]).catch(() => null);
     if (er && er[0]) { elo = er[0].elo; partien = er[0].partien | 0; }
+    koenigMerken(c);
     c.user.elo = typeof elo === 'number' ? elo : (SPALTE_ELO && KONTO_SECRET ? ELO_START : null); // für die Anzeige vor Online-Partien
     return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id) });
   }
-  if (m.k === 'koenig') { c.koenig = koenigId(m.id); return; }
+  if (m.k === 'koenig') { c.koenig = koenigId(m.id); koenigMerken(c); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }
   if (m.k === 'name') { // eigenen Spielernamen ändern (jederzeit)
