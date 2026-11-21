@@ -96,5 +96,10 @@
       // greift bei 210 Gold an (Belagerungsschild, Rammbock, 4 Ritter, Eismagier, 8 Speerwerfer, 15 Leiterträger), spielt selbst den Eismagier (Belohnung: Eismagier)
       zarinfrostmantel: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 20, hunt: [['archer', 1]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 4, turm: { archer: 6 }, wallClear: true, attackGold: 210, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 6, buy: [['mage', 1]] }, { after: 8, buy: [['javelin', 8]] }, { after: 14, buy: [['ladder', 15]] }],
-                    defPlus: 1, defPool: ['archer', 'knight', 'mage', 'spear', 'digger'], noOutput: 10 }
+                    defPlus: 1, defPool: ['archer', 'knight', 'mage', 'spear', 'digger'], noOutput: 10 },
+      // «Steinmetz Brocken» (Story-Platz 14, braucht ein Konto): 8 Bauern und 2 Holzfäller, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt mit 2 Schwertkämpfern (15 s Vorsprung, alle 40 s), 3 s später 2 Speerwerfer,
+      // greift bei 200 Gold an (Belagerungsschild, 2 Onager, 8 Schwertkämpfer, 8 Speerwerfer, 8 Reiter), spielt selbst den Onager (Belohnung: Onager); verteidigt mit Reitern, Speerwerfern, Schwertkämpfern
+      steinmetzbrocken: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 2, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, huntLater: [{ after: 3, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 200, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 4, buy: [['onager', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 8, buy: [['javelin', 8]] }, { after: 16, buy: [['rider', 8]] }],
+                    defPlus: 1, defPool: ['rider', 'javelin', 'sword'], noOutput: 10 }
   };
