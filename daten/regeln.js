@@ -4,7 +4,7 @@
     GOLD_EVERY: 5,
     GOLD_AMOUNT: 10,
     START_GOLD: 10,
-    UNIT_HEAL: { delay: 10, rate: 1 }, // jede Einheit heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
+    UNIT_HEAL: { delay: 15, rate: 1 }, // jede Einheit, jedes Gebäude, Burg und Mauer heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
     GOLD_MAX: Infinity, SANDBOX_GOLD: 9999, // GOLD_MAX = mehr Gold kann niemand haben (alle Modi; Infinity = keine Obergrenze)
      SANDBOX_FOE_GOLD: 160, // Sandbox-Knopf im Menü: du startest mit so viel Gold, der Gegner mit so viel
     BASE_HP: 40,

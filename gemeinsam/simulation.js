@@ -121,7 +121,7 @@
       if (d.gebaeude) { // Gebäude (Schmiede): steht still; fertig bringt es Gold (Stufe) und heilt wie die Mauer
         u.hit = Math.max(0, u.hit - dt); u.slow = 0;
         if (!u.bau) {
-          if (u.hp < u.max) u.hp = Math.round(Math.min(u.max, u.hp + WALL.heal * dt) * 1e6) / 1e6;
+          if (u.hp < u.max && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.round(Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
           var GD = d.gebaeude, galt = u.gT; u.gT += dt;
           if (GD.art === 'dieb' && !tut.on) { // Dieb: klaut in der gegnerischen Burg, liefert in der eigenen ab
             var fb = bases[1 - u.team], ob = bases[u.team];
@@ -677,7 +677,7 @@
           for (var oi = 0; oi < olds.length; oi++) { olds[oi].gar = null; olds[oi].tower = false; olds[oi].seat = false; seekSlot(olds[oi]); }
         }
       }
-      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1]) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + WALL.heal * dt) * 1e6) / 1e6;
+      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1] && clock - hw.lastHit >= CONFIG.UNIT_HEAL.delay) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
     }
     bases[0].flash = Math.max(0, bases[0].flash - dt);
     bases[1].flash = Math.max(0, bases[1].flash - dt);
@@ -690,7 +690,7 @@
         effects.push({ kind: 'blast', x: (cs.x1 + cs.x2) / 2, y: (cs.y1 + cs.y2) / 2, r: 1.6, t: 0, dur: 0.6 });
       } else if (cs.down && cs.hp >= 1) cs.down = false;
       if (!cs.down) {
-        if (cs.hp < CONFIG.BASE_HP) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + WALL.heal * dt) * 1e6) / 1e6;
+        if (cs.hp < CONFIG.BASE_HP && clock - cs.lastHit >= CONFIG.UNIT_HEAL.delay) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
       }
     }
     if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));

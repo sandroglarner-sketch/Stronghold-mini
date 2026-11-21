@@ -859,7 +859,7 @@
     GOLD_EVERY: 5,
     GOLD_AMOUNT: 10,
     START_GOLD: 10,
-    UNIT_HEAL: { delay: 10, rate: 1 }, // jede Einheit heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
+    UNIT_HEAL: { delay: 15, rate: 1 }, // jede Einheit, jedes Gebäude, Burg und Mauer heilt rate Leben pro Sekunde, wenn sie delay Sekunden lang keinen Schaden erlitten hat
     GOLD_MAX: Infinity, SANDBOX_GOLD: 9999, // GOLD_MAX = mehr Gold kann niemand haben (alle Modi; Infinity = keine Obergrenze)
      SANDBOX_FOE_GOLD: 160, // Sandbox-Knopf im Menü: du startest mit so viel Gold, der Gegner mit so viel
     BASE_HP: 40,
@@ -1079,7 +1079,7 @@
       // multi.spread um das Ziel verteilen (je Flächenschaden splash), fliegen über Mauern (fire). Zwei Arten: bekommt es beim Kauf einen Platz auf dem grossen Turm (Mauer 5),
       // baut es sich dort auf und schiesst auf Gegner in Reichweite. Sonst (spot): fährt es zu einem zufälligen Punkt spot.dist vom Zielpunkt entfernt (Richtung eigene Seite,
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
-      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 8, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
+      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 10, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
@@ -1248,7 +1248,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '60f2bd2f2a'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'e5f4ed90cb'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2547,7 +2547,7 @@
       if (d.gebaeude) { // Gebäude (Schmiede): steht still; fertig bringt es Gold (Stufe) und heilt wie die Mauer
         u.hit = Math.max(0, u.hit - dt); u.slow = 0;
         if (!u.bau) {
-          if (u.hp < u.max) u.hp = Math.round(Math.min(u.max, u.hp + WALL.heal * dt) * 1e6) / 1e6;
+          if (u.hp < u.max && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.round(Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
           var GD = d.gebaeude, galt = u.gT; u.gT += dt;
           if (GD.art === 'dieb' && !tut.on) { // Dieb: klaut in der gegnerischen Burg, liefert in der eigenen ab
             var fb = bases[1 - u.team], ob = bases[u.team];
@@ -3103,7 +3103,7 @@
           for (var oi = 0; oi < olds.length; oi++) { olds[oi].gar = null; olds[oi].tower = false; olds[oi].seat = false; seekSlot(olds[oi]); }
         }
       }
-      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1]) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + WALL.heal * dt) * 1e6) / 1e6;
+      if (hw.stage >= 1 && hw.hp < WALL.stages[hw.stage - 1] && clock - hw.lastHit >= CONFIG.UNIT_HEAL.delay) hw.hp = Math.round(Math.min(WALL.stages[hw.stage - 1], hw.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
     }
     bases[0].flash = Math.max(0, bases[0].flash - dt);
     bases[1].flash = Math.max(0, bases[1].flash - dt);
@@ -3116,7 +3116,7 @@
         effects.push({ kind: 'blast', x: (cs.x1 + cs.x2) / 2, y: (cs.y1 + cs.y2) / 2, r: 1.6, t: 0, dur: 0.6 });
       } else if (cs.down && cs.hp >= 1) cs.down = false;
       if (!cs.down) {
-        if (cs.hp < CONFIG.BASE_HP) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + WALL.heal * dt) * 1e6) / 1e6;
+        if (cs.hp < CONFIG.BASE_HP && clock - cs.lastHit >= CONFIG.UNIT_HEAL.delay) cs.hp = Math.round(Math.min(CONFIG.BASE_HP, cs.hp + CONFIG.UNIT_HEAL.rate * dt) * 1e6) / 1e6; // heilt wie Einheiten (UNIT_HEAL)
       }
     }
     if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));
