@@ -20,6 +20,7 @@
   button.klein { padding: 3px 8px; font-size: 0.82rem; }
   button.weg { border: 0; background: transparent; color: var(--muted); font-size: 1.05rem; padding: 2px 6px; }
   button.weg:hover { color: var(--foe); }
+  .spzl li, .spzl .spz { display: flex; align-items: center; gap: 6px; } .spzl li span { flex: 1; } .spzl .spz input { flex: 1; min-width: 0; } .spzl .spz { margin-top: 6px; }
   main { max-width: 1280px; margin: 0 auto; padding: 16px 18px 60px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
   @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
   section.karte { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px 14px; margin-bottom: 14px; }
@@ -172,8 +173,9 @@
     <section class="karte">
       <h2>Spezialregeln</h2>
       <p class="hilfe">Alles, was die Felder oben nicht abdecken. Beschreibe es in eigenen Worten; Claude baut es beim Übernehmen ein.</p>
-      <ul class="aend" id="spezialAlt"></ul>
-      <textarea id="f_spezial" data-k="spezial" rows="5" style="width:100%;background:var(--input);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;color:var(--fg)" placeholder="z. B. «Wenn du einen Rammbock schickst, kauft er sofort 2 Ritter.»"></textarea>
+      <ul class="aend spzl" id="spezialAlt"></ul>
+      <div class="spzl" id="spezialNeu"></div>
+      <button type="button" class="klein" id="spezAdd" style="margin-top:6px">+ Regel hinzufügen</button>
     </section>
   </div>
 
@@ -272,7 +274,8 @@
   function fuellen() {
     $('f_name').value = cur.name; $('f_id').value = cur.id; platzOptionen();
     $('f_id').disabled = !cur.neu; // bestehende Bots behalten ihre ID
-    $('f_spezial').value = cur.spezial || '';
+    spzZeilen = (cur.spezial || '').split('\n'); if (!spzZeilen.length) spzZeilen = [''];
+    spezialNeuMalen();
     $('f_storyKonto').checked = !!cur.storyKonto;
     $('f_belohnung').innerHTML = '<option value="">– keine –</option>' + Object.keys(CONFIG.units).filter(function (t) { var u = CONFIG.units[t]; return !u.hidden && u.cost > 0 && t !== 'wall'; }).map(function (t) {
       var r = CONFIG.FREI.einheiten[t], von = r && r.besiegt && r.besiegt !== cur.id ? ' – schon Belohnung von ' + r.besiegt : r && !r.besiegt ? ' – heute: ' + (r.freunde ? r.freunde + ' Freund(e)' : 'Account') : '';
@@ -395,13 +398,30 @@
     $('turmSumme').innerHTML = '<span>Schützenplätze: <b class="' + (s > p.schuetzen ? 'rot' : '') + '">' + s + ' von ' + p.schuetzen + '</b></span><span>Belagerungsplätze: <b class="' + (b > p.belagerung ? 'rot' : '') + '">' + b + ' von ' + p.belagerung + '</b></span>' +
       (s > p.schuetzen || b > p.belagerung ? '<span class="rot">Mehr als Plätze vorhanden (bei dieser Ausbaustufe).</span>' : '');
   }
-  var SPEZIAL_TEXT = { keinAngriff: function (v) { return v ? 'greift nie an' : null; }, gebetAb: function (v) { return 'betet in der Kirche, sobald er ' + v + ' Gold hat'; }, gebMax: function (v) { return 'Gebäude höchstens bis Stufe ' + Object.keys(v).map(function (t) { return v[t] + ' (' + uName(t) + ')'; }).join(', '); }, defMax: function (v) { return 'in einer Verteidigung höchstens ' + Object.keys(v).map(function (t) { return v[t] + ' ' + uName(t); }).join(', '); }, defMage: function (v) { return v >= 99 ? null : 'Magier in der Verteidigung ab ' + v + ' benötigter Stärke'; }, defMageAtt: function (v) { return 'Magier in der Verteidigung, wenn du mindestens ' + v + ' Stärke hast'; },
-    defDiggerAt: function (v) { return 'Tunnelgräber in der Verteidigung, wenn du ' + v + ' Bogenschützen + Magier hast'; }, defDiggerVsCatapult: function (v) { return 'mindestens ' + v + ' Tunnelgräber in der Verteidigung, wenn du ein Katapult auf dem Feld hast'; } };
-  function spezialAlt() {
+  var SPEZIAL_TEXT = { keinAngriff: function (v) { return v ? 'greift nie an' : null; }, gebetAb: function (v) { return 'betet in der Kirche, sobald er ' + v + ' Gold hat'; }, gebMax: function (v) { return 'Gebäude höchstens bis Stufe ' + Object.keys(v).map(function (t) { return v[t] + ' (' + uName(t) + ')'; }).join(', '); }, defMax: function (v) { return 'in einer Verteidigung höchstens ' + Object.keys(v).map(function (t) { return v[t] + ' ' + uName(t); }).join(', '); }, defDiggerAt: function (v) { return 'Tunnelgräber in der Verteidigung, wenn du ' + v + ' Bogenschützen + Magier hast'; }, defDiggerVsCatapult: function (v) { return 'mindestens ' + v + ' Tunnelgräber in der Verteidigung, wenn du ein Katapult auf dem Feld hast'; } };
+  function spezialAlt() { // eingebaute Spezialregeln: je Zeile mit ✕ zum Entfernen
     var L = cur.logik, l = [];
-    Object.keys(L).forEach(function (k) { if (SPEZIAL_TEXT[k]) { var t = SPEZIAL_TEXT[k](L[k]); if (t) l.push(t + ' (' + k + ': ' + (typeof L[k] === 'object' ? JSON.stringify(L[k]) : L[k]) + ')'); } else if (REIHE.indexOf(k) < 0) l.push(k + ': ' + JSON.stringify(L[k])); });
-    $('spezialAlt').innerHTML = l.length ? '<li><b>Schon eingebaut:</b></li>' + l.map(function (x) { return '<li>' + x.replace(/</g, '&lt;') + '</li>'; }).join('') : '';
+    if (L) Object.keys(L).forEach(function (k) { if (SPEZIAL_TEXT[k]) { var t = SPEZIAL_TEXT[k](L[k]); if (t) l.push([k, t + ' (' + k + ': ' + (typeof L[k] === 'object' ? JSON.stringify(L[k]) : L[k]) + ')']); } else if (REIHE.indexOf(k) < 0) l.push([k, k + ': ' + JSON.stringify(L[k])]); });
+    var ul = $('spezialAlt');
+    ul.innerHTML = l.length ? '<li><b>Schon eingebaut:</b></li>' + l.map(function (x) { return '<li><span>' + x[1].replace(/</g, '&lt;') + '</span><button type="button" class="weg" data-weg="' + x[0] + '" aria-label="Regel entfernen" title="Entfernen">✕</button></li>'; }).join('') : '';
   }
+  // eigene Spezialregeln (Text): eine Zeile pro Regel, mit ✕ und «+ Regel hinzufügen»
+  var spzZeilen = [''];
+  function spzSpeichern() { var t = spzZeilen.map(function (z) { return z.trim(); }).filter(Boolean).join('\n'); if (t) cur.spezial = t; else delete cur.spezial; geaendert(); }
+  function spezialNeuMalen() {
+    var box = $('spezialNeu'); box.innerHTML = '';
+    if (!spzZeilen.length) spzZeilen = [''];
+    spzZeilen.forEach(function (z, i) {
+      var d = document.createElement('div'); d.className = 'spz';
+      d.innerHTML = '<input type="text" placeholder="z. B. «Wenn du einen Rammbock schickst, kauft er sofort 2 Ritter.»" aria-label="Spezialregel"><button type="button" class="weg" aria-label="Regel löschen" title="Löschen">✕</button>';
+      var inp = d.querySelector('input'); inp.value = z;
+      inp.addEventListener('input', function () { spzZeilen[i] = inp.value; spzSpeichern(); });
+      d.querySelector('.weg').addEventListener('click', function () { spzZeilen.splice(i, 1); spezialNeuMalen(); spzSpeichern(); });
+      box.appendChild(d);
+    });
+  }
+  $('spezAdd').addEventListener('click', function () { spzZeilen.push(''); spezialNeuMalen(); var l = $('spezialNeu').querySelectorAll('input'); l[l.length - 1].focus(); });
+  $('spezialAlt').addEventListener('click', function (e) { var k = e.target.getAttribute && e.target.getAttribute('data-weg'); if (!k || !cur.logik) return; delete cur.logik[k]; spezialAlt(); geaendert(); });
   function gebMalen() { // Gebäude-Tabelle
     var L = cur.logik, tb = $('gebRows'), n = {}; if (!L.gebaeude) L.gebaeude = [];
     tb.innerHTML = '';
@@ -434,7 +454,6 @@
   document.querySelector('main').addEventListener('input', function (e) {
     var k = e.target.getAttribute('data-k'); if (!k) return;
     var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    if (k === 'spezial') { if (v.trim()) cur.spezial = v; else delete cur.spezial; geaendert(); return; }
     if (k.indexOf('turm.') === 0 && cur.logik) { var tt = k.slice(5), n = Math.max(0, Math.floor(+v || 0)); if (n) cur.logik.turm[tt] = n; else delete cur.logik.turm[tt]; turmSumme(); geaendert(); return; }
     if (k === 'storyKonto') { cur.storyKonto = !!v; geaendert(); return; }
     if (k === 'belohnung') { cur.belohnung = v; geaendert(); return; }
@@ -515,7 +534,7 @@
   function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
 
   // ----- Code für das Spiel -----
-  var REIHE = ['income', 'incomeEvery', 'farmers', 'karawanen', 'holzfaeller', 'gebaeude', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defMage', 'defMageAtt', 'defDiggerAt', 'defDiggerVsCatapult', 'defMax', 'noOutput'];
+  var REIHE = ['income', 'incomeEvery', 'farmers', 'karawanen', 'holzfaeller', 'gebaeude', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defPlus', 'defPool', 'defDiggerAt', 'defDiggerVsCatapult', 'defMax', 'noOutput'];
   function js(v) { return JSON.stringify(v).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
   function logikCode(b) {
     var L = b.logik, teile = [];

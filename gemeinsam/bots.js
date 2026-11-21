@@ -150,7 +150,7 @@
     var defHold = false; // Verteidigung geht vor: solange sie gebraucht wird, kein Gold für die Neubesetzung der Türme
     if (free && ((isAttacked() && !enemyIsWeak()) || invaded || catOnly)) {
       var nDef = Math.max(0, countFighters(0, true) - countTowerUnits(1) + R.defPlus), tDef, nBought = 0;
-      var pool = nDef >= R.defMage || (R.defMageAtt && countFighters(0, true) >= R.defMageAtt) ? R.defPool.concat(['mage']) : R.defPool;
+      var pool = R.defPool; // Eismagier nur, wenn er in defPool steht (defMage/defMageAtt gibt es seit 21.11. nicht mehr)
       if (R.defDiggerAt) { // Tunnelgräber nur, wenn du genug Bogenschützen und Magier hast
         var shooters = 0;
         for (i = 0; i < units.length; i++) if (units[i].team === 0 && units[i].hp > 0 && !units[i].dig && (units[i].type === 'archer' || units[i].type === 'mage')) shooters++;
