@@ -76,9 +76,9 @@
       wolfsjarl: { income: 10, incomeEvery: 5, farmers: 6, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['javelin', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 150, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 8, buy: [['spear', 8]] }, { after: 9, buy: [['javelin', 8]] }, { after: 13, buy: [['ladder', 15]] }],
                     defPlus: 1, defPool: ['catapult', 'spear', 'javelin'], defMax: { catapult: 1 }, noOutput: 10 },
-      // «Fürstbischof Gerold» (Story-Platz 10, braucht ein Konto): greift nie an (keinAngriff); 6 Bauern und 6 Holzfäller, baut ab 120 Gold eine Kirche (Belohnung: Kirche)
-      // und lässt danach immer, wenn er 50 Gold hat, einen Priester beten (gebetAb); Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Katapulten, jagt mit 2 Bogenschützen (alle 40 s)
-      fuerstbischofgerold: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 6, gebaeude: [{ type: 'kirche', gold: 120 }], gebetAb: 50, keinAngriff: true, huntLead: 20, hunt: [['archer', 2]], huntEvery: 40,
+      // «Fürstbischof Gerold» (Story-Platz 10, braucht ein Konto): greift nie an (keinAngriff); 6 Bauern und 6 Holzfäller, baut ab 70 Gold eine Kirche (Belohnung: Kirche)
+      // und lässt danach immer, wenn er 70 Gold hat, einen Priester beten (gebetAb); Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Katapulten, jagt mit 2 Bogenschützen (alle 40 s)
+      fuerstbischofgerold: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 6, gebaeude: [{ type: 'kirche', gold: 70 }], gebetAb: 70, keinAngriff: true, huntLead: 20, hunt: [['archer', 2]], huntEvery: 40,
                     wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 999, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMax: { catapult: 1 }, noOutput: 10 },
