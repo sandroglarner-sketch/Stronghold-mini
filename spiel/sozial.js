@@ -158,6 +158,7 @@
   var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
   function freundeOpen(on) {
     $('freunde').hidden = !on;
+    if (on) $('freunde').scrollTop = 0; // immer oben öffnen (✕ sichtbar)
     if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
   }
   function zeitSeit(t) { var s = Math.max(0, Math.floor((Date.now() - t) / 1000)); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }

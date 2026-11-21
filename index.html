@@ -698,6 +698,15 @@
   .kontoname input { flex: 1; min-width: 0; }
   .kontohinweis { margin: 0; padding: 6px 9px; border-radius: 8px; background: color-mix(in srgb, #c76a00 12%, transparent); color: #8a4a00; font-size: 0.8rem; }
   .kontohinweis[hidden] { display: none; }
+
+  /* Freunde am Handy (21.11.): Fenster fest am Bildschirm (nicht am Spielfeld), scrollt in sich; Kopf mit ✕ bleibt immer oben sichtbar */
+  .frkopf { position: sticky; top: -12px; margin: -12px -14px 0; padding: 12px 14px 6px; background: var(--panel); z-index: 2; }
+  @media (pointer: coarse), (max-width: 700px) {
+    .freunde { position: fixed; top: 0; bottom: 0; right: 0; height: 100dvh; max-height: 100dvh; z-index: 60; border-radius: 0;
+      padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
+      overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+    .frkopf { top: calc(-1 * max(12px, env(safe-area-inset-top, 0px))); margin-top: calc(-1 * max(12px, env(safe-area-inset-top, 0px))); padding-top: max(12px, env(safe-area-inset-top, 0px)); }
+  }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -1239,7 +1248,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'f518989e63'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '848e8573d4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5933,6 +5942,7 @@
   var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
   function freundeOpen(on) {
     $('freunde').hidden = !on;
+    if (on) $('freunde').scrollTop = 0; // immer oben öffnen (✕ sichtbar)
     if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
   }
   function zeitSeit(t) { var s = Math.max(0, Math.floor((Date.now() - t) / 1000)); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
