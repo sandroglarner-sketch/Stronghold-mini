@@ -59,7 +59,7 @@
     }
     return hp <= CONFIG.AI.weakHp;
   }
-  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss (40) Leben bis zum Höchstwert der angestrebten Stufe (40, 80, 120, 160, 200), wird sie repariert
+  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss (50) Leben bis zum Höchstwert der angestrebten Stufe (50, 100, 150, 200, 250), wird sie repariert
   function wallWeak(w, ziel) {
     var st = Math.max(w && w.stage || 0, ziel || 1);
     return !!(w && w.built && WALL.stages[st - 1] - w.hp > CONFIG.AI.wallRepairLoss);

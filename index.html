@@ -877,7 +877,7 @@
     },
     // think = Sekunden zwischen Entscheidungen; weakHp = Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
-    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 40 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
+    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50 }, // towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
 
   // Bäume (Ressourcen für Holzfäller): spiegelbildlich zur Mitte (x -> W - x). Wald unten in der Mitte, je 2 Bäume näher an jeder Burg, je 5 links und rechts vom Teich.
@@ -1023,7 +1023,7 @@
       // wall = Mauer: im Abstand dist Kacheln um die eigene Kaserne herum gebogen, workers Arbeiter, die mit rate Leben pro Sekunde bis zu add Leben bringen
       // rate Leben pro Sekunde bauen (jeder). Erst wenn sie einmal fertig ist, blockiert sie gegnerische Einheiten.
       wall: { name: 'Mauer',     cost: 20, hp: 0, atk: 0, range: 0, speed: 0, cd: 1, r: 0.3, key: '8',
-              wall: { dist: 3, thick: 0.5, workers: 4, rate: 3, add: 10, cap: 200, heal: 0.6, fade: 1, tower: { from: 2, takeDist: 4, // takeDist = so nah (in Kacheln) an der Kaserne muss eine Einheit sein, damit sie einen freien Turmplatz nimmt
+              wall: { dist: 3, thick: 0.5, workers: 4, rate: 3, add: 12.5, cap: 250, heal: 0.6, fade: 1, tower: { from: 2, takeDist: 4, // takeDist = so nah (in Kacheln) an der Kaserne muss eine Einheit sein, damit sie einen freien Turmplatz nimmt
               taken: 0.25, // Einheiten in einem Turm erleiden von Fernkämpfern (auch von der Kaserne) nur diesen Anteil des Schadens
               // Türme ab Mauer 2: links und rechts (f = Stelle auf der Mauer, 0 oben bis 1 unten) je ein Turm; k = sq (Viereck) oder rd (Rund), w/h bzw. r = Grösse in Kacheln,
               // out = Abstand vor der Mauer; slots = Plätze (types = erlaubte Einheitentypen, dx/dy = Versatz in Kacheln)
@@ -1040,7 +1040,7 @@
                 5: { list: [
                   { k: 'rd', f: 0.25, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] },
                   { k: 'rd', f: 0.75, r: 1.05, out: 0.7, slots: [{ types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: -0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: 0.5, dy: 0.4 }, { types: ['archer', 'mage', 'crossbow', 'javelin', 'fackel'], dx: -0.05, dy: -0.62 }, { types: ['catapult', 'baliste', 'trebuchet'], dx: -0.4, dy: 0.3 }] }] }
-              } }, stages: [40, 80, 120, 160, 200], bars: [40, 40, 80, 120, 160, 200] } }, // rate = Leben pro Sekunde je Arbeiter, add = Leben, die jeder Arbeiter insgesamt bringt, cap = höchstes Leben der Mauer; stages = ab so viel Leben erscheint die nächste der 5 Optiken (davor nur ein Gerüst), bars = Maximum der Lebensleiste je Stufe (Gerüst, Optik 1 bis 5) = Leben, ab denen die Optik erscheint; heal = Leben pro Sekunde, die eine Mauer unter dem Höchstwert ihrer Optik von selbst heilt (erst ab der ersten Optik)
+              } }, stages: [50, 100, 150, 200, 250], bars: [50, 50, 100, 150, 200, 250] } }, // seit 21.11.: 50 Leben pro Ausbau (4 Arbeiter x 12,5) // rate = Leben pro Sekunde je Arbeiter, add = Leben, die jeder Arbeiter insgesamt bringt, cap = höchstes Leben der Mauer; stages = ab so viel Leben erscheint die nächste der 5 Optiken (davor nur ein Gerüst), bars = Maximum der Lebensleiste je Stufe (Gerüst, Optik 1 bis 5) = Leben, ab denen die Optik erscheint; heal = Leben pro Sekunde, die eine Mauer unter dem Höchstwert ihrer Optik von selbst heilt (erst ab der ersten Optik)
       // shield = Belagerungsschild: greift nur Mauern und Kasernen an (wie der Rammbock), richtet aber keinen Schaden an
       shield: { cat: 'siege', name: 'Belagerungsschild', cost: 25, staerke: 2, hp: 15, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
       // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
@@ -1260,7 +1260,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '6193ec962a'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'e61f3b93b2'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2260,7 +2260,7 @@
     }
     return hp <= CONFIG.AI.weakHp;
   }
-  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss (40) Leben bis zum Höchstwert der angestrebten Stufe (40, 80, 120, 160, 200), wird sie repariert
+  // Gilt für alle Gegner: fehlen der Mauer mehr als wallRepairLoss (50) Leben bis zum Höchstwert der angestrebten Stufe (50, 100, 150, 200, 250), wird sie repariert
   function wallWeak(w, ziel) {
     var st = Math.max(w && w.stage || 0, ziel || 1);
     return !!(w && w.built && WALL.stages[st - 1] - w.hp > CONFIG.AI.wallRepairLoss);
@@ -4104,7 +4104,7 @@
     ctx.lineTo(x2 + rp, y2);
     ctx.arc(x2, y2, rp, 0, a0);
   }
-  // Bis 40 Leben nur ein Gerüst (blasser Bauplatz); ab 40, 80, 120, 160 und 200 Leben je eine neue Optik: Holzpfähle, Planken, Ziegel,
+  // Bis 50 Leben nur ein Gerüst (blasser Bauplatz); ab 50, 100, 150, 200 und 250 Leben je eine neue Optik: Holzpfähle, Planken, Ziegel,
   // Ziegel mit Eisenbändern, Zinnenmauer. Die höchste erreichte Stufe bleibt, bis die Mauer zerstört ist.
   // Turm (Viereck oder Rund) im Stil der Mauer-Optik st
   function drawTower(w, tw, st, col) {
@@ -4183,7 +4183,7 @@
     // Risse und Lebensanzeige an der Spitze der Mauer
     var tb = bases[w.team], tip = { x: w.team === 0 ? tb.x2 + R : tb.x1 - R, y: tb.y1 }, i;
     if (st >= 1) {
-      // je weniger Leben im Verhältnis zum Höchstwert der erreichten Optik (40, 80, 120, 160, 200), desto mehr Risse; beim Bauen keine
+      // je weniger Leben im Verhältnis zum Höchstwert der erreichten Optik (50, 100, 150, 200, 250), desto mehr Risse; beim Bauen keine
       ctx.save();
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
       var cr = Math.floor((1 - clamp(w.hp / WALL.stages[st - 1], 0, 1)) * 20); // Höchstwert dieser Optik = Leben, ab denen sie erscheint

@@ -19,7 +19,7 @@
     ctx.lineTo(x2 + rp, y2);
     ctx.arc(x2, y2, rp, 0, a0);
   }
-  // Bis 40 Leben nur ein Gerüst (blasser Bauplatz); ab 40, 80, 120, 160 und 200 Leben je eine neue Optik: Holzpfähle, Planken, Ziegel,
+  // Bis 50 Leben nur ein Gerüst (blasser Bauplatz); ab 50, 100, 150, 200 und 250 Leben je eine neue Optik: Holzpfähle, Planken, Ziegel,
   // Ziegel mit Eisenbändern, Zinnenmauer. Die höchste erreichte Stufe bleibt, bis die Mauer zerstört ist.
   // Turm (Viereck oder Rund) im Stil der Mauer-Optik st
   function drawTower(w, tw, st, col) {
@@ -98,7 +98,7 @@
     // Risse und Lebensanzeige an der Spitze der Mauer
     var tb = bases[w.team], tip = { x: w.team === 0 ? tb.x2 + R : tb.x1 - R, y: tb.y1 }, i;
     if (st >= 1) {
-      // je weniger Leben im Verhältnis zum Höchstwert der erreichten Optik (40, 80, 120, 160, 200), desto mehr Risse; beim Bauen keine
+      // je weniger Leben im Verhältnis zum Höchstwert der erreichten Optik (50, 100, 150, 200, 250), desto mehr Risse; beim Bauen keine
       ctx.save();
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
       var cr = Math.floor((1 - clamp(w.hp / WALL.stages[st - 1], 0, 1)) * 20); // Höchstwert dieser Optik = Leben, ab denen sie erscheint
