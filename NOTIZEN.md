@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE SPAWNPUNKT RUND (22.11. 18:00): Spawnpunkt gilt ab 0,85 Kacheln als erreicht (runde Wende statt Knick), Andockplätze weiter auf der eigenen Seite (W/2 ∓ 1,0).
+
 KARAWANE RUNDE BÖGEN (22.11. 17:55): Fahrtrichtung u.kdx/kdy dreht sich weich zur Zielrichtung (Anteil pro Schritt dt × 1,6; näher als 0,45 Kacheln direkt aufs Ziel), Burg/Spawnpunkt ab 0,5 und Rückweg-Wegpunkt ab 0,7 Kacheln erreicht (Kurve wird geschnitten); sie fährt in ihre Fahrtrichtung, dadurch runde Kurven an Wartepunkt, Wegpunkt, Burg und Spawnpunkt.
 
 KARAWANE ÜBER DEN SPAWNPUNKT (22.11. 17:50): nach dem Abladen an der Burg fährt sie zuerst zum Spawnpunkt (kz 'spawn', oberes Ende vor der Burg) und erst von dort wieder Richtung Teich ('hin').

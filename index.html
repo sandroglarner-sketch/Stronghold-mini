@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '1361a4757f'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'd7efccd5df'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3007,7 +3007,7 @@
       if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, wenden, zurück zur Burg, Gold abliefern, von vorn
         // Füllplatz: jede Seite hat ihren eigenen (W/2 ∓ 0,7, 2,6); wer vorne in der Schlange steht (näher als 2,2 Kacheln) und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
-        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 0.7, FPY = 2.6; // eigener Andockplatz jeder Seite: unten am Teich, etwas auf der eigenen Seite
+        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 1.0, FPY = 2.6; // eigener Andockplatz jeder Seite: unten am Teich, auf der eigenen Seite (22.11. 18:00: 1,0 statt 0,7)
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
         // Warteschlange je Seite: k = so viele eigene Karawanen auf dem Hinweg sind näher am Füllplatz (bei Gleichstand kleinere id zuerst).
         // Platz k liegt k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg; nur die vorderste (k = 0) darf zum Füllplatz.
@@ -3031,7 +3031,7 @@
           // Rückweg leicht oval: zuerst etwas Richtung Spielfeldmitte (unter dem Hinweg durch), dann zur Burg; so kommen sich Karawanen nicht in die Quere
           if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.7; } // Wegpunkt: früh weiter, Kurve wird rund
           else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.5; }
-          else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.5; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
+          else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.85; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
           else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
             var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
@@ -3039,7 +3039,7 @@
           }
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
           if (kdd > kziel) {
-            // runde Bögen (22.11.): Fahrtrichtung dreht sich weich zur Zielrichtung (1,6 pro s); näher als 0,45 Kacheln direkt aufs Ziel (kein Kreisen). Burg, Spawn- und Wegpunkt gelten schon ab 0,5–0,7 Kacheln als erreicht = runde Kurven
+            // runde Bögen (22.11.): Fahrtrichtung dreht sich weich zur Zielrichtung (1,6 pro s); näher als 0,45 Kacheln direkt aufs Ziel (kein Kreisen). Burg (0,5), Spawnpunkt (0,85) und Wegpunkt (0,7) gelten früh als erreicht = runde Kurven
             var kwx = kdx / kdd, kwy = kdy / kdd, khx = u.kdx === undefined ? kwx : u.kdx, khy = u.kdy === undefined ? kwy : u.kdy, kst = kdd < 0.45 ? 1 : Math.min(1, dt * 1.6);
             if (khx * kwx + khy * kwy < -0.95) { khx += -khy * 0.2; khy += khx * 0.2; } // fast genau entgegengesetzt: zur Seite ausweichen statt durch null
             khx += (kwx - khx) * kst; khy += (kwy - khy) * kst; var khl = hyp(khx, khy) || 1; khx /= khl; khy /= khl;
