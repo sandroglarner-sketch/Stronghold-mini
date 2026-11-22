@@ -226,9 +226,13 @@
   // was dann gleich ist wie im Spiel, fällt weg. Entwürfe ohne BASIS (vor dem 20.11. 14:21) und Entwürfe zu Bots, die es so nicht mehr gibt, werden verworfen.
   var BASIS = {}; try { BASIS = JSON.parse(localStorage.getItem(SPEICHER + '-basis') || '{}') || {}; } catch (e) { BASIS = {}; }
   function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify(ENTW)); localStorage.setItem(SPEICHER + '-basis', JSON.stringify(BASIS)); } catch (e) {} }
+  // Spezialregeln sind Aufträge an Claude: ein Entwurf, der kopiert (gesendet) wurde, gilt mit dem nächsten Editor-Stand als eingebaut -> Text fällt weg (22.11.)
+  try { if (!localStorage.getItem(SPEICHER + '-aufr1')) { Object.keys(ENTW).forEach(function (id) { delete ENTW[id].spezial; delete ENTW[id].gesendet; }); localStorage.setItem(SPEICHER + '-aufr1', '1'); } } catch (e) {} // einmalig: alte Texte sind alle eingebaut
   function entwuerfeAbgleichen() {
     Object.keys(ENTW).forEach(function (id) {
       var d = ENTW[id], o = ORIG[id], b = BASIS[id];
+      if (d.gesendet && d.gesendet !== STAND) { delete d.spezial; delete d.gesendet; } // gesendet und seither neuer Spielstand: eingebaut
+      if (o && gleich(normal(d), normal(o))) { delete ENTW[id]; delete BASIS[id]; return; }
       if (d.neu) { if (o) { delete ENTW[id]; delete BASIS[id]; } return; } // neuer Bot ist inzwischen im Spiel
       if (!o || !b) { delete ENTW[id]; delete BASIS[id]; return; }
       if (gleich(normal(b), normal(o))) return; // Spiel unverändert seit dem Entwurf
@@ -498,11 +502,12 @@
   function gleich(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   function geaendert() {
     var o = ORIG[akt];
-    if (o && gleich(normal(cur), normal(o))) { delete ENTW[akt]; delete BASIS[akt]; } else { if (!ENTW[akt] || !BASIS[akt]) BASIS[akt] = o ? kopie(o) : null; ENTW[akt] = kopie(cur); }
+    if (o && gleich(normal(cur), normal(o))) { delete ENTW[akt]; delete BASIS[akt]; } else { if (!ENTW[akt] || !BASIS[akt]) BASIS[akt] = o ? kopie(o) : null; delete cur.gesendet; ENTW[akt] = kopie(cur); }
     speichern(); markieren(); ausgabe();
     var sel = $('botSel').selectedOptions[0]; if (sel) sel.textContent = cur.name + (ENTW[akt] ? ' ✎' : '');
   }
-  function normal(b) { var c = kopie(b); if (c.logik) { c.logik.attack = gruppiert(flach(c.logik.attack)); } return c; }
+  function sortiert(v) { if (Array.isArray(v)) return v.map(sortiert); if (v && typeof v === 'object') { var r = {}; Object.keys(v).sort().forEach(function (k) { if (v[k] !== undefined) r[k] = sortiert(v[k]); }); return r; } return v; }
+  function normal(b) { var c = kopie(b); delete c.gesendet; if (c.spezial === '') delete c.spezial; if (c.logik && c.logik.attack) { c.logik.attack = gruppiert(flach(c.logik.attack)); } return sortiert(c); } // Reihenfolge der Felder egal
   function markieren() {
     var o = ORIG[akt];
     document.querySelectorAll('[data-k]').forEach(function (el) {
@@ -560,9 +565,11 @@
     var fertig = function (ok) { $('kopierStatus').textContent = ok ? wo + ' kopiert – jetzt im Chat einfügen.' : 'Kopieren ging nicht – bitte den Code von Hand markieren.'; };
     try { navigator.clipboard.writeText(t).then(function () { fertig(true); }, function () { fertig(false); }); } catch (e) { fertig(false); }
   }
-  $('kopierBtn').addEventListener('click', function () { kopieren('Bitte diesen Bot ins Spiel übernehmen (aus dem Bot-Editor):\n\n' + text(cur), 'Bot'); });
+  function gesendet(ids) { ids.forEach(function (id) { if (ENTW[id]) ENTW[id].gesendet = STAND; }); speichern(); } // nach dem nächsten Einbau (neuer Stand) fallen die Spezialregel-Texte weg
+  $('kopierBtn').addEventListener('click', function () { gesendet([akt]); kopieren('Bitte diesen Bot ins Spiel übernehmen (aus dem Bot-Editor):\n\n' + text(cur), 'Bot'); });
   $('alleBtn').addEventListener('click', function () {
     var ids = Object.keys(ENTW); if (!ids.length) { $('kopierStatus').textContent = 'Keine geänderten Bots.'; return; }
+    gesendet(ids);
     kopieren('Bitte diese Bots ins Spiel übernehmen (aus dem Bot-Editor):\n\n' + ids.map(function (id) { return text(ENTW[id]); }).join('\n\n'), ids.length + ' Bots');
   });
 

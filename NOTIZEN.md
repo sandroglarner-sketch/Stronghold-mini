@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+BOT-EDITOR ABGLEICH (22.11. 19:06): Entwürfe mit Spezialregel-Text blieben nach dem Einbau als «geändert» stehen (Text ist nur ein Auftrag und steht nie in den Spieldaten). Neu: Kopieren markiert die Entwürfe als gesendet (gesendet = STAND); mit dem nächsten Editor-Stand fällt der Text weg und der Entwurf wird mit dem Spiel verglichen (gleich = weg). Vergleich unabhängig von der Feld-Reihenfolge (sortiert). Einmalig (localStorage …-aufr1) wurden alle alten Spezialregel-Texte entfernt.
+
 KAISERIN GOLDFEDER (22.11. 18:45, aus dem Bot-Editor): Story-Platz 17 (nr 21, braucht Konto, Logik kaiseringoldfeder: 10 Bauern + 3 Karawanen, Mauer 5 mit 6 Bogen + 2 Balisten auf den Türmen, Jagd 2 Speer nach 20 s / alle 30 s + 1 s später 1 Bogen, Angriff ab 240 Gold (Welle 343): Trebuchet, s1 4 Speer + Baliste, s2 4 Bogen, s3/s6/s9/s12 je 4 Speer, s16 20 Leiter; Verteidigung Speer, Bogen, Reiter); Belohnung Karawane (FREI karawane { besiegt }; vorher war die Karawane in Entwicklung). Zarin Frostmantel und Drachenkönig aus demselben Export waren schon identisch (gebMax schmiede 1 bzw. 2), nichts geändert. Nächste freie nr: 22.
 
 HOLZFÄLLER BIS 3 MIN (22.11. 18:30): Bots kaufen neue Holzfäller bis 180 s Spielzeit (vorher 120 s).
