@@ -545,6 +545,8 @@
       var built = !d.setup || u.setupT >= d.setup;
       u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
+      if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
+      u.warBereit = u.ready;
       if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange)) {
         u.cd = d.cd * (u.cdm || 1);
         u.atkT = clock; var lp = launchPt(u, d, tx, ty);

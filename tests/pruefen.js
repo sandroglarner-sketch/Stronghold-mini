@@ -35,11 +35,18 @@ const TESTS = {
     X.spawn(0, 'schwarzritter'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear');
     var k = X.units[0], z = X.units[1], seite = X.units[2], hinten = X.units[3], weit = X.units[4];
     k.x = 11; k.y = 5; z.x = 11.85; z.y = 5; seite.x = 11.45; seite.y = 5.65; hinten.x = 10.05; hinten.y = 5; weit.x = 12.9; weit.y = 5.9;
-    X.units.forEach(function (u) { u.cd = 9; u.settled = false; }); k.cd = 0;
+    X.units.forEach(function (u) { u.cd = 9; u.settled = false; }); k.cd = 0; k.warBereit = true; // schon ausgeholt
     var hp = X.units.map(function (u) { return u.hp; });
     X.upd(0.02);
     var d = X.units.map(function (u, i) { return +(hp[i] - u.hp).toFixed(2); });
     return d[1] === 1 && d[2] === 1 && d[3] === 0 && d[4] === 0 ? true : 'Schaden Ziel/Seite/hinten/weit: ' + d.slice(1).join('/');
+  },
+  'Schwarzer Ritter: holt vor dem ersten Schlag 0,5 s aus, dann alle 1,5 s': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'schwarzritter'); X.spawn(1, 'shield');
+    var k = X.units[0], z = X.units[1]; k.x = 11; k.y = 5; z.x = 11.85; z.y = 5; z.hp = 999; k.cd = 0; var treffer = [], hp = z.hp;
+    for (var i = 0; i < 200; i++) { z.x = 11.85; z.y = 5; k.x = 11; k.y = 5; X.upd(0.02); if (z.hp < hp) { treffer.push(+((i + 1) * 0.02).toFixed(2)); hp = z.hp; } }
+    return treffer.length >= 2 && Math.abs(treffer[0] - 0.5) < 0.05 && Math.abs(treffer[1] - treffer[0] - 1.5) < 0.05 ? true : 'Treffer bei ' + treffer.join(', ') + ' s';
   },
 };
 

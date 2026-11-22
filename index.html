@@ -1088,7 +1088,7 @@
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
       mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.4, secs: 3 } }, // Eismagier (21.11.): bremst Getroffene auf 40 % Tempo
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
-      schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 20, staerke: 1, hp: 16, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, kegel: { winkel: 120, r: 1 } }, // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
+      schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 20, staerke: 1, hp: 16, atk: 1, range: 1, speed: 0.7, cd: 1.5, r: 0.38, ausholen: 0.5, kegel: { winkel: 120, r: 1 } }, // ausholen: vor dem ersten Schlag 0,5 s ausholen // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
       raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1 } },
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
@@ -1347,7 +1347,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '3432484aef'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '11f3ce12ef'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3072,6 +3072,8 @@
       var built = !d.setup || u.setupT >= d.setup;
       u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
+      if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
+      u.warBereit = u.ready;
       if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange)) {
         u.cd = d.cd * (u.cdm || 1);
         u.atkT = clock; var lp = launchPt(u, d, tx, ty);
@@ -3274,7 +3276,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.32, after: 0.25 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.9 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -3287,6 +3289,32 @@
     if (at < 0) { var k = (at + W) / W; return k < split ? back * sm(k / split) : lerp(back, hitV, sm((k - split) / (1 - split))); }
     return hitV * (1 - sm(at / Aft));
   }
+  // Morgenstern des Schwarzen Ritters: rot = Armdrehung um die Hand, phi = Richtung der Kette relativ zum Stiel, L = Kettenlänge (× r).
+  // In Ruhe hängt die Kugel kurz am Stiel (L klein); beim Schlag fliegt sie weit hinaus und pendelt danach gedämpft aus. Drei Varianten (MS_VARIANTE).
+  var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: 0.6, L: 0.4 };
+  function msOsc(t, amp, k, w) { return amp * Math.exp(-k * t) * Math.sin(w * t); }
+  function msPose(at, W, F) {
+    var R = MS_RUHE, v = MS_VARIANTE;
+    if (at === undefined || at < -W || at > F) return R;
+    if (at < 0) {
+      var k = (at + W) / W;
+      if (v === 'B') { // Kreisen: die Kugel saust einmal ganz um die Hand, dann nach vorne aufs Ziel
+        var kb = sm(k), kz = sm(Math.max(0, (k - 0.8) / 0.2));
+        return { rot: lerp(-0.4 * kb, 0.3, kz), phi: lerp(R.phi, 0.1 - 2 * Math.PI, kb), L: lerp(R.L, 1.15, sm(Math.min(1, k * 2))) };
+      }
+      if (v === 'C') { // Pendel: schaukelt immer stärker hin und her, dann peitscht sie nach vorne
+        var kc = Math.min(1, k / 0.8), kq = sm(Math.max(0, (k - 0.8) / 0.2)), pend = R.phi + 1.3 * kc * Math.sin(2 * Math.PI * 1.25 * kc);
+        return { rot: lerp(-1.0 * sm(kc), 0.4, kq), phi: lerp(pend, 0.05, kq), L: lerp(R.L, 1.1, sm(k)) };
+      }
+      // A: Seitenhieb: weit nach hinten-aussen ausholen (Kugel schleift hinterher), dann quer durch den ganzen Bogen
+      var ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
+      return { rot: lerp(-1.8 * ka, 0.35, ks), phi: lerp(lerp(R.phi, 1.1, ka), 0.1, ks), L: lerp(R.L, 1.15, sm(k)) };
+    }
+    var e = sm(at / F);
+    if (v === 'B') return { rot: 0.3 * (1 - e), phi: lerp(0.1, R.phi, e) + msOsc(at, 0.7, 4, 16), L: lerp(1.15, R.L, e) - Math.abs(msOsc(at, 0.35, 5, 22)) }; // Aufprall: Kugel federt zurück
+    if (v === 'C') return { rot: 0.4 * (1 - e) + msOsc(at, 0.6, 3, 7), phi: lerp(0.05, R.phi, e) + msOsc(at, 1.8, 2.6, 11), L: lerp(1.1, R.L, e) };
+    return { rot: 0.35 * (1 - e) + msOsc(at, 1.0, 3, 6), phi: lerp(0.1, R.phi, e) + msOsc(at, -1.5, 3.2, 13), L: lerp(1.15, R.L, e) }; // schwingt nach dem Treffer weiter durch
+  }
   function attackPose(type, at, r) {
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };
     if (type === 'archer') P0.arrow = 0; // der Bogenschütze legt den Pfeil erst beim Spannen auf
@@ -3298,7 +3326,7 @@
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
     else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
-    else if (type === 'schwarzritter') { P0.rot = swing(at, W, F, -1.5, 0.95); P0.off = swing(at, W, F, 0, 0.1 * r); } // Morgenstern: weiter Bogen
+    else if (type === 'schwarzritter') { P0.ms = msPose(at, W, F); P0.off = swing(at, W, F, 0, 0.1 * r); } // Morgenstern: eigene Stellung (msPose)
     else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
     else if (type === 'king') P0.rot = swing(at, W, F, -1.0, 0.45);
@@ -4164,10 +4192,11 @@
       c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
       if (swz) { // Morgenstern: kurzer Holzstiel mit Eisenbeschlag, Kette mit 3 Gliedern, Stachelkugel (schwingt beim Hieb etwas nach)
-        var mzug = (A.rot || 0) * -0.35, mkx = r * 1.15, mky = -r * 0.75;
+        var MSP = A.ms || MS_RUHE; c.translate(r * 0.55, -r * 0.75); c.rotate(MSP.rot); c.translate(-r * 0.55, r * 0.75); // ganze Waffe dreht um die Hand
+        var mzug = MSP.phi, mkx = r * 1.15, mky = -r * 0.75;
         c.strokeStyle = '#4a3220'; c.lineWidth = Math.max(2.5, r * 0.2); c.beginPath(); c.moveTo(r * 0.45, -r * 0.75); c.lineTo(mkx, mky); c.stroke(); // Stiel
         c.strokeStyle = '#5c6066'; c.lineWidth = Math.max(3, r * 0.26); c.beginPath(); c.moveTo(r * 0.98, mky); c.lineTo(mkx + r * 0.04, mky); c.stroke(); // Beschlag
-        var mbx = mkx + r * 0.75 * dcos(mzug), mby = mky + r * 0.75 * dsin(mzug);
+        var mbx = mkx + r * MSP.L * Math.cos(mzug), mby = mky + r * MSP.L * Math.sin(mzug);
         c.strokeStyle = '#3a3d42'; c.lineWidth = Math.max(1.2, r * 0.07);
         for (var mg = 0; mg < 3; mg++) { var mt = (mg + 0.5) / 3.4; c.beginPath(); c.ellipse(mkx + (mbx - mkx) * mt, mky + (mby - mky) * mt, r * 0.1, r * 0.06, mzug + (mg % 2 ? Math.PI / 2 : 0), 0, Math.PI * 2); c.stroke(); } // Kettenglieder
         var mkr = r * 0.32; c.fillStyle = '#1d1f23'; c.strokeStyle = '#000';
