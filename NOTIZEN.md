@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+SHOP WIE KARTENBUCH (22.11. 13:35): Kopfzeile = Edelstein-Regeln als Chips (Online-Sieg +2, Online-Niederlage +1, Story-Gegner besiegt +1, Freund einladen +20 = Knopf, startet die Einladung; am Handy kurze Texte, i.lang ausgeblendet) und Kontostand. Links kleine Karten (.mcard: Bild, Name, Preis bzw. ✓, gekauft grün umrandet, gewählte blau), rechts die gewählte Karte gross wie im Kartenbuch (cardHtml ohne Deck-Knopf/Sperrtext) mit Kaufbereich (Kaufen für n → «Kaufen?» 3 s bestätigen; Hinweise: nur online / Konto / fehlen noch n). Vorgewählt: erste noch nicht gekaufte Karte. Fussleiste: Meldung + «Bisher: …». Fenster reicht bis fast an den unteren Rand (shopPlatz). Ersetzt die alte Kartenreihe mit Infospalte.
+
 FLÜSSIGE ANIMATIONEN ONLINE (22.11. 13:25): pvpRender glättet jetzt neben den Laufwegen auch die Zeiten: gezeichnet wird (1 − alpha) Schritte vor dem letzten Schritt, dafür werden clock, u.cd (nur > 0), u.setupT und alle e.t nur fürs Zeichnen zurückgedreht und danach (finally) wiederhergestellt. Vorher liefen Schlag-/Schussanimationen (Morgenstern, Trebuchet-Wurf und -Steine) online im 20er-Takt (STEP 0,05). Gilt auch für Bot-Partien und Zuschauer (ST = BL_STEP). Simulation unverändert (deterministisch).
 
 MORGENSTERN RUHE (22.11. 13:10): in Ruhe liegt die Kugel mittig unter dem Stiel (MS_RUHE phi π, L 0,35).
