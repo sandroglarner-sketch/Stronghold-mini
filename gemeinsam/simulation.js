@@ -433,17 +433,20 @@
           u.voll = Math.min(1, u.voll + dt / KW.fuellen);
           if (u.voll >= 1) { u.kz = 'wenden'; u.wendT = 0; }
         } else if (u.kz === 'wenden') { // am Platz abdrehen (Richtung Burg), dann losfahren
-          u.x = FPX; u.y = FPY; var wzx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - u.x, wzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5 - u.y, wzl = hyp(wzx, wzy) || 1;
+          u.x = FPX; u.y = FPY; var wzx = FPX + ksg * 1.1 - u.x, wzy = FPY + 1.6 - u.y, wzl = hyp(wzx, wzy) || 1; // dreht zum ersten Wegpunkt des Rückwegs
           u.kdx = wzx / wzl; u.kdy = wzy / wzl; u.wendT += dt;
-          if (u.wendT >= 0.8) u.kz = 'zurueck';
+          if (u.wendT >= 0.8) { u.kz = 'zurueck'; u.kw = 0; }
         } else {
           var kzx, kzy, kziel;
-          if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
+          // Rückweg leicht oval: zuerst etwas Richtung Spielfeldmitte (unter dem Hinweg durch), dann zur Burg; so kommen sich Karawanen nicht in die Quere
+          if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.25; }
+          else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
           else { kzx = FPX + ksg * 1.7 + kof * 0.5; kzy = FPY + 0.35 + Math.abs(kof); kziel = 0.12; } // 'hin': zum Wartepunkt auf der eigenen Seite
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
           if (kdd > kziel) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = kv.x; u.kdy = kv.y; }
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
+          else if (u.kz === 'zurueck' && !u.kw) u.kw = 1; // Wegpunkt erreicht: weiter zur Burg
           else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
