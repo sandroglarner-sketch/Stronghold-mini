@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '742c03ea69'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '1361a4757f'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3029,16 +3029,22 @@
         } else {
           var kzx, kzy, kziel;
           // Rückweg leicht oval: zuerst etwas Richtung Spielfeldmitte (unter dem Hinweg durch), dann zur Burg; so kommen sich Karawanen nicht in die Quere
-          if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.25; }
-          else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
-          else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.12; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
+          if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.7; } // Wegpunkt: früh weiter, Kurve wird rund
+          else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.5; }
+          else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.5; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
           else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
             var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
             kzx = wpx + brx / brl * 1.1 * kq; kzy = wpy + bry / brl * 1.1 * kq; kziel = 0.12;
           }
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
-          if (kdd > kziel) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = kv.x; u.kdy = kv.y; }
+          if (kdd > kziel) {
+            // runde Bögen (22.11.): Fahrtrichtung dreht sich weich zur Zielrichtung (1,6 pro s); näher als 0,45 Kacheln direkt aufs Ziel (kein Kreisen). Burg, Spawn- und Wegpunkt gelten schon ab 0,5–0,7 Kacheln als erreicht = runde Kurven
+            var kwx = kdx / kdd, kwy = kdy / kdd, khx = u.kdx === undefined ? kwx : u.kdx, khy = u.kdy === undefined ? kwy : u.kdy, kst = kdd < 0.45 ? 1 : Math.min(1, dt * 1.6);
+            if (khx * kwx + khy * kwy < -0.95) { khx += -khy * 0.2; khy += khx * 0.2; } // fast genau entgegengesetzt: zur Seite ausweichen statt durch null
+            khx += (kwx - khx) * kst; khy += (kwy - khy) * kst; var khl = hyp(khx, khy) || 1; khx /= khl; khy /= khl;
+            var kv = umGebaeude(u, khx, khy, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = khx; u.kdy = khy;
+          }
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
           else if (u.kz === 'zurueck' && !u.kw) u.kw = 1; // Wegpunkt erreicht: weiter zur Burg
           else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft

@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE RUNDE BÖGEN (22.11. 17:55): Fahrtrichtung u.kdx/kdy dreht sich weich zur Zielrichtung (Anteil pro Schritt dt × 1,6; näher als 0,45 Kacheln direkt aufs Ziel), Burg/Spawnpunkt ab 0,5 und Rückweg-Wegpunkt ab 0,7 Kacheln erreicht (Kurve wird geschnitten); sie fährt in ihre Fahrtrichtung, dadurch runde Kurven an Wartepunkt, Wegpunkt, Burg und Spawnpunkt.
+
 KARAWANE ÜBER DEN SPAWNPUNKT (22.11. 17:50): nach dem Abladen an der Burg fährt sie zuerst zum Spawnpunkt (kz 'spawn', oberes Ende vor der Burg) und erst von dort wieder Richtung Teich ('hin').
 
 KARAWANE SPAWN (22.11. 17:40): Karawanen erscheinen als einzige Einheit immer am selben Ort: 0,5 Kacheln vor der Burg am oberen Ende des Spawn-Bands (Burgmitte − 1,4), ohne Zufallsversatz (simRand wird trotzdem gezogen).
