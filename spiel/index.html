@@ -54,7 +54,7 @@
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
       <div class="ovmodes">
         <button class="ovmode ovstory" id="storyBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14"></path><path d="M15 6v14"></path></svg><b>Story-Modus</b><span id="storyText">Besiege einen Gegner nach dem anderen</span><span class="ovdots" id="storyDots"></span></button>
-        <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovonl" id="pvpOnline"></span></button>
+        <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovpvpedel" id="pvpEdel" hidden></span><span class="ovonl" id="pvpOnline"></span></button>
         <button class="ovmode" id="tutBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"></path><path d="M22 9v6"></path></svg><b>Tutorial</b><span>Lerne jede Einheit kennen</span><span class="ovonl ovgrau">ca. 5 Minuten</span></button>
       </div>
       <div class="ovrow">
@@ -118,7 +118,7 @@
       <div class="bookfoot"><span class="bookmsg" id="bookMsg"></span><span id="bookPg"></span></div>
     </div>
     <div class="book shop" id="shop" hidden role="dialog" aria-label="Shop">
-      <div class="bookhead"><b>Shop</b><span class="shopregeln" id="shopRegeln" aria-label="So bekommst du Edelsteine"></span><span class="shopstand" id="shopStand"></span><button class="ghost bookx" id="shopZu" type="button" aria-label="Shop schliessen">✕</button></div>
+      <div class="bookhead"><b>Shop</b><span class="shopregeln" id="shopRegeln" aria-label="So bekommst du Edelsteine"></span><button class="ghost bookx" id="shopZu" type="button" aria-label="Shop schliessen">✕</button></div>
       <div class="shopbody">
         <div class="shopgrid" id="shopKarten"></div>
         <div class="bookdetail shopdetail" id="shopDetail"></div>

@@ -117,7 +117,7 @@
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
       konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
       edelUebernehmen(j);
-      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
+      // neu freigeschaltete Karten: kein Fenster mehr (22.11.), das Kartenbuch zeigt sie mit «neu»
       return true;
     }).catch(function (e) { kontoServerLaeuft = false; kontoServerFehler = 'keine Verbindung zum Server'; return false; });
   }

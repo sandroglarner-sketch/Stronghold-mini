@@ -761,6 +761,25 @@
   .shopregeln i.lang { font-style: normal; }
   html.phone .shopregeln i.lang { display: none; }
   html.phone .shopregeln > * { padding: 2px 7px; }
+
+  /* 22.11. 13:40: Online-Belohnung im Menü, Edelstein-Belohnung im Story-Feld, Konto-Fenster am Handy */
+  .ovpvpedel { color: var(--fg) !important; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .ovpvpedel b { color: #1c8f4c; display: inline-flex; align-items: center; gap: 2px; }
+  .ovpvpedel[hidden] { display: none; }
+  .bkarte.bedel .bedelsym { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; filter: grayscale(1); opacity: 0.45; }
+  .bkarte.bedel .bedelsym .edel { width: 34px; height: 34px; }
+  .bkarte.bedel.ok .bedelsym { filter: none; opacity: 1; }
+  html.phone .bkarte.bedel .bedelsym { width: 38px; height: 38px; }
+  html.phone .bkarte.bedel .bedelsym .edel { width: 27px; height: 27px; }
+  @media (pointer: coarse), (max-width: 700px) {
+    .konto { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translateX(-50%);
+      max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+    .konto .kontox { position: sticky; top: 0; order: -1; justify-self: end; margin: -8px -10px -32px 0; z-index: 1; width: 36px; height: 36px; font-size: 1.05rem; }
+  }
+  @media (pointer: coarse), (max-width: 700px) {
+    .konto { width: min(440px, calc(100vw - 24px)); overflow-x: hidden; }
+    .konto .kontorow > *, .konto input { min-width: 0; }
+  }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -811,7 +830,7 @@
       <p id="ovText">Baue Einheiten, sie marschieren von selbst los und greifen an.</p>
       <div class="ovmodes">
         <button class="ovmode ovstory" id="storyBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14"></path><path d="M15 6v14"></path></svg><b>Story-Modus</b><span id="storyText">Besiege einen Gegner nach dem anderen</span><span class="ovdots" id="storyDots"></span></button>
-        <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovonl" id="pvpOnline"></span></button>
+        <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovpvpedel" id="pvpEdel" hidden></span><span class="ovonl" id="pvpOnline"></span></button>
         <button class="ovmode" id="tutBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"></path><path d="M22 9v6"></path></svg><b>Tutorial</b><span>Lerne jede Einheit kennen</span><span class="ovonl ovgrau">ca. 5 Minuten</span></button>
       </div>
       <div class="ovrow">
@@ -875,7 +894,7 @@
       <div class="bookfoot"><span class="bookmsg" id="bookMsg"></span><span id="bookPg"></span></div>
     </div>
     <div class="book shop" id="shop" hidden role="dialog" aria-label="Shop">
-      <div class="bookhead"><b>Shop</b><span class="shopregeln" id="shopRegeln" aria-label="So bekommst du Edelsteine"></span><span class="shopstand" id="shopStand"></span><button class="ghost bookx" id="shopZu" type="button" aria-label="Shop schliessen">✕</button></div>
+      <div class="bookhead"><b>Shop</b><span class="shopregeln" id="shopRegeln" aria-label="So bekommst du Edelsteine"></span><button class="ghost bookx" id="shopZu" type="button" aria-label="Shop schliessen">✕</button></div>
       <div class="shopbody">
         <div class="shopgrid" id="shopKarten"></div>
         <div class="bookdetail shopdetail" id="shopDetail"></div>
@@ -1348,7 +1367,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '13b1d64c16'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '4a06962806'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5198,11 +5217,11 @@
   }
 
   // Belohnungskarten mit Bild (Story-Feld, Freunde): liste = [[typ, erreicht], ...]; nicht erreicht = ausgegraut, erreicht = klar mit grünem Haken
-  function belohnungHtml(liste) {
+  function belohnungHtml(liste, edel) { // edel = [Anzahl, erreicht]: zusätzlich ein Edelstein-Kärtchen
     return '<div class="belohn">' + liste.map(function (e) {
       var t = e[0], ok = !!e[1];
       return '<span class="bkarte' + (ok ? ' ok' : '') + '" title="' + CONFIG.units[t].name + (ok ? ' (freigeschaltet)' : ' (noch nicht freigeschaltet)') + '"><canvas width="88" height="88" data-t="' + t + '"></canvas><span class="bname">' + CONFIG.units[t].name + '</span>' + (ok ? '<i class="bhaken" aria-label="freigeschaltet">✓</i>' : '') + '</span>';
-    }).join('') + '</div>';
+    }).join('') + (edel ? edelKarteHtml(edel[0], edel[1]) : '') + '</div>';
   }
   var ovKarten = []; // neue Karten nach einem Story-Sieg (gesetzt von storyErgebnis)
   function showOverlay(title, text, btnText, withChoice) {
@@ -5330,7 +5349,8 @@
   // ---------- Shop (22.11.): Karten mit Edelsteinen freischalten ----------
   // Welche Karten es im Shop gibt und was sie kosten: daten/freischalten.js (Regel kaufen: n). Wie viele Edelsteine es wofür gibt: CONFIG.FREI.edel.
   // Kontostand und Käufe führt der Server (server.js: kontoStand, /api/kaufen, Nachricht 'edel'); der Browser zeigt nur an.
-  // Aufbau wie das Kartenbuch (22.11. 13:30): oben die Edelstein-Regeln als Chips (Freund-Chip lädt ein) und der Kontostand,
+  // Aufbau wie das Kartenbuch (22.11. 13:30): oben nur der Knopf «Freund einladen: +20» (Kontostand steht am Shop-Knopf im Menü,
+  // Online-Belohnung auf dem Online-Feld im Menü, Story-Belohnung beim jeweiligen Gegner),
   // links kleine Karten mit Preis, rechts die gewählte Karte gross mit ganzem Beschrieb und Kaufknopf. Fenster deckt auch die Einheitenleiste ab (mehr Höhe).
   // Kaufen: Knopf antippen, dann innerhalb von 3 s «Kaufen?» bestätigen.
   var shopArm = '', shopArmT = 0, shopLaeuft = false, shopSel = '';
@@ -5340,8 +5360,9 @@
       .sort(function (a, b) { return CONFIG.FREI.einheiten[a].kaufen - CONFIG.FREI.einheiten[b].kaufen; });
   }
   function edelText(n) { return n + ' ' + EDEL_SVG; }
-  function edelMalen() { // Zahl am Shop-Knopf im Menü (nur angemeldet und bekannt)
-    var k = konto || {};
+  function edelMalen() { // Zahl am Shop-Knopf im Menü (nur angemeldet und bekannt), Online-Belohnung auf dem Online-Feld
+    var k = konto || {}, E = CONFIG.FREI.edel, pe = $('pvpEdel');
+    pe.hidden = !kontoAn(); pe.innerHTML = 'Sieg <b>+' + edelText(E.sieg) + '</b> · Niederlage <b>+' + edelText(E.niederlage) + '</b>';
     $('edelZahl').textContent = k.user && typeof k.edel === 'number' ? k.edel : '';
     $('shopBtn').hidden = !kontoAn() || !shopTypen().length;
     if (!$('shop').hidden) shopMalen();
@@ -5371,12 +5392,7 @@
   function shopMalen() {
     var k = konto || {}, E = CONFIG.FREI.edel, q = k.quellen, l = shopTypen();
     if (l.indexOf(shopSel) < 0) shopSel = l.filter(function (t) { return unitLocked(t); })[0] || l[0] || '';
-    $('shopStand').innerHTML = k.user && typeof k.edel === 'number' ? edelText(k.edel) : '';
-    $('shopRegeln').innerHTML =
-      '<span title="Online-Partie gewonnen"><i class="lang">Online-</i>Sieg <b>+' + edelText(E.sieg) + '</b></span>' +
-      '<span title="Online-Partie verloren (auch Unentschieden)"><i class="lang">Online-</i>Niederlage <b>+' + edelText(E.niederlage) + '</b></span>' +
-      '<span title="Jeder Story-Gegner zählt einmal, beim ersten Sieg">Story-Gegner<i class="lang"> besiegt</i> <b>+' + edelText(E.bot) + '</b></span>' +
-      '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine">👥 Freund<i class="lang"> einladen</i> <b>+' + edelText(E.freund) + '</b></button>';
+    $('shopRegeln').innerHTML = '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine">👥 Freund einladen: <b>+' + edelText(E.freund) + '</b></button>'; // übrige Belohnungen: Online-Feld im Menü, Story-Gegner
     var g = $('shopKarten'); g.innerHTML = l.map(shopMini).join(''); drawCardIcons(g);
     var dt = $('shopDetail'); dt.innerHTML = shopSel ? shopDetail(shopSel) : ''; drawCardIcons(dt);
     dt.style.setProperty('--bk-fs', Math.max(10, Math.min(14, (dt.clientHeight || 300) / 24)).toFixed(1) + 'px');
@@ -5431,6 +5447,10 @@
   $('shopZu').addEventListener('click', function () { shopOpen(false); $('shopBtn').focus(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('shop').hidden && $('konto').hidden) shopOpen(false); });
   window.addEventListener('resize', function () { if (!$('shop').hidden) { shopPlatz(); shopMalen(); } });
+  // Belohnung «+n Edelsteine» als Kärtchen neben den Karten-Belohnungen (Story-Feld)
+  function edelKarteHtml(n, ok) {
+    return '<span class="bkarte bedel' + (ok ? ' ok' : '') + '" title="' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + (ok ? ' (erhalten)' : ' beim ersten Sieg (mit Konto)') + '"><span class="bedelsym">' + EDEL_SVG + '</span><span class="bname">+' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + '</span>' + (ok ? '<i class="bhaken" aria-label="erhalten">✓</i>' : '') + '</span>';
+  }
   // ---------- Konto (Supabase) ----------
   // Gratis-Konto mit E-Mail und Passwort. Welche Karten ein Konto, Freunde oder Story-Siege brauchen, steht in daten/freischalten.js.
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
@@ -5550,7 +5570,7 @@
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
       konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
       edelUebernehmen(j);
-      if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
+      // neu freigeschaltete Karten: kein Fenster mehr (22.11.), das Kartenbuch zeigt sie mit «neu»
       return true;
     }).catch(function (e) { kontoServerLaeuft = false; kontoServerFehler = 'keine Verbindung zum Server'; return false; });
   }
@@ -6249,7 +6269,7 @@
     k.style.top = g.y + '%';
     var bel = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t]; }); // Karte(n), die ein Sieg gegen diesen Gegner freischaltet
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
-      (bel.length ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; })) : '') +
+      (bel.length || kontoAn() ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; }), kontoAn() ? [CONFIG.FREI.edel.bot, istBesiegt(g.id) && !!(konto && konto.user)] : null) : '') +
       (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (bs.indexOf(g.id) >= 0 ? 'Nochmal' : 'Kämpfen') + '</button>'
         : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;

@@ -741,3 +741,22 @@
   .shopregeln i.lang { font-style: normal; }
   html.phone .shopregeln i.lang { display: none; }
   html.phone .shopregeln > * { padding: 2px 7px; }
+
+  /* 22.11. 13:40: Online-Belohnung im Menü, Edelstein-Belohnung im Story-Feld, Konto-Fenster am Handy */
+  .ovpvpedel { color: var(--fg) !important; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .ovpvpedel b { color: #1c8f4c; display: inline-flex; align-items: center; gap: 2px; }
+  .ovpvpedel[hidden] { display: none; }
+  .bkarte.bedel .bedelsym { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; filter: grayscale(1); opacity: 0.45; }
+  .bkarte.bedel .bedelsym .edel { width: 34px; height: 34px; }
+  .bkarte.bedel.ok .bedelsym { filter: none; opacity: 1; }
+  html.phone .bkarte.bedel .bedelsym { width: 38px; height: 38px; }
+  html.phone .bkarte.bedel .bedelsym .edel { width: 27px; height: 27px; }
+  @media (pointer: coarse), (max-width: 700px) {
+    .konto { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translateX(-50%);
+      max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+    .konto .kontox { position: sticky; top: 0; order: -1; justify-self: end; margin: -8px -10px -32px 0; z-index: 1; width: 36px; height: 36px; font-size: 1.05rem; }
+  }
+  @media (pointer: coarse), (max-width: 700px) {
+    .konto { width: min(440px, calc(100vw - 24px)); overflow-x: hidden; }
+    .konto .kontorow > *, .konto input { min-width: 0; }
+  }

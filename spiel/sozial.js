@@ -106,7 +106,7 @@
     k.style.top = g.y + '%';
     var bel = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t]; }); // Karte(n), die ein Sieg gegen diesen Gegner freischaltet
     k.innerHTML = '<b>' + (storySel + 1) + ' · ' + esc(g.name) + '</b>' +
-      (bel.length ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; })) : '') +
+      (bel.length || kontoAn() ? '<span class="blabel">Belohnung</span>' + belohnungHtml(bel.map(function (t) { return [t, istBesiegt(g.id)]; }), kontoAn() ? [CONFIG.FREI.edel.bot, istBesiegt(g.id) && !!(konto && konto.user)] : null) : '') +
       (storyFrei(storySel) ? '<button class="primary" type="button" id="storyLos">' + (bs.indexOf(g.id) >= 0 ? 'Nochmal' : 'Kämpfen') + '</button>'
         : (i_konto(storySel) ? '<button class="primary" type="button" id="storyKonto">' + esc(storySperre(storySel)) + ' · 👤 Konto</button>' : '<button class="primary" type="button" disabled>' + esc(storySperre(storySel)) + '</button>'));
     k.hidden = false;

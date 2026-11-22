@@ -299,11 +299,11 @@
   }
 
   // Belohnungskarten mit Bild (Story-Feld, Freunde): liste = [[typ, erreicht], ...]; nicht erreicht = ausgegraut, erreicht = klar mit grünem Haken
-  function belohnungHtml(liste) {
+  function belohnungHtml(liste, edel) { // edel = [Anzahl, erreicht]: zusätzlich ein Edelstein-Kärtchen
     return '<div class="belohn">' + liste.map(function (e) {
       var t = e[0], ok = !!e[1];
       return '<span class="bkarte' + (ok ? ' ok' : '') + '" title="' + CONFIG.units[t].name + (ok ? ' (freigeschaltet)' : ' (noch nicht freigeschaltet)') + '"><canvas width="88" height="88" data-t="' + t + '"></canvas><span class="bname">' + CONFIG.units[t].name + '</span>' + (ok ? '<i class="bhaken" aria-label="freigeschaltet">✓</i>' : '') + '</span>';
-    }).join('') + '</div>';
+    }).join('') + (edel ? edelKarteHtml(edel[0], edel[1]) : '') + '</div>';
   }
   var ovKarten = []; // neue Karten nach einem Story-Sieg (gesetzt von storyErgebnis)
   function showOverlay(title, text, btnText, withChoice) {

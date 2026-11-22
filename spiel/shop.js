@@ -1,7 +1,8 @@
   // ---------- Shop (22.11.): Karten mit Edelsteinen freischalten ----------
   // Welche Karten es im Shop gibt und was sie kosten: daten/freischalten.js (Regel kaufen: n). Wie viele Edelsteine es wofür gibt: CONFIG.FREI.edel.
   // Kontostand und Käufe führt der Server (server.js: kontoStand, /api/kaufen, Nachricht 'edel'); der Browser zeigt nur an.
-  // Aufbau wie das Kartenbuch (22.11. 13:30): oben die Edelstein-Regeln als Chips (Freund-Chip lädt ein) und der Kontostand,
+  // Aufbau wie das Kartenbuch (22.11. 13:30): oben nur der Knopf «Freund einladen: +20» (Kontostand steht am Shop-Knopf im Menü,
+  // Online-Belohnung auf dem Online-Feld im Menü, Story-Belohnung beim jeweiligen Gegner),
   // links kleine Karten mit Preis, rechts die gewählte Karte gross mit ganzem Beschrieb und Kaufknopf. Fenster deckt auch die Einheitenleiste ab (mehr Höhe).
   // Kaufen: Knopf antippen, dann innerhalb von 3 s «Kaufen?» bestätigen.
   var shopArm = '', shopArmT = 0, shopLaeuft = false, shopSel = '';
@@ -11,8 +12,9 @@
       .sort(function (a, b) { return CONFIG.FREI.einheiten[a].kaufen - CONFIG.FREI.einheiten[b].kaufen; });
   }
   function edelText(n) { return n + ' ' + EDEL_SVG; }
-  function edelMalen() { // Zahl am Shop-Knopf im Menü (nur angemeldet und bekannt)
-    var k = konto || {};
+  function edelMalen() { // Zahl am Shop-Knopf im Menü (nur angemeldet und bekannt), Online-Belohnung auf dem Online-Feld
+    var k = konto || {}, E = CONFIG.FREI.edel, pe = $('pvpEdel');
+    pe.hidden = !kontoAn(); pe.innerHTML = 'Sieg <b>+' + edelText(E.sieg) + '</b> · Niederlage <b>+' + edelText(E.niederlage) + '</b>';
     $('edelZahl').textContent = k.user && typeof k.edel === 'number' ? k.edel : '';
     $('shopBtn').hidden = !kontoAn() || !shopTypen().length;
     if (!$('shop').hidden) shopMalen();
@@ -42,12 +44,7 @@
   function shopMalen() {
     var k = konto || {}, E = CONFIG.FREI.edel, q = k.quellen, l = shopTypen();
     if (l.indexOf(shopSel) < 0) shopSel = l.filter(function (t) { return unitLocked(t); })[0] || l[0] || '';
-    $('shopStand').innerHTML = k.user && typeof k.edel === 'number' ? edelText(k.edel) : '';
-    $('shopRegeln').innerHTML =
-      '<span title="Online-Partie gewonnen"><i class="lang">Online-</i>Sieg <b>+' + edelText(E.sieg) + '</b></span>' +
-      '<span title="Online-Partie verloren (auch Unentschieden)"><i class="lang">Online-</i>Niederlage <b>+' + edelText(E.niederlage) + '</b></span>' +
-      '<span title="Jeder Story-Gegner zählt einmal, beim ersten Sieg">Story-Gegner<i class="lang"> besiegt</i> <b>+' + edelText(E.bot) + '</b></span>' +
-      '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine">👥 Freund<i class="lang"> einladen</i> <b>+' + edelText(E.freund) + '</b></button>';
+    $('shopRegeln').innerHTML = '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine">👥 Freund einladen: <b>+' + edelText(E.freund) + '</b></button>'; // übrige Belohnungen: Online-Feld im Menü, Story-Gegner
     var g = $('shopKarten'); g.innerHTML = l.map(shopMini).join(''); drawCardIcons(g);
     var dt = $('shopDetail'); dt.innerHTML = shopSel ? shopDetail(shopSel) : ''; drawCardIcons(dt);
     dt.style.setProperty('--bk-fs', Math.max(10, Math.min(14, (dt.clientHeight || 300) / 24)).toFixed(1) + 'px');
@@ -102,3 +99,7 @@
   $('shopZu').addEventListener('click', function () { shopOpen(false); $('shopBtn').focus(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('shop').hidden && $('konto').hidden) shopOpen(false); });
   window.addEventListener('resize', function () { if (!$('shop').hidden) { shopPlatz(); shopMalen(); } });
+  // Belohnung «+n Edelsteine» als Kärtchen neben den Karten-Belohnungen (Story-Feld)
+  function edelKarteHtml(n, ok) {
+    return '<span class="bkarte bedel' + (ok ? ' ok' : '') + '" title="' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + (ok ? ' (erhalten)' : ' beim ersten Sieg (mit Konto)') + '"><span class="bedelsym">' + EDEL_SVG + '</span><span class="bname">+' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + '</span>' + (ok ? '<i class="bhaken" aria-label="erhalten">✓</i>' : '') + '</span>';
+  }
