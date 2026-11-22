@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ada6fa2bbd'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '5a88d3fe58'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2548,7 +2548,7 @@
     while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
-    while (guard++ < 3 && clock < 120 /* ab 120 s Spielzeit keine neuen Holzfäller mehr (alle Bots) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
+    while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {

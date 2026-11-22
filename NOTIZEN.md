@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+HOLZFÄLLER BIS 3 MIN (22.11. 18:30): Bots kaufen neue Holzfäller bis 180 s Spielzeit (vorher 120 s).
+
 ANDOCKPLATZ PARALLEL (22.11. 18:10): Andockplatz W/2 ∓ 1,8, y 2,55 (0,5 unter dem Teichrand); Karawane steht dort parallel zur Teichkante (KHX/KHY = ±0,9666 / 0,2562, Blick zur Mitte). Vorderster Warteplatz liegt 1,6 Kacheln zurück genau auf dieser Linie, weitere Plätze Richtung Burg: die Anfahrt zum Andockplatz kommt gerade, kein Ruckeln beim Andocken. Angefahren wird erst, wenn die vorderste Karawane höchstens 0,4 Kacheln vom vordersten Warteplatz entfernt ist.
 
 TEICH LÄNGER, KARAWANE OHNE WENDEN (22.11. 18:05): Teich-Ellipse rx 2,7 (vorher 1,7, je Seite 1 Kachel länger), die 5 Teich-Bäume je Seite 1 Kachel weiter aussen (CONFIG.BAEUME). Karawane wendet nicht mehr am Platz: nach dem Füllen fährt sie geradeaus weiter (Richtung Mitte) und biegt weich (Lenkung 1,1/s) zum Wegpunkt 0,3 Kacheln Richtung Mitte und 1,5 unterhalb des Andockplatzes, dann zur Burg. Zustand 'wenden' entfernt. Fehler behoben: wartende Karawanen schauen wieder zum Teich (Code war versehentlich in einem Kommentar gelandet).
