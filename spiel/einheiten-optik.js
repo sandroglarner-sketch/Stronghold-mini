@@ -16,7 +16,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.9 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -32,23 +32,29 @@
   // Morgenstern des Schwarzen Ritters: rot = Armdrehung um die Hand, phi = Richtung der Kette relativ zum Stiel, L = Kettenlänge (× r).
   // In Ruhe hängt die Kugel kurz am Stiel (L klein); beim Schlag fliegt sie weit hinaus und pendelt danach gedämpft aus. Drei Varianten (MS_VARIANTE).
   var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: -1.15, L: 0.75 }; // Ruhe: Kugel hängt an der Kette aussen neben dem Stiel (verdeckt weder Stiel noch Schild)
-  // Seitenhieb in drei Stärken: back = Ausholen (rad), schleif = Kette beim Ausholen, Lmax = Kette beim Schlag (× r),
-  // durch = Arm schwingt nach dem Treffer weiter, pend = Ausschwingen der Kugel (Weite, Dämpfung, Tempo)
+  // Seitenhieb (Ausholen wie Runde-2-A), danach wird die Kugel im 120°-Bogen vor dem Ritter hin und her geschwungen (a = Richtung der Kugel, ±1 ≈ ±60°)
+  var MS_HIEB = { back: -2.0, schleif: 1.4, Lmax: 1.3 };
   var MS_ART = {
-    A: { back: -2.0, schleif: 1.4, Lmax: 1.3, durch: 1.1, pend: [-1.9, 3.0, 12] },          // weit
-    B: { back: -2.3, schleif: 1.7, Lmax: 1.45, durch: 1.5, pend: [-2.4, 2.4, 10] },          // noch weiter, langes Pendeln
-    C: { back: -2.5, schleif: 2.0, Lmax: 1.55, durch: 1.9, pend: [-2.8, 2.0, 8], um: 1 }     // ganz weit: Kugel wickelt sich fast um und pendelt zurück
+    A: function (t) { return { a: 0.95 * Math.sin(2 * Math.PI * t / 0.7), L: 0 }; },                                     // einmal hin und zurück
+    B: function (t) { return { a: 1.05 * Math.exp(-1.2 * t) * Math.sin(2 * Math.PI * 2 * t / 0.85), L: 0 }; },          // zweimal hin und her, wird schwächer
+    C: function (t) { var a = 1.05 * Math.sin(2 * Math.PI * 1.5 * t / 0.85); return { a: a, L: 0.2 * a * a }; }         // anderthalb Mal, Kette wird an den Rändern länger (Achterschwung)
   };
   function msOsc(t, amp, k, w) { return amp * Math.exp(-k * t) * Math.sin(w * t); }
   function msPose(at, W, F) {
-    var R = MS_RUHE, P = MS_ART[MS_VARIANTE] || MS_ART.A;
+    var R = MS_RUHE, P = MS_HIEB, f = MS_ART[MS_VARIANTE] || MS_ART.A;
     if (at === undefined || at < -W || at > F) return R;
-    if (at < 0) { // weit nach hinten-aussen ausholen (Kugel schleift hinterher), dann quer durch den ganzen Bogen
+    if (at < 0) { // weit nach hinten-aussen ausholen (Kugel schleift hinterher), dann quer in den Bogen
       var k = (at + W) / W, ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
       return { rot: lerp(P.back * ka, 0.35, ks), phi: lerp(lerp(R.phi, P.schleif, ka), 0.1, ks), L: lerp(R.L, P.Lmax, sm(k)) };
     }
-    var e = sm(at / F), wick = P.um ? 1.6 * Math.sin(Math.PI * Math.min(1, at / 0.3)) * (1 - e) : 0;
-    return { rot: 0.35 * (1 - e) + msOsc(at, P.durch, 2.6, 5.5), phi: lerp(0.1, R.phi, e) + msOsc(at, P.pend[0], P.pend[1], P.pend[2]) - wick, L: lerp(P.Lmax, R.L, e) };
+    // Kugel kreist vor dem Ritter: Zielpunkt im Bogen (Richtung a × 60°, Abstand 2,3 r vom Ritter), Stiel zeigt etwas voraus, Kugel hängt nach
+    var b = sm(Math.max(0, (at - (F - 0.3)) / 0.3)), q = f(at), qv = f(at + 0.06);
+    var ballX = 2.3 * (1 + q.L) * Math.cos(q.a * Math.PI / 3), ballY = 2.3 * (1 + q.L) * Math.sin(q.a * Math.PI / 3);
+    var vorX = 2.3 * Math.cos(qv.a * Math.PI / 3), vorY = 2.3 * Math.sin(qv.a * Math.PI / 3);
+    var srot = Math.atan2(vorY + 0.75, vorX - 0.55) * 0.75, tipX = 0.55 + 0.6 * Math.cos(srot), tipY = -0.75 + 0.6 * Math.sin(srot);
+    var sw = { rot: srot, phi: Math.atan2(ballY - tipY, ballX - tipX) - srot, L: Math.max(0.5, hyp(ballX - tipX, ballY - tipY)) };
+    var c0 = sm(Math.min(1, at / 0.1)); sw = { rot: lerp(0.35, sw.rot, c0), phi: lerp(0.1, sw.phi, c0), L: lerp(P.Lmax, sw.L, c0) }; // weicher Übergang vom Hieb
+    return { rot: lerp(sw.rot, R.rot, b), phi: lerp(sw.phi, R.phi, b), L: lerp(sw.L, R.L, b) };
   }
   function attackPose(type, at, r) {
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };
@@ -929,15 +935,17 @@
       if (swz) { // Morgenstern: kurzer Holzstiel mit Eisenbeschlag, Kette mit 3 Gliedern, Stachelkugel (schwingt beim Hieb etwas nach)
         var MSP = A.ms || MS_RUHE; c.translate(r * 0.55, -r * 0.75); c.rotate(MSP.rot); c.translate(-r * 0.55, r * 0.75); // ganze Waffe dreht um die Hand
         var mzug = MSP.phi, mkx = r * 1.15, mky = -r * 0.75;
-        c.strokeStyle = '#4a3220'; c.lineWidth = Math.max(2.5, r * 0.2); c.beginPath(); c.moveTo(r * 0.45, -r * 0.75); c.lineTo(mkx, mky); c.stroke(); // Stiel
-        c.strokeStyle = '#5c6066'; c.lineWidth = Math.max(3, r * 0.26); c.beginPath(); c.moveTo(r * 0.98, mky); c.lineTo(mkx + r * 0.04, mky); c.stroke(); // Beschlag
         var mbx = mkx + r * MSP.L * Math.cos(mzug), mby = mky + r * MSP.L * Math.sin(mzug);
-        c.strokeStyle = '#3a3d42'; c.lineWidth = Math.max(1.2, r * 0.07);
-        for (var mg = 0; mg < 3; mg++) { var mt = (mg + 0.5) / 3.4; c.beginPath(); c.ellipse(mkx + (mbx - mkx) * mt, mky + (mby - mky) * mt, r * 0.1, r * 0.06, mzug + (mg % 2 ? Math.PI / 2 : 0), 0, Math.PI * 2); c.stroke(); } // Kettenglieder
+        // Reihenfolge von unten nach oben: Stachelkugel, Kette, Stiel (Stiel zuoberst)
         var mkr = r * 0.32; c.fillStyle = '#1d1f23'; c.strokeStyle = '#000';
         for (var ms = 0; ms < 8; ms++) { var ma = ms * Math.PI / 4 + 0.2; c.beginPath(); c.moveTo(mbx + Math.cos(ma - 0.32) * mkr * 0.9, mby + Math.sin(ma - 0.32) * mkr * 0.9); c.lineTo(mbx + Math.cos(ma) * mkr * 1.6, mby + Math.sin(ma) * mkr * 1.6); c.lineTo(mbx + Math.cos(ma + 0.32) * mkr * 0.9, mby + Math.sin(ma + 0.32) * mkr * 0.9); c.fill(); } // Stacheln
         c.fillStyle = '#34373c'; c.beginPath(); c.arc(mbx, mby, mkr, 0, Math.PI * 2); c.fill(); c.lineWidth = 1; c.stroke(); // Kugel
         c.fillStyle = 'rgba(255,255,255,0.25)'; c.beginPath(); c.arc(mbx - mkr * 0.3, mby - mkr * 0.3, mkr * 0.3, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#3a3d42'; c.lineWidth = Math.max(1.2, r * 0.07);
+        var mgn = Math.max(3, Math.round(MSP.L * 4));
+        for (var mg = 0; mg < mgn; mg++) { var mt = (mg + 0.5) / (mgn + 0.4); c.beginPath(); c.ellipse(mkx + (mbx - mkx) * mt, mky + (mby - mky) * mt, r * 0.1, r * 0.06, mzug + (mg % 2 ? Math.PI / 2 : 0), 0, Math.PI * 2); c.stroke(); } // Kettenglieder
+        c.strokeStyle = '#4a3220'; c.lineWidth = Math.max(2.5, r * 0.2); c.beginPath(); c.moveTo(r * 0.45, -r * 0.75); c.lineTo(mkx, mky); c.stroke(); // Stiel
+        c.strokeStyle = '#5c6066'; c.lineWidth = Math.max(3, r * 0.26); c.beginPath(); c.moveTo(r * 0.98, mky); c.lineTo(mkx + r * 0.04, mky); c.stroke(); // Beschlag
         c.fillStyle = '#2b2e33'; c.beginPath(); c.arc(r * 0.5, -r * 0.75, r * 0.15, 0, Math.PI * 2); c.fill(); // Panzerhandschuh
         c.restore();
       } else {
