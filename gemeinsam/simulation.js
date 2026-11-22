@@ -423,7 +423,11 @@
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
         var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2, FPY = 2.6;
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
-        if (u.kz === 'hin' && hyp(FPX - u.x, FPY - u.y) < 2.2) {
+        // Warteschlange je Seite: k = so viele eigene Karawanen auf dem Hinweg sind näher am Füllplatz (bei Gleichstand kleinere id zuerst).
+        // Platz k liegt k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg; nur die vorderste (k = 0) darf zum Füllplatz.
+        var kq = 0, kme = hyp(FPX - u.x, FPY - u.y);
+        if (u.kz === 'hin') for (var kn = 0; kn < units.length; kn++) { var kv2 = units[kn]; if (kv2 !== u && kv2.type === 'karawane' && kv2.team === u.team && kv2.hp > 0 && kv2.kz === 'hin') { var kd2 = hyp(FPX - kv2.x, FPY - kv2.y); if (kd2 < kme - 1e-9 || (Math.abs(kd2 - kme) <= 1e-9 && kv2.id < u.id)) kq++; } }
+        if (u.kz === 'hin' && kq === 0 && kme < 2.2) {
           var kfrei = true;
           for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
           if (kfrei) u.kz = 'anfahrt';
@@ -442,7 +446,10 @@
           if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.25; }
           else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
-          else { kzx = FPX + ksg * 1.7 + kof * 0.5; kzy = FPY + 0.35 + Math.abs(kof); kziel = 0.12; } // 'hin': zum Wartepunkt auf der eigenen Seite
+          else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
+            var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
+            kzx = wpx + brx / brl * 1.1 * kq; kzy = wpy + bry / brl * 1.1 * kq; kziel = 0.12;
+          }
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
           if (kdd > kziel) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = kv.x; u.kdy = kv.y; }
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
@@ -451,7 +458,7 @@
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'hin'; u.voll = 0;
-          } // 'hin' am Wartepunkt: warten, bis der Füllplatz frei ist
+          } else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
         }
         u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;

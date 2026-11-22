@@ -16,7 +16,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.6 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -47,14 +47,18 @@
       var k = (at + W) / W, ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
       return { rot: lerp(P.back * ka, 0.35, ks), phi: lerp(lerp(R.phi, P.schleif, ka), 0.1, ks), L: lerp(R.L, P.Lmax, sm(k)) };
     }
-    // Kugel kreist vor dem Ritter: Zielpunkt im Bogen (Richtung a × 60°, Abstand 2,3 r vom Ritter), Stiel zeigt etwas voraus, Kugel hängt nach
-    var b = sm(Math.max(0, (at - (F - 0.3)) / 0.3)), q = f(at), qv = f(at + 0.06);
-    var ballX = 2.3 * (1 + q.L) * Math.cos(q.a * Math.PI / 3), ballY = 2.3 * (1 + q.L) * Math.sin(q.a * Math.PI / 3);
-    var vorX = 2.3 * Math.cos(qv.a * Math.PI / 3), vorY = 2.3 * Math.sin(qv.a * Math.PI / 3);
-    var srot = Math.atan2(vorY + 0.75, vorX - 0.55) * 0.75, tipX = 0.55 + 0.6 * Math.cos(srot), tipY = -0.75 + 0.6 * Math.sin(srot);
-    var sw = { rot: srot, phi: Math.atan2(ballY - tipY, ballX - tipX) - srot, L: Math.max(0.5, hyp(ballX - tipX, ballY - tipY)) };
-    var c0 = sm(Math.min(1, at / 0.1)); sw = { rot: lerp(0.35, sw.rot, c0), phi: lerp(0.1, sw.phi, c0), L: lerp(P.Lmax, sw.L, c0) }; // weicher Übergang vom Hieb
-    return { rot: lerp(sw.rot, R.rot, b), phi: lerp(sw.phi, R.phi, b), L: lerp(sw.L, R.L, b) };
+    // Nach dem Treffer (22.11. 17:30): kurz durchschwingen (0,2 s, Kugel fliegt im Bogen etwas über das Ziel hinaus), dann direkt und zügig zurück
+    // in die Ruhestellung (Kugel unter dem Stiel). Kugelposition wird gerade (kartesisch) zurückgeführt, Kette per Rückrechnung: kein Herumwedeln.
+    var ik = function (bx, by, rot) { var tx = 0.55 + 0.6 * Math.cos(rot), ty = -0.75 + 0.6 * Math.sin(rot); return { rot: rot, phi: Math.atan2(by - ty, bx - tx) - rot, L: Math.max(0.3, hyp(bx - tx, by - ty)) }; };
+    var ballAt = function (a) { return [2.3 * Math.cos(a * Math.PI / 3), 2.3 * Math.sin(a * Math.PI / 3)]; };
+    var DURCH = 0.2, aD = 0.5, ruheX = 0.8, ruheY = -0.75;
+    if (at <= DURCH) {
+      var a1 = aD * sm(at / DURCH), bp = ballAt(a1), sw = ik(bp[0], bp[1], 0.35 + 0.35 * a1);
+      var c0 = sm(Math.min(1, at / 0.08)); // weicher Übergang vom Hieb
+      return { rot: lerp(0.35, sw.rot, c0), phi: lerp(0.1, sw.phi, c0), L: lerp(P.Lmax, sw.L, c0) };
+    }
+    var e = sm((at - DURCH) / (F - DURCH)), b0 = ballAt(aD);
+    return ik(lerp(b0[0], ruheX, e), lerp(b0[1], ruheY, e), lerp(0.35 + 0.35 * aD, R.rot, e));
   }
   function attackPose(type, at, r) {
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };

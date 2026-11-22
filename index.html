@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '32464473cb'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'ef69718a7b'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3008,7 +3008,11 @@
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
         var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2, FPY = 2.6;
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
-        if (u.kz === 'hin' && hyp(FPX - u.x, FPY - u.y) < 2.2) {
+        // Warteschlange je Seite: k = so viele eigene Karawanen auf dem Hinweg sind näher am Füllplatz (bei Gleichstand kleinere id zuerst).
+        // Platz k liegt k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg; nur die vorderste (k = 0) darf zum Füllplatz.
+        var kq = 0, kme = hyp(FPX - u.x, FPY - u.y);
+        if (u.kz === 'hin') for (var kn = 0; kn < units.length; kn++) { var kv2 = units[kn]; if (kv2 !== u && kv2.type === 'karawane' && kv2.team === u.team && kv2.hp > 0 && kv2.kz === 'hin') { var kd2 = hyp(FPX - kv2.x, FPY - kv2.y); if (kd2 < kme - 1e-9 || (Math.abs(kd2 - kme) <= 1e-9 && kv2.id < u.id)) kq++; } }
+        if (u.kz === 'hin' && kq === 0 && kme < 2.2) {
           var kfrei = true;
           for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
           if (kfrei) u.kz = 'anfahrt';
@@ -3027,7 +3031,10 @@
           if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.25; }
           else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
-          else { kzx = FPX + ksg * 1.7 + kof * 0.5; kzy = FPY + 0.35 + Math.abs(kof); kziel = 0.12; } // 'hin': zum Wartepunkt auf der eigenen Seite
+          else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
+            var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
+            kzx = wpx + brx / brl * 1.1 * kq; kzy = wpy + bry / brl * 1.1 * kq; kziel = 0.12;
+          }
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
           if (kdd > kziel) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = kv.x; u.kdy = kv.y; }
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
@@ -3036,7 +3043,7 @@
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'hin'; u.voll = 0;
-          } // 'hin' am Wartepunkt: warten, bis der Füllplatz frei ist
+          } else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
         }
         u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;
@@ -3384,7 +3391,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.6 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -3415,14 +3422,18 @@
       var k = (at + W) / W, ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
       return { rot: lerp(P.back * ka, 0.35, ks), phi: lerp(lerp(R.phi, P.schleif, ka), 0.1, ks), L: lerp(R.L, P.Lmax, sm(k)) };
     }
-    // Kugel kreist vor dem Ritter: Zielpunkt im Bogen (Richtung a × 60°, Abstand 2,3 r vom Ritter), Stiel zeigt etwas voraus, Kugel hängt nach
-    var b = sm(Math.max(0, (at - (F - 0.3)) / 0.3)), q = f(at), qv = f(at + 0.06);
-    var ballX = 2.3 * (1 + q.L) * Math.cos(q.a * Math.PI / 3), ballY = 2.3 * (1 + q.L) * Math.sin(q.a * Math.PI / 3);
-    var vorX = 2.3 * Math.cos(qv.a * Math.PI / 3), vorY = 2.3 * Math.sin(qv.a * Math.PI / 3);
-    var srot = Math.atan2(vorY + 0.75, vorX - 0.55) * 0.75, tipX = 0.55 + 0.6 * Math.cos(srot), tipY = -0.75 + 0.6 * Math.sin(srot);
-    var sw = { rot: srot, phi: Math.atan2(ballY - tipY, ballX - tipX) - srot, L: Math.max(0.5, hyp(ballX - tipX, ballY - tipY)) };
-    var c0 = sm(Math.min(1, at / 0.1)); sw = { rot: lerp(0.35, sw.rot, c0), phi: lerp(0.1, sw.phi, c0), L: lerp(P.Lmax, sw.L, c0) }; // weicher Übergang vom Hieb
-    return { rot: lerp(sw.rot, R.rot, b), phi: lerp(sw.phi, R.phi, b), L: lerp(sw.L, R.L, b) };
+    // Nach dem Treffer (22.11. 17:30): kurz durchschwingen (0,2 s, Kugel fliegt im Bogen etwas über das Ziel hinaus), dann direkt und zügig zurück
+    // in die Ruhestellung (Kugel unter dem Stiel). Kugelposition wird gerade (kartesisch) zurückgeführt, Kette per Rückrechnung: kein Herumwedeln.
+    var ik = function (bx, by, rot) { var tx = 0.55 + 0.6 * Math.cos(rot), ty = -0.75 + 0.6 * Math.sin(rot); return { rot: rot, phi: Math.atan2(by - ty, bx - tx) - rot, L: Math.max(0.3, hyp(bx - tx, by - ty)) }; };
+    var ballAt = function (a) { return [2.3 * Math.cos(a * Math.PI / 3), 2.3 * Math.sin(a * Math.PI / 3)]; };
+    var DURCH = 0.2, aD = 0.5, ruheX = 0.8, ruheY = -0.75;
+    if (at <= DURCH) {
+      var a1 = aD * sm(at / DURCH), bp = ballAt(a1), sw = ik(bp[0], bp[1], 0.35 + 0.35 * a1);
+      var c0 = sm(Math.min(1, at / 0.08)); // weicher Übergang vom Hieb
+      return { rot: lerp(0.35, sw.rot, c0), phi: lerp(0.1, sw.phi, c0), L: lerp(P.Lmax, sw.L, c0) };
+    }
+    var e = sm((at - DURCH) / (F - DURCH)), b0 = ballAt(aD);
+    return ik(lerp(b0[0], ruheX, e), lerp(b0[1], ruheY, e), lerp(0.35 + 0.35 * aD, R.rot, e));
   }
   function attackPose(type, at, r) {
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };
