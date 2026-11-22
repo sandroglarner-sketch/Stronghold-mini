@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE EIGENER ANDOCKPLATZ (22.11. 17:40): jede Seite hat ihren eigenen Füllplatz unten am Teich, etwas auf der eigenen Seite (x = W/2 ∓ 0,7, y 2,6; blau links, rot rechts); besetzt zählt nur durch eigene Karawanen. Körper: Karawanen schieben nur Karawanen, alle anderen Einheiten gehen durch sie hindurch (und umgekehrt). Ersetzt den gemeinsamen Füllplatz von 17:20.
+
 KARAWANEN-SCHLANGE, MORGENSTERN ZURÜCK (22.11. 17:35): Wartende Karawanen stellen sich je Seite hintereinander auf (Platz k = Anzahl eigener Karawanen auf dem Hinweg, die näher am Füllplatz sind; k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg), schauen dabei zum Teich; nur die vorderste fährt an. Morgenstern nach dem Treffer: 0,2 s durchschwingen (Kugel 30° über das Ziel hinaus), dann in 0,4 s gerade zurück in die Ruhestellung (Kugelposition kartesisch geführt, Kette per Rückrechnung), ANIM after 0,6; kein Wedeln mehr (MS_ART wird nicht mehr benutzt).
 
 KARAWANE OVALE ROUTE (22.11. 17:25): Füllen 2 s (vorher 3). Rückweg über einen Wegpunkt 1,1 Kacheln seitlich und 1,6 Kacheln unterhalb des Füllplatzes (Richtung Spielfeldmitte, u.kw = erreicht), dann zur Burg; beim Wenden dreht sie schon zu diesem Wegpunkt. Hinweg oben, Rückweg unten = leicht ovale Runde, Karawanen kommen aneinander vorbei.

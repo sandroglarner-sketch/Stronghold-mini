@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'ef69718a7b'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '7675d846af'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3004,9 +3004,9 @@
         continue;
       }
       if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, wenden, zurück zur Burg, Gold abliefern, von vorn
-        // Füllplatz (W/2, 2,6) gehört beiden Seiten zusammen: wer näher als 2,2 Kacheln ist und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
+        // Füllplatz: jede Seite hat ihren eigenen (W/2 ∓ 0,7, 2,6); wer vorne in der Schlange steht (näher als 2,2 Kacheln) und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
-        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2, FPY = 2.6;
+        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 0.7, FPY = 2.6; // eigener Andockplatz jeder Seite: unten am Teich, etwas auf der eigenen Seite
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
         // Warteschlange je Seite: k = so viele eigene Karawanen auf dem Hinweg sind näher am Füllplatz (bei Gleichstand kleinere id zuerst).
         // Platz k liegt k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg; nur die vorderste (k = 0) darf zum Füllplatz.
@@ -3014,7 +3014,7 @@
         if (u.kz === 'hin') for (var kn = 0; kn < units.length; kn++) { var kv2 = units[kn]; if (kv2 !== u && kv2.type === 'karawane' && kv2.team === u.team && kv2.hp > 0 && kv2.kz === 'hin') { var kd2 = hyp(FPX - kv2.x, FPY - kv2.y); if (kd2 < kme - 1e-9 || (Math.abs(kd2 - kme) <= 1e-9 && kv2.id < u.id)) kq++; } }
         if (u.kz === 'hin' && kq === 0 && kme < 2.2) {
           var kfrei = true;
-          for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
+          for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.team === u.team && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
           if (kfrei) u.kz = 'anfahrt';
         }
         if (u.kz === 'fuellen') {
@@ -3255,6 +3255,7 @@
       for (j = i + 1; j < units.length; j++) {
         var b = units[j];
         if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz && !CONFIG.units[b.type].karawane) || CONFIG.units[b.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
+        if (!!CONFIG.units[a.type].karawane !== !!CONFIG.units[b.type].karawane) continue; // Karawanen schieben nur Karawanen, alle anderen gehen durch sie hindurch
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
