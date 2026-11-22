@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE (22.11. 17:10): kostet immer 10 Gold (kein steigt mehr), bringt 20 Gold pro Gang, hat einen Körper (nimmt am Wegschieben teil, push 0,38; beim Töpfe-Füllen am Teich unverschiebbar wie der Holzfäller beim Hacken); Ankommen ab 0,12 Kacheln (vorher 0,05), damit sie im Gedränge nicht hängen bleibt.
+
 BANK 50 GOLD (22.11. 16:15): Bank kostet 50 Gold (cost und stufen[0].cost, vorher 80).
 
 PRINZESSIN ANGEPASST (22.11. 15:05): Reichweite 3 (sie zaubert erst, wenn ein Ziel 3 Kacheln nah ist), Trichter weiter bis 5 Kacheln, alle 3 s (cd 3). Zielwahl nur bekehrbare Gegner (bekehrbar() in simulation.js, gleiche Ausnahmen wie bekehrKegel); greift nie Burg, Mauer oder König an und zaubert nie ohne Ziel (ohne Ziel läuft sie Richtung gegnerische Burg).

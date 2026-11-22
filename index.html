@@ -1135,7 +1135,7 @@
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4, staerke: 0,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       // Karawane (Wirtschaft): 1. kostet 5 Gold, jede weitere 5 mehr (stirbt eine, sinkt der Preis wieder); geht (Tempo 0.8) zur Mitte unterhalb des Teichs, füllt in 3 s (Annahme) alle 4 Töpfe mit Wasser, geht zurück zur Burg: +10 Gold; dann wieder von vorn.
-      karawane: { cat: 'eco', name: 'Karawane', cost: 5, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.34, passive: true, karawane: { gold: 10, fuellen: 3, toepfe: 4 }, steigt: 5 }, // Preis: 5 Gold + 5 pro lebende eigene Karawane
+      karawane: { cat: 'eco', name: 'Karawane', cost: 10, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.34, push: 0.38, passive: true, karawane: { gold: 20, fuellen: 3, toepfe: 4 } }, // 22.11.: immer 10 Gold, bringt 20 Gold pro Gang, hat einen Körper (push)
       // Holzfäller (Wirtschaft): 6 Gold, hat einen Körper (steht anderen im Weg), höchstens 2 pro Baum; geht zum nächsten freien Baum (CONFIG.BAEUME) und fällt ihn: alle 5 s +2 Gold; ein Baum gibt höchstens 20 Gold, dann bleibt der Stumpf (für den Rest des Spiels)
       holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 6, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.8, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2, proBaum: 2 } },
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
@@ -1405,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '8ec77c245e'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'cd57b44628'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3012,7 +3012,7 @@
           if (u.voll >= 1) u.kz = 'zurueck';
         } else {
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
-          if (kdd > 0.05) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
+          if (kdd > 0.12) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
           else if (u.kz === 'hin') u.kz = 'fuellen';
           else { // an der Burg: Wasser verkauft
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
@@ -3226,15 +3226,15 @@
     var k = Math.min(1, dt * 12);
     for (i = 0; i < units.length; i++) {
       var a = units[i];
-      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || (CONFIG.units[a.type].passive && !CONFIG.units[a.type].holz) || CONFIG.units[a.type].worker) continue; // Holzfäller haben einen Körper
+      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || (CONFIG.units[a.type].passive && !CONFIG.units[a.type].holz && !CONFIG.units[a.type].karawane) || CONFIG.units[a.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
       for (j = i + 1; j < units.length; j++) {
         var b = units[j];
-        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz) || CONFIG.units[b.type].worker) continue; // Holzfäller haben einen Körper
+        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz && !CONFIG.units[b.type].karawane) || CONFIG.units[b.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
           var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
-          var ma = a.dock || a.atSpot || a.hackt || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
           var nx = dx / dist, ny = dy / dist;
           a.x -= nx * pa; a.y -= ny * pa;
           b.x += nx * pb; b.y += ny * pb;
@@ -5071,7 +5071,7 @@
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
-    if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>. Kosten steigen mit jeder weiteren Karawane.');
+    if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');

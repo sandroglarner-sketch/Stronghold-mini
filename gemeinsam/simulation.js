@@ -427,7 +427,7 @@
           if (u.voll >= 1) u.kz = 'zurueck';
         } else {
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
-          if (kdd > 0.05) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
+          if (kdd > 0.12) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
           else if (u.kz === 'hin') u.kz = 'fuellen';
           else { // an der Burg: Wasser verkauft
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
@@ -641,15 +641,15 @@
     var k = Math.min(1, dt * 12);
     for (i = 0; i < units.length; i++) {
       var a = units[i];
-      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || (CONFIG.units[a.type].passive && !CONFIG.units[a.type].holz) || CONFIG.units[a.type].worker) continue; // Holzfäller haben einen Körper
+      if (a.hp <= 0 || a.dummy || a.dig || a.tower || a.inCastle || a.climb || (CONFIG.units[a.type].passive && !CONFIG.units[a.type].holz && !CONFIG.units[a.type].karawane) || CONFIG.units[a.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
       for (j = i + 1; j < units.length; j++) {
         var b = units[j];
-        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz) || CONFIG.units[b.type].worker) continue; // Holzfäller haben einen Körper
+        if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz && !CONFIG.units[b.type].karawane) || CONFIG.units[b.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
           var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
-          var ma = a.dock || a.atSpot || a.hackt || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
           var nx = dx / dist, ny = dy / dist;
           a.x -= nx * pa; a.y -= ny * pa;
           b.x += nx * pb; b.y += ny * pb;
