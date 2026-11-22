@@ -13,6 +13,7 @@
       crossbow: { kaufen: 10 }, // Shop (22.11.)
       schwarzritter: { kaufen: 25 }, // Shop
       bank: { kaufen: 35 }, // Shop
+      dieb: { kaufen: 30 }, // Shop (Diebeshaus)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen

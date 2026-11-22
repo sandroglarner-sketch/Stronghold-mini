@@ -180,7 +180,7 @@ async function kontoStand(userId, besiegtGemeldet) {
   const gekauft = gekauftAus(z);
   const st = { konto: true, freunde, besiegt: b, gekauft };
   const einheiten = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st, t));
-  (tab || []).forEach((t) => { if (einheiten.indexOf(t) < 0) einheiten.push(t); });
+  (tab || []).forEach((t) => { if (einheiten.indexOf(t) < 0 && !(FREI.einheiten[t] && FREI.einheiten[t].kaufen)) einheiten.push(t); }); // Shop-Karten nur durch Kauf (alte Einträge, z. B. Armbrust aus Einladungen, zählen nicht)
   const erg = { code: ein && ein.length ? ein[0].code : '', freunde, einheiten, gekauft, shop: !!z, edel: null, quellen: null, zeile: z };
   if (z) {
     const E = EDEL(), pv = pvpZahlen(z), bots = bServer.filter((id) => STORY_IDS.indexOf(id) >= 0).length;

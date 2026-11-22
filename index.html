@@ -798,7 +798,7 @@
         <span class="ovleft">
         <button class="ghost ovbook" id="bookBtn" type="button" title="Kartenbuch: wähle bis zu 10 Einheiten für dein Deck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"></path><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"></path></svg><span>Kartenbuch</span><span class="ovdeck" id="deckZahl"></span><span class="ovbadge" id="neuZahl" hidden title="Neu freigeschaltete Karten"></span></button>
           <button class="ghost ovkoenig" id="koenigBtn" type="button" title="Dein König: wähle sein Aussehen"><canvas id="koenigIcon" width="30" height="30" aria-hidden="true"></canvas><span>König</span></button>
-          <button class="ghost ovshop" id="shopBtn" type="button" hidden title="Shop: Karten mit Edelsteinen freischalten"><i class="ovedelsym"></i><span>Shop</span><b class="ovedel" id="edelZahl"></b></button>
+          <button class="ghost ovshop" id="shopBtn" type="button" hidden title="Shop: Karten mit Edelsteinen freischalten"><span>Shop</span><i class="ovedelsym"></i><b class="ovedel" id="edelZahl"></b></button>
         </span>
         <span class="ovright">
           <button class="ghost ovrang" id="rangBtn" type="button" title="Rangliste der Online-Partien"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"></path></svg><span>Rangliste</span></button>
@@ -1298,6 +1298,7 @@
       crossbow: { kaufen: 10 }, // Shop (22.11.)
       schwarzritter: { kaufen: 25 }, // Shop
       bank: { kaufen: 35 }, // Shop
+      dieb: { kaufen: 30 }, // Shop (Diebeshaus)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen
@@ -1346,7 +1347,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '2e4245af8f'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'cf1a93e3f1'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
