@@ -167,6 +167,8 @@ function pvpZahlen(z) { // Partien vor den Edelsteinen (pvp_siege leer): Siege a
 }
 // spieler.gekauft: Einträge «typ@bezahlt» (z. B. schwarzritter@40); alte Einträge ohne @ wurden zum Preis aus PREIS_ALT gekauft
 const PREIS_ALT = { crossbow: 10, schwarzritter: 25, bank: 35, dieb: 30 };
+// Einmalige Nachzahlung nach einer Preiserhöhung (nur auf ausdrücklichen Wunsch eintragen): typ -> neuer Preis
+const NACHZAHLEN = { schwarzritter: 40 }; // 22.11.: Schwarzer Ritter 25 -> 40, einmalig
 function gekauftListe(z) { return String((z && z.gekauft) || '').split(',').filter(Boolean).map((e) => { const [t, p] = e.split('@'); return { t, p: p !== undefined ? p | 0 : (PREIS_ALT[t] | 0) }; }); }
 function gekauftAus(z) { return gekauftListe(z).map((e) => e.t).filter((t) => FREI.einheiten[t] && FREI.einheiten[t].kaufen); }
 function gekauftText(l) { return l.map((e) => e.t + '@' + e.p).join(','); }
@@ -189,9 +191,10 @@ async function kontoStand(userId, besiegtGemeldet) {
   if (z) {
     const E = EDEL(), pv = pvpZahlen(z), bots = bServer.filter((id) => STORY_IDS.indexOf(id) >= 0).length;
     const verdient = pv.siege * E.sieg + pv.niederlagen * E.niederlage + bots * E.bot + freunde * E.freund;
-    // Preis einer gekauften Karte erhöht (22.11.): Differenz automatisch nachzahlen, höchstens bis Kontostand 0; Preissenkung gibt nichts zurück
+    // Einmalige Nachzahlung (NACHZAHLEN): wer billiger gekauft hat, zahlt die Differenz, höchstens bis Kontostand 0.
+    // Sonst ändern Preisänderungen im Shop NICHTS am Kontostand (Wunsch Besitzer 22.11.).
     const gl = gekauftListe(z); let nach = 0, geaendert = false;
-    gl.forEach((e) => { const r = FREI.einheiten[e.t]; if (r && r.kaufen && r.kaufen > e.p) { nach += r.kaufen - e.p; e.p = r.kaufen; geaendert = true; } });
+    gl.forEach((e) => { const ziel = NACHZAHLEN[e.t]; if (ziel && ziel > e.p) { nach += ziel - e.p; e.p = ziel; geaendert = true; } });
     if (geaendert) {
       const abzug = Math.min(nach, Math.max(0, verdient - (z.edel_ausgegeben | 0)));
       z.edel_ausgegeben = (z.edel_ausgegeben | 0) + abzug; z.gekauft = gekauftText(gl);

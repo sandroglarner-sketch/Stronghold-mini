@@ -11,7 +11,7 @@
   CONFIG.FREI = {
     einheiten: {
       crossbow: { kaufen: 10 }, // Shop (22.11.)
-      schwarzritter: { kaufen: 40 }, // Shop (22.11. 08:40: 40, vorher 25; Käufer zahlen die Differenz automatisch nach, siehe server.js preisNachzahlen)
+      schwarzritter: { kaufen: 40 }, // Shop (22.11. 08:40: 40, vorher 25; Käufer zahlten einmalig die Differenz nach, server.js NACHZAHLEN)
       bank: { kaufen: 35 }, // Shop
       dieb: { kaufen: 30 }, // Shop (Diebeshaus)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
