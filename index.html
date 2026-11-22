@@ -1124,7 +1124,12 @@
       // jagt mit 2 Fackelwerfern (20 s Vorsprung, alle 40 s), greift bei 240 Gold an (Belagerungsschild, Onager, 4 Ritter, 10 Fackelwerfer, 4 Speerträger, 20 Leitern)
       drachenkoenig: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'brand', gold: 50 }, { type: 'schmiede', gold: 40 }], gebMax: { schmiede: 2 }, huntLead: 20, hunt: [['fackel', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 4, turm: { archer: 6 }, wallClear: true, attackGold: 240, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['onager', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 8, buy: [['fackel', 10]] }, { after: 9, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 20]] }],
-                    defPlus: 1, defPool: ['spear', 'fackel', 'knight'], noOutput: 10 }
+                    defPlus: 1, defPool: ['spear', 'fackel', 'knight'], noOutput: 10 },
+      // «Kaiserin Goldfeder» (Story-Platz 17, braucht ein Konto, 22.11.): 10 Bauern und 3 Karawanen, Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Balisten auf den Türmen,
+      // jagt mit 2 Speerträgern (20 s Vorsprung, alle 30 s), 1 s später 1 Bogenschütze, greift bei 240 Gold an (Welle 343: Trebuchet, 8+4+4+4+4 Speer, Baliste, 4 Bogen, 20 Leitern)
+      kaiseringoldfeder: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 3, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, huntLater: [{ after: 1, buy: [['archer', 1]] }], wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, baliste: 2 }, wallClear: true, attackGold: 240, lockSecs: 17,
+                    attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 1, buy: [['spear', 4], ['baliste', 1]] }, { after: 2, buy: [['archer', 4]] }, { after: 3, buy: [['spear', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 12, buy: [['spear', 4]] }, { after: 16, buy: [['ladder', 20]] }],
+                    defPlus: 1, defPool: ['spear', 'archer', 'rider'], noOutput: 10 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1316,7 +1321,7 @@
     { id: 'zarinfrostmantel', name: 'Zarin Frostmantel', koenig: 'zarinfrostmantel', platz: 13, logik: 'zarinfrostmantel', nr: 17 }, // seit 21.11. 13:37, braucht ein Konto
     { id: 'junkerhabgier', name: 'Junker Habgier', koenig: 'junkerhabgier', platz: null, logik: null },
     { id: 'vogtgrimmbart', name: 'Vogt Grimmbart', koenig: 'vogtgrimmbart', platz: null, logik: null },
-    { id: 'kaiseringoldfeder', name: 'Kaiserin Goldfeder', koenig: 'kaiseringoldfeder', platz: null, logik: null },
+    { id: 'kaiseringoldfeder', name: 'Kaiserin Goldfeder', koenig: 'kaiseringoldfeder', platz: 17, logik: 'kaiseringoldfeder', nr: 21 }, // seit 22.11. 18:45, braucht ein Konto
     { id: 'pilzkoenig', name: 'Der Pilzkönig', koenig: 'pilzkoenig', platz: null, logik: null },
     { id: 'admiralsalzwind', name: 'Admiral Salzwind', koenig: 'admiralsalzwind', platz: null, logik: null },
     { id: 'khansteppensturm', name: 'Khan Steppensturm', koenig: 'khansteppensturm', platz: null, logik: null },
@@ -1371,12 +1376,13 @@
       mage: { besiegt: 'zarinfrostmantel' },
       onager: { besiegt: 'steinmetzbrocken' },
       adel: { besiegt: 'graefineisenhand' }, // Belohnung für Gräfin Eisenhand (Story-Platz 15, braucht ein Konto) // Belohnung für Steinmetz Brocken (Story-Platz 14, braucht ein Konto) // Belohnung für Zarin Frostmantel (Story-Platz 13, braucht ein Konto) // Belohnung für den Jungkönig (Story-Platz 12, braucht ein Konto) // Belohnung für König Rotbart (Story-Platz 11, braucht ein Konto) // Belohnung für Fürstbischof Gerold (Story-Platz 10, braucht ein Konto) // Belohnung für den Wolfsjarl (Story-Platz 9, braucht ein Konto)
+      karawane: { besiegt: 'kaiseringoldfeder' }, // Belohnung für Kaiserin Goldfeder (Story-Platz 17, braucht ein Konto)
       fackel: { besiegt: 'drachenkoenig' }, // Belohnung für den Drachenkönig (Story-Platz 16, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true } } },
+    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),
@@ -1405,7 +1411,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '5a88d3fe58'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '32b92c6c27'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).

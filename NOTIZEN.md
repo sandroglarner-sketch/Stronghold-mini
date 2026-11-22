@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KAISERIN GOLDFEDER (22.11. 18:45, aus dem Bot-Editor): Story-Platz 17 (nr 21, braucht Konto, Logik kaiseringoldfeder: 10 Bauern + 3 Karawanen, Mauer 5 mit 6 Bogen + 2 Balisten auf den Türmen, Jagd 2 Speer nach 20 s / alle 30 s + 1 s später 1 Bogen, Angriff ab 240 Gold (Welle 343): Trebuchet, s1 4 Speer + Baliste, s2 4 Bogen, s3/s6/s9/s12 je 4 Speer, s16 20 Leiter; Verteidigung Speer, Bogen, Reiter); Belohnung Karawane (FREI karawane { besiegt }; vorher war die Karawane in Entwicklung). Zarin Frostmantel und Drachenkönig aus demselben Export waren schon identisch (gebMax schmiede 1 bzw. 2), nichts geändert. Nächste freie nr: 22.
+
 HOLZFÄLLER BIS 3 MIN (22.11. 18:30): Bots kaufen neue Holzfäller bis 180 s Spielzeit (vorher 120 s).
 
 ANDOCKPLATZ PARALLEL (22.11. 18:10): Andockplatz W/2 ∓ 1,8, y 2,55 (0,5 unter dem Teichrand); Karawane steht dort parallel zur Teichkante (KHX/KHY = ±0,9666 / 0,2562, Blick zur Mitte). Vorderster Warteplatz liegt 1,6 Kacheln zurück genau auf dieser Linie, weitere Plätze Richtung Burg: die Anfahrt zum Andockplatz kommt gerade, kein Ruckeln beim Andocken. Angefahren wird erst, wenn die vorderste Karawane höchstens 0,4 Kacheln vom vordersten Warteplatz entfernt ist.
