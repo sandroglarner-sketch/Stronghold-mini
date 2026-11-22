@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE ÜBER DEN SPAWNPUNKT (22.11. 17:50): nach dem Abladen an der Burg fährt sie zuerst zum Spawnpunkt (kz 'spawn', oberes Ende vor der Burg) und erst von dort wieder Richtung Teich ('hin').
+
 KARAWANE SPAWN (22.11. 17:40): Karawanen erscheinen als einzige Einheit immer am selben Ort: 0,5 Kacheln vor der Burg am oberen Ende des Spawn-Bands (Burgmitte − 1,4), ohne Zufallsversatz (simRand wird trotzdem gezogen).
 
 KARAWANE EIGENER ANDOCKPLATZ (22.11. 17:40): jede Seite hat ihren eigenen Füllplatz unten am Teich, etwas auf der eigenen Seite (x = W/2 ∓ 0,7, y 2,6; blau links, rot rechts); besetzt zählt nur durch eigene Karawanen. Körper: Karawanen schieben nur Karawanen, alle anderen Einheiten gehen durch sie hindurch (und umgekehrt). Ersetzt den gemeinsamen Füllplatz von 17:20.

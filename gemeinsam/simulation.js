@@ -445,6 +445,7 @@
           // Rückweg leicht oval: zuerst etwas Richtung Spielfeldmitte (unter dem Hinweg durch), dann zur Burg; so kommen sich Karawanen nicht in die Quere
           if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.25; }
           else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
+          else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.12; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
           else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
             var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
@@ -457,8 +458,9 @@
           else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
-            u.kz = 'hin'; u.voll = 0;
-          } else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
+            u.kz = 'spawn'; u.voll = 0;
+          }
+          else if (u.kz === 'spawn') u.kz = 'hin'; // am Spawnpunkt: von hier wieder zum Teich else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
         }
         u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;
