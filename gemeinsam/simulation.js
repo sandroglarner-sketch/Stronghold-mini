@@ -54,13 +54,17 @@
   // Jede getroffene gegnerische Einheit wechselt sofort die Seite. Nicht: König, Arbeiter, Gebäude, Wirtschaft (Bauern, Holzfäller, Karawane),
   // Turmbesatzung und wer zu einem Turmplatz unterwegs ist, Belagerungsturm samt Schützen, Kletternde, Tunnelgräber unter der Erde, Einheiten in der Burg.
   // Deterministisch (feste Reihenfolge, Skalarprodukt statt Winkel).
+  function bekehrbar(sv) { // kann die Prinzessin diese Einheit bekehren? (auch für ihre Zielwahl)
+    var sd = CONFIG.units[sv.type];
+    if (!sd || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock) return false;
+    return !(sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry);
+  }
   function bekehrKegel(u, d, tx, ty) {
     var K = d.bekehren, ax = tx - u.x, ay = ty - u.y, al = hyp(ax, ay), ck = K.winkel === 60 ? 0.8660254 : dcos(K.winkel / 360 * Math.PI), neu = u.team, l = [];
     if (al < 1e-6) { ax = neu === 0 ? 1 : -1; ay = 0; al = 1; }
     for (var j = 0; j < units.length; j++) {
       var sv = units[j], sd = CONFIG.units[sv.type];
-      if (sv.team === neu || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock || !sd) continue;
-      if (sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry) continue;
+      if (sv.team === neu || !bekehrbar(sv)) continue;
       var dx = sv.x - u.x, dy = sv.y - u.y, dl = hyp(dx, dy);
       if (dl - (sd.r || 0.3) > K.r) continue;
       if (dl > 1e-6 && (dx * ax + dy * ay) / (dl * al) < ck) continue; // ausserhalb des Trichters
@@ -515,6 +519,7 @@
       for (j = 0; j < units.length; j++) {
         var e = units[j];
         if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
+        if (d.bekehren && !bekehrbar(e)) continue; // Prinzessin: nur Gegner, die sie bekehren kann
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen
@@ -529,11 +534,11 @@
       var db = hyp(bp.x - u.x, bp.y - u.y);
       var sight = Math.max(4, d.range + 1.5);
 
-      var dbe = outside || foeDown || (d.minRange && db < d.minRange) ? 1e9 : db, wallT = false;
+      var dbe = outside || foeDown || d.bekehren || (d.minRange && db < d.minRange) ? 1e9 : db, wallT = false; // Prinzessin greift Burg und Mauer nie an
       var tgt = null, tx, ty, td;
       if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
-      else if (outside && dw <= d.range && !bt) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+      else if (outside && dw <= d.range && !bt && !d.bekehren) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
         // nächster Punkt auf der Außenkante der Mauer
         var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
         wallT = true;
@@ -568,11 +573,11 @@
         }
       }
       var built = !d.setup || u.setupT >= d.setup;
-      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && (d.atk > 0 || !!d.bekehren); // nur für die Darstellung (Ausholen, Blickrichtung)
+      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && (d.atk > 0 || !!(d.bekehren && tgt)); // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
       if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
       u.warBereit = u.ready;
-      if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange)) {
+      if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && !(d.bekehren && !tgt)) {
         u.cd = d.cd * (u.cdm || 1);
         u.atkT = clock; var lp = launchPt(u, d, tx, ty);
         if (Math.abs(tx - u.x) > 0.05) u.face = tx > u.x ? 1 : -1;

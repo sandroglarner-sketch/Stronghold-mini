@@ -58,6 +58,17 @@ const TESTS = {
     var t = X.units.map(function (u) { return u.team; });
     return t[1] === 0 && t[2] === 0 && t[3] === 1 && t[4] === 1 && z.hp === z.max ? true : 'Teams Ziel/drin/aussen/weit: ' + t.slice(1).join('/');
   },
+  'Prinzessin: zielt nur auf bekehrbare Gegner und erst ab 3 Kacheln': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'prinzessin'); X.spawn(1, 'farmer'); X.spawn(1, 'spear');
+    var p = X.units[0], f = X.units[1], s = X.units[2];
+    var setz = function (sx) { p.x = 8; p.y = 5; f.x = 9.5; f.y = 5; s.x = sx; s.y = 5; f.cd = s.cd = 9; };
+    setz(12); p.cd = 0; X.upd(0.02);
+    var vorher = [p.cd > 0, f.team, s.team].join('/');
+    setz(10.8); X.upd(0.02);
+    var nachher = [f.team, s.team].join('/');
+    return vorher === 'false/1/1' && nachher === '1/0' ? true : 'bei 4 Kacheln (zaubert?/Bauer/Speer): ' + vorher + ', bei 2,8: ' + nachher;
+  },
 };
 
 const out = {};

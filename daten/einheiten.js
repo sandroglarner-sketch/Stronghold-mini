@@ -99,7 +99,7 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 5, speed: 0.8, cd: 2, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
+      prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 3, speed: 0.8, cd: 3, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): zielt nur auf bekehrbare Gegner, ab 3 Kacheln; Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
