@@ -1347,7 +1347,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '11f3ce12ef'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'a025316a62'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3291,29 +3291,24 @@
   }
   // Morgenstern des Schwarzen Ritters: rot = Armdrehung um die Hand, phi = Richtung der Kette relativ zum Stiel, L = Kettenlänge (× r).
   // In Ruhe hängt die Kugel kurz am Stiel (L klein); beim Schlag fliegt sie weit hinaus und pendelt danach gedämpft aus. Drei Varianten (MS_VARIANTE).
-  var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: 0.6, L: 0.4 };
+  var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: -1.15, L: 0.75 }; // Ruhe: Kugel hängt an der Kette aussen neben dem Stiel (verdeckt weder Stiel noch Schild)
+  // Seitenhieb in drei Stärken: back = Ausholen (rad), schleif = Kette beim Ausholen, Lmax = Kette beim Schlag (× r),
+  // durch = Arm schwingt nach dem Treffer weiter, pend = Ausschwingen der Kugel (Weite, Dämpfung, Tempo)
+  var MS_ART = {
+    A: { back: -2.0, schleif: 1.4, Lmax: 1.3, durch: 1.1, pend: [-1.9, 3.0, 12] },          // weit
+    B: { back: -2.3, schleif: 1.7, Lmax: 1.45, durch: 1.5, pend: [-2.4, 2.4, 10] },          // noch weiter, langes Pendeln
+    C: { back: -2.5, schleif: 2.0, Lmax: 1.55, durch: 1.9, pend: [-2.8, 2.0, 8], um: 1 }     // ganz weit: Kugel wickelt sich fast um und pendelt zurück
+  };
   function msOsc(t, amp, k, w) { return amp * Math.exp(-k * t) * Math.sin(w * t); }
   function msPose(at, W, F) {
-    var R = MS_RUHE, v = MS_VARIANTE;
+    var R = MS_RUHE, P = MS_ART[MS_VARIANTE] || MS_ART.A;
     if (at === undefined || at < -W || at > F) return R;
-    if (at < 0) {
-      var k = (at + W) / W;
-      if (v === 'B') { // Kreisen: die Kugel saust einmal ganz um die Hand, dann nach vorne aufs Ziel
-        var kb = sm(k), kz = sm(Math.max(0, (k - 0.8) / 0.2));
-        return { rot: lerp(-0.4 * kb, 0.3, kz), phi: lerp(R.phi, 0.1 - 2 * Math.PI, kb), L: lerp(R.L, 1.15, sm(Math.min(1, k * 2))) };
-      }
-      if (v === 'C') { // Pendel: schaukelt immer stärker hin und her, dann peitscht sie nach vorne
-        var kc = Math.min(1, k / 0.8), kq = sm(Math.max(0, (k - 0.8) / 0.2)), pend = R.phi + 1.3 * kc * Math.sin(2 * Math.PI * 1.25 * kc);
-        return { rot: lerp(-1.0 * sm(kc), 0.4, kq), phi: lerp(pend, 0.05, kq), L: lerp(R.L, 1.1, sm(k)) };
-      }
-      // A: Seitenhieb: weit nach hinten-aussen ausholen (Kugel schleift hinterher), dann quer durch den ganzen Bogen
-      var ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
-      return { rot: lerp(-1.8 * ka, 0.35, ks), phi: lerp(lerp(R.phi, 1.1, ka), 0.1, ks), L: lerp(R.L, 1.15, sm(k)) };
+    if (at < 0) { // weit nach hinten-aussen ausholen (Kugel schleift hinterher), dann quer durch den ganzen Bogen
+      var k = (at + W) / W, ka = sm(Math.min(1, k / 0.7)), ks = sm(Math.max(0, (k - 0.7) / 0.3));
+      return { rot: lerp(P.back * ka, 0.35, ks), phi: lerp(lerp(R.phi, P.schleif, ka), 0.1, ks), L: lerp(R.L, P.Lmax, sm(k)) };
     }
-    var e = sm(at / F);
-    if (v === 'B') return { rot: 0.3 * (1 - e), phi: lerp(0.1, R.phi, e) + msOsc(at, 0.7, 4, 16), L: lerp(1.15, R.L, e) - Math.abs(msOsc(at, 0.35, 5, 22)) }; // Aufprall: Kugel federt zurück
-    if (v === 'C') return { rot: 0.4 * (1 - e) + msOsc(at, 0.6, 3, 7), phi: lerp(0.05, R.phi, e) + msOsc(at, 1.8, 2.6, 11), L: lerp(1.1, R.L, e) };
-    return { rot: 0.35 * (1 - e) + msOsc(at, 1.0, 3, 6), phi: lerp(0.1, R.phi, e) + msOsc(at, -1.5, 3.2, 13), L: lerp(1.15, R.L, e) }; // schwingt nach dem Treffer weiter durch
+    var e = sm(at / F), wick = P.um ? 1.6 * Math.sin(Math.PI * Math.min(1, at / 0.3)) * (1 - e) : 0;
+    return { rot: 0.35 * (1 - e) + msOsc(at, P.durch, 2.6, 5.5), phi: lerp(0.1, R.phi, e) + msOsc(at, P.pend[0], P.pend[1], P.pend[2]) - wick, L: lerp(P.Lmax, R.L, e) };
   }
   function attackPose(type, at, r) {
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };
