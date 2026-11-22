@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE FÜLLPLATZ (22.11. 17:20): nur EIN Füllplatz unten in der Mitte des Teichs (W/2, 2,6), für beide Seiten zusammen. Ablauf kz: 'hin' (zum Wartepunkt auf der eigenen Seite, 1,7 Kacheln neben dem Platz; ist sie näher als 2,2 Kacheln und der Platz frei = keine andere Karawane in 'anfahrt'/'fuellen'/'wenden' -> 'anfahrt') -> 'anfahrt' (zum Platz) -> 'fuellen' (3 s, steht seitlich zum Teich, unverschiebbar) -> 'wenden' (0,8 s am Platz Richtung Burg drehen, unverschiebbar) -> 'zurueck' -> +20 Gold. Blickrichtung u.kdx/u.kdy = Fahrtrichtung (faceAngle nimmt sie statt der Bewegung, Wegschieben dreht sie nicht mehr). MORGENSTERN RUHIGER: nach dem Treffer schwingt die Kugel nur noch sanft (MS_ART.A a = 0,5·e^(−1,5t)·sin(2πt/0,9)), Ausholen unverändert weit.
+
 KARAWANE (22.11. 17:10): kostet immer 10 Gold (kein steigt mehr), bringt 20 Gold pro Gang, hat einen Körper (nimmt am Wegschieben teil, push 0,38; beim Töpfe-Füllen am Teich unverschiebbar wie der Holzfäller beim Hacken); Ankommen ab 0,12 Kacheln (vorher 0,05), damit sie im Gedränge nicht hängen bleibt.
 
 BANK 50 GOLD (22.11. 16:15): Bank kostet 50 Gold (cost und stufen[0].cost, vorher 80).

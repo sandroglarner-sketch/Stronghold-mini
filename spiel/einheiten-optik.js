@@ -35,7 +35,7 @@
   // Gewählt (22.11. 13:01): Variante A. Seitenhieb (Ausholen wie Runde-2-A), danach wird die Kugel im 120°-Bogen vor dem Ritter hin und her geschwungen (a = Richtung der Kugel, ±1 ≈ ±60°)
   var MS_HIEB = { back: -2.0, schleif: 1.4, Lmax: 1.3 };
   var MS_ART = {
-    A: function (t) { return { a: 0.95 * Math.sin(2 * Math.PI * t / 0.7), L: 0 }; },                                     // einmal hin und zurück
+    A: function (t) { return { a: 0.5 * Math.exp(-1.5 * t) * Math.sin(2 * Math.PI * t / 0.9), L: 0 }; },                  // einmal sanft hin und zurück (22.11. 17:20: ruhiger, vorher 0,95 / 0,7 s)
     B: function (t) { return { a: 1.05 * Math.exp(-1.2 * t) * Math.sin(2 * Math.PI * 2 * t / 0.85), L: 0 }; },          // zweimal hin und her, wird schwächer
     C: function (t) { var a = 1.05 * Math.sin(2 * Math.PI * 1.5 * t / 0.85); return { a: a, L: 0.2 * a * a }; }         // anderthalb Mal, Kette wird an den Rändern länger (Achterschwung)
   };

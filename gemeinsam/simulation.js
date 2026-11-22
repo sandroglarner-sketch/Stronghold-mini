@@ -418,22 +418,37 @@
         u.settled = { hackt: u.hackt, ziel: hb ? Math.atan2(hb.y - u.y, hb.x - u.x) : 0 }; // nur für die Zeichnung
         continue;
       }
-      if (d.karawane) { // Karawane: zum Teich, Töpfe füllen, zurück zur Burg, Gold abliefern, von vorn
-        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12;
+      if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, wenden, zurück zur Burg, Gold abliefern, von vorn
+        // Füllplatz (W/2, 2,6) gehört beiden Seiten zusammen: wer näher als 2,2 Kacheln ist und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
+        // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
+        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2, FPY = 2.6;
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
-        var kzx = u.kz === 'zurueck' ? (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) : W / 2 + ksg * 0.35 + kof, kzy = u.kz === 'zurueck' ? (kb0.y1 + kb0.y2) / 2 + kof * 1.5 : 2.6; // Teich: in der Mitte unterhalb andocken (dort sieht der Gegner sie)
+        if (u.kz === 'hin' && hyp(FPX - u.x, FPY - u.y) < 2.2) {
+          var kfrei = true;
+          for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
+          if (kfrei) u.kz = 'anfahrt';
+        }
         if (u.kz === 'fuellen') {
+          u.x = FPX; u.y = FPY; u.kdx = u.team === 0 ? 1 : -1; u.kdy = 0; // seitlich zum Teich
           u.voll = Math.min(1, u.voll + dt / KW.fuellen);
-          if (u.voll >= 1) u.kz = 'zurueck';
+          if (u.voll >= 1) { u.kz = 'wenden'; u.wendT = 0; }
+        } else if (u.kz === 'wenden') { // am Platz abdrehen (Richtung Burg), dann losfahren
+          u.x = FPX; u.y = FPY; var wzx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - u.x, wzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5 - u.y, wzl = hyp(wzx, wzy) || 1;
+          u.kdx = wzx / wzl; u.kdy = wzy / wzl; u.wendT += dt;
+          if (u.wendT >= 0.8) u.kz = 'zurueck';
         } else {
+          var kzx, kzy, kziel;
+          if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.12; }
+          else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
+          else { kzx = FPX + ksg * 1.7 + kof * 0.5; kzy = FPY + 0.35 + Math.abs(kof); kziel = 0.12; } // 'hin': zum Wartepunkt auf der eigenen Seite
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
-          if (kdd > 0.12) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; }
-          else if (u.kz === 'hin') u.kz = 'fuellen';
-          else { // an der Burg: Wasser verkauft
+          if (kdd > kziel) { var kv = umGebaeude(u, kdx / kdd, kdy / kdd, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = kv.x; u.kdy = kv.y; }
+          else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
+          else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft
             gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'hin'; u.voll = 0;
-          }
+          } // 'hin' am Wartepunkt: warten, bis der Füllplatz frei ist
         }
         u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;
@@ -649,7 +664,7 @@
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
           var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
-          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.kz === 'wenden' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.kz === 'wenden' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
           var nx = dx / dist, ny = dy / dist;
           a.x -= nx * pa; a.y -= ny * pa;
           b.x += nx * pb; b.y += ny * pb;
