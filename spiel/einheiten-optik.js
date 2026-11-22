@@ -32,7 +32,7 @@
   // Morgenstern des Schwarzen Ritters: rot = Armdrehung um die Hand, phi = Richtung der Kette relativ zum Stiel, L = Kettenlänge (× r).
   // In Ruhe hängt die Kugel kurz am Stiel (L klein); beim Schlag fliegt sie weit hinaus und pendelt danach gedämpft aus. Drei Varianten (MS_VARIANTE).
   var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: -1.15, L: 0.75 }; // Ruhe: Kugel hängt an der Kette aussen neben dem Stiel (verdeckt weder Stiel noch Schild)
-  // Seitenhieb (Ausholen wie Runde-2-A), danach wird die Kugel im 120°-Bogen vor dem Ritter hin und her geschwungen (a = Richtung der Kugel, ±1 ≈ ±60°)
+  // Gewählt (22.11. 13:01): Variante A. Seitenhieb (Ausholen wie Runde-2-A), danach wird die Kugel im 120°-Bogen vor dem Ritter hin und her geschwungen (a = Richtung der Kugel, ±1 ≈ ±60°)
   var MS_HIEB = { back: -2.0, schleif: 1.4, Lmax: 1.3 };
   var MS_ART = {
     A: function (t) { return { a: 0.95 * Math.sin(2 * Math.PI * t / 0.7), L: 0 }; },                                     // einmal hin und zurück
