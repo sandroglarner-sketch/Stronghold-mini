@@ -35,6 +35,7 @@
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
+    if (d.bekehren) a.push('<b>Verzaubert:</b> Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln. <b>Getroffene Gegner wechseln die Seite</b> (nicht: König, Gebäude, Wirtschaft, Turmbesatzung).');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
@@ -63,7 +64,7 @@
   // Buch: so gross wie der Startbildschirm (liegt im Spielfeld), Karten seitenweise, Pfeile/Wischen/Pfeiltasten blättern mit Umblätter-Animation
   var book = { page: 0, per: 6, busy: false, sel: null, filter: '' };
   function bookTypes() {
-    var l = BUY_TYPES.filter(function (t) { return t !== 'wall' && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); });
+    var l = BUY_TYPES.filter(function (t) { var rg = CONFIG.FREI.regel(t); return t !== 'wall' && !(rg && rg.geschenk && unitLocked(t)) && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); });
     neuPruefen();
     return l.filter(function (t) { return !unitLocked(t); }).concat(l.filter(function (t) { return unitLocked(t); })); // nicht freigeschaltete Karten ganz hinten
   }
@@ -100,8 +101,8 @@
     return '<div class="ucard' + (on ? ' on' : '') + (lk ? ' lockd' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><div class="nm">' + d.name + '</div>' +
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
-      '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
-      '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
+      '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk || d.bekehren ? fmtN(d.cd) + ' s' : '–') + '</span>' +
+      '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram || d.bekehren ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
       '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 ' + lockText(t) + '</p>' : '') + '</div>';
   }
   function miniHtml(t) {

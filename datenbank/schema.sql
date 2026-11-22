@@ -67,3 +67,12 @@ update public.spieler
  where pvp_siege is null;
 alter table public.spieler alter column pvp_siege set default 0;
 alter table public.spieler alter column pvp_niederlagen set default 0;
+
+-- 22.11.: Geschenke vom Entwickler (Karten mit Regel geschenk, z. B. Prinzessin). gezeigt = Geschenk-Fenster schon gesehen.
+alter table public.freischaltungen add column if not exists gezeigt boolean not null default true;
+-- Geschenk vergeben (E-Mail einsetzen; erscheint beim nächsten Öffnen als Geschenk):
+-- insert into public.freischaltungen (user_id, einheit, grund, gezeigt)
+-- select id, 'prinzessin', 'geschenk', false from auth.users where email = 'name@beispiel.ch'
+-- on conflict (user_id, einheit) do update set grund = 'geschenk', gezeigt = false;
+-- Geschenk wieder wegnehmen:
+-- delete from public.freischaltungen where einheit = 'prinzessin' and user_id = (select id from auth.users where email = 'name@beispiel.ch');

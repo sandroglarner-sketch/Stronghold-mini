@@ -50,6 +50,31 @@
     }
     effects.push({ kind: 'kegel', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, t: 0, dur: 0.35 });
   }
+  // Prinzessin (Geschenk): Glitzerstaub im Trichter d.bekehren.winkel (Mitte = Richtung zum Ziel), 0 bis d.bekehren.r Kacheln (bis zum Körperrand).
+  // Jede getroffene gegnerische Einheit wechselt sofort die Seite. Nicht: König, Arbeiter, Gebäude, Wirtschaft (Bauern, Holzfäller, Karawane),
+  // Turmbesatzung und wer zu einem Turmplatz unterwegs ist, Belagerungsturm samt Schützen, Kletternde, Tunnelgräber unter der Erde, Einheiten in der Burg.
+  // Deterministisch (feste Reihenfolge, Skalarprodukt statt Winkel).
+  function bekehrKegel(u, d, tx, ty) {
+    var K = d.bekehren, ax = tx - u.x, ay = ty - u.y, al = hyp(ax, ay), ck = K.winkel === 60 ? 0.8660254 : dcos(K.winkel / 360 * Math.PI), neu = u.team, l = [];
+    if (al < 1e-6) { ax = neu === 0 ? 1 : -1; ay = 0; al = 1; }
+    for (var j = 0; j < units.length; j++) {
+      var sv = units[j], sd = CONFIG.units[sv.type];
+      if (sv.team === neu || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock || !sd) continue;
+      if (sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry) continue;
+      var dx = sv.x - u.x, dy = sv.y - u.y, dl = hyp(dx, dy);
+      if (dl - (sd.r || 0.3) > K.r) continue;
+      if (dl > 1e-6 && (dx * ax + dy * ay) / (dl * al) < ck) continue; // ausserhalb des Trichters
+      l.push(sv);
+    }
+    for (j = 0; j < l.length; j++) {
+      var b = l[j], bd = CONFIG.units[b.type];
+      b.team = neu; b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
+      b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
+      if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
+      effects.push({ kind: 'bekehrt', x: b.x, y: b.y, team: neu, t: 0, dur: 0.9 });
+    }
+    effects.push({ kind: 'glitzer', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, team: neu, t: 0, dur: 0.9 });
+  }
   // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
   function landShot(s) {
     if (s.base) { // Pfeil der Kaserne
@@ -543,7 +568,7 @@
         }
       }
       var built = !d.setup || u.setupT >= d.setup;
-      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
+      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && (d.atk > 0 || !!d.bekehren); // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
       if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
       u.warBereit = u.ready;
@@ -556,7 +581,8 @@
           if (d.multi) fireMulti(u, d, tx, ty); // mehrere Steine, zufällig verteilt im Umkreis multi.spread um das Ziel
           else shots.push({ type: u.type, team: u.team, sx: u.x, sy: u.y, tx: tx, ty: ty, tgt: tgt, wall: (!tgt && wallT) ? ow : null, t: d.delay });
         } else {
-          if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
+          if (d.bekehren) bekehrKegel(u, d, tx, ty); // Prinzessin: kein Schaden, Gegner im Trichter wechseln die Seite
+          else if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
           else if (wallT) {
             if (d.atk > 0) { ow.hit = 0.15; ow.lastHit = clock; }
             ow.hp -= d.atk;
@@ -586,6 +612,7 @@
             effects.push({ kind: 'orb', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: 0.5 });
             effects.push({ kind: u.type === 'mage' ? 'frost' : 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: u.type === 'mage' ? 1 : 0.45 }); // Eismagier: Eiszacken im Radius
           }
+        } else if (d.bekehren) { /* Glitzerstaub zeichnet bekehrKegel */
         } else if (d.ram) {
           if (d.atk > 0) effects.push({ kind: 'slam', x: tx, y: ty, t: 0, dur: 0.4 }); // Rammbock: Einschlag mit Staub und Splittern
         } else {

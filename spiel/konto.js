@@ -14,6 +14,7 @@
     var k = konto || {};
     if (!r) return true;
     if (r.entwicklung) return false; // noch in Entwicklung
+    if (r.geschenk) return false; // nur als Geschenk (konto.einheiten)
     if (r.kaufen) return false; // Shop: gekaufte Karten stehen in konto.einheiten (unitLocked)
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
@@ -59,7 +60,8 @@
     if (Array.isArray(j.gekauft)) konto.gekauft = j.gekauft;
     if (typeof j.shop === 'boolean') konto.shop = j.shop;
     if (Array.isArray(j.einheiten)) konto.einheiten = j.einheiten;
-    kontoSave(); kontoChanged();
+    if (Array.isArray(j.geschenke)) konto.geschenke = j.geschenke;
+    kontoSave(); kontoChanged(); geschenkPruefen();
   }
   function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {

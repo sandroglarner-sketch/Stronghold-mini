@@ -103,3 +103,31 @@
   function edelKarteHtml(n, ok) {
     return '<span class="bkarte bedel' + (ok ? ' ok' : '') + '" title="' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + (ok ? ' (erhalten)' : ' beim ersten Sieg (mit Konto)') + '"><span class="bedelsym">' + EDEL_SVG + '</span><span class="bname">+' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + '</span>' + (ok ? '<i class="bhaken" aria-label="erhalten">✓</i>' : '') + '</span>';
   }
+
+  // ---------- Geschenk vom Entwickler (22.11.) ----------
+  // Karten mit Regel geschenk (daten/freischalten.js) sieht nur, wer sie in der Tabelle freischaltungen hat (grund 'geschenk', per SQL mit der E-Mail eingetragen).
+  // Ist das Geschenk noch nicht gezeigt (gezeigt = false), erscheint es beim nächsten Öffnen im Menü in der Mitte: Kiste springt auf, Karte kommt heraus.
+  // «Annehmen» legt die Karte ins Deck (wenn Platz) und meldet dem Server, dass sie gezeigt wurde (/api/geschenk).
+  var geschenkOffen = '';
+  function geschenkPruefen() {
+    var g = (konto && konto.user && konto.geschenke) || [], el = $('geschenk');
+    if (!el || geschenkOffen || !g.length || state === 'playing' || state === 'paused' || pvp.on || tut.on) return;
+    var t = g[0]; if (!CONFIG.units[t]) return;
+    geschenkOffen = t;
+    $('gKarte').innerHTML = cardHtml(t).replace(/<button class="pick"[\s\S]*?<\/button>/, '').replace(/<p class="lockinfo">[\s\S]*?<\/p>/, '').replace('class="ucard on', 'class="ucard').replace(' lockd', '');
+    drawCardIcons($('gKarte'));
+    $('gText').textContent = 'Die Karte «' + CONFIG.units[t].name + '» gehört jetzt dir.';
+    el.classList.remove('auf'); el.hidden = false; void el.offsetWidth; el.classList.add('auf');
+    try { jingle('win'); } catch (e) {}
+  }
+  $('gOk').addEventListener('click', function () {
+    var t = geschenkOffen; if (!t) return;
+    var geb = CONFIG.units[t].cat === 'building' && DECK.filter(function (x) { return CONFIG.units[x].cat === 'building'; }).length >= GEB_MAX;
+    if (DECK.indexOf(t) < 0 && DECK.length < DECK_MAX && !geb) { DECK.push(t); saveDeck(); applyDeck(); }
+    neuPruefen(); neuGesehen(t);
+    konto.geschenke = (konto.geschenke || []).filter(function (x) { return x !== t; }); kontoSave();
+    if (ONLINE && konto.token) fetch('/api/geschenk', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ t: t }) }).catch(function () {});
+    $('geschenk').hidden = true; geschenkOffen = '';
+    if (sozial) menuAktuell();
+    setTimeout(geschenkPruefen, 400); // weitere Geschenke
+  });

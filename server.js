@@ -36,7 +36,13 @@ function db(method, pfad, body, prefer) {
   return mitZeit(6000, (signal) => fetch(KONTO_URL + '/rest/v1/' + pfad, { method, headers, body: body ? JSON.stringify(body) : undefined, signal })
     .then((r) => r.text().then((t) => { if (!r.ok) { const e = new Error('DB ' + r.status + ' ' + t); e.status = r.status; throw e; } return t ? JSON.parse(t) : null; })));
 }
-function freischaltungenTabelle(userId) { return db('GET', 'freischaltungen?select=einheit&user_id=eq.' + encodeURIComponent(userId)).then((l) => (l || []).map((x) => x.einheit)); } // von Hand vergebene (und alte) Freischaltungen
+// von Hand vergebene (und alte) Freischaltungen: [{ einheit, grund, gezeigt }]; Spalte gezeigt (22.11., Geschenke) fehlt evtl. noch -> ohne Geschenk-Fenster
+let SPALTE_GEZEIGT = true;
+async function freischaltungenTabelle(userId) {
+  const q = 'freischaltungen?user_id=eq.' + encodeURIComponent(userId) + '&select=';
+  if (SPALTE_GEZEIGT) { try { return (await db('GET', q + 'einheit,grund,gezeigt')) || []; } catch (e) { if (e.status !== 400) throw e; SPALTE_GEZEIGT = false; } }
+  return ((await db('GET', q + 'einheit')) || []).map((x) => ({ einheit: x.einheit, grund: '', gezeigt: true }));
+}
 // Regeln aus daten/freischalten.js (dieselbe Datei wie im Spiel) und Story-Reihenfolge aus daten/botdatenbank.js
 let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_NR = {}, STORY_ALT = { 1: [] };
 // spieler.story: besiegte Story-Gegner als 1000 + Bitmaske über die festen Nummern (BOT_DB nr, höchstens 30): 1000 + Summe 2^(nr-1);
@@ -138,6 +144,7 @@ try {
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
 function regelOk(r, st, t) { // st = { konto, freunde, besiegt: [ids], gekauft: [typen] }, t = Karte
   if (r.entwicklung) return false;
+  if (r.geschenk) return false; // nur über die Tabelle freischaltungen (Geschenk)
   if (r.kaufen && (!st.konto || (st.gekauft || []).indexOf(t) < 0)) return false; // Shop: nur gekauft
   if ((r.konto || r.freunde) && !st.konto) return false;
   if (r.freunde && st.freunde < r.freunde) return false;
@@ -186,8 +193,9 @@ async function kontoStand(userId, besiegtGemeldet) {
   const gekauft = gekauftAus(z);
   const st = { konto: true, freunde, besiegt: b, gekauft };
   const einheiten = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st, t));
-  (tab || []).forEach((t) => { if (einheiten.indexOf(t) < 0 && !(FREI.einheiten[t] && FREI.einheiten[t].kaufen)) einheiten.push(t); }); // Shop-Karten nur durch Kauf (alte Einträge, z. B. Armbrust aus Einladungen, zählen nicht)
-  const erg = { code: ein && ein.length ? ein[0].code : '', freunde, einheiten, gekauft, shop: !!z, edel: null, quellen: null, zeile: z };
+  (tab || []).forEach((x) => { const t = x.einheit; if (einheiten.indexOf(t) < 0 && !(FREI.einheiten[t] && FREI.einheiten[t].kaufen)) einheiten.push(t); }); // Shop-Karten nur durch Kauf (alte Einträge, z. B. Armbrust aus Einladungen, zählen nicht)
+  const geschenke = (tab || []).filter((x) => x.grund === 'geschenk' && x.gezeigt === false).map((x) => x.einheit); // noch nicht gezeigte Geschenke (Fenster im Spiel)
+  const erg = { code: ein && ein.length ? ein[0].code : '', freunde, einheiten, gekauft, geschenke, shop: !!z, edel: null, quellen: null, zeile: z };
   if (z) {
     const E = EDEL(), pv = pvpZahlen(z), bots = bServer.filter((id) => STORY_IDS.indexOf(id) >= 0).length;
     const verdient = pv.siege * E.sieg + pv.niederlagen * E.niederlage + bots * E.bot + freunde * E.freund;
@@ -206,7 +214,7 @@ async function kontoStand(userId, besiegtGemeldet) {
   return erg;
 }
 async function freischaltungen(userId, besiegtGemeldet) { return (await kontoStand(userId, besiegtGemeldet)).einheiten; }
-function edelDaten(st) { return { edel: st.edel, quellen: st.quellen, gekauft: st.gekauft, shop: st.shop, einheiten: st.einheiten }; }
+function edelDaten(st) { return { edel: st.edel, quellen: st.quellen, gekauft: st.gekauft, shop: st.shop, einheiten: st.einheiten, geschenke: st.geschenke }; }
 // neuen Kontostand an alle offenen Verbindungen des Spielers schicken (plus = gerade dazugekommen, fürs Ergebnisfenster)
 async function edelMelden(userId, plus, grund) {
   const set = online.get(userId); if (!set || !set.size) return;
@@ -225,6 +233,16 @@ async function edelPartie(ma, w) { // jedes Konto bekommt Edelsteine (Sieg / Nie
   if (ua && ub && ua.id === ub.id) return;
   if (Date.now() - ma.start < EDEL().minPartie * 1000) return;
   await Promise.all([ua ? edelGutschrift(ua, w === 0) : null, ub ? edelGutschrift(ub, w === 1) : null]);
+}
+// Geschenk gesehen (Knopf «Annehmen» im Geschenk-Fenster): nicht nochmals zeigen
+async function apiGeschenk(req, res) {
+  const u = await kontoUser(bearer(req));
+  if (!u) return json(res, 401, { fehler: 'nicht angemeldet' });
+  if (!KONTO_SECRET || !SPALTE_GEZEIGT) return json(res, 200, { ok: true });
+  const b = await lesen(req), t = String(b.t || '');
+  if (!/^[a-z0-9_]{1,30}$/.test(t)) return json(res, 400, { fehler: 'ungültig' });
+  await db('PATCH', 'freischaltungen?user_id=eq.' + encodeURIComponent(u.id) + '&einheit=eq.' + t, { gezeigt: true });
+  json(res, 200, { ok: true });
 }
 // Kauf im Shop: ein Kauf pro Spieler gleichzeitig (sonst könnte man doppelt ausgeben)
 const kaufSperre = new Map();
@@ -303,8 +321,8 @@ const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
   if (req.method === 'GET' && url === '/api/rangliste') { apiRangliste(res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler' }); }); return; }
-  if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch' || url === '/api/kaufen')) {
-    (url === '/api/konto' ? apiKonto : url === '/api/kaufen' ? apiKaufen : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
+  if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch' || url === '/api/kaufen' || url === '/api/geschenk')) {
+    (url === '/api/konto' ? apiKonto : url === '/api/kaufen' ? apiKaufen : url === '/api/geschenk' ? apiGeschenk : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
     return;
   }
   if (url === '/' || url === '/index.html') {

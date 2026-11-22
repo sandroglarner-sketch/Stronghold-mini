@@ -402,6 +402,29 @@
           ctx.beginPath(); ctx.moveTo(Math.cos(bsa) * (bra + 2), Math.sin(bsa) * (bra + 2)); ctx.lineTo(Math.cos(bsa) * (bra + 6 + 8 * k), Math.sin(bsa) * (bra + 6 + 8 * k)); ctx.stroke();
         }
         ctx.restore();
+      } else if (e.kind === 'glitzer') { // Prinzessin: Glitzerstaub fliegt im Trichter (Winkel e.w, bis e.r Kacheln) nach vorne und funkelt
+        var gza = Math.atan2(e.dy, e.dx), gzw = e.w / 360 * Math.PI, gzR = e.r * T, FARB = ['#ffffff', '#ffe066', '#ff9ccf', '#c8a4ff', '#9fe8ff'];
+        ctx.save(); ctx.translate(e.x * T, e.y * T);
+        ctx.globalAlpha = 0.28 * (1 - k); ctx.fillStyle = '#ffd6ee'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, gzR * Math.min(1, k * 2.5), gza - gzw, gza + gzw); ctx.closePath(); ctx.fill();
+        for (var gi = 0; gi < 120; gi++) {
+          var h1 = ((gi * 7919) % 997) / 997, h2 = ((gi * 104729) % 991) / 991, h3 = ((gi * 1299709) % 983) / 983;
+          var gd = gzR * (0.08 + 0.92 * h2) * Math.min(1, k * 3 + h3 * 0.15), gang = gza + (h1 * 2 - 1) * gzw * Math.min(1, 0.35 + gd / gzR);
+          var gx = Math.cos(gang) * gd, gy = Math.sin(gang) * gd + 6 * k * k, tw = 0.5 + 0.5 * Math.sin(e.t * 30 + gi * 1.7);
+          ctx.globalAlpha = (1 - k) * (0.4 + 0.6 * tw); ctx.fillStyle = FARB[gi % FARB.length];
+          var gs = (2 + 3.5 * h3) * (0.6 + 0.4 * tw);
+          if (gi % 4 === 0) { ctx.beginPath(); ctx.moveTo(gx - gs * 1.8, gy); ctx.lineTo(gx, gy - gs * 0.5); ctx.lineTo(gx + gs * 1.8, gy); ctx.lineTo(gx, gy + gs * 0.5); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(gx, gy - gs * 1.8); ctx.lineTo(gx + gs * 0.5, gy); ctx.lineTo(gx, gy + gs * 1.8); ctx.lineTo(gx - gs * 0.5, gy); ctx.closePath(); ctx.fill(); } // Funkelstern
+          else { ctx.beginPath(); ctx.arc(gx, gy, gs * 0.6, 0, Math.PI * 2); ctx.fill(); }
+        }
+        ctx.restore(); ctx.globalAlpha = 1;
+      } else if (e.kind === 'bekehrt') { // Einheit wechselt die Seite: Glitzerring in der neuen Teamfarbe und aufsteigende Herzchen
+        var bx = e.x * T, by = e.y * T, bcol = e.team === 0 ? P.me : P.foe;
+        ctx.save(); ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = bcol; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bx, by, 10 + 16 * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#ffe066';
+        for (var bi2 = 0; bi2 < 8; bi2++) { var ba2 = bi2 * Math.PI / 4 + k * 2, bd2 = 12 + 20 * k; ctx.beginPath(); ctx.arc(bx + Math.cos(ba2) * bd2, by + Math.sin(ba2) * bd2, 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = '#ff6fa8';
+        for (var hz = 0; hz < 3; hz++) { var hx = bx + (hz - 1) * 9, hy = by - 8 - 26 * k - hz * 3, hs = 3.2; ctx.beginPath(); ctx.moveTo(hx, hy + hs); ctx.bezierCurveTo(hx - hs * 2, hy - hs * 0.5, hx - hs * 0.6, hy - hs * 2, hx, hy - hs * 0.6); ctx.bezierCurveTo(hx + hs * 0.6, hy - hs * 2, hx + hs * 2, hy - hs * 0.5, hx, hy + hs); ctx.fill(); }
+        ctx.restore();
       } else if (e.kind === 'kegel') { // Morgenstern-Hieb: Bogen des Flächenschadens (Richtung Ziel, Winkel e.w, Radius e.r), blendet aus
         var kga = Math.atan2(e.dy, e.dx), kgw = e.w / 360 * Math.PI, kgr = (e.r + 0.35) * T, kgk = Math.min(1, k * 2.2);
         ctx.save(); ctx.translate(e.x * T, e.y * T); ctx.globalAlpha = 0.55 * (1 - k);

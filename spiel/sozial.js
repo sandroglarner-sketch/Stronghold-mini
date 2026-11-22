@@ -24,6 +24,7 @@
     sandBtn.hidden = !tester;
     applyDeck(); menuAktuell(); menuKoenig();
     sozialStatus('menu');
+    geschenkPruefen(); // wartendes Geschenk vom Entwickler zeigen
   }
   function menuAktuell() {
     $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();

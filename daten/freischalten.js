@@ -6,6 +6,7 @@
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
   //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
   //   kaufen: n          = im Shop für n Edelsteine kaufen (braucht ein Konto; gekaufte Karten in spieler.gekauft)
+  //   geschenk: true     = nur als Geschenk (Tabelle freischaltungen, grund 'geschenk'); für alle anderen unsichtbar
   //   entwicklung: true  = noch in Entwicklung (für niemanden frei; nur von Hand über die Tabelle freischaltungen)
   // Karten ohne Eintrag sind gesperrt (noch in Entwicklung), ausser sie stehen in FREI.frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
@@ -14,6 +15,7 @@
       schwarzritter: { kaufen: 40 }, // Shop (22.11. 08:40: 40, vorher 25; Käufer zahlten einmalig die Differenz nach, server.js NACHZAHLEN)
       bank: { kaufen: 35 }, // Shop
       dieb: { kaufen: 30 }, // Shop (Diebeshaus)
+      prinzessin: { geschenk: true }, // Geschenk vom Entwickler (22.11.)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen

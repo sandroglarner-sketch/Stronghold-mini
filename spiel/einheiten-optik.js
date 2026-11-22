@@ -16,7 +16,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -67,6 +67,7 @@
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
     else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
+    else if (type === 'prinzessin') { P0.rot = swing(at, W, F, -1.0, 0.45); P0.glow = at < 0 ? sm((at + W) / W) : Math.max(0, 1 - at / F); } // Zauberstab ausholen, Stern leuchtet
     else if (type === 'schwarzritter') { P0.ms = msPose(at, W, F); P0.off = swing(at, W, F, 0, 0.1 * r); } // Morgenstern: eigene Stellung (msPose)
     else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
@@ -910,6 +911,26 @@
       c.beginPath(); c.moveTo(r * 0.2, -r * 0.6); c.lineTo(r * 2.1, -r * 0.6); c.stroke();
       c.fillStyle = P.steel;
       c.beginPath(); c.moveTo(r * 2.45, -r * 0.6); c.lineTo(r * 2.0, -r * 0.85); c.lineTo(r * 2.0, -r * 0.35); c.closePath(); c.fill();
+      c.restore();
+    } else if (type === 'prinzessin') {
+      // Prinzessin (Geschenk): Kleid in Teamfarbe mit weissem Spitzensaum, blondes Haar mit goldenem Diadem, Zauberstab mit Stern
+      c.fillStyle = '#fff6fb'; for (var pz = 0; pz < 12; pz++) { var pa = pz * Math.PI / 6; c.beginPath(); c.arc(Math.cos(pa) * bodyR * 0.98, Math.sin(pa) * bodyR * 0.98, bodyR * 0.2, 0, Math.PI * 2); c.fill(); } // Spitzensaum
+      c.fillStyle = col; c.beginPath(); c.arc(0, 0, bodyR * 0.9, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.22)'; c.beginPath(); c.arc(0, 0, bodyR * 0.7, 0, Math.PI * 2); c.fill(); // heller Schimmer
+      c.fillStyle = '#f2c94c'; c.strokeStyle = 'rgba(120,80,0,0.45)'; c.lineWidth = 1.2; c.beginPath(); c.ellipse(-r * 0.12, 0, r * 0.5, r * 0.46, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Haar
+      c.strokeStyle = '#e0b23a'; c.lineWidth = Math.max(1, r * 0.06); c.beginPath(); c.moveTo(-r * 0.55, -r * 0.2); c.quadraticCurveTo(-r * 0.75, 0, -r * 0.55, r * 0.2); c.stroke(); // Zopf
+      c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(r * 0.22, 0, r * 0.2, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
+      c.fillStyle = '#ffd23f'; c.strokeStyle = '#b8860b'; c.lineWidth = 1; c.beginPath(); // Diadem mit drei Zacken
+      c.moveTo(-r * 0.02, -r * 0.3); c.lineTo(r * 0.12, -r * 0.18); c.lineTo(r * 0.04, -r * 0.08); c.lineTo(r * 0.2, 0); c.lineTo(r * 0.04, r * 0.08); c.lineTo(r * 0.12, r * 0.18); c.lineTo(-r * 0.02, r * 0.3); c.lineTo(-r * 0.12, 0); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#e8467c'; c.beginPath(); c.arc(r * 0.13, 0, r * 0.05, 0, Math.PI * 2); c.fill(); // Edelstein im Diadem
+      c.save(); c.translate(r * 0.45, r * 0.55); c.rotate(A.rot); // Zauberstab in der rechten Hand
+      c.strokeStyle = '#c9a227'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(0, 0); c.lineTo(r * 1.05, 0); c.stroke();
+      var sx0 = r * 1.18, gl = A.glow || 0;
+      if (gl > 0) { var sg = c.createRadialGradient(sx0, 0, 0, sx0, 0, r * (0.4 + 0.5 * gl)); sg.addColorStop(0, 'rgba(255,240,180,' + (0.9 * gl) + ')'); sg.addColorStop(1, 'rgba(255,170,220,0)'); c.fillStyle = sg; c.beginPath(); c.arc(sx0, 0, r * (0.4 + 0.5 * gl), 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#ffe066'; c.strokeStyle = '#c9a227'; c.lineWidth = 1; c.beginPath();
+      for (var sp5 = 0; sp5 < 10; sp5++) { var sa5 = -Math.PI / 2 + sp5 * Math.PI / 5, sr5 = r * (sp5 % 2 ? 0.1 : 0.24); c.lineTo(sx0 + Math.cos(sa5) * sr5, Math.sin(sa5) * sr5); }
+      c.closePath(); c.fill(); c.stroke(); // Stern
+      c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
       c.restore();
     } else if (type === 'raeuber') {
       // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)

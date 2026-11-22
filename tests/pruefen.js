@@ -48,6 +48,16 @@ const TESTS = {
     for (var i = 0; i < 200; i++) { z.x = 11.85; z.y = 5; k.x = 11; k.y = 5; X.upd(0.02); if (z.hp < hp) { treffer.push(+((i + 1) * 0.02).toFixed(2)); hp = z.hp; } }
     return treffer.length >= 2 && Math.abs(treffer[0] - 0.5) < 0.05 && Math.abs(treffer[1] - treffer[0] - 1.5) < 0.05 ? true : 'Treffer bei ' + treffer.join(', ') + ' s';
   },
+  'Prinzessin: Gegner im 60°-Trichter bis 5 Kacheln wechseln die Seite': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'prinzessin'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear');
+    var p = X.units[0], z = X.units[1], drin = X.units[2], aussen = X.units[3], weit = X.units[4];
+    p.x = 8; p.y = 5; z.x = 10.5; z.y = 5; drin.x = 12; drin.y = 6; aussen.x = 9.8; aussen.y = 7.8; weit.x = 14.2; weit.y = 5;
+    X.units.forEach(function (u) { u.cd = 9; }); p.cd = 0;
+    X.upd(0.02);
+    var t = X.units.map(function (u) { return u.team; });
+    return t[1] === 0 && t[2] === 0 && t[3] === 1 && t[4] === 1 && z.hp === z.max ? true : 'Teams Ziel/drin/aussen/weit: ' + t.slice(1).join('/');
+  },
 };
 
 const out = {};

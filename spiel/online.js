@@ -189,7 +189,8 @@
   function pvpRender() {
     // Nur Darstellung: Laufwege UND Zeiten werden zwischen zwei Spielschritten geglättet (danach alles zurückgesetzt, die Berechnung bleibt deterministisch).
     // Gezeichnet wird der Stand (1 − alpha) Schritte vor dem letzten Schritt: Uhr, Angriffs-Restzeit (u.cd → Schlaganimationen, z. B. Morgenstern),
-    // Aufbauzeit (u.setupT → Trebuchet) und Effekte (e.t → fliegende Steine, Einschläge) um diesen Rest zurückgedreht. (22.11.: vorher ruckelten die Animationen im 20er-Takt)
+    // Aufbauzeit (u.setupT → Trebuchet) um diesen Rest zurückgedreht. (22.11.: vorher ruckelten die Animationen im 20er-Takt)
+    // Effekte (e.t) NICHT: die laufen schon pro Bild mit der echten Zeit (updateEffects in main.js), Zurückdrehen würde sie ruckeln lassen.
     var a = pvp.alpha, saved = [], zeiten = [], i, u;
     var ST = pvp.on && !pvp.bot ? STEP : BL_STEP, lag = (1 - a) * ST, uhr = clock;
     for (i = 0; i < units.length; i++) {
@@ -200,12 +201,10 @@
       }
       if (lag > 0) { zeiten.push(u, u.cd, u.setupT); if (u.cd > 0) u.cd += lag; if (u.setupT > 0) u.setupT = Math.max(0, u.setupT - lag); }
     }
-    var et = [];
-    if (lag > 0) { clock -= lag; for (i = 0; i < effects.length; i++) { et.push(effects[i].t); effects[i].t -= lag; } }
+    if (lag > 0) clock -= lag;
     try { render(); } finally {
       for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
       for (i = 0; i < zeiten.length; i += 3) { zeiten[i].cd = zeiten[i + 1]; zeiten[i].setupT = zeiten[i + 2]; }
-      for (i = 0; i < et.length; i++) effects[i].t = et[i];
       clock = uhr;
     }
   }

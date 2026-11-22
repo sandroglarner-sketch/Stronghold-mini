@@ -780,6 +780,35 @@
     .konto { width: min(440px, calc(100vw - 24px)); overflow-x: hidden; }
     .konto .kontorow > *, .konto input { min-width: 0; }
   }
+
+  /* Geschenk vom Entwickler (22.11.): Kiste springt auf, Karte kommt heraus */
+  .geschenk { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 66; width: min(340px, calc(100% - 24px)); max-height: calc(100% - 16px); overflow-y: auto; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 16px; border-radius: 16px; text-align: center;
+    background: radial-gradient(circle at 50% 30%, #fff7fb, var(--panel) 70%); border: 2px solid #f3a6c8; box-shadow: 0 10px 34px rgba(0,0,0,0.35); }
+  .geschenk[hidden] { display: none; }
+  .gtitel { font-family: var(--display); font-size: 1.25rem; color: #c2185b; }
+  .geschenk p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .gbuehne { position: relative; width: 210px; min-height: 230px; display: flex; align-items: center; justify-content: center; }
+  .gkiste { position: absolute; width: 120px; height: 120px; left: 45px; top: 55px; }
+  .gkiste svg { width: 100%; height: 100%; overflow: visible; }
+  .geschenk.auf .gkiste { animation: gwackeln 0.9s ease-in-out, gweg 0.4s ease-in 1.5s forwards; }
+  .geschenk.auf .gdeckel { transform-origin: 50px 38px; animation: gdeckel 0.6s cubic-bezier(.3,1.6,.5,1) 0.9s forwards; }
+  .gkarte { width: 190px; font-size: 12px; opacity: 0; transform: scale(0.3) translateY(40px); }
+  .geschenk.auf .gkarte { animation: gkarte 0.6s cubic-bezier(.2,1.4,.4,1) 1.25s forwards; }
+  .gkarte .ucard canvas { width: 5em; height: 5em; }
+  .gfunken { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(circle, #ffe066 2px, transparent 3px) 20px 30px / 46px 52px, radial-gradient(circle, #ff9ccf 2px, transparent 3px) 0 0 / 38px 44px, radial-gradient(circle, #fff 1.5px, transparent 2.5px) 10px 18px / 30px 34px; }
+  .geschenk.auf .gfunken { animation: gfunken 1.6s ease-out 1.1s; }
+  @keyframes gwackeln { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-8deg); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-6deg); } 60% { transform: rotate(5deg); } 75% { transform: rotate(-3deg); } }
+  @keyframes gdeckel { to { transform: translate(18px, -46px) rotate(28deg); } }
+  @keyframes gweg { to { opacity: 0; transform: scale(0.6) translateY(30px); } }
+  @keyframes gkarte { to { opacity: 1; transform: none; } }
+  @keyframes gfunken { 0% { opacity: 0; transform: scale(0.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3); } }
+  @media (prefers-reduced-motion: reduce) { .geschenk.auf .gkiste { animation: gweg 0.01s forwards; } .geschenk.auf .gkarte { animation: gkarte 0.01s forwards; } }
+  @media (pointer: coarse), (max-width: 700px) {
+    .geschenk { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translateX(-50%); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px); }
+  }
+  @media (max-height: 460px) { .gbuehne { min-height: 0; } .gkiste { top: 20px; } .gkarte { font-size: 10px; width: 170px; } .geschenk p { display: none; } }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -900,6 +929,12 @@
         <div class="bookdetail shopdetail" id="shopDetail"></div>
       </div>
       <div class="bookfoot"><span class="bookmsg" id="shopMsg"></span><span id="shopBisher"></span></div>
+    </div>
+    <div class="geschenk" id="geschenk" hidden role="dialog" aria-label="Geschenk">
+      <b class="gtitel">🎁 Geschenk vom Entwickler</b>
+      <div class="gbuehne"><div class="gkiste" aria-hidden="true"><svg viewBox="0 0 100 100"><rect x="14" y="44" width="72" height="50" rx="5" fill="#e8467c"/><rect x="45" y="44" width="10" height="50" fill="#ffd23f"/><g class="gdeckel"><rect x="8" y="30" width="84" height="17" rx="4" fill="#f06292"/><rect x="45" y="30" width="10" height="17" fill="#ffd23f"/><path d="M50 30c-6-14-24-16-22-5 2 7 14 6 22 5zM50 30c6-14 24-16 22-5-2 7-14 6-22 5z" fill="#ffd23f" stroke="#c99a00" stroke-width="1.5"/></g></svg></div><div class="gkarte" id="gKarte"></div><i class="gfunken" aria-hidden="true"></i></div>
+      <p id="gText"></p>
+      <button class="primary" id="gOk" type="button">Annehmen</button>
     </div>
     <div class="konto" id="konto" hidden role="dialog" aria-label="Konto">
       <h3 id="kontoTitel">Konto</h3>
@@ -1192,6 +1227,7 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
+      prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 5, speed: 0.8, cd: 2, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
@@ -1311,6 +1347,7 @@
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
   //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
   //   kaufen: n          = im Shop für n Edelsteine kaufen (braucht ein Konto; gekaufte Karten in spieler.gekauft)
+  //   geschenk: true     = nur als Geschenk (Tabelle freischaltungen, grund 'geschenk'); für alle anderen unsichtbar
   //   entwicklung: true  = noch in Entwicklung (für niemanden frei; nur von Hand über die Tabelle freischaltungen)
   // Karten ohne Eintrag sind gesperrt (noch in Entwicklung), ausser sie stehen in FREI.frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
@@ -1319,6 +1356,7 @@
       schwarzritter: { kaufen: 40 }, // Shop (22.11. 08:40: 40, vorher 25; Käufer zahlten einmalig die Differenz nach, server.js NACHZAHLEN)
       bank: { kaufen: 35 }, // Shop
       dieb: { kaufen: 30 }, // Shop (Diebeshaus)
+      prinzessin: { geschenk: true }, // Geschenk vom Entwickler (22.11.)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen
@@ -1347,11 +1385,11 @@
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
     regel: function (t) { return CONFIG.FREI.einheiten[t] || (CONFIG.FREI.frei.indexOf(t) >= 0 ? null : { entwicklung: true }); }
   };
-  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber'];
+  var TYPES = ['farmer', 'spear', 'archer', 'rider', 'mage', 'knight', 'digger', 'wall', 'ram', 'worker', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber', 'prinzessin'];
   // Knopf-Reihenfolge (auch Deck/Buch): links die Mauer, dann Wirtschaft + Kampfeinheiten nach Kosten aufsteigend, dann Belagerungsmaschinen nach Kosten aufsteigend.
   // cat = Typ (genau einer): 'building' Gebäude, 'eco' Wirtschaft, 'melee' Nahkampfeinheit, 'ranged' Fernkampfeinheit, 'siege' Belagerungsmaschine. Ob eine Belagerungsmaschine auf den grossen Turm (Mauer 5) darf, steht in WALL.tower.levels[5] (slot types). Tasten 1–9, 0, Q, E werden von links nach rechts vergeben.
   var BUY_TYPES = (function () {
-    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber'];
+    var all = ['farmer', 'spear', 'archer', 'rider', 'digger', 'knight', 'mage', 'ram', 'shield', 'catapult', 'baliste', 'sword', 'ladder', 'belfry', 'trebuchet', 'javelin', 'crossbow', 'onager', 'schmiede', 'adel', 'bank', 'dieb', 'kirche', 'karawane', 'brand', 'fackel', 'holzfaeller', 'schwarzritter', 'raeuber', 'prinzessin'];
     var grp = function (t) { var c = CONFIG.units[t].cat; return c === 'building' ? 0 : c === 'eco' ? 1 : c === 'siege' ? 3 : 2; }; // nach der Mauer: Gebäude, Wirtschaft, Kampfeinheiten, Belagerung
     all.sort(function (a, b) { return grp(a) - grp(b) || CONFIG.units[a].cost - CONFIG.units[b].cost || 0; });
     var list = ['wall'].concat(all), keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'];
@@ -1367,7 +1405,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '4a06962806'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'fe4a828841'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2133,7 +2171,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', schwarzritter: 'K', raeuber: 'R' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', schwarzritter: 'K', raeuber: 'R', prinzessin: 'P' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -2596,6 +2634,31 @@
       hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock;
     }
     effects.push({ kind: 'kegel', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, t: 0, dur: 0.35 });
+  }
+  // Prinzessin (Geschenk): Glitzerstaub im Trichter d.bekehren.winkel (Mitte = Richtung zum Ziel), 0 bis d.bekehren.r Kacheln (bis zum Körperrand).
+  // Jede getroffene gegnerische Einheit wechselt sofort die Seite. Nicht: König, Arbeiter, Gebäude, Wirtschaft (Bauern, Holzfäller, Karawane),
+  // Turmbesatzung und wer zu einem Turmplatz unterwegs ist, Belagerungsturm samt Schützen, Kletternde, Tunnelgräber unter der Erde, Einheiten in der Burg.
+  // Deterministisch (feste Reihenfolge, Skalarprodukt statt Winkel).
+  function bekehrKegel(u, d, tx, ty) {
+    var K = d.bekehren, ax = tx - u.x, ay = ty - u.y, al = hyp(ax, ay), ck = K.winkel === 60 ? 0.8660254 : dcos(K.winkel / 360 * Math.PI), neu = u.team, l = [];
+    if (al < 1e-6) { ax = neu === 0 ? 1 : -1; ay = 0; al = 1; }
+    for (var j = 0; j < units.length; j++) {
+      var sv = units[j], sd = CONFIG.units[sv.type];
+      if (sv.team === neu || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock || !sd) continue;
+      if (sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry) continue;
+      var dx = sv.x - u.x, dy = sv.y - u.y, dl = hyp(dx, dy);
+      if (dl - (sd.r || 0.3) > K.r) continue;
+      if (dl > 1e-6 && (dx * ax + dy * ay) / (dl * al) < ck) continue; // ausserhalb des Trichters
+      l.push(sv);
+    }
+    for (j = 0; j < l.length; j++) {
+      var b = l[j], bd = CONFIG.units[b.type];
+      b.team = neu; b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
+      b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
+      if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
+      effects.push({ kind: 'bekehrt', x: b.x, y: b.y, team: neu, t: 0, dur: 0.9 });
+    }
+    effects.push({ kind: 'glitzer', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, team: neu, t: 0, dur: 0.9 });
   }
   // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
   function landShot(s) {
@@ -3090,7 +3153,7 @@
         }
       }
       var built = !d.setup || u.setupT >= d.setup;
-      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && d.atk > 0; // nur für die Darstellung (Ausholen, Blickrichtung)
+      u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && (d.atk > 0 || !!d.bekehren); // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
       if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
       u.warBereit = u.ready;
@@ -3103,7 +3166,8 @@
           if (d.multi) fireMulti(u, d, tx, ty); // mehrere Steine, zufällig verteilt im Umkreis multi.spread um das Ziel
           else shots.push({ type: u.type, team: u.team, sx: u.x, sy: u.y, tx: tx, ty: ty, tgt: tgt, wall: (!tgt && wallT) ? ow : null, t: d.delay });
         } else {
-          if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
+          if (d.bekehren) bekehrKegel(u, d, tx, ty); // Prinzessin: kein Schaden, Gegner im Trichter wechseln die Seite
+          else if (tgt) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; }
           else if (wallT) {
             if (d.atk > 0) { ow.hit = 0.15; ow.lastHit = clock; }
             ow.hp -= d.atk;
@@ -3133,6 +3197,7 @@
             effects.push({ kind: 'orb', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: 0.5 });
             effects.push({ kind: u.type === 'mage' ? 'frost' : 'blast', x: tx, y: ty, r: d.splash, t: -0.5, dur: u.type === 'mage' ? 1 : 0.45 }); // Eismagier: Eiszacken im Radius
           }
+        } else if (d.bekehren) { /* Glitzerstaub zeichnet bekehrKegel */
         } else if (d.ram) {
           if (d.atk > 0) effects.push({ kind: 'slam', x: tx, y: ty, t: 0, dur: 0.4 }); // Rammbock: Einschlag mit Staub und Splittern
         } else {
@@ -3296,7 +3361,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.95 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -3347,6 +3412,7 @@
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
     else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
+    else if (type === 'prinzessin') { P0.rot = swing(at, W, F, -1.0, 0.45); P0.glow = at < 0 ? sm((at + W) / W) : Math.max(0, 1 - at / F); } // Zauberstab ausholen, Stern leuchtet
     else if (type === 'schwarzritter') { P0.ms = msPose(at, W, F); P0.off = swing(at, W, F, 0, 0.1 * r); } // Morgenstern: eigene Stellung (msPose)
     else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
@@ -4191,6 +4257,26 @@
       c.fillStyle = P.steel;
       c.beginPath(); c.moveTo(r * 2.45, -r * 0.6); c.lineTo(r * 2.0, -r * 0.85); c.lineTo(r * 2.0, -r * 0.35); c.closePath(); c.fill();
       c.restore();
+    } else if (type === 'prinzessin') {
+      // Prinzessin (Geschenk): Kleid in Teamfarbe mit weissem Spitzensaum, blondes Haar mit goldenem Diadem, Zauberstab mit Stern
+      c.fillStyle = '#fff6fb'; for (var pz = 0; pz < 12; pz++) { var pa = pz * Math.PI / 6; c.beginPath(); c.arc(Math.cos(pa) * bodyR * 0.98, Math.sin(pa) * bodyR * 0.98, bodyR * 0.2, 0, Math.PI * 2); c.fill(); } // Spitzensaum
+      c.fillStyle = col; c.beginPath(); c.arc(0, 0, bodyR * 0.9, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.22)'; c.beginPath(); c.arc(0, 0, bodyR * 0.7, 0, Math.PI * 2); c.fill(); // heller Schimmer
+      c.fillStyle = '#f2c94c'; c.strokeStyle = 'rgba(120,80,0,0.45)'; c.lineWidth = 1.2; c.beginPath(); c.ellipse(-r * 0.12, 0, r * 0.5, r * 0.46, 0, 0, Math.PI * 2); c.fill(); c.stroke(); // Haar
+      c.strokeStyle = '#e0b23a'; c.lineWidth = Math.max(1, r * 0.06); c.beginPath(); c.moveTo(-r * 0.55, -r * 0.2); c.quadraticCurveTo(-r * 0.75, 0, -r * 0.55, r * 0.2); c.stroke(); // Zopf
+      c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(r * 0.22, 0, r * 0.2, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
+      c.fillStyle = '#ffd23f'; c.strokeStyle = '#b8860b'; c.lineWidth = 1; c.beginPath(); // Diadem mit drei Zacken
+      c.moveTo(-r * 0.02, -r * 0.3); c.lineTo(r * 0.12, -r * 0.18); c.lineTo(r * 0.04, -r * 0.08); c.lineTo(r * 0.2, 0); c.lineTo(r * 0.04, r * 0.08); c.lineTo(r * 0.12, r * 0.18); c.lineTo(-r * 0.02, r * 0.3); c.lineTo(-r * 0.12, 0); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#e8467c'; c.beginPath(); c.arc(r * 0.13, 0, r * 0.05, 0, Math.PI * 2); c.fill(); // Edelstein im Diadem
+      c.save(); c.translate(r * 0.45, r * 0.55); c.rotate(A.rot); // Zauberstab in der rechten Hand
+      c.strokeStyle = '#c9a227'; c.lineWidth = Math.max(1.5, r * 0.1); c.beginPath(); c.moveTo(0, 0); c.lineTo(r * 1.05, 0); c.stroke();
+      var sx0 = r * 1.18, gl = A.glow || 0;
+      if (gl > 0) { var sg = c.createRadialGradient(sx0, 0, 0, sx0, 0, r * (0.4 + 0.5 * gl)); sg.addColorStop(0, 'rgba(255,240,180,' + (0.9 * gl) + ')'); sg.addColorStop(1, 'rgba(255,170,220,0)'); c.fillStyle = sg; c.beginPath(); c.arc(sx0, 0, r * (0.4 + 0.5 * gl), 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#ffe066'; c.strokeStyle = '#c9a227'; c.lineWidth = 1; c.beginPath();
+      for (var sp5 = 0; sp5 < 10; sp5++) { var sa5 = -Math.PI / 2 + sp5 * Math.PI / 5, sr5 = r * (sp5 % 2 ? 0.1 : 0.24); c.lineTo(sx0 + Math.cos(sa5) * sr5, Math.sin(sa5) * sr5); }
+      c.closePath(); c.fill(); c.stroke(); // Stern
+      c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
+      c.restore();
     } else if (type === 'raeuber') {
       // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)
       c.fillStyle = '#34302c'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); // Kapuze
@@ -4662,6 +4748,29 @@
           ctx.beginPath(); ctx.moveTo(Math.cos(bsa) * (bra + 2), Math.sin(bsa) * (bra + 2)); ctx.lineTo(Math.cos(bsa) * (bra + 6 + 8 * k), Math.sin(bsa) * (bra + 6 + 8 * k)); ctx.stroke();
         }
         ctx.restore();
+      } else if (e.kind === 'glitzer') { // Prinzessin: Glitzerstaub fliegt im Trichter (Winkel e.w, bis e.r Kacheln) nach vorne und funkelt
+        var gza = Math.atan2(e.dy, e.dx), gzw = e.w / 360 * Math.PI, gzR = e.r * T, FARB = ['#ffffff', '#ffe066', '#ff9ccf', '#c8a4ff', '#9fe8ff'];
+        ctx.save(); ctx.translate(e.x * T, e.y * T);
+        ctx.globalAlpha = 0.28 * (1 - k); ctx.fillStyle = '#ffd6ee'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, gzR * Math.min(1, k * 2.5), gza - gzw, gza + gzw); ctx.closePath(); ctx.fill();
+        for (var gi = 0; gi < 120; gi++) {
+          var h1 = ((gi * 7919) % 997) / 997, h2 = ((gi * 104729) % 991) / 991, h3 = ((gi * 1299709) % 983) / 983;
+          var gd = gzR * (0.08 + 0.92 * h2) * Math.min(1, k * 3 + h3 * 0.15), gang = gza + (h1 * 2 - 1) * gzw * Math.min(1, 0.35 + gd / gzR);
+          var gx = Math.cos(gang) * gd, gy = Math.sin(gang) * gd + 6 * k * k, tw = 0.5 + 0.5 * Math.sin(e.t * 30 + gi * 1.7);
+          ctx.globalAlpha = (1 - k) * (0.4 + 0.6 * tw); ctx.fillStyle = FARB[gi % FARB.length];
+          var gs = (2 + 3.5 * h3) * (0.6 + 0.4 * tw);
+          if (gi % 4 === 0) { ctx.beginPath(); ctx.moveTo(gx - gs * 1.8, gy); ctx.lineTo(gx, gy - gs * 0.5); ctx.lineTo(gx + gs * 1.8, gy); ctx.lineTo(gx, gy + gs * 0.5); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(gx, gy - gs * 1.8); ctx.lineTo(gx + gs * 0.5, gy); ctx.lineTo(gx, gy + gs * 1.8); ctx.lineTo(gx - gs * 0.5, gy); ctx.closePath(); ctx.fill(); } // Funkelstern
+          else { ctx.beginPath(); ctx.arc(gx, gy, gs * 0.6, 0, Math.PI * 2); ctx.fill(); }
+        }
+        ctx.restore(); ctx.globalAlpha = 1;
+      } else if (e.kind === 'bekehrt') { // Einheit wechselt die Seite: Glitzerring in der neuen Teamfarbe und aufsteigende Herzchen
+        var bx = e.x * T, by = e.y * T, bcol = e.team === 0 ? P.me : P.foe;
+        ctx.save(); ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = bcol; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bx, by, 10 + 16 * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#ffe066';
+        for (var bi2 = 0; bi2 < 8; bi2++) { var ba2 = bi2 * Math.PI / 4 + k * 2, bd2 = 12 + 20 * k; ctx.beginPath(); ctx.arc(bx + Math.cos(ba2) * bd2, by + Math.sin(ba2) * bd2, 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = '#ff6fa8';
+        for (var hz = 0; hz < 3; hz++) { var hx = bx + (hz - 1) * 9, hy = by - 8 - 26 * k - hz * 3, hs = 3.2; ctx.beginPath(); ctx.moveTo(hx, hy + hs); ctx.bezierCurveTo(hx - hs * 2, hy - hs * 0.5, hx - hs * 0.6, hy - hs * 2, hx, hy - hs * 0.6); ctx.bezierCurveTo(hx + hs * 0.6, hy - hs * 2, hx + hs * 2, hy - hs * 0.5, hx, hy + hs); ctx.fill(); }
+        ctx.restore();
       } else if (e.kind === 'kegel') { // Morgenstern-Hieb: Bogen des Flächenschadens (Richtung Ziel, Winkel e.w, Radius e.r), blendet aus
         var kga = Math.atan2(e.dy, e.dx), kgw = e.w / 360 * Math.PI, kgr = (e.r + 0.35) * T, kgk = Math.min(1, k * 2.2);
         ctx.save(); ctx.translate(e.x * T, e.y * T); ctx.globalAlpha = 0.55 * (1 - k);
@@ -4953,6 +5062,7 @@
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
+    if (d.bekehren) a.push('<b>Verzaubert:</b> Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln. <b>Getroffene Gegner wechseln die Seite</b> (nicht: König, Gebäude, Wirtschaft, Turmbesatzung).');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
@@ -4981,7 +5091,7 @@
   // Buch: so gross wie der Startbildschirm (liegt im Spielfeld), Karten seitenweise, Pfeile/Wischen/Pfeiltasten blättern mit Umblätter-Animation
   var book = { page: 0, per: 6, busy: false, sel: null, filter: '' };
   function bookTypes() {
-    var l = BUY_TYPES.filter(function (t) { return t !== 'wall' && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); });
+    var l = BUY_TYPES.filter(function (t) { var rg = CONFIG.FREI.regel(t); return t !== 'wall' && !(rg && rg.geschenk && unitLocked(t)) && (!book.filter || (CONFIG.units[t].cat || (CONFIG.units[t].range > 1.5 ? 'ranged' : 'melee')) === book.filter); });
     neuPruefen();
     return l.filter(function (t) { return !unitLocked(t); }).concat(l.filter(function (t) { return unitLocked(t); })); // nicht freigeschaltete Karten ganz hinten
   }
@@ -5018,8 +5128,8 @@
     return '<div class="ucard' + (on ? ' on' : '') + (lk ? ' lockd' : '') + '"><button class="pick" type="button" data-pick="' + t + '" aria-pressed="' + on + '" aria-label="' + d.name + ' ins Deck">' + (on ? '✓' : '') + '</button>' +
       '<canvas width="88" height="88" data-t="' + t + '"></canvas><div class="nm">' + d.name + '</div>' +
       '<div class="tg"><span>' + c.join(' ') + '</span></div>' +
-      '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk ? fmtN(d.cd) + ' s' : '–') + '</span>' +
-      '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
+      '<div class="st"><span title="Kosten">' + COIN_SVG + ' ' + d.cost + '</span><span title="Leben">❤️ ' + d.hp + '</span><span title="Angriff">💥 ' + (d.atk || '–') + '</span><span title="Angriff alle … Sekunden">⏱️ ' + (d.atk || d.bekehren ? fmtN(d.cd) + ' s' : '–') + '</span>' +
+      '<span title="Reichweite in Kacheln">🎯 ' + (d.atk || d.ram || d.bekehren ? fmtN(d.range) : '–') + '</span><span title="Tempo">👟 ' + fmtN(d.speed) + '</span></div>' +
       '<div class="ab">' + (ab ? '✨ ' + ab : '✨ keine') + '</div>' + (lk ? '<p class="lockinfo">🔒 ' + lockText(t) + '</p>' : '') + '</div>';
   }
   function miniHtml(t) {
@@ -5451,6 +5561,34 @@
   function edelKarteHtml(n, ok) {
     return '<span class="bkarte bedel' + (ok ? ' ok' : '') + '" title="' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + (ok ? ' (erhalten)' : ' beim ersten Sieg (mit Konto)') + '"><span class="bedelsym">' + EDEL_SVG + '</span><span class="bname">+' + n + (n === 1 ? ' Edelstein' : ' Edelsteine') + '</span>' + (ok ? '<i class="bhaken" aria-label="erhalten">✓</i>' : '') + '</span>';
   }
+
+  // ---------- Geschenk vom Entwickler (22.11.) ----------
+  // Karten mit Regel geschenk (daten/freischalten.js) sieht nur, wer sie in der Tabelle freischaltungen hat (grund 'geschenk', per SQL mit der E-Mail eingetragen).
+  // Ist das Geschenk noch nicht gezeigt (gezeigt = false), erscheint es beim nächsten Öffnen im Menü in der Mitte: Kiste springt auf, Karte kommt heraus.
+  // «Annehmen» legt die Karte ins Deck (wenn Platz) und meldet dem Server, dass sie gezeigt wurde (/api/geschenk).
+  var geschenkOffen = '';
+  function geschenkPruefen() {
+    var g = (konto && konto.user && konto.geschenke) || [], el = $('geschenk');
+    if (!el || geschenkOffen || !g.length || state === 'playing' || state === 'paused' || pvp.on || tut.on) return;
+    var t = g[0]; if (!CONFIG.units[t]) return;
+    geschenkOffen = t;
+    $('gKarte').innerHTML = cardHtml(t).replace(/<button class="pick"[\s\S]*?<\/button>/, '').replace(/<p class="lockinfo">[\s\S]*?<\/p>/, '').replace('class="ucard on', 'class="ucard').replace(' lockd', '');
+    drawCardIcons($('gKarte'));
+    $('gText').textContent = 'Die Karte «' + CONFIG.units[t].name + '» gehört jetzt dir.';
+    el.classList.remove('auf'); el.hidden = false; void el.offsetWidth; el.classList.add('auf');
+    try { jingle('win'); } catch (e) {}
+  }
+  $('gOk').addEventListener('click', function () {
+    var t = geschenkOffen; if (!t) return;
+    var geb = CONFIG.units[t].cat === 'building' && DECK.filter(function (x) { return CONFIG.units[x].cat === 'building'; }).length >= GEB_MAX;
+    if (DECK.indexOf(t) < 0 && DECK.length < DECK_MAX && !geb) { DECK.push(t); saveDeck(); applyDeck(); }
+    neuPruefen(); neuGesehen(t);
+    konto.geschenke = (konto.geschenke || []).filter(function (x) { return x !== t; }); kontoSave();
+    if (ONLINE && konto.token) fetch('/api/geschenk', { method: 'POST', headers: { 'Authorization': 'Bearer ' + konto.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ t: t }) }).catch(function () {});
+    $('geschenk').hidden = true; geschenkOffen = '';
+    if (sozial) menuAktuell();
+    setTimeout(geschenkPruefen, 400); // weitere Geschenke
+  });
   // ---------- Konto (Supabase) ----------
   // Gratis-Konto mit E-Mail und Passwort. Welche Karten ein Konto, Freunde oder Story-Siege brauchen, steht in daten/freischalten.js.
   // Die Anmeldung läuft direkt gegen Supabase Auth (REST, ohne Bibliothek). Sitzung im Browser: localStorage 'stronghold-konto'.
@@ -5467,6 +5605,7 @@
     var k = konto || {};
     if (!r) return true;
     if (r.entwicklung) return false; // noch in Entwicklung
+    if (r.geschenk) return false; // nur als Geschenk (konto.einheiten)
     if (r.kaufen) return false; // Shop: gekaufte Karten stehen in konto.einheiten (unitLocked)
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
@@ -5512,7 +5651,8 @@
     if (Array.isArray(j.gekauft)) konto.gekauft = j.gekauft;
     if (typeof j.shop === 'boolean') konto.shop = j.shop;
     if (Array.isArray(j.einheiten)) konto.einheiten = j.einheiten;
-    kontoSave(); kontoChanged();
+    if (Array.isArray(j.geschenke)) konto.geschenke = j.geschenke;
+    kontoSave(); kontoChanged(); geschenkPruefen();
   }
   function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {
@@ -6051,7 +6191,8 @@
   function pvpRender() {
     // Nur Darstellung: Laufwege UND Zeiten werden zwischen zwei Spielschritten geglättet (danach alles zurückgesetzt, die Berechnung bleibt deterministisch).
     // Gezeichnet wird der Stand (1 − alpha) Schritte vor dem letzten Schritt: Uhr, Angriffs-Restzeit (u.cd → Schlaganimationen, z. B. Morgenstern),
-    // Aufbauzeit (u.setupT → Trebuchet) und Effekte (e.t → fliegende Steine, Einschläge) um diesen Rest zurückgedreht. (22.11.: vorher ruckelten die Animationen im 20er-Takt)
+    // Aufbauzeit (u.setupT → Trebuchet) um diesen Rest zurückgedreht. (22.11.: vorher ruckelten die Animationen im 20er-Takt)
+    // Effekte (e.t) NICHT: die laufen schon pro Bild mit der echten Zeit (updateEffects in main.js), Zurückdrehen würde sie ruckeln lassen.
     var a = pvp.alpha, saved = [], zeiten = [], i, u;
     var ST = pvp.on && !pvp.bot ? STEP : BL_STEP, lag = (1 - a) * ST, uhr = clock;
     for (i = 0; i < units.length; i++) {
@@ -6062,12 +6203,10 @@
       }
       if (lag > 0) { zeiten.push(u, u.cd, u.setupT); if (u.cd > 0) u.cd += lag; if (u.setupT > 0) u.setupT = Math.max(0, u.setupT - lag); }
     }
-    var et = [];
-    if (lag > 0) { clock -= lag; for (i = 0; i < effects.length; i++) { et.push(effects[i].t); effects[i].t -= lag; } }
+    if (lag > 0) clock -= lag;
     try { render(); } finally {
       for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
       for (i = 0; i < zeiten.length; i += 3) { zeiten[i].cd = zeiten[i + 1]; zeiten[i].setupT = zeiten[i + 2]; }
-      for (i = 0; i < et.length; i++) effects[i].t = et[i];
       clock = uhr;
     }
   }
@@ -6187,6 +6326,7 @@
     sandBtn.hidden = !tester;
     applyDeck(); menuAktuell(); menuKoenig();
     sozialStatus('menu');
+    geschenkPruefen(); // wartendes Geschenk vom Entwickler zeigen
   }
   function menuAktuell() {
     $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();
