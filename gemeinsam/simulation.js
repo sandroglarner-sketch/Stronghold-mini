@@ -33,6 +33,23 @@
       if (d.slow) { sv.slow = d.slow.secs; sv.slowF = d.slow.factor; } // Tempo während der Verlangsamung
     }
   }
+  // Morgenstern (Schwarzer Ritter): trifft zusätzlich jede gegnerische Einheit im Bogen d.kegel.winkel (Mitte = Richtung zum Ziel),
+  // bis d.kegel.r Kacheln vom Ritter (gemessen bis zum Körper- bzw. Gebäuderand). Das Ziel selbst nur einmal; Mauer/Burg nur als direktes Ziel.
+  // Deterministisch ohne Winkelfunktion: Vergleich über das Skalarprodukt mit cos(winkel/2).
+  function kegelSchlag(u, d, tx, ty, tgt) {
+    var K = d.kegel, ax = tx - u.x, ay = ty - u.y, al = hyp(ax, ay), ck = K.winkel === 120 ? 0.5 : K.winkel === 180 ? 0 : K.winkel === 90 ? 0.70710678 : dcos(K.winkel / 360 * Math.PI);
+    if (al < 1e-6) { ax = u.team === 0 ? 1 : -1; ay = 0; al = 1; }
+    for (var j = 0; j < units.length; j++) {
+      var sv = units[j];
+      if (sv === tgt || sv.team === u.team || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.type === 'king' && sv.inCastle) continue;
+      var sG = CONFIG.units[sv.type] && CONFIG.units[sv.type].gebaeude, dx = sv.x - u.x, dy = sv.y - u.y, dl = hyp(dx, dy);
+      var rand = sG ? hyp(Math.max(0, Math.abs(dx) - sG.w / 2), Math.max(0, Math.abs(dy) - sG.h / 2)) : Math.max(0, dl - (CONFIG.units[sv.type].r || 0.3));
+      if (rand > K.r) continue;
+      if (dl > 1e-6 && (dx * ax + dy * ay) / (dl * al) < ck) continue; // ausserhalb des Bogens
+      hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock;
+    }
+    effects.push({ kind: 'kegel', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, t: 0, dur: 0.35 });
+  }
   // Ein Geschoss schlägt ein: das Ziel wird getroffen, wenn es noch da ist (der Schütze muss nicht mehr leben)
   function landShot(s) {
     if (s.base) { // Pfeil der Kaserne
@@ -548,6 +565,7 @@
           }
           else { foeBase.hp = Math.max(0, foeBase.hp - d.atk); if (d.atk > 0) { foeBase.flash = 0.2; foeBase.lastHit = clock; } }
           if (d.splash) applySplash(u.team, u.x, u.y, tx, ty, d, tgt, wallT, !tgt && !wallT);
+          if (d.kegel) kegelSchlag(u, d, tx, ty, tgt);
         }
         if (d.fackel) { // Fackelwerfer: brennende Fackel fliegt im Bogen und dreht sich, kleiner Brand am Einschlag
           effects.push({ kind: 'fackel', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });

@@ -40,7 +40,8 @@
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
     else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
-    else if (type === 'knight' || type === 'sword' || type === 'schwarzritter') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
+    else if (type === 'schwarzritter') { P0.rot = swing(at, W, F, -1.5, 0.95); P0.off = swing(at, W, F, 0, 0.1 * r); } // Morgenstern: weiter Bogen
+    else if (type === 'knight' || type === 'sword') { P0.rot = swing(at, W, F, -1.15, 0.55); P0.off = swing(at, W, F, 0, 0.12 * r); }
     else if (type === 'ladder') P0.rot = swing(at, W, F, -1.15, 0.55);
     else if (type === 'king') P0.rot = swing(at, W, F, -1.0, 0.45);
     else if (type === 'digger') P0.rot = swing(at, W, F, 1.1, -0.35);
@@ -904,12 +905,27 @@
       c.lineWidth = Math.max(1.5, r * 0.07); c.beginPath(); c.moveTo(r * 0.12, 0); c.lineTo(r * 0.5, 0); c.stroke();
       c.fillStyle = swz ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.28)'; c.beginPath(); c.arc(-r * 0.25, -r * 0.18, r * 0.18, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(r * 0.55, -r * 0.75); c.rotate(A.rot); c.translate(-r * 0.55, r * 0.75); // Schwerthieb: ausholen nach aussen, Hieb nach vorne-innen
+      if (swz) { // Morgenstern: kurzer Holzstiel mit Eisenbeschlag, Kette mit 3 Gliedern, Stachelkugel (schwingt beim Hieb etwas nach)
+        var mzug = (A.rot || 0) * -0.35, mkx = r * 1.15, mky = -r * 0.75;
+        c.strokeStyle = '#4a3220'; c.lineWidth = Math.max(2.5, r * 0.2); c.beginPath(); c.moveTo(r * 0.45, -r * 0.75); c.lineTo(mkx, mky); c.stroke(); // Stiel
+        c.strokeStyle = '#5c6066'; c.lineWidth = Math.max(3, r * 0.26); c.beginPath(); c.moveTo(r * 0.98, mky); c.lineTo(mkx + r * 0.04, mky); c.stroke(); // Beschlag
+        var mbx = mkx + r * 0.75 * dcos(mzug), mby = mky + r * 0.75 * dsin(mzug);
+        c.strokeStyle = '#3a3d42'; c.lineWidth = Math.max(1.2, r * 0.07);
+        for (var mg = 0; mg < 3; mg++) { var mt = (mg + 0.5) / 3.4; c.beginPath(); c.ellipse(mkx + (mbx - mkx) * mt, mky + (mby - mky) * mt, r * 0.1, r * 0.06, mzug + (mg % 2 ? Math.PI / 2 : 0), 0, Math.PI * 2); c.stroke(); } // Kettenglieder
+        var mkr = r * 0.32; c.fillStyle = '#1d1f23'; c.strokeStyle = '#000';
+        for (var ms = 0; ms < 8; ms++) { var ma = ms * Math.PI / 4 + 0.2; c.beginPath(); c.moveTo(mbx + Math.cos(ma - 0.32) * mkr * 0.9, mby + Math.sin(ma - 0.32) * mkr * 0.9); c.lineTo(mbx + Math.cos(ma) * mkr * 1.6, mby + Math.sin(ma) * mkr * 1.6); c.lineTo(mbx + Math.cos(ma + 0.32) * mkr * 0.9, mby + Math.sin(ma + 0.32) * mkr * 0.9); c.fill(); } // Stacheln
+        c.fillStyle = '#34373c'; c.beginPath(); c.arc(mbx, mby, mkr, 0, Math.PI * 2); c.fill(); c.lineWidth = 1; c.stroke(); // Kugel
+        c.fillStyle = 'rgba(255,255,255,0.25)'; c.beginPath(); c.arc(mbx - mkr * 0.3, mby - mkr * 0.3, mkr * 0.3, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#2b2e33'; c.beginPath(); c.arc(r * 0.5, -r * 0.75, r * 0.15, 0, Math.PI * 2); c.fill(); // Panzerhandschuh
+        c.restore();
+      } else {
       c.strokeStyle = P.steel; c.lineWidth = Math.max(2.5, r * (swz ? 0.28 : 0.22));
       c.beginPath(); c.moveTo(r * 0.5, -r * 0.75); c.lineTo(r * (swz ? 2.4 : 1.9), -r * 0.75); c.stroke();
       c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(r * 0.7, -r * 0.75); c.lineTo(r * 1.8, -r * 0.75); c.stroke();
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(2.5, r * 0.22);
       c.beginPath(); c.moveTo(r * 0.55, -r * 1.02); c.lineTo(r * 0.55, -r * 0.48); c.stroke();
       c.restore();
+      }
       // Schild: Fläche (u quer, v Höhe 0 = Spitze .. KH = Oberkante) -> Bild: Oberkante bei x0, Spitze vorne (Kippung KK), oben etwas breiter
       var KW = 0.95, KH = 1.5, KK = 0.75, kx0 = 0.3 + A.off / r, kcy = 0.5;
       var km = function (u, v) { return [r * (kx0 + (KH - v) * KK), r * (kcy + u * (1 + 0.1 * v / KH))]; };

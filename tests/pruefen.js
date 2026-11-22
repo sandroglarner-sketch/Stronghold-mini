@@ -30,6 +30,17 @@ const TESTS = {
     b.hp = 0; X.upd(0.05); X.upd(0.05);
     return X.units.length === 0 ? true : 'übrig: ' + X.units.map(function (u) { return u.type; }).join(',');
   },
+  'Schwarzer Ritter: Morgenstern trifft im 120°-Bogen, 1 Kachel weit': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'schwarzritter'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear');
+    var k = X.units[0], z = X.units[1], seite = X.units[2], hinten = X.units[3], weit = X.units[4];
+    k.x = 11; k.y = 5; z.x = 11.85; z.y = 5; seite.x = 11.45; seite.y = 5.65; hinten.x = 10.05; hinten.y = 5; weit.x = 12.9; weit.y = 5.9;
+    X.units.forEach(function (u) { u.cd = 9; u.settled = false; }); k.cd = 0;
+    var hp = X.units.map(function (u) { return u.hp; });
+    X.upd(0.02);
+    var d = X.units.map(function (u, i) { return +(hp[i] - u.hp).toFixed(2); });
+    return d[1] === 1 && d[2] === 1 && d[3] === 0 && d[4] === 0 ? true : 'Schaden Ziel/Seite/hinten/weit: ' + d.slice(1).join('/');
+  },
 };
 
 const out = {};

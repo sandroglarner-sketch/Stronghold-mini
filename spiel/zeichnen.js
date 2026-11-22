@@ -402,6 +402,13 @@
           ctx.beginPath(); ctx.moveTo(Math.cos(bsa) * (bra + 2), Math.sin(bsa) * (bra + 2)); ctx.lineTo(Math.cos(bsa) * (bra + 6 + 8 * k), Math.sin(bsa) * (bra + 6 + 8 * k)); ctx.stroke();
         }
         ctx.restore();
+      } else if (e.kind === 'kegel') { // Morgenstern-Hieb: Bogen des Flächenschadens (Richtung Ziel, Winkel e.w, Radius e.r), blendet aus
+        var kga = Math.atan2(e.dy, e.dx), kgw = e.w / 360 * Math.PI, kgr = (e.r + 0.35) * T, kgk = Math.min(1, k * 2.2);
+        ctx.save(); ctx.translate(e.x * T, e.y * T); ctx.globalAlpha = 0.55 * (1 - k);
+        ctx.fillStyle = 'rgba(40,40,46,0.35)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, kgr, kga - kgw, kga + kgw); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#e9e2d0'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(0, 0, kgr * 0.9, kga - kgw, kga - kgw + 2 * kgw * kgk); ctx.stroke(); // Wischspur der Kugel
+        ctx.restore();
       } else if (e.kind === 'slam') {
         var sx = e.x * T, sy = e.y * T, sk = Math.min(1, k * 1.6);
         ctx.globalAlpha = 1 - k;
