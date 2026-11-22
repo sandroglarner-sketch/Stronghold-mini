@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE SPAWN (22.11. 17:40): Karawanen erscheinen als einzige Einheit immer am selben Ort: 0,5 Kacheln vor der Burg am oberen Ende des Spawn-Bands (Burgmitte − 1,4), ohne Zufallsversatz (simRand wird trotzdem gezogen).
+
 KARAWANE EIGENER ANDOCKPLATZ (22.11. 17:40): jede Seite hat ihren eigenen Füllplatz unten am Teich, etwas auf der eigenen Seite (x = W/2 ∓ 0,7, y 2,6; blau links, rot rechts); besetzt zählt nur durch eigene Karawanen. Körper: Karawanen schieben nur Karawanen, alle anderen Einheiten gehen durch sie hindurch (und umgekehrt). Ersetzt den gemeinsamen Füllplatz von 17:20.
 
 KARAWANEN-SCHLANGE, MORGENSTERN ZURÜCK (22.11. 17:35): Wartende Karawanen stellen sich je Seite hintereinander auf (Platz k = Anzahl eigener Karawanen auf dem Hinweg, die näher am Füllplatz sind; k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg), schauen dabei zum Teich; nur die vorderste fährt an. Morgenstern nach dem Treffer: 0,2 s durchschwingen (Kugel 30° über das Ziel hinaus), dann in 0,4 s gerade zurück in die Ruhestellung (Kugelposition kartesisch geführt, Kette per Rückrechnung), ANIM after 0,6; kein Wedeln mehr (MS_ART wird nicht mehr benutzt).

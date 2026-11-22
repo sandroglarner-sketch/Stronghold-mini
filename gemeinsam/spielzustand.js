@@ -149,6 +149,7 @@
       hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
+    if (d.karawane) { var ku = units[units.length - 1]; ku.x = x; ku.y = (b.y1 + b.y2) / 2 - SPAWN_BAND / 2; } // Karawane: immer am selben Ort, oberes Ende des Spawn-Bands (Zufall wird trotzdem gezogen, gleiche Folge wie vorher)
     if (d.passive && !d.karawane && !d.holz) pickSpot(units[units.length - 1]);
     if (d.range > 1.5 && !d.king && !d.ram) seekSlot(units[units.length - 1]); // Fernkämpfer: Turmplatz suchen (welche Typen wo stehen dürfen, steht in WALL.tower.levels)
     if (d.dig) units[units.length - 1].dig = pickDigTarget(team);
