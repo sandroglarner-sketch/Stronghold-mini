@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+TEICH LÄNGER, KARAWANE OHNE WENDEN (22.11. 18:05): Teich-Ellipse rx 2,7 (vorher 1,7, je Seite 1 Kachel länger), die 5 Teich-Bäume je Seite 1 Kachel weiter aussen (CONFIG.BAEUME). Karawane wendet nicht mehr am Platz: nach dem Füllen fährt sie geradeaus weiter (Richtung Mitte) und biegt weich (Lenkung 1,1/s) zum Wegpunkt 0,3 Kacheln Richtung Mitte und 1,5 unterhalb des Andockplatzes, dann zur Burg. Zustand 'wenden' entfernt. Fehler behoben: wartende Karawanen schauen wieder zum Teich (Code war versehentlich in einem Kommentar gelandet).
+
 KARAWANE SPAWNPUNKT RUND (22.11. 18:00): Spawnpunkt gilt ab 0,85 Kacheln als erreicht (runde Wende statt Knick), Andockplätze weiter auf der eigenen Seite (W/2 ∓ 1,0).
 
 KARAWANE RUNDE BÖGEN (22.11. 17:55): Fahrtrichtung u.kdx/kdy dreht sich weich zur Zielrichtung (Anteil pro Schritt dt × 1,6; näher als 0,45 Kacheln direkt aufs Ziel), Burg/Spawnpunkt ab 0,5 und Rückweg-Wegpunkt ab 0,7 Kacheln erreicht (Kurve wird geschnitten); sie fährt in ihre Fahrtrichtung, dadurch runde Kurven an Wartepunkt, Wegpunkt, Burg und Spawnpunkt.

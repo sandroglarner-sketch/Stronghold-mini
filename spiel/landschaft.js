@@ -39,11 +39,11 @@
     }
     // Teich
     c.fillStyle = P['water'];
-    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 2.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.fill(); // 22.11.: 1 Kachel pro Seite länger (vorher 1,7)
     c.strokeStyle = P['water-hi'];
     c.lineWidth = 3;
-    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 1.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
-    c.beginPath(); c.ellipse((W / 2 - 0.4) * T, 1.3 * T, 0.7 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.ellipse(W / 2 * T, 1.45 * T, 2.7 * T, 0.8 * T, 0, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.ellipse((W / 2 - 0.7) * T, 1.3 * T, 1.2 * T, 0.25 * T, 0, 0, Math.PI * 2); c.stroke();
     // Bäume: nicht mehr im Hintergrund, sondern als Ressource im Spiel (CONFIG.BAEUME, gezeichnet in zeichnen.js)
     // Steine
     for (i = 0; i < 9; i++) {

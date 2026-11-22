@@ -418,7 +418,7 @@
         u.settled = { hackt: u.hackt, ziel: hb ? Math.atan2(hb.y - u.y, hb.x - u.x) : 0 }; // nur für die Zeichnung
         continue;
       }
-      if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, wenden, zurück zur Burg, Gold abliefern, von vorn
+      if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, im Bogen zurück zur Burg, Gold abliefern, von vorn
         // Füllplatz: jede Seite hat ihren eigenen (W/2 ∓ 0,7, 2,6); wer vorne in der Schlange steht (näher als 2,2 Kacheln) und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
         var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 1.0, FPY = 2.6; // eigener Andockplatz jeder Seite: unten am Teich, auf der eigenen Seite (22.11. 18:00: 1,0 statt 0,7)
@@ -429,21 +429,17 @@
         if (u.kz === 'hin') for (var kn = 0; kn < units.length; kn++) { var kv2 = units[kn]; if (kv2 !== u && kv2.type === 'karawane' && kv2.team === u.team && kv2.hp > 0 && kv2.kz === 'hin') { var kd2 = hyp(FPX - kv2.x, FPY - kv2.y); if (kd2 < kme - 1e-9 || (Math.abs(kd2 - kme) <= 1e-9 && kv2.id < u.id)) kq++; } }
         if (u.kz === 'hin' && kq === 0 && kme < 2.2) {
           var kfrei = true;
-          for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.team === u.team && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen' || ko.kz === 'wenden')) { kfrei = false; break; } }
+          for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.team === u.team && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen')) { kfrei = false; break; } }
           if (kfrei) u.kz = 'anfahrt';
         }
         if (u.kz === 'fuellen') {
           u.x = FPX; u.y = FPY; u.kdx = u.team === 0 ? 1 : -1; u.kdy = 0; // seitlich zum Teich
           u.voll = Math.min(1, u.voll + dt / KW.fuellen);
-          if (u.voll >= 1) { u.kz = 'wenden'; u.wendT = 0; }
-        } else if (u.kz === 'wenden') { // am Platz abdrehen (Richtung Burg), dann losfahren
-          u.x = FPX; u.y = FPY; var wzx = FPX + ksg * 1.1 - u.x, wzy = FPY + 1.6 - u.y, wzl = hyp(wzx, wzy) || 1; // dreht zum ersten Wegpunkt des Rückwegs
-          u.kdx = wzx / wzl; u.kdy = wzy / wzl; u.wendT += dt;
-          if (u.wendT >= 0.8) { u.kz = 'zurueck'; u.kw = 0; }
+          if (u.voll >= 1) { u.kz = 'zurueck'; u.kw = 0; } // voll: fährt geradeaus weiter und biegt in einem weichen Bogen nach unten und zurück (kein Wenden am Platz)
         } else {
           var kzx, kzy, kziel;
           // Rückweg leicht oval: zuerst etwas Richtung Spielfeldmitte (unter dem Hinweg durch), dann zur Burg; so kommen sich Karawanen nicht in die Quere
-          if (u.kz === 'zurueck' && !u.kw) { kzx = FPX + ksg * 1.1; kzy = FPY + 1.6; kziel = 0.7; } // Wegpunkt: früh weiter, Kurve wird rund
+          if (u.kz === 'zurueck' && !u.kw) { kzx = FPX - ksg * 0.3; kzy = FPY + 1.5; kziel = 0.7; } // Wegpunkt etwas Richtung Mitte unterhalb des Platzes: früh weiter, Kurve wird rund
           else if (u.kz === 'zurueck') { kzx = u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45; kzy = (kb0.y1 + kb0.y2) / 2 + kof * 1.5; kziel = 0.5; }
           else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.85; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
@@ -454,7 +450,7 @@
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
           if (kdd > kziel) {
             // runde Bögen (22.11.): Fahrtrichtung dreht sich weich zur Zielrichtung (1,6 pro s); näher als 0,45 Kacheln direkt aufs Ziel (kein Kreisen). Burg (0,5), Spawnpunkt (0,85) und Wegpunkt (0,7) gelten früh als erreicht = runde Kurven
-            var kwx = kdx / kdd, kwy = kdy / kdd, khx = u.kdx === undefined ? kwx : u.kdx, khy = u.kdy === undefined ? kwy : u.kdy, kst = kdd < 0.45 ? 1 : Math.min(1, dt * 1.6);
+            var kwx = kdx / kdd, kwy = kdy / kdd, khx = u.kdx === undefined ? kwx : u.kdx, khy = u.kdy === undefined ? kwy : u.kdy, kst = kdd < 0.45 ? 1 : Math.min(1, dt * (u.kz === 'zurueck' && !u.kw ? 1.1 : 1.6)); // vom Teich weg besonders weich
             if (khx * kwx + khy * kwy < -0.95) { khx += -khy * 0.2; khy += khx * 0.2; } // fast genau entgegengesetzt: zur Seite ausweichen statt durch null
             khx += (kwx - khx) * kst; khy += (kwy - khy) * kst; var khl = hyp(khx, khy) || 1; khx /= khl; khy /= khl;
             var kv = umGebaeude(u, khx, khy, null), ks = Math.min(spd * dt, kdd); u.x += kv.x * ks; u.y += kv.y * ks; if (Math.abs(kv.x) > 0.1) u.face = kv.x > 0 ? 1 : -1; u.kdx = khx; u.kdy = khy;
@@ -466,7 +462,8 @@
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'spawn'; u.voll = 0;
           }
-          else if (u.kz === 'spawn') u.kz = 'hin'; // am Spawnpunkt: von hier wieder zum Teich else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
+          else if (u.kz === 'spawn') u.kz = 'hin'; // am Spawnpunkt: von hier wieder zum Teich
+          else { var tpx = FPX - u.x, tpy = FPY - u.y, tpl = hyp(tpx, tpy) || 1; u.kdx = tpx / tpl; u.kdy = tpy / tpl; } // wartet in der Schlange und schaut zum Teich
         }
         u.settled = { voll: u.voll, toepfe: KW.toepfe }; // nur für die Zeichnung
         continue;
@@ -683,7 +680,7 @@
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
           var push = (sep - dist) * k; // zusammen, verteilt nach Masse: Rammbock und Belagerungsturm drücken sich durch, die anderen weichen aus
-          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.kz === 'wenden' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.kz === 'wenden' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
+          var ma = a.dock || a.atSpot || a.hackt || a.kz === 'fuellen' || a.setupT > 0 ? 1e6 : ((a.goWall && CONFIG.units[a.type].massRun) || CONFIG.units[a.type].mass || 1), mb = b.dock || b.atSpot || b.hackt || b.kz === 'fuellen' || b.setupT > 0 ? 1e6 : ((b.goWall && CONFIG.units[b.type].massRun) || CONFIG.units[b.type].mass || 1), pa = push * mb / (ma + mb), pb = push * ma / (ma + mb); // angedockt: unverrückbar
           var nx = dx / dist, ny = dy / dist;
           a.x -= nx * pa; a.y -= ny * pa;
           b.x += nx * pb; b.y += ny * pb;
