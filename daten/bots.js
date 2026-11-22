@@ -113,8 +113,8 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['onager', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 8, buy: [['fackel', 10]] }, { after: 9, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 20]] }],
                     defPlus: 1, defPool: ['spear', 'fackel', 'knight'], noOutput: 10 },
       // «Kaiserin Goldfeder» (Story-Platz 17, braucht ein Konto, 22.11.): 10 Bauern und 3 Karawanen, Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Balisten auf den Türmen,
-      // jagt mit 2 Speerträgern (20 s Vorsprung, alle 30 s), 1 s später 1 Bogenschütze, greift bei 240 Gold an (Welle 343: Trebuchet, 8+4+4+4+4 Speer, Baliste, 4 Bogen, 20 Leitern)
-      kaiseringoldfeder: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 3, huntLead: 20, hunt: [['spear', 2]], huntEvery: 30, huntLater: [{ after: 1, buy: [['archer', 1]] }], wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, baliste: 2 }, wallClear: true, attackGold: 240, lockSecs: 17,
+      // baut die ersten 16 s keine Bauern (bauernAb), jagt mit 2 Speerträgern (5 s Vorsprung, alle 30 s), 1 s später 1 Bogenschütze, greift bei 240 Gold an (Welle 343: Trebuchet, 8+4+4+4+4 Speer, Baliste, 4 Bogen, 20 Leitern)
+      kaiseringoldfeder: { income: 10, incomeEvery: 5, farmers: 10, bauernAb: 16, karawanen: 3, huntLead: 5, hunt: [['spear', 2]], huntEvery: 30, huntLater: [{ after: 1, buy: [['archer', 1]] }], wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, baliste: 2 }, wallClear: true, attackGold: 240, lockSecs: 17,
                     attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 1, buy: [['spear', 4], ['baliste', 1]] }, { after: 2, buy: [['archer', 4]] }, { after: 3, buy: [['spear', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 12, buy: [['spear', 4]] }, { after: 16, buy: [['ladder', 20]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'rider'], noOutput: 10 }
   };

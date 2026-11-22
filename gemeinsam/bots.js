@@ -193,7 +193,7 @@
 
     // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
     var guard = 0;
-    while (guard++ < 3 && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
+    while (guard++ < 3 && clock >= (R.bauernAb || 0) /* bauernAb = erst ab dieser Sekunde Bauern */ && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
     // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
