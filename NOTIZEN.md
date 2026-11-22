@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+SCHWARZER RITTER SCHNELLER (22.11. 21:51): cd 1 (vorher 1,5). Morgenstern holt weiter aus: MS_HIEB back −2,4, schleif 1,6, Lmax 1,45 (vorher −2,0 / 1,4 / 1,3); ANIM after 0,45 (vorher 0,6), damit Ausholen 0,5 + Nachschwung in 1 s passen.
+
 KARAWANE VOLL 0,6 (22.11. 21:17): karawane.tempoVoll 0,6 (vorher 0,7); leer weiter 0,9.
 
 KARAWANE TEMPO JE LADUNG (22.11. 20:22): leer Tempo 0,9 (speed), mit vollen Töpfen (u.voll >= 1, Rückweg zur Burg) 0,7 (karawane.tempoVoll); in simulation.js bei spd. Ein Umlauf (eine Karawane, ohne Warten) ca. 23 s (vorher bei 0,6 ca. 29 s). Kartentext: «Voll beladen langsamer (Tempo 0,7)».

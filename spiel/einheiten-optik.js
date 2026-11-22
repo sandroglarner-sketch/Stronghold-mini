@@ -16,7 +16,7 @@
   }
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
-    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.6 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
+    spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.45 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
@@ -33,7 +33,7 @@
   // In Ruhe hängt die Kugel kurz am Stiel (L klein); beim Schlag fliegt sie weit hinaus und pendelt danach gedämpft aus. Drei Varianten (MS_VARIANTE).
   var MS_VARIANTE = 'A', MS_RUHE = { rot: 0, phi: Math.PI, L: 0.35 }; // Ruhe: Kugel liegt mittig unter dem Stiel (Kette läuft von der Spitze zurück, der Stiel liegt darüber)
   // Gewählt (22.11. 13:01): Variante A. Seitenhieb (Ausholen wie Runde-2-A), danach wird die Kugel im 120°-Bogen vor dem Ritter hin und her geschwungen (a = Richtung der Kugel, ±1 ≈ ±60°)
-  var MS_HIEB = { back: -2.0, schleif: 1.4, Lmax: 1.3 };
+  var MS_HIEB = { back: -2.4, schleif: 1.6, Lmax: 1.45 }; // 22.11. 21:50: etwas weiter ausholen (vorher back -2,0, schleif 1,4, Lmax 1,3)
   var MS_ART = {
     A: function (t) { return { a: 0.5 * Math.exp(-1.5 * t) * Math.sin(2 * Math.PI * t / 0.9), L: 0 }; },                  // einmal sanft hin und zurück (22.11. 17:20: ruhiger, vorher 0,95 / 0,7 s)
     B: function (t) { return { a: 1.05 * Math.exp(-1.2 * t) * Math.sin(2 * Math.PI * 2 * t / 0.85), L: 0 }; },          // zweimal hin und her, wird schwächer
