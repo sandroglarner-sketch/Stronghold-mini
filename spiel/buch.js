@@ -141,8 +141,9 @@
     $('bookN').textContent = DECK.length;
     $('bookN').parentNode.classList.toggle('full', DECK.length === DECK_MAX);
   }
-  function placeBook() { // Buch über dem Menü: rundum etwas Landschaft frei, unten bleibt das Deck (Einheitenknöpfe) sichtbar
-    var st = $('stage').getBoundingClientRect(), ub = unitsEl.getBoundingClientRect(), bk = $('book');
+  function placeBook(bk) { // Buch (und Shop) über dem Menü: rundum etwas Landschaft frei, unten bleibt das Deck (Einheitenknöpfe) sichtbar
+    bk = bk || $('book');
+    var st = $('stage').getBoundingClientRect(), ub = unitsEl.getBoundingClientRect();
     var side = Math.max(10, Math.round(st.width * 0.035)), top = Math.max(8, Math.round(st.height * 0.04));
     var fb = $('fsBar').getBoundingClientRect(); if (fb.height && fb.bottom > st.top) top = Math.max(top, Math.round(fb.bottom - st.top + 4)); // Vollbild: unter Gold/Pause/✕
     var bottom = ub.height ? Math.max(top, Math.round(st.bottom - ub.top + 6)) : top;
@@ -186,7 +187,7 @@
   }
   function openBook(on) {
     $('book').hidden = !on;
-    if (on) { $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel] || istNeu(book.sel)) book.sel = ersteKarte(bookTypes()); renderBook(); $('bookClose').focus(); }
+    if (on) { $('shop').hidden = true; $('bookMsg').textContent = ''; book.page = 0; if (!book.sel || !CONFIG.units[book.sel] || istNeu(book.sel)) book.sel = ersteKarte(bookTypes()); renderBook(); $('bookClose').focus(); }
   }
   function bookClick(e) {
     var b = e.target.closest ? e.target.closest('[data-pick]') : null;
@@ -415,7 +416,7 @@
     state = 'playing';
     jingle('start');
     overlay.hidden = true;
-    $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true;
+    $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true; $('shop').hidden = true;
     koenigTeam = [meinKoenig(), botEintrag(botType).koenig]; // Aussehen der beiden Könige
     intro.t = 0;
     if (spielArt === 'story' && !tut.on) startIntro(meinName(), STORY[storyIdx].name); // auch bei «Nochmal»

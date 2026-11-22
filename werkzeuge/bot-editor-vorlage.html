@@ -278,7 +278,7 @@
     spezialNeuMalen();
     $('f_storyKonto').checked = !!cur.storyKonto;
     $('f_belohnung').innerHTML = '<option value="">– keine –</option>' + Object.keys(CONFIG.units).filter(function (t) { var u = CONFIG.units[t]; return !u.hidden && u.cost > 0 && t !== 'wall'; }).map(function (t) {
-      var r = CONFIG.FREI.einheiten[t], von = r && r.besiegt && r.besiegt !== cur.id ? ' – schon Belohnung von ' + r.besiegt : r && !r.besiegt ? ' – heute: ' + (r.freunde ? r.freunde + ' Freund(e)' : 'Account') : '';
+      var r = CONFIG.FREI.einheiten[t], von = r && r.besiegt && r.besiegt !== cur.id ? ' – schon Belohnung von ' + r.besiegt : r && !r.besiegt ? ' – heute: ' + (r.kaufen ? 'Shop (' + r.kaufen + ' Edelsteine)' : r.freunde ? r.freunde + ' Freund(e)' : 'Account') : '';
       return '<option value="' + t + '"' + (t === cur.belohnung ? ' selected' : '') + '>' + uName(t) + von + '</option>'; }).join('');
     $('f_koenig').innerHTML = KOENIG_IDS.map(function (k) { return '<option value="' + k + '"' + (k === cur.koenig ? ' selected' : '') + '>' + koenigLabel(k) + '</option>'; }).join('');
     koenigZeigen();

@@ -33,6 +33,8 @@
   try { tester = !ONLINE && localStorage.getItem('stronghold-tester') === '1'; } catch (err) {}
   var tut = { on: false, i: 0, avail: [], bought: {}, script: [], si: 0, rt: 0, st: 0, boxOpen: false };
   var overlay = $('overlay'), ovTitle = $('ovTitle'), ovText = $('ovText'), ovBtn = $('ovBtn');
+  // Edelstein (22.11.): Währung für den Shop, grüner geschliffener Stein
+  var EDEL_SVG = '<svg class="edel" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5h10l4.2 5L10 18.2 0.8 7.5z" fill="#1c8f4c"/><path d="M0.8 7.5h18.4L10 18.2z" fill="#14713b"/><path d="M5 2.5l2.6 5h4.8l2.6-5z" fill="#6ee29b"/><path d="M7.6 7.5L10 18.2l2.4-10.7z" fill="#27b263"/><path d="M5 2.5L0.8 7.5h6.8zM15 2.5l4.2 5h-6.8z" fill="#3cc777"/><path d="M6.6 4.2l1.3 2.2" stroke="#e9fff1" stroke-width="1.1" stroke-linecap="round"/></svg>';
   var COIN_SVG = '<svg class="coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="#c98a12"/><circle cx="10" cy="10" r="7.4" fill="#f5c542"/><circle cx="10" cy="10" r="4.8" fill="none" stroke="#d9a21f" stroke-width="1.5"/><path d="M5.6 8.2A4.8 4.8 0 0 1 8.4 5.5" fill="none" stroke="#fff3c4" stroke-width="1.6" stroke-linecap="round"/></svg>';
   var pauseBtn = $('pauseBtn'), goldMeEl = $('goldMe'), goldFoeEl = $('goldFoe');
   var payFill = $('payFill'), payText = $('payText'), unitsEl = $('units');

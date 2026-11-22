@@ -312,7 +312,7 @@
   html.zuschauer .units, html.zuschauer #fsGive, html.zuschauer #giveBtn { display: none !important; }
   @media (max-width: 640px) { .ovmode b { font-size: 1.05rem; } .ovmode span { font-size: 0.75rem; } .ovtop .ghost span:not(.ovbadge):not(.ovdeck), .storykopf .ovleft .ghost span:not(.ovbadge):not(.ovdeck) { display: none; } }
     .konto {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9; width: min(360px, calc(100% - 24px)); box-sizing: border-box;
     display: grid; gap: 8px; justify-items: stretch; text-align: center; padding: 16px 18px; border-radius: 12px;
     background: var(--panel); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
   }
@@ -704,3 +704,39 @@
   .frava.frkoenig { background: #e9eef0; }
   .frava.frkoenig .fkrund { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; display: block; }
   .frava.frkoenig canvas { width: 36px; height: 36px; display: block; transform: scale(1.45) translate(-1px, 2px); }
+
+  /* ---------- Edelsteine und Shop (22.11.) ---------- */
+  .edel { width: 1em; height: 1em; flex: none; display: inline-block; vertical-align: -0.14em; }
+  .ovshop .ovedelsym { display: inline-flex; width: 20px; height: 20px; }
+  .ovshop .ovedelsym .edel { width: 20px; height: 20px; }
+  .ovedel { font-weight: 700; color: #1c8f4c; }
+  .ovedel:empty { display: none; }
+  .shop .bookhead { padding: 2px 2px 0 6px; }
+  .shopstand { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 1.05rem; color: #1c8f4c; }
+  .shopstand .edel { width: 1.2em; height: 1.2em; }
+  .shopbody { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; margin-top: 6px; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+  .shopkarten { flex: 1 1 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-content: start; min-width: 0; }
+  .skarte { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--fg) 3%, transparent); text-align: center; }
+  .skarte canvas { width: 64px; height: 64px; }
+  .skarte .snm { font-weight: 700; font-family: var(--display); }
+  .skarte .stg { font-size: 0.72rem; color: var(--muted); }
+  .skarte .sst { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; font-size: 0.75rem; }
+  .skarte .sab { font-size: 0.72rem; color: var(--muted); line-height: 1.3; }
+  .skarte button { margin-top: auto; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-weight: 700; }
+  .skarte button .edel { width: 1.1em; height: 1.1em; }
+  .skarte.gekauft { border-color: #2f8a3e; background: color-mix(in srgb, #2f8a3e 8%, transparent); }
+  .skarte.gekauft button { background: transparent; color: #2f8a3e; border: 1px solid #2f8a3e; }
+  .skarte button.armed { background: #1c8f4c; border-color: #1c8f4c; color: #fff; }
+  .shopinfo { flex: 0 0 min(260px, 38%); font-size: 0.82rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+  .shopinfo b { color: var(--fg); }
+  .shopinfo .sregeln { display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; align-items: center; }
+  .shopinfo .sregeln span:nth-child(odd) { font-weight: 700; color: #1c8f4c; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
+  .shopinfo button { align-self: flex-start; }
+  html.phone .shopinfo, .shop.schmal .shopinfo { flex-basis: 42%; font-size: 0.75rem; }
+  html.phone .skarte canvas { width: 48px; height: 48px; }
+  html.phone .skarte .sab { display: none; }
+  .ovedelplus { margin-top: 8px; font-weight: 700; color: #1c8f4c; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .ovedelplus .edel { width: 1.3em; height: 1.3em; }
+  .frinvedel { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+  .frinvedel b { color: #1c8f4c; display: inline-flex; align-items: center; gap: 3px; }
+  html.phone .shopkarten { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }

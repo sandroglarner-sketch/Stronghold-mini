@@ -5,11 +5,14 @@
   //   freunde: n         = mindestens n eingeladene Freunde, die über den Link gespielt haben (braucht ein Konto)
   //   besiegt: 'bot-id'  = diesen Story-Gegner besiegt (ids aus daten/botdatenbank.js, z. B. 'feldherr');
   //                        gilt auch ohne Konto (online meldet der Browser seinen Story-Stand)
+  //   kaufen: n          = im Shop für n Edelsteine kaufen (braucht ein Konto; gekaufte Karten in spieler.gekauft)
   //   entwicklung: true  = noch in Entwicklung (für niemanden frei; nur von Hand über die Tabelle freischaltungen)
   // Karten ohne Eintrag sind gesperrt (noch in Entwicklung), ausser sie stehen in FREI.frei. Im Tester-Modus ist alles frei.
   CONFIG.FREI = {
     einheiten: {
-      crossbow: { konto: true, freunde: 1 },
+      crossbow: { kaufen: 10 }, // Shop (22.11.)
+      schwarzritter: { kaufen: 25 }, // Shop
+      bank: { kaufen: 35 }, // Shop
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
       catapult: { besiegt: 'prinz' }, // Belohnung für den Kleinen Prinzen
@@ -32,6 +35,9 @@
     story: { kontoAb: '', gegner: { drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
+    // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),
+    // jeder besiegte Story-Gegner einmal, jeder eingeladene Freund (hat über den Link mind. 30 s gespielt). Online-Partien unter minPartie Sekunden zählen nicht.
+    edel: { sieg: 2, niederlage: 1, bot: 1, freund: 20, minPartie: 30 },
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
     regel: function (t) { return CONFIG.FREI.einheiten[t] || (CONFIG.FREI.frei.indexOf(t) >= 0 ? null : { entwicklung: true }); }
   };

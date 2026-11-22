@@ -167,8 +167,9 @@
     var l = $('freundListe'), angemeldet = !!konto.user;
     $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
     var fk = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].freunde && CONFIG.units[t]; }), ik = $('inviteKarten'); // Karten, die nur über eingeladene Freunde frei werden
-    ik.hidden = !kontoAn() || !fk.length;
-    if (!ik.hidden) {
+    ik.hidden = !kontoAn();
+    if (!ik.hidden && !fk.length) ik.innerHTML = '<p class="frinvedel">Pro Freund, der über deinen Link mind. 30 s spielt: <b>+' + CONFIG.FREI.edel.freund + ' ' + EDEL_SVG + '</b></p>'; // Belohnung = Edelsteine (Shop)
+    else if (!ik.hidden) {
       ik.innerHTML = '<span class="blabel">Freund einladen und ' + (fk.length === 1 ? 'diese Karte' : 'diese Karten') + ' freischalten:</span>' + belohnungHtml(fk.map(function (t) { return [t, regelErfuellt(CONFIG.FREI.einheiten[t])]; }));
       drawCardIcons(ik);
     }
@@ -250,6 +251,11 @@
     if (m.k === 'elo') { // nach einer gewerteten Online-Partie: neue Elo, Änderung im Ergebnisfenster
       if (sozial.ich) { sozial.ich.elo = m.elo; sozial.ich.partien = m.partien | 0; }
       if (!overlay.hidden && state === 'over') { var ez = document.createElement('div'); ez.className = 'ovelo'; ez.innerHTML = kranzSvg(22) + ' ' + m.elo + ' (' + (m.diff >= 0 ? '+' : '') + m.diff + ')'; ovText.appendChild(ez); }
+      return;
+    }
+    if (m.k === 'edel') { // neuer Edelstein-Kontostand (nach Online-Partie, Story-Sieg oder Kauf); plus = gerade dazugekommen
+      edelUebernehmen(m);
+      if (m.plus > 0 && state === 'over' && !overlay.hidden && !overlay.classList.contains('menu')) { var ed = document.createElement('div'); ed.className = 'ovedelplus'; ed.innerHTML = '+' + m.plus + ' ' + EDEL_SVG + (m.plus === 1 ? ' Edelstein' : ' Edelsteine'); ovText.appendChild(ed); }
       return;
     }
     if (m.k === 'name_ok') { if (sozial.ich) sozial.ich.name = m.name; $('kontoName').value = m.name; kontoMsg('Gespeichert: ' + m.name, true); kontoView(); return; }

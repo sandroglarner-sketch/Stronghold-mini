@@ -70,8 +70,13 @@ async function eloLesen(ids) {
 }
 function storyZahl(p) { const b = storyAus(p.story | 0); String(p.besiegt || '').split(',').forEach((id) => { if (id && b.indexOf(id) < 0) b.push(id); }); return b.filter((id) => STORY_IDS.indexOf(id) >= 0).length; }
 let rangCache = null, rangZeit = 0;
-async function bewerten(ma, w) { // w = Sieger-Team (0/1), -1 = unentschieden; nur wenn beide ein (verschiedenes) Konto haben
+// Ende einer Online-Partie steht fest (einmal pro Partie): Elo (nur Konto gegen Konto) und Edelsteine (jedes Konto)
+function abschluss(ma, w) {
   if (ma.bewertet) return; ma.bewertet = true;
+  bewerten(ma, w).catch((e) => console.error('elo', e.message));
+  edelPartie(ma, w).catch((e) => console.error('edel', e.message));
+}
+async function bewerten(ma, w) { // w = Sieger-Team (0/1), -1 = unentschieden; nur wenn beide ein (verschiedenes) Konto haben
   const ua = ma.a.user, ub = ma.b.user;
   if (!ua || !ub || ua.id === ub.id) return;
   const rows = await eloLesen([ua.id, ub.id]); if (!rows) return;
@@ -88,13 +93,13 @@ function ergebnis(c, wRoh) { // ein Browser meldet das Ende der Online-Partie; g
   const ma = c.match; if (!ma || ma.bewertet) return;
   const t = ma.a === c ? 0 : 1, w = wRoh === 0 || wRoh === 1 ? wRoh : -1, o = t === 0 ? ma.b : ma.a;
   ma.erg = ma.erg || {}; ma.erg[t] = w;
-  if (ma.erg[1 - t] !== undefined) { if (ma.erg[1 - t] === w) bewerten(ma, w).catch((e) => console.error('elo', e.message)); else ma.bewertet = true; } // unterschiedlich: nicht werten
-  else if (!o.alive && w === t) bewerten(ma, w).catch((e) => console.error('elo', e.message));
+  if (ma.erg[1 - t] !== undefined) { if (ma.erg[1 - t] === w) abschluss(ma, w); else ma.bewertet = true; } // unterschiedlich: nicht werten
+  else if (!o.alive && w === t) abschluss(ma, w);
 }
 function verlassen(c) { // Verbindung weg während einer Online-Partie: wer geht, verliert (ausser beide hatten das Ende schon gemeldet)
-  const ma = c.match; if (!ma || ma.bewertet || !ma.a.user || !ma.b.user) return;
+  const ma = c.match; if (!ma || ma.bewertet || (!ma.a.user && !ma.b.user)) return;
   const t = ma.a === c ? 0 : 1, w = ma.erg && ma.erg[1 - t] !== undefined ? ma.erg[1 - t] : ma.erg && ma.erg[t] !== undefined ? ma.erg[t] : 1 - t;
-  bewerten(ma, w).catch((e) => console.error('elo', e.message));
+  abschluss(ma, w);
 }
 async function apiRangliste(res) {
   if (!KONTO_SECRET || !SPALTE_ELO) return json(res, 200, { liste: [], aus: true });
@@ -131,8 +136,9 @@ try {
   ctx.__BOT.forEach((b) => { if (b.nr && b.nr <= 30) STORY_NR[b.id] = b.nr; });
   STORY_ALT = ctx.STORY_ALT || STORY_ALT;
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
-function regelOk(r, st) { // st = { konto, freunde, besiegt: [ids] }
+function regelOk(r, st, t) { // st = { konto, freunde, besiegt: [ids], gekauft: [typen] }, t = Karte
   if (r.entwicklung) return false;
+  if (r.kaufen && (!st.konto || (st.gekauft || []).indexOf(t) < 0)) return false; // Shop: nur gekauft
   if ((r.konto || r.freunde) && !st.konto) return false;
   if (r.freunde && st.freunde < r.freunde) return false;
   if (r.besiegt && STORY_IDS.indexOf(r.besiegt) >= 0 && st.besiegt.indexOf(r.besiegt) < 0) return false;
@@ -141,21 +147,91 @@ function regelOk(r, st) { // st = { konto, freunde, besiegt: [ids] }
 // Freigeschaltete Karten eines Spielers: alle Regeln aus daten/freischalten.js, die er erfüllt, plus Einträge der Tabelle freischaltungen
 function freiGast(besiegt) { // ohne Konto: nur Regeln mit Story-Siegen (der Browser meldet seine besiegten Gegner)
   const st = { konto: false, freunde: 0, besiegt: storyIds(besiegt) };
-  return Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
+  return Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st, t));
 }
-async function freischaltungen(userId, besiegtGemeldet) {
-  const [ein, sp, tab] = await Promise.all([
+// ---------- Edelsteine und Shop (22.11.) ----------
+// Kontostand wird jedes Mal aus den Zählern berechnet: verdient (Online-Siege/-Niederlagen, besiegte Story-Gegner, eingeladene Freunde) minus ausgegeben.
+// Spalten spieler.pvp_siege, pvp_niederlagen, edel_ausgegeben, gekauft (datenbank/schema.sql). Fehlen sie, ist der Shop aus (SPALTE_EDEL false).
+let SPALTE_EDEL = true;
+const EDEL = () => (FREI.edel || { sieg: 2, niederlage: 1, bot: 1, freund: 20, minPartie: 30 });
+async function edelZeile(userId) { // {} = noch keine Zeile, null = Shop nicht eingerichtet
+  if (!SPALTE_EDEL || !KONTO_SECRET) return null;
+  try { const l = await db('GET', 'spieler?select=elo,partien,pvp_siege,pvp_niederlagen,edel_ausgegeben,gekauft&user_id=eq.' + encodeURIComponent(userId)); return (l && l[0]) || {}; }
+  catch (e) { if (e.status === 400) { SPALTE_EDEL = false; console.error('Edelsteine aus: Spalten fehlen (datenbank/schema.sql ausführen)'); return null; } throw e; }
+}
+function pvpZahlen(z) { // Partien vor den Edelsteinen (pvp_siege leer): Siege aus der Elo geschätzt (je Sieg/Niederlage etwa ±16)
+  if (z.pvp_siege !== null && z.pvp_siege !== undefined) return { siege: z.pvp_siege | 0, niederlagen: z.pvp_niederlagen | 0 };
+  const p = z.partien | 0, elo = typeof z.elo === 'number' ? z.elo : ELO_START;
+  const s = Math.max(0, Math.min(p, Math.round((p + (elo - ELO_START) / (ELO_K / 2)) / 2)));
+  return { siege: s, niederlagen: p - s };
+}
+function gekauftAus(z) { return String((z && z.gekauft) || '').split(',').filter((t) => t && FREI.einheiten[t] && FREI.einheiten[t].kaufen); }
+// Alles zum Konto eines Spielers: Freunde, Story-Siege, gekaufte Karten, freigeschaltete Karten, Edelsteine
+async function kontoStand(userId, besiegtGemeldet) {
+  const [ein, sp, tab, z] = await Promise.all([
     db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     besiegtLesen(userId).catch(() => null),
-    freischaltungenTabelle(userId).catch(() => [])]);
+    freischaltungenTabelle(userId).catch(() => []),
+    edelZeile(userId).catch(() => null)]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const b = sp ? sp.besiegt.slice() : [];
+  const bServer = sp ? sp.besiegt.slice() : [], b = bServer.slice();
   storyIds(besiegtGemeldet).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
-  const st = { konto: true, freunde, besiegt: b };
-  const l = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st));
-  (tab || []).forEach((t) => { if (l.indexOf(t) < 0) l.push(t); });
-  return l;
+  const gekauft = gekauftAus(z);
+  const st = { konto: true, freunde, besiegt: b, gekauft };
+  const einheiten = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st, t));
+  (tab || []).forEach((t) => { if (einheiten.indexOf(t) < 0) einheiten.push(t); });
+  const erg = { code: ein && ein.length ? ein[0].code : '', freunde, einheiten, gekauft, shop: !!z, edel: null, quellen: null, zeile: z };
+  if (z) {
+    const E = EDEL(), pv = pvpZahlen(z), bots = bServer.filter((id) => STORY_IDS.indexOf(id) >= 0).length;
+    const verdient = pv.siege * E.sieg + pv.niederlagen * E.niederlage + bots * E.bot + freunde * E.freund;
+    erg.edel = Math.max(0, verdient - (z.edel_ausgegeben | 0));
+    erg.quellen = { siege: pv.siege, niederlagen: pv.niederlagen, bots, freunde, ausgegeben: z.edel_ausgegeben | 0 };
+  }
+  return erg;
+}
+async function freischaltungen(userId, besiegtGemeldet) { return (await kontoStand(userId, besiegtGemeldet)).einheiten; }
+function edelDaten(st) { return { edel: st.edel, quellen: st.quellen, gekauft: st.gekauft, shop: st.shop, einheiten: st.einheiten }; }
+// neuen Kontostand an alle offenen Verbindungen des Spielers schicken (plus = gerade dazugekommen, fürs Ergebnisfenster)
+async function edelMelden(userId, plus, grund) {
+  const set = online.get(userId); if (!set || !set.size) return;
+  const st = await kontoStand(userId); if (!st.shop) return;
+  for (const z of set) { z.frei = st.einheiten; z.send(Object.assign({ k: 'edel', plus: plus || 0, grund: grund || '' }, edelDaten(st))); }
+}
+async function edelGutschrift(user, sieg) {
+  const userId = user.id, z = await edelZeile(userId); if (!z) return;
+  if (z.pvp_siege === undefined) await db('POST', 'spieler', { user_id: userId, name: user.name || 'Spieler' }, 'resolution=ignore-duplicates').catch(() => {}); // noch keine Zeile
+  const pv = pvpZahlen(z);
+  await db('PATCH', 'spieler?user_id=eq.' + encodeURIComponent(userId), sieg ? { pvp_siege: pv.siege + 1, pvp_niederlagen: pv.niederlagen } : { pvp_siege: pv.siege, pvp_niederlagen: pv.niederlagen + 1 });
+  const E = EDEL(); await edelMelden(userId, sieg ? E.sieg : E.niederlage, sieg ? 'sieg' : 'niederlage');
+}
+async function edelPartie(ma, w) { // jedes Konto bekommt Edelsteine (Sieg / Niederlage, Unentschieden wie Niederlage); nicht gegen sich selbst, nicht unter minPartie s
+  const ua = ma.a.user, ub = ma.b.user;
+  if (ua && ub && ua.id === ub.id) return;
+  if (Date.now() - ma.start < EDEL().minPartie * 1000) return;
+  await Promise.all([ua ? edelGutschrift(ua, w === 0) : null, ub ? edelGutschrift(ub, w === 1) : null]);
+}
+// Kauf im Shop: ein Kauf pro Spieler gleichzeitig (sonst könnte man doppelt ausgeben)
+const kaufSperre = new Map();
+async function apiKaufen(req, res) {
+  const u = await kontoUser(bearer(req));
+  if (!u) return json(res, 401, { fehler: 'Melde dich zuerst an.' });
+  if (!KONTO_SECRET) return json(res, 503, { fehler: 'Der Shop ist noch nicht eingerichtet.' });
+  const b = await lesen(req), t = String(b.t || ''), r = FREI.einheiten[t];
+  if (!r || !r.kaufen) return json(res, 400, { fehler: 'Diese Karte gibt es nicht im Shop.' });
+  if (kaufSperre.get(u.id)) return json(res, 429, { fehler: 'Einen Moment …' });
+  kaufSperre.set(u.id, true);
+  try {
+    const st = await kontoStand(u.id);
+    if (!st.shop) return json(res, 503, { fehler: 'Der Shop ist noch nicht eingerichtet.' });
+    if (st.gekauft.indexOf(t) >= 0) return json(res, 200, Object.assign({ ok: true }, edelDaten(st)));
+    if (st.edel < r.kaufen) return json(res, 400, Object.assign({ fehler: 'Zu wenig Edelsteine.' }, edelDaten(st)));
+    if (st.zeile.edel_ausgegeben === undefined) await db('POST', 'spieler', { user_id: u.id, name: nameAus(u.email) }, 'resolution=ignore-duplicates');
+    await db('PATCH', 'spieler?user_id=eq.' + encodeURIComponent(u.id), { edel_ausgegeben: (st.zeile.edel_ausgegeben | 0) + r.kaufen, gekauft: st.gekauft.concat([t]).join(','), pvp_siege: pvpZahlen(st.zeile).siege, pvp_niederlagen: pvpZahlen(st.zeile).niederlagen });
+    const neu = await kontoStand(u.id);
+    json(res, 200, Object.assign({ ok: true }, edelDaten(neu)));
+    for (const z of online.get(u.id) || []) { z.frei = neu.einheiten; z.send(Object.assign({ k: 'edel', plus: 0 }, edelDaten(neu))); }
+  } finally { kaufSperre.delete(u.id); }
 }
 const CODE_ZEICHEN = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function neuerCode() { let c = ''; for (let i = 0; i < 6; i++) c += CODE_ZEICHEN[crypto.randomInt(CODE_ZEICHEN.length)]; return c; }
@@ -180,8 +256,8 @@ async function apiKonto(req, res) {
   if (!u) return json(res, 401, { fehler: 'nicht angemeldet' });
   if (!KONTO_SECRET) return json(res, 503, { fehler: 'Einladungen noch nicht eingerichtet' });
   const code = await eigenerCode(u.id);
-  const [besuche, einheiten] = await Promise.all([db('GET', 'einladung_besuche?select=geraet&code=eq.' + code), freischaltungen(u.id)]);
-  json(res, 200, { code, freunde: (besuche || []).length, einheiten });
+  const st = await kontoStand(u.id);
+  json(res, 200, Object.assign({ code, freunde: st.freunde }, edelDaten(st)));
 }
 // /api/besuch: ein Freund hat über einen Einladungslink eine Partie gespielt -> zählt als eingeladener Freund (Freischaltungen: daten/freischalten.js)
 async function apiBesuch(req, res) {
@@ -212,8 +288,8 @@ const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
   if (req.method === 'GET' && url === '/api/rangliste') { apiRangliste(res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler' }); }); return; }
-  if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch')) {
-    (url === '/api/konto' ? apiKonto : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
+  if (req.method === 'POST' && (url === '/api/konto' || url === '/api/besuch' || url === '/api/kaufen')) {
+    (url === '/api/konto' ? apiKonto : url === '/api/kaufen' ? apiKaufen : apiBesuch)(req, res).catch((e) => { console.error(url, e.message); json(res, 500, { fehler: 'Serverfehler: ' + String(e.message).slice(0, 160) }); });
     return;
   }
   if (url === '/' || url === '/index.html') {
@@ -512,9 +588,10 @@ async function sozial(c, m) {
   }
   if (m.k === 'story') { // neue Siege dazunehmen (nie etwas wegnehmen)
     const l = await besiegtLesen(c.user.id).catch(() => null);
-    const b = l ? l.besiegt : [];
+    const b = l ? l.besiegt : [], zahl = () => b.filter((id) => STORY_IDS.indexOf(id) >= 0).length, vorher = zahl();
     storyIds(m.ids).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
     await besiegtSchreiben(c.user.id, b);
+    if (zahl() > vorher) edelMelden(c.user.id, (zahl() - vorher) * EDEL().bot, 'bot').catch(() => {}); // Edelsteine für neu besiegte Story-Gegner
     return;
   }
   if (m.k === 'freunde') return freundesliste(c);

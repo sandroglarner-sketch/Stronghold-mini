@@ -4,7 +4,8 @@
   // Online-Partien: der Browser schickt sein Zugangs-Token mit, der Server prüft es bei Supabase und meldet beiden Spielern, wer ein Konto hat.
   // Einladungen (nur auf der Online-Seite, der Render-Server führt Buch): konto.code = eigener Einladungscode, konto.freunde = Anzahl Freunde,
   // die über den Link gespielt haben, konto.einheiten = freigeschaltete Einheiten (z. B. 'crossbow')
-  var konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] };
+  // Edelsteine (22.11.): konto.edel = Kontostand (vom Server, null = unbekannt), konto.gekauft = im Shop gekaufte Karten, konto.quellen = woher, konto.shop = Shop eingerichtet
+  var konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [], edel: null, gekauft: [], quellen: null, shop: false };
   function kontoAn() { return !!KONTO.url; }
   // Freischaltungen nach daten/freischalten.js
   function storyIndex(botId) { for (var i = 0; i < STORY.length; i++) if (STORY[i].id === botId) return i; return -1; }
@@ -13,6 +14,7 @@
     var k = konto || {};
     if (!r) return true;
     if (r.entwicklung) return false; // noch in Entwicklung
+    if (r.kaufen) return false; // Shop: gekaufte Karten stehen in konto.einheiten (unitLocked)
     if ((r.konto || r.freunde) && !k.user) return false;
     if (r.freunde && (k.freunde | 0) < r.freunde) return false;
     if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) return false;
@@ -20,6 +22,7 @@
   }
   function regelText(r, kurz) { // «benötigt Account und 2 eingeladene Freunde» / «Sieg gegen …»
     var k = konto || {}, l = [];
+    if (r.kaufen) return 'einen Kauf im Shop (' + r.kaufen + ' Edelsteine)';
     if ((r.konto || r.freunde) && !k.user) l.push('Account');
     if (r.freunde && (k.freunde | 0) < r.freunde) l.push(r.freunde === 1 ? 'einen eingeladenen Freund' : r.freunde + ' eingeladene Freunde');
     if (r.besiegt && storyIndex(r.besiegt) >= 0 && !istBesiegt(r.besiegt)) l.push('einen Sieg gegen ' + botName(r.besiegt));
@@ -31,10 +34,11 @@
     if (((konto || {}).einheiten || []).indexOf(t) >= 0) return false; // vom Server freigeschaltet (Regeln oder von Hand)
     return !regelErfuellt(r);
   }
-  function kontoKarten() { var l = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { var r = CONFIG.FREI.einheiten[t]; return CONFIG.units[t] && !CONFIG.units[t].hidden && r.konto && !r.freunde && !r.besiegt; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die allein ein Konto freischaltet
+  function kontoKarten() { var l = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { var r = CONFIG.FREI.einheiten[t]; return CONFIG.units[t] && !CONFIG.units[t].hidden && r.konto && !r.freunde && !r.besiegt && !r.kaufen; }).map(function (t) { return CONFIG.units[t].name; }); return l.length > 1 ? l.slice(0, -1).join(', ') + ' und ' + l[l.length - 1] : l.join(''); } // Karten, die allein ein Konto freischaltet
   function lockText(t) {
     var r = CONFIG.FREI.regel(t) || {}, txt = regelText(r);
     if (r.entwicklung) return 'Diese Karte befindet sich noch in Entwicklung';
+    if (r.kaufen) return 'Im Shop für ' + r.kaufen + ' Edelsteine erhältlich' + (konto && konto.user ? '' : ' (mit Gratis-Konto)');
     if (r.freunde && konto && konto.user && !r.besiegt) return 'Nicht freigeschaltet – lade ' + (r.freunde === 1 ? 'einen Freund' : r.freunde + ' Freunde') + ' ein (👥 Freund einladen)';
     return 'Nicht freigeschaltet – benötigt ' + (txt || 'Account');
   }
@@ -47,7 +51,16 @@
     konto.exp = Date.now() + (r.expires_in || 3600) * 1000;
     kontoSave(); kontoChanged(); kontoServer();
   }
-  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [] }; kontoSave(); kontoChanged(); }
+  function kontoClear() { konto = { user: null, token: null, refresh: null, exp: 0, code: '', freunde: 0, einheiten: [], edel: null, gekauft: [], quellen: null, shop: false }; kontoSave(); kontoChanged(); }
+  function edelUebernehmen(j) { // Kontostand vom Server (/api/konto, /api/kaufen, Nachricht 'edel')
+    if (!j || !konto.user) return;
+    if (typeof j.edel === 'number') konto.edel = j.edel;
+    if (j.quellen) konto.quellen = j.quellen;
+    if (Array.isArray(j.gekauft)) konto.gekauft = j.gekauft;
+    if (typeof j.shop === 'boolean') konto.shop = j.shop;
+    if (Array.isArray(j.einheiten)) konto.einheiten = j.einheiten;
+    kontoSave(); kontoChanged();
+  }
   function kontoApi(pfad, body, token, methode) {
     return fetch(KONTO.url + pfad, {
       method: methode || 'POST',
@@ -79,6 +92,7 @@
     var kb = $('kontoBtn');
     kb.hidden = !kontoAn();
     $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
+    edelMalen();
     kb.textContent = konto.user ? '👤 ' + (sozial && sozial.ich ? sozial.ich.name : konto.user.split('@')[0]) : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -102,7 +116,7 @@
       if (!j || !j.code) return false;
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
       konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
-      kontoSave(); kontoChanged();
+      edelUebernehmen(j);
       if (neu.length && !erste) { kontoOpen(true); kontoMsg('🎉 Freigeschaltet: ' + neu.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '.', true); }
       return true;
     }).catch(function (e) { kontoServerLaeuft = false; kontoServerFehler = 'keine Verbindung zum Server'; return false; });
@@ -112,7 +126,7 @@
     var on = !!konto.user, pw = on && !!kontoPwModus;
     $('kontoTitel').textContent = kontoPwModus === 'reset' ? 'Neues Passwort' : pw ? 'Passwort ändern' : on ? 'Dein Konto' : 'Gratis-Konto';
     $('kontoText').textContent = kontoPwModus === 'reset' ? 'Wähle ein neues Passwort für ' + konto.user + '.' : pw ? 'Neues Passwort für ' + konto.user + '.' :
-      on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto kannst du Freunde einladen und so weitere Karten freischalten.';
+      on ? 'Angemeldet als ' + konto.user + '.' + (kontoKarten() ? ' ' + kontoKarten() + ' sind freigeschaltet.' : '') + (typeof konto.edel === 'number' ? ' Du hast ' + konto.edel + (konto.edel === 1 ? ' Edelstein.' : ' Edelsteine.') : '') : kontoKarten() ? 'Mit einem Gratis-Konto schaltest du ' + kontoKarten() + ' frei.' : 'Mit einem Gratis-Konto sammelst du Edelsteine (Online-Partien, Story-Siege, Freunde einladen) und kaufst damit Karten im Shop.';
     $('kontoForm').hidden = on;
     var nf = $('kontoNameForm'), meinN = sozial && sozial.ich ? sozial.ich.name : '';
     nf.hidden = !on || pw || !ONLINE || !meinN; // Name ändern geht über den Server (nur online, angemeldet)
@@ -125,8 +139,7 @@
     var inv = on && !pw && ONLINE && !!konto.code;
     $('kontoInv').hidden = !inv;
     if (inv) {
-      var frei = (konto.einheiten || []).indexOf('crossbow') >= 0;
-      $('kontoInvText').textContent = (frei ? '✓ Armbrustschütze freigeschaltet. ' : 'Spielt ein Freund über deinen Link eine Partie, bekommst du den Armbrustschützen. ') + 'Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
+      $('kontoInvText').textContent = 'Für jeden Freund, der über deinen Link mindestens 30 s spielt, bekommst du ' + CONFIG.FREI.edel.freund + ' Edelsteine. Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
       $('kontoLink').value = einladeLink();
     }
   }
@@ -266,6 +279,8 @@
     }).catch(function () { kontoClear(); kontoOpen(true); kontoMsg('Der Link hat nicht funktioniert. Fordere unten einen neuen an.'); });
   })();
   if (!konto.einheiten) konto.einheiten = [];
+  if (!konto.gekauft) konto.gekauft = [];
+  if (konto.edel === undefined) konto.edel = null;
   kontoChanged();
   if (kontoAn() && konto.refresh) kontoRefresh(); else kontoServer();
   setInterval(function () { if (kontoAn() && konto.refresh && konto.exp - Date.now() < 10 * 60 * 1000) kontoRefresh(); }, 60 * 1000);

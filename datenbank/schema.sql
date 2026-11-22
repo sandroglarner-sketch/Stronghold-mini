@@ -54,3 +54,16 @@ alter table public.spieler add column if not exists partien int not null default
 
 -- 21.11.: gewählter König (nur Optik) fürs Bild in der Freundesliste
 alter table public.spieler add column if not exists koenig text;
+
+-- 22.11.: Edelsteine und Shop. Kontostand = verdient (Online-Siege x2, Niederlagen x1, besiegte Story-Gegner x1, eingeladene Freunde x20) minus ausgegeben.
+alter table public.spieler add column if not exists pvp_siege int;
+alter table public.spieler add column if not exists pvp_niederlagen int;
+alter table public.spieler add column if not exists edel_ausgegeben int not null default 0;
+alter table public.spieler add column if not exists gekauft text not null default '';   -- im Shop gekaufte Karten, mit Komma
+-- Nachzahlung für alte Online-Partien: Siege aus der Elo geschätzt (Start 1000, je Partie etwa ±16). Nur einmal (wo noch leer).
+update public.spieler
+   set pvp_siege = least(partien, greatest(0, round((partien + (elo - 1000) / 16.0) / 2)))::int,
+       pvp_niederlagen = partien - least(partien, greatest(0, round((partien + (elo - 1000) / 16.0) / 2)))::int
+ where pvp_siege is null;
+alter table public.spieler alter column pvp_siege set default 0;
+alter table public.spieler alter column pvp_niederlagen set default 0;

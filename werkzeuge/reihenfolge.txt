@@ -17,6 +17,7 @@ spiel/einheiten-optik.js
 spiel/zeichnen.js
 spiel/oberflaeche.js
 spiel/buch.js
+spiel/shop.js
 spiel/konto.js
 spiel/tutorial.js
 spiel/online.js
