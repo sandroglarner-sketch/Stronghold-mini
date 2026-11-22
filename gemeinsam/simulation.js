@@ -421,19 +421,21 @@
       if (d.karawane) { // Karawane: zum Teich, am einzigen Füllplatz (unten in der Mitte) Töpfe füllen, im Bogen zurück zur Burg, Gold abliefern, von vorn
         // Füllplatz: jede Seite hat ihren eigenen (W/2 ∓ 0,7, 2,6); wer vorne in der Schlange steht (näher als 2,2 Kacheln) und ihn frei findet, fährt an (kz 'anfahrt'), die anderen warten
         // am Wartepunkt auf ihrer Seite. u.kdx/u.kdy = Blickrichtung für die Zeichnung (nur Fahrtrichtung, nicht das Wegschieben).
-        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 1.0, FPY = 2.6; // eigener Andockplatz jeder Seite: unten am Teich, auf der eigenen Seite (22.11. 18:00: 1,0 statt 0,7)
+        var KW = d.karawane, kb0 = bases[u.team], ksg = u.team === 0 ? -1 : 1, kof = ((u.id * 37) % 7 - 3) * 0.12, FPX = W / 2 + ksg * 1.8, FPY = 2.55; // eigener Andockplatz jeder Seite: unten am Teich, Richtung eigene Burg (22.11. 18:10: 1,8; 0,5 unter dem Teichrand)
+        var KHX = -ksg * 0.9666, KHY = 0.2562; // Richtung parallel zur Teichkante dort (Ellipse rx 2,7, ry 0,8: Steigung 0,265), zeigt zur Mitte
         if (!u.kz) { u.kz = 'hin'; u.voll = 0; }
         // Warteschlange je Seite: k = so viele eigene Karawanen auf dem Hinweg sind näher am Füllplatz (bei Gleichstand kleinere id zuerst).
         // Platz k liegt k × 1,1 Kacheln hinter dem Wartepunkt Richtung eigene Burg; nur die vorderste (k = 0) darf zum Füllplatz.
         var kq = 0, kme = hyp(FPX - u.x, FPY - u.y);
         if (u.kz === 'hin') for (var kn = 0; kn < units.length; kn++) { var kv2 = units[kn]; if (kv2 !== u && kv2.type === 'karawane' && kv2.team === u.team && kv2.hp > 0 && kv2.kz === 'hin') { var kd2 = hyp(FPX - kv2.x, FPY - kv2.y); if (kd2 < kme - 1e-9 || (Math.abs(kd2 - kme) <= 1e-9 && kv2.id < u.id)) kq++; } }
-        if (u.kz === 'hin' && kq === 0 && kme < 2.2) {
+        var KWX = FPX - KHX * 1.6, KWY = FPY - KHY * 1.6; // vorderster Warteplatz: 1,6 Kacheln zurück auf der Andocklinie
+        if (u.kz === 'hin' && kq === 0 && hyp(KWX - u.x, KWY - u.y) < 0.4) { // erst am vordersten Platz: von dort gerade zum Andockplatz
           var kfrei = true;
           for (var kj = 0; kj < units.length; kj++) { var ko = units[kj]; if (ko !== u && ko.type === 'karawane' && ko.team === u.team && ko.hp > 0 && (ko.kz === 'anfahrt' || ko.kz === 'fuellen')) { kfrei = false; break; } }
           if (kfrei) u.kz = 'anfahrt';
         }
         if (u.kz === 'fuellen') {
-          u.x = FPX; u.y = FPY; u.kdx = u.team === 0 ? 1 : -1; u.kdy = 0; // seitlich zum Teich
+          u.x = FPX; u.y = FPY; u.kdx = KHX; u.kdy = KHY; // seitlich zum Teich, parallel zur Teichkante
           u.voll = Math.min(1, u.voll + dt / KW.fuellen);
           if (u.voll >= 1) { u.kz = 'zurueck'; u.kw = 0; } // voll: fährt geradeaus weiter und biegt in einem weichen Bogen nach unten und zurück (kein Wenden am Platz)
         } else {
@@ -444,7 +446,7 @@
           else if (u.kz === 'spawn') { kzx = u.team === 0 ? kb0.x2 + 0.5 : kb0.x1 - 0.5; kzy = (kb0.y1 + kb0.y2) / 2 - 1.4; kziel = 0.85; } // nach dem Abladen zuerst zurück zum Spawnpunkt (oberes Ende vor der Burg)
           else if (u.kz === 'anfahrt') { kzx = FPX; kzy = FPY; kziel = 0.08; }
           else { // 'hin': zu ihrem Platz in der Warteschlange (hintereinander auf dem Hinweg, Richtung eigene Burg)
-            var wpx = FPX + ksg * 1.7, wpy = FPY + 0.35, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1;
+            var wpx = KWX, wpy = KWY, brx = (u.team === 0 ? kb0.x2 + 0.45 : kb0.x1 - 0.45) - wpx, bry = (kb0.y1 + kb0.y2) / 2 - wpy, brl = hyp(brx, bry) || 1; // vorderster Platz auf der Verlängerung der Andockrichtung: Anfahrt kommt gerade
             kzx = wpx + brx / brl * 1.1 * kq; kzy = wpy + bry / brl * 1.1 * kq; kziel = 0.12;
           }
           var kdx = kzx - u.x, kdy = kzy - u.y, kdd = hyp(kdx, kdy);
