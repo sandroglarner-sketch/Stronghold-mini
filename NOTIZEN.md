@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+TEMPO HOLZFÄLLER/KARAWANE (22.11. 20:19): holzfaeller speed 1, karawane speed 0,6 (vorher je 0,8).
+
 WIRTSCHAFTSSPERRE NEU (22.11. 19:49, alle Bots): Die alte Regel «keine Bauern/Karawanen/Holzfäller, solange du mehr Kampfeinheiten hast» ist gelöscht. Neu: keine Wirtschaftseinheiten (Bauern, Karawanen, Holzfäller), solange eine Einheit des Spielers über der Spielfeldmitte steht (x > W/2; zählt nicht: Wirtschaft/Gebäude (passive), Arbeiter, König, Tunnelgräber unter der Erde). gegnerUeberMitte() in gemeinsam/bots.js. Regeltext (Bandit-Beschreibung) und Bot-Editor-Hinweise angepasst.
 
 KAISERIN GOLDFEDER ANGEPASST (22.11. 19:12, aus dem Bot-Editor): huntLead 5 (vorher 20). Neue Bot-Option bauernAb (Sekunden): vorher kauft der Bot keine Bauern (gemeinsam/bots.js, Wirtschaft; Karawanen/Holzfäller nicht betroffen); Kaiserin bauernAb 11 (19:14 korrigiert, kurz 16). Bot-Editor zeigt sie als eingebaute Spezialregel «baut die ersten 11 s keine Bauern».
