@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+KARAWANE TEMPO JE LADUNG (22.11. 20:22): leer Tempo 0,9 (speed), mit vollen Töpfen (u.voll >= 1, Rückweg zur Burg) 0,7 (karawane.tempoVoll); in simulation.js bei spd. Ein Umlauf (eine Karawane, ohne Warten) ca. 23 s (vorher bei 0,6 ca. 29 s). Kartentext: «Voll beladen langsamer (Tempo 0,7)».
+
 TEMPO HOLZFÄLLER/KARAWANE (22.11. 20:19): holzfaeller speed 1, karawane speed 0,6 (vorher je 0,8).
 
 WIRTSCHAFTSSPERRE NEU (22.11. 19:49, alle Bots): Die alte Regel «keine Bauern/Karawanen/Holzfäller, solange du mehr Kampfeinheiten hast» ist gelöscht. Neu: keine Wirtschaftseinheiten (Bauern, Karawanen, Holzfäller), solange eine Einheit des Spielers über der Spielfeldmitte steht (x > W/2; zählt nicht: Wirtschaft/Gebäude (passive), Arbeiter, König, Tunnelgräber unter der Erde). gegnerUeberMitte() in gemeinsam/bots.js. Regeltext (Bandit-Beschreibung) und Bot-Editor-Hinweise angepasst.

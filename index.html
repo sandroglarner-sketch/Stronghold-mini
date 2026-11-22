@@ -1140,7 +1140,7 @@
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4, staerke: 0,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
       // Karawane (Wirtschaft): 1. kostet 5 Gold, jede weitere 5 mehr (stirbt eine, sinkt der Preis wieder); geht (Tempo 0.8) zur Mitte unterhalb des Teichs, füllt in 3 s (Annahme) alle 4 Töpfe mit Wasser, geht zurück zur Burg: +10 Gold; dann wieder von vorn.
-      karawane: { cat: 'eco', name: 'Karawane', cost: 10, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.6, cd: 1, r: 0.34, push: 0.38, passive: true, karawane: { gold: 20, fuellen: 2, toepfe: 4 } }, // 22.11.: immer 10 Gold, bringt 20 Gold pro Gang, hat einen Körper (push)
+      karawane: { cat: 'eco', name: 'Karawane', cost: 10, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.9, cd: 1, r: 0.34, push: 0.38, passive: true, karawane: { gold: 20, fuellen: 2, toepfe: 4, tempoVoll: 0.7 } }, // 22.11.: immer 10 Gold, bringt 20 Gold pro Gang, hat einen Körper (push)
       // Holzfäller (Wirtschaft): 6 Gold, hat einen Körper (steht anderen im Weg), höchstens 2 pro Baum; geht zum nächsten freien Baum (CONFIG.BAEUME) und fällt ihn: alle 5 s +2 Gold; ein Baum gibt höchstens 20 Gold, dann bleibt der Stumpf (für den Rest des Spiels)
       holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 6, staerke: 0, hp: 2, atk: 0, range: 0, speed: 1, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2, proBaum: 2 } },
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
@@ -1411,7 +1411,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '71c21a2f12'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '1bbaa44e8d'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2821,7 +2821,7 @@
       u.hit = Math.max(0, u.hit - dt);
       u.slow = Math.max(0, u.slow - dt);
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
-      var spd = d.speed * (u.slow > 0 ? (u.slowF || 0.5) : 1);
+      var spd = (d.karawane && u.voll >= 1 && d.karawane.tempoVoll ? d.karawane.tempoVoll : d.speed) * (u.slow > 0 ? (u.slowF || 0.5) : 1); // Karawane: mit vollen Töpfen langsamer (22.11.)
       if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
         var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
         if (u.inCastle) {
@@ -5125,7 +5125,7 @@
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
-    if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));
+    if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.karawane.tempoVoll ? ' Voll beladen langsamer (Tempo ' + fmtN(d.karawane.tempoVoll) + ').' : '') + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));
     if (d.passive && d.bonus) a.push('Lässt sich nahe der eigenen Burg nieder und bringt <b>alle ' + d.bonusEvery + ' s +' + d.bonus + ' Gold</b>.');
     if (d.dig) a.push('<b>Gräbt sich unsichtbar</b> (Tempo ' + fmtN(d.dig.speed) + ') zu einem gegnerischen Fernkämpfer und taucht neben ihm auf.');
     if (d.splash && !d.fire) a.push('<b>Flächenschaden</b> (Radius ' + fmtN(d.splash) + ')' + (d.slow ? ' und <b>bremst</b> Getroffene ' + d.slow.secs + ' s auf ' + Math.round(d.slow.factor * 100) + ' % Tempo' : '') + '.');

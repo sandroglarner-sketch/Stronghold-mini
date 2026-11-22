@@ -220,7 +220,7 @@
       u.hit = Math.max(0, u.hit - dt);
       u.slow = Math.max(0, u.slow - dt);
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
-      var spd = d.speed * (u.slow > 0 ? (u.slowF || 0.5) : 1);
+      var spd = (d.karawane && u.voll >= 1 && d.karawane.tempoVoll ? d.karawane.tempoVoll : d.speed) * (u.slow > 0 ? (u.slowF || 0.5) : 1); // Karawane: mit vollen Töpfen langsamer (22.11.)
       if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
         var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
         if (u.inCastle) {
