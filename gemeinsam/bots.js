@@ -64,6 +64,15 @@
     var st = Math.max(w && w.stage || 0, ziel || 1);
     return !!(w && w.built && WALL.stages[st - 1] - w.hp > CONFIG.AI.wallRepairLoss);
   }
+  // Wirtschaftssperre (22.11., alle Bots): steht eine gegnerische Einheit über der Spielfeldmitte (in seiner Hälfte), kauft er keine Bauern, Karawanen, Holzfäller.
+  // Zählt: sichtbare Einheiten des Spielers ausser Wirtschaft/Gebäuden (passive), Arbeitern, König und Tunnelgräbern unter der Erde.
+  function gegnerUeberMitte() {
+    for (var i = 0; i < units.length; i++) {
+      var u = units[i], ud = CONFIG.units[u.type];
+      if (u.team === 0 && u.hp > 0 && !u.dig && !ud.passive && !ud.worker && !ud.king && u.x > W / 2) return true;
+    }
+    return false;
+  }
   // Steht ein sichtbarer Gegner in der Spielfeldhälfte des Computers (rechts)?
   function enemyInMyHalf() {
     for (var i = 0; i < units.length; i++) {
@@ -191,15 +200,15 @@
     if (R.gebetAb && gebKaeufe(1, 'kirche') >= 1 && spendable() >= Math.max(R.gebetAb, preisVon(1, 'kirche'))) buy(1, 'kirche');
     if (!free) return;
 
-    // Wirtschaft: keine Bauern, solange du mehr Kampfeinheiten hast
-    var guard = 0;
-    while (guard++ < 3 && clock >= (R.bauernAb || 0) /* bauernAb = erst ab dieser Sekunde Bauern */ && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ countFighters(0, true) <= countFighters(1) && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
+    // Wirtschaft (22.11.): keine Bauern, Karawanen, Holzfäller, solange eine gegnerische Einheit über der Mitte steht (vorher: solange du mehr Kampfeinheiten hattest)
+    var wirtschaft = !gegnerUeberMitte(), guard = 0;
+    while (guard++ < 3 && clock >= (R.bauernAb || 0) /* bauernAb = erst ab dieser Sekunde Bauern */ && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ wirtschaft && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
     // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
     guard = 0;
-    while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
+    while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && wirtschaft && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
-    while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && countFighters(0, true) <= countFighters(1) && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
+    while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && wirtschaft && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {
