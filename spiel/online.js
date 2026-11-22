@@ -187,16 +187,27 @@
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
   function pvpRender() {
-    var a = pvp.alpha, saved = [], i, u;
+    // Nur Darstellung: Laufwege UND Zeiten werden zwischen zwei Spielschritten geglättet (danach alles zurückgesetzt, die Berechnung bleibt deterministisch).
+    // Gezeichnet wird der Stand (1 − alpha) Schritte vor dem letzten Schritt: Uhr, Angriffs-Restzeit (u.cd → Schlaganimationen, z. B. Morgenstern),
+    // Aufbauzeit (u.setupT → Trebuchet) und Effekte (e.t → fliegende Steine, Einschläge) um diesen Rest zurückgedreht. (22.11.: vorher ruckelten die Animationen im 20er-Takt)
+    var a = pvp.alpha, saved = [], zeiten = [], i, u;
+    var ST = pvp.on && !pvp.bot ? STEP : BL_STEP, lag = (1 - a) * ST, uhr = clock;
     for (i = 0; i < units.length; i++) {
       u = units[i];
       if (u.px !== undefined) {
         var dx = u.x - u.px, dy = u.y - u.py;
         if (dx * dx + dy * dy < 1) { saved.push(u, u.x, u.y); u.x = u.px + dx * a; u.y = u.py + dy * a; }
       }
+      if (lag > 0) { zeiten.push(u, u.cd, u.setupT); if (u.cd > 0) u.cd += lag; if (u.setupT > 0) u.setupT = Math.max(0, u.setupT - lag); }
     }
-    render();
-    for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
+    var et = [];
+    if (lag > 0) { clock -= lag; for (i = 0; i < effects.length; i++) { et.push(effects[i].t); effects[i].t -= lag; } }
+    try { render(); } finally {
+      for (i = 0; i < saved.length; i += 3) { saved[i].x = saved[i + 1]; saved[i].y = saved[i + 2]; }
+      for (i = 0; i < zeiten.length; i += 3) { zeiten[i].cd = zeiten[i + 1]; zeiten[i].setupT = zeiten[i + 2]; }
+      for (i = 0; i < et.length; i++) effects[i].t = et[i];
+      clock = uhr;
+    }
   }
   $('pvpBtn').addEventListener('click', function () {
     if (!ONLINE) { hinweis('Online-Partien gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.'); return; }

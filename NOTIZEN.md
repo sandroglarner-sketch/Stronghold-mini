@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+FLÜSSIGE ANIMATIONEN ONLINE (22.11. 13:25): pvpRender glättet jetzt neben den Laufwegen auch die Zeiten: gezeichnet wird (1 − alpha) Schritte vor dem letzten Schritt, dafür werden clock, u.cd (nur > 0), u.setupT und alle e.t nur fürs Zeichnen zurückgedreht und danach (finally) wiederhergestellt. Vorher liefen Schlag-/Schussanimationen (Morgenstern, Trebuchet-Wurf und -Steine) online im 20er-Takt (STEP 0,05). Gilt auch für Bot-Partien und Zuschauer (ST = BL_STEP). Simulation unverändert (deterministisch).
+
 MORGENSTERN RUHE (22.11. 13:10): in Ruhe liegt die Kugel mittig unter dem Stiel (MS_RUHE phi π, L 0,35).
 SCHWARZER RITTER FERTIG (22.11. 13:05): Morgenstern-Animation Variante A gewählt (MS_VARIANTE 'A': Seitenhieb, danach schwingt die Kugel einmal über den 120°-Bogen hin und zurück; B/C bleiben im Code). Kosten 22 Gold, 18 Leben. Hochgeladen.
 
