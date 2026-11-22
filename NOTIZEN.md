@@ -135,6 +135,7 @@ Besitzer: Sandro (Deutsch, Handy/Android, Zürich). Online: https://stronghold-m
 
 STANDARDREGELN DES BESITZERS
 - Antworten kurz auf Deutsch, getroffene Annahmen nennen. E-Mail des Nutzers privat halten.
+- Muss der Besitzer selbst etwas tun (Supabase, Render, GitHub …), immer gleich den direkten Link dazu schicken (z. B. Supabase SQL Editor: https://supabase.com/dashboard/project/odxpdyrwtvgicntbjlrh/sql/new, Render: https://dashboard.render.com).
 - Bots/Computer-Einheiten verhalten sich exakt wie Spielereinheiten.
 - Kein Gold-Maximum mehr (GOLD_MAX = Infinity, seit 16.11.2026). Sandbox: Spieler 9999, Bot 160 Startgold. Auszahlung alle 5 s (10 Gold), Startgold 10.
 - Veröffentlichungs-Labels (Artifact) max. 60 Zeichen.
