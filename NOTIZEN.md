@@ -1,6 +1,6 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
-KAISERIN GOLDFEDER ANGEPASST (22.11. 19:12, aus dem Bot-Editor): huntLead 5 (vorher 20). Neue Bot-Option bauernAb (Sekunden): vorher kauft der Bot keine Bauern (gemeinsam/bots.js, Wirtschaft; Karawanen/Holzfäller nicht betroffen); Kaiserin bauernAb 16. Bot-Editor zeigt sie als eingebaute Spezialregel «baut die ersten 16 s keine Bauern».
+KAISERIN GOLDFEDER ANGEPASST (22.11. 19:12, aus dem Bot-Editor): huntLead 5 (vorher 20). Neue Bot-Option bauernAb (Sekunden): vorher kauft der Bot keine Bauern (gemeinsam/bots.js, Wirtschaft; Karawanen/Holzfäller nicht betroffen); Kaiserin bauernAb 11 (19:14 korrigiert, kurz 16). Bot-Editor zeigt sie als eingebaute Spezialregel «baut die ersten 11 s keine Bauern».
 
 BOT-EDITOR ABGLEICH (22.11. 19:06): Entwürfe mit Spezialregel-Text blieben nach dem Einbau als «geändert» stehen (Text ist nur ein Auftrag und steht nie in den Spieldaten). Neu: Kopieren markiert die Entwürfe als gesendet (gesendet = STAND); mit dem nächsten Editor-Stand fällt der Text weg und der Entwurf wird mit dem Spiel verglichen (gleich = weg). Vergleich unabhängig von der Feld-Reihenfolge (sortiert). Einmalig (localStorage …-aufr1) wurden alle alten Spezialregel-Texte entfernt.
 
