@@ -571,7 +571,7 @@
       var tgt = null, tx, ty, td;
       if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
-      else if (outside && dw <= d.range && !bt && !d.bekehren) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+      else if (outside && dw <= d.range && !bt && !d.bekehren && !d.nurFern) { // Bandit (nurFern) greift die Mauer nie an (23.11. 16:25) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
         // nächster Punkt auf der Außenkante der Mauer
         var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
         wallT = true;

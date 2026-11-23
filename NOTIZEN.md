@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+BANDIT OHNE MAUER (23.11. 16:25): Bandit (nurFern) greift die gegnerische Mauer nie an (Mauer-Ziel in simulation.js: !d.nurFern); steht er vor einer Mauer, bleibt er davor (wie die Prinzessin). Burg greift er weiter an, wenn er sie erreicht. Kartentext ergänzt «nie die Mauer».
+
 BANDIT: KÖNIG UND DURCHLAUFEN (23.11. 06:27): nurFernZiel erlaubt auch den König (ausserhalb der Burg). Unsichtbare Einheiten (Bandit) nehmen nicht am Wegschieben teil: sie laufen durch alle Einheiten hindurch (Körper-Schleife in simulation.js: unsichtbar(a) || unsichtbar(b) -> continue); sichtbar (nach einem Angriff) wird wieder geschoben.
 
 SCHWERT, BANDIT-ZIELE (23.11. 06:22): sword cost 9, hp 7 (vorher 8 / 6). Bots mit Schwertkämpfern in der Angriffswelle: attackGold +1 je Schwertkämpfer (Löwenherz 200→206, Waldkönig 160→166, König Rotbart 220→228, Steinmetz Brocken 200→208). Bandit (raeuber) nurFern: true = greift nur Fernkämpfer (cat ranged), Wirtschaft (cat eco) und Kriegsmaschinen mit Reichweite > 1,5 (Katapult, Baliste, Onager, Trebuchet) an; sonst läuft er weiter Richtung Burg (Burg greift er weiter an). nurFernZiel() in spielzustand.js, Filter in der Zielwahl (simulation.js) und in unitInFight. Kartentext «Greift nur …».

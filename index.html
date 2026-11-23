@@ -1411,7 +1411,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '895fb70e37'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'c1866d0e25'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3174,7 +3174,7 @@
       var tgt = null, tx, ty, td;
       if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
-      else if (outside && dw <= d.range && !bt && !d.bekehren) { // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+      else if (outside && dw <= d.range && !bt && !d.bekehren && !d.nurFern) { // Bandit (nurFern) greift die Mauer nie an (23.11. 16:25) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
         // nächster Punkt auf der Außenkante der Mauer
         var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
         wallT = true;
@@ -5127,7 +5127,7 @@
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
     if (d.bekehren) a.push('<b>Verzaubert:</b> zielt nur auf Gegner, die sie bekehren kann (nicht: König, Gebäude, Wirtschaft, Turmbesatzung). Ab ' + fmtN(d.range) + ' Kacheln sprüht sie Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln: <b>Getroffene Gegner wechseln die Seite</b>.');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
-    if (d.nurFern) a.push('<b>Greift nur</b> den König, Fernkämpfer, Bauern, Holzfäller, Karawanen und Fernkampf-Kriegsmaschinen an. Unsichtbar läuft er durch Einheiten hindurch.');
+    if (d.nurFern) a.push('<b>Greift nur</b> den König, Fernkämpfer, Bauern, Holzfäller, Karawanen und Fernkampf-Kriegsmaschinen an, nie die Mauer. Unsichtbar läuft er durch Einheiten hindurch.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
     if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.karawane.tempoVoll ? ' Voll beladen langsamer (Tempo ' + fmtN(d.karawane.tempoVoll) + ').' : '') + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));
