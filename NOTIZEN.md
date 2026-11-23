@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+BANDIT: KÖNIG UND DURCHLAUFEN (23.11. 06:27): nurFernZiel erlaubt auch den König (ausserhalb der Burg). Unsichtbare Einheiten (Bandit) nehmen nicht am Wegschieben teil: sie laufen durch alle Einheiten hindurch (Körper-Schleife in simulation.js: unsichtbar(a) || unsichtbar(b) -> continue); sichtbar (nach einem Angriff) wird wieder geschoben.
+
 SCHWERT, BANDIT-ZIELE (23.11. 06:22): sword cost 9, hp 7 (vorher 8 / 6). Bots mit Schwertkämpfern in der Angriffswelle: attackGold +1 je Schwertkämpfer (Löwenherz 200→206, Waldkönig 160→166, König Rotbart 220→228, Steinmetz Brocken 200→208). Bandit (raeuber) nurFern: true = greift nur Fernkämpfer (cat ranged), Wirtschaft (cat eco) und Kriegsmaschinen mit Reichweite > 1,5 (Katapult, Baliste, Onager, Trebuchet) an; sonst läuft er weiter Richtung Burg (Burg greift er weiter an). nurFernZiel() in spielzustand.js, Filter in der Zielwahl (simulation.js) und in unitInFight. Kartentext «Greift nur …».
 
 SCHWARZER RITTER SCHNELLER (22.11. 21:51): cd 1 (vorher 1,5). Morgenstern holt weiter aus: MS_HIEB back −2,4, schleif 1,6, Lmax 1,45 (vorher −2,0 / 1,4 / 1,3); ANIM after 0,45 (vorher 0,6), damit Ausholen 0,5 + Nachschwung in 1 s passen.

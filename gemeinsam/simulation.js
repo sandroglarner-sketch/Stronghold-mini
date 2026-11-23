@@ -679,6 +679,7 @@
         var b = units[j];
         if (b.hp <= 0 || b.dummy || b.dig || b.tower || b.inCastle || b.climb || (CONFIG.units[b.type].passive && !CONFIG.units[b.type].holz && !CONFIG.units[b.type].karawane) || CONFIG.units[b.type].worker) continue; // Holzfäller und Karawanen haben einen Körper
         if (!!CONFIG.units[a.type].karawane !== !!CONFIG.units[b.type].karawane) continue; // Karawanen schieben nur Karawanen, alle anderen gehen durch sie hindurch
+        if (unsichtbar(a) || unsichtbar(b)) continue; // unsichtbarer Bandit geht durch alle Einheiten hindurch (23.11.)
         var dx = b.x - a.x, dy = b.y - a.y, dist = hyp(dx, dy), sep = ((a.goWall && CONFIG.units[a.type].pushRun) || CONFIG.units[a.type].push || 0.275) + ((b.goWall && CONFIG.units[b.type].pushRun) || CONFIG.units[b.type].push || 0.275); // pushRun: Körper nur unterwegs zur Mauer
         if (dist < sep) {
           if (dist < 1e-4) { dx = simRand() - 0.5; dy = simRand() - 0.5; dist = hyp(dx, dy) || 1; }
