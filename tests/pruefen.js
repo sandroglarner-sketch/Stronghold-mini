@@ -41,12 +41,12 @@ const TESTS = {
     var d = X.units.map(function (u, i) { return +(hp[i] - u.hp).toFixed(2); });
     return d[1] === 1 && d[2] === 1 && d[3] === 0 && d[4] === 0 ? true : 'Schaden Ziel/Seite/hinten/weit: ' + d.slice(1).join('/');
   },
-  'Schwarzer Ritter: holt vor dem ersten Schlag 0,5 s aus, dann alle 1,5 s': function (X) {
+  'Schwarzer Ritter: holt vor dem ersten Schlag 0,5 s aus, dann jede Sekunde': function (X) {
     X.reset(); X.units.length = 0;
     X.spawn(0, 'schwarzritter'); X.spawn(1, 'shield');
     var k = X.units[0], z = X.units[1]; k.x = 11; k.y = 5; z.x = 11.85; z.y = 5; z.hp = 999; k.cd = 0; var treffer = [], hp = z.hp;
     for (var i = 0; i < 200; i++) { z.x = 11.85; z.y = 5; k.x = 11; k.y = 5; X.upd(0.02); if (z.hp < hp) { treffer.push(+((i + 1) * 0.02).toFixed(2)); hp = z.hp; } }
-    return treffer.length >= 2 && Math.abs(treffer[0] - 0.5) < 0.05 && Math.abs(treffer[1] - treffer[0] - 1.5) < 0.05 ? true : 'Treffer bei ' + treffer.join(', ') + ' s';
+    return treffer.length >= 2 && Math.abs(treffer[0] - 0.5) < 0.05 && Math.abs(treffer[1] - treffer[0] - 1) < 0.05 ? true : 'Treffer bei ' + treffer.join(', ') + ' s';
   },
   'Prinzessin: Gegner im 60°-Trichter bis 5 Kacheln wechseln die Seite': function (X) {
     X.reset(); X.units.length = 0;
