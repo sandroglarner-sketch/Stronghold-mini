@@ -1,5 +1,7 @@
 PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
 
+BANDIT MAUER ZULETZT (23.11. 16:31, ersetzt 16:25): Bandit greift die Mauer wieder an, aber erst, wenn ausserhalb der Mauer kein erlaubtes Ziel (nurFernZiel) mehr im Suchradius ist. Neuer Wert suche (Suchradius) = 8 Kacheln für den Bandit (sonst max(4, Reichweite + 1,5)); sight in simulation.js nimmt d.suche.
+
 BANDIT OHNE MAUER (23.11. 16:25): Bandit (nurFern) greift die gegnerische Mauer nie an (Mauer-Ziel in simulation.js: !d.nurFern); steht er vor einer Mauer, bleibt er davor (wie die Prinzessin). Burg greift er weiter an, wenn er sie erreicht. Kartentext ergänzt «nie die Mauer».
 
 BANDIT: KÖNIG UND DURCHLAUFEN (23.11. 06:27): nurFernZiel erlaubt auch den König (ausserhalb der Burg). Unsichtbare Einheiten (Bandit) nehmen nicht am Wegschieben teil: sie laufen durch alle Einheiten hindurch (Körper-Schleife in simulation.js: unsichtbar(a) || unsichtbar(b) -> continue); sichtbar (nach einem Angriff) wird wieder geschoben.

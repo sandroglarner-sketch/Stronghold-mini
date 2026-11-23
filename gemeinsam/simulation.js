@@ -565,13 +565,13 @@
       if (foeDown) for (j = 0; j < units.length; j++) if (units[j].type === 'king' && units[j].team !== u.team && units[j].hp > 0) { fk = units[j]; break; }
       var bp = foeDown && fk ? { x: fk.x, y: fk.y } : nearestOnRect(u, foeBase);
       var db = hyp(bp.x - u.x, bp.y - u.y);
-      var sight = Math.max(4, d.range + 1.5);
+      var sight = d.suche || Math.max(4, d.range + 1.5); // suche = eigener Suchradius (Bandit 8)
 
       var dbe = outside || foeDown || d.bekehren || (d.minRange && db < d.minRange) ? 1e9 : db, wallT = false; // Prinzessin greift Burg und Mauer nie an
       var tgt = null, tx, ty, td;
       if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
-      else if (outside && dw <= d.range && !bt && !d.bekehren && !d.nurFern) { // Bandit (nurFern) greift die Mauer nie an (23.11. 16:25) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+      else if (outside && dw <= d.range && !bt && !d.bekehren && !(d.nurFern && best && bd <= sight)) { // Bandit (nurFern): Mauer erst, wenn ausserhalb der Mauer kein Ziel mehr im Suchradius ist (23.11. 16:31) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
         // nächster Punkt auf der Außenkante der Mauer
         var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
         wallT = true;
