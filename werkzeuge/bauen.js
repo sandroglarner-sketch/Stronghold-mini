@@ -1,5 +1,5 @@
 // Baut aus den Einzeldateien wieder EINE Datei:
-//   build/artifact.html        -> fürs Claude-Artifact (mit Projektnotizen oben als Kommentar)
+//   build/artifact.html        -> fürs Claude-Artifact
 //   index.html (im Hauptordner) -> für GitHub/Render, server.js liefert sie aus (eigener Kopf, ohne Notizen, mit Statistik-Skript und Datenschutzzeile)
 // Aufruf im Projektordner: node werkzeuge/bauen.js
 'use strict';
@@ -20,7 +20,7 @@ const vorlage = lies('spiel/index.html');
 const ersetze = (s, marke, inhalt) => { const i = s.indexOf(marke); if (i < 0) throw new Error('Marke fehlt: ' + marke); return s.slice(0, i) + inhalt + s.slice(i + marke.length); };
 
 let artifact = vorlage;
-artifact = ersetze(artifact, '<!--NOTIZEN-->\n', '<!--\n' + lies('NOTIZEN.md') + '-->\n');
+artifact = ersetze(artifact, '<!--NOTIZEN-->\n', ''); // Notizen stehen nicht mehr im Artifact (STAND.md, NOTIZEN.md = Archiv)
 artifact = ersetze(artifact, '<!--STIL-->\n', lies('spiel/stil.css'));
 artifact = ersetze(artifact, '<!--SKRIPT-->', skript);
 schreib('build/artifact.html', artifact);
@@ -29,7 +29,6 @@ schreib('build/artifact.html', artifact);
 let body = artifact.slice(artifact.indexOf('<body>') + '<body>'.length);
 body = body.replace(/^\s*<title>[\s\S]*?<\/title>\s*/, '');
 body = body.replace(/^\s*<meta name="claude:[^>]*>\s*/, '');
-body = body.replace(/<!--[\s\S]*?-->\s*/, (m) => (m.indexOf('PROJEKTNOTIZEN') >= 0 ? '' : m));
 body = body.replace(/<\/body>\s*<\/html>\s*$/, '').replace(/\s+$/, '');
 const kopf = `<!DOCTYPE html>
 <html lang="de">

@@ -1,4 +1,4 @@
-PROJEKTNOTIZEN (für Claude: zuerst lesen, bei Änderungen aktuell halten)
+ARCHIV DER PROJEKTNOTIZEN (bis 23.11.2026, wird nicht mehr fortgeschrieben). Aktueller Stand: STAND.md, Verlauf ab jetzt: git log.
 
 TURMBESATZUNG IM SUCHRADIUS (23.11. 16:37): Bandit nach einem Schlag mindestens 1,5 s sichtbar (unsichtbar.sichtbar 1,5, vorher 1). Fernkämpfer vor der Mauer greifen Einheiten auf den Türmen nur noch an, wenn diese im Suchradius (sight = suche oder max(4, Reichweite + 1,5)) stehen; sonst greifen sie die Mauer an (vorher: Mauer erst, wenn gar keine Turmbesatzung mehr da war). Regeltext angepasst.
 
