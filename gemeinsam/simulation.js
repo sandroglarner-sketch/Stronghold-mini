@@ -571,7 +571,7 @@
       var tgt = null, tx, ty, td;
       if (best && bd <= d.range && (dbe > d.range || bd <= dbe)) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else if (dbe <= d.range) { tx = bp.x; ty = bp.y; td = db; }
-      else if (outside && dw <= d.range && !bt && !d.bekehren && !(d.nurFern && best && bd <= sight)) { // Bandit (nurFern): Mauer erst, wenn ausserhalb der Mauer kein Ziel mehr im Suchradius ist (23.11. 16:31) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
+      else if (outside && dw <= d.range && !(bt && btd <= sight) && !d.bekehren && !(d.nurFern && best && bd <= sight)) { // 23.11. 16:37: Turmbesatzung nur zuerst, wenn sie im Suchradius ist // Bandit (nurFern): Mauer erst, wenn ausserhalb der Mauer kein Ziel mehr im Suchradius ist (23.11. 16:31) // Fernkämpfer greifen die Mauer erst an, wenn keine Gegner mehr in den Türmen stehen
         // nächster Punkt auf der Außenkante der Mauer
         var wb = bases[ow.team], wpx = clamp(u.x, wb.x1, wb.x2), wpy = clamp(u.y, wb.y1, wb.y2), wl2 = hyp(u.x - wpx, u.y - wpy) || 1;
         wallT = true;
@@ -579,7 +579,7 @@
         ty = wpy + (u.y - wpy) / wl2 * (WALL.dist + WALL_TH / 2);
         td = Math.max(dw, 0);
       }
-      else if (bt) { tgt = bt; tx = bt.x; ty = bt.y; td = btd; } // zuerst die Besatzung der Türme
+      else if (bt && btd <= sight) { tgt = bt; tx = bt.x; ty = bt.y; td = btd; } // zuerst die Besatzung der Türme (nur im Suchradius)
       else if (best && bd <= sight) { tgt = best; tx = best.x; ty = best.y; td = bd; }
       else { tx = bp.x; ty = bp.y; td = db; }
 
