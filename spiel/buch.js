@@ -37,6 +37,7 @@
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
     if (d.bekehren) a.push('<b>Verzaubert:</b> zielt nur auf Gegner, die sie bekehren kann (nicht: König, Gebäude, Wirtschaft, Turmbesatzung). Ab ' + fmtN(d.range) + ' Kacheln sprüht sie Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln: <b>Getroffene Gegner wechseln die Seite</b>.');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
+    if (d.nurFern) a.push('<b>Greift nur</b> Fernkämpfer, Bauern, Holzfäller, Karawanen und Fernkampf-Kriegsmaschinen an.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
     if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.karawane.tempoVoll ? ' Voll beladen langsamer (Tempo ' + fmtN(d.karawane.tempoVoll) + ').' : '') + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));

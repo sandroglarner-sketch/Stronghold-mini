@@ -305,12 +305,14 @@
     return false;
   }
   // Bandit: unsichtbar, ausser kurz nach einem eigenen Angriff (dann sichtbar.sichtbar Sekunden lang); unsichtbar = kann nicht anvisiert werden (Flächenschaden trifft trotzdem)
+  // Bandit (nurFern, 23.11.): erlaubte Ziele = Fernkämpfer, Wirtschaftseinheiten und Kriegsmaschinen mit Fernkampf (Reichweite > 1,5)
+  function nurFernZiel(e) { var ed = CONFIG.units[e.type]; return !!ed && (ed.cat === 'ranged' || ed.cat === 'eco' || (ed.cat === 'siege' && ed.range > 1.5)); }
   function unsichtbar(u) { var d = CONFIG.units[u.type]; return !!(d && d.unsichtbar && (u.atkT === undefined || clock - u.atkT >= d.unsichtbar.sichtbar)); }
   // Hat u einen angreifbaren Gegner in Reichweite? Dann kämpft es zuerst, statt in den Turm zu laufen.
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue;
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e))) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;

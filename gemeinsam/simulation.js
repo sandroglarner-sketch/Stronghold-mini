@@ -552,6 +552,7 @@
         var e = units[j];
         if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (d.bekehren && !bekehrbar(e)) continue; // Prinzessin: nur Gegner, die sie bekehren kann
+        if (d.nurFern && !nurFernZiel(e)) continue; // Bandit: nur Fernkämpfer, Wirtschaft, Fernkampf-Kriegsmaschinen
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen

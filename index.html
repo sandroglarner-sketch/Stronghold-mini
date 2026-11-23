@@ -1069,14 +1069,14 @@
                     wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 180, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'catapult', 'rider', 'knight'], noOutput: 10, defMax: { catapult: 1 } },
-      // «Löwenherz» (Story-Platz 6, braucht ein Konto): 9 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (alle 40 s), greift bei 200 Gold an (20 Leiterträger)
+      // «Löwenherz» (Story-Platz 6, braucht ein Konto): 9 Bauern, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (alle 40 s), greift bei 206 Gold an (20 Leiterträger)
       // und spielt selbst den Schwertkämpfer (Belohnung: Schwertkämpfer); in einer Verteidigung höchstens 1 Katapult
-      loewenherz: { income: 10, incomeEvery: 5, farmers: 9, huntLead: 20, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 200, lockSecs: 15,
+      loewenherz: { income: 10, incomeEvery: 5, farmers: 9, huntLead: 20, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 206, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1], ['catapult', 1]] }, { after: 4, buy: [['sword', 6]] }, { after: 5, buy: [['archer', 4]] }, { after: 10, buy: [['ladder', 20]] }],
                     defPlus: 1, defPool: ['archer', 'sword', 'catapult', 'rider'], noOutput: 10, defMax: { catapult: 1 } },
       // «Waldkönig» (Story-Platz 7, braucht ein Konto): 6 Bauern und 4 Holzfäller (Belohnung: Holzfäller), Mauer ohne Türme, jagt mit 3 Speerkämpfern (alle 30 s),
-      // greift bei 160 Gold an (6 Schwertkämpfer, 6 Bogenschützen, 8 Speerkämpfer, 15 Leiterträger)
-      waldkoenig: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 4, huntLead: 20, hunt: [['spear', 3]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 160, lockSecs: 15,
+      // greift bei 166 Gold an (6 Schwertkämpfer, 6 Bogenschützen, 8 Speerkämpfer, 15 Leiterträger)
+      waldkoenig: { income: 10, incomeEvery: 5, farmers: 6, holzfaeller: 4, huntLead: 20, hunt: [['spear', 3]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 1, turm: {}, wallClear: true, attackGold: 166, lockSecs: 15,
                     attack: [{ after: 0, buy: [['sword', 6]] }, { after: 2, buy: [['archer', 6]] }, { after: 3, buy: [['spear', 8]] }, { after: 8, buy: [['ladder', 15]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'sword'], noOutput: 10 },
       // «Der Strohkönig» (Story-Platz 7, braucht ein Konto): 6 Bauern, baut ab 50 Gold ein Brandstifterhaus (Belohnung: Brandstifterhaus), Mauer ohne Türme,
@@ -1096,8 +1096,8 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['archer', 4]] }, { after: 7, buy: [['spear', 6]] }, { after: 12, buy: [['spear', 14]] }],
                     defPlus: 1, defPool: ['spear', 'archer', 'knight'], defMax: { catapult: 1 }, noOutput: 10 },
       // «König Rotbart» (Story-Platz 11, braucht ein Konto): 8 Bauern, Schmiede ab 50 Gold (nur Stufe 1), Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Schwertkämpfern (15 s Vorsprung, alle 40 s),
-      // greift bei 220 Gold an (Belagerungsschild, 2 Rammböcke, 8 Schwertkämpfer, 6 Bogenschützen, 8 Reiter); verteidigt mit Bogenschützen, Tunnelgräbern, Schwertkämpfern (Belohnung: Tunnelgräber)
-      koenigrotbart: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 220, lockSecs: 15,
+      // greift bei 228 Gold an (Belagerungsschild, 2 Rammböcke, 8 Schwertkämpfer, 6 Bogenschützen, 8 Reiter); verteidigt mit Bogenschützen, Tunnelgräbern, Schwertkämpfern (Belohnung: Tunnelgräber)
+      koenigrotbart: { income: 10, incomeEvery: 5, farmers: 8, gebaeude: [{ type: 'schmiede', gold: 50 }], gebMax: { schmiede: 1 }, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 228, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 6, buy: [['archer', 6]] }, { after: 15, buy: [['rider', 8]] }],
                     defPlus: 1, defPool: ['archer', 'digger', 'sword'], defMax: { catapult: 1 }, noOutput: 10 },
       // «Jungkönig» (Story-Platz 12, braucht ein Konto): 10 Bauern und 4 Holzfäller, Mauer bis Stufe 3 mit 4 Bogenschützen, jagt mit 2 Reitern (alle 40 s), greift bei 200 Gold an
@@ -1111,8 +1111,8 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 4, buy: [['knight', 4]] }, { after: 6, buy: [['mage', 1]] }, { after: 8, buy: [['javelin', 8]] }, { after: 14, buy: [['ladder', 15]] }],
                     defPlus: 1, defPool: ['archer', 'knight', 'mage', 'spear', 'digger'], noOutput: 10 },
       // «Steinmetz Brocken» (Story-Platz 14, braucht ein Konto): 8 Bauern und 2 Holzfäller, Mauer bis Stufe 2 mit 2 Bogenschützen, jagt mit 2 Schwertkämpfern (15 s Vorsprung, alle 40 s), 3 s später 2 Speerwerfer,
-      // greift bei 200 Gold an (Belagerungsschild, 2 Onager, 8 Schwertkämpfer, 8 Speerwerfer, 8 Reiter), spielt selbst den Onager (Belohnung: Onager); verteidigt mit Reitern, Speerwerfern, Schwertkämpfern
-      steinmetzbrocken: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 2, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, huntLater: [{ after: 3, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 200, lockSecs: 15,
+      // greift bei 208 Gold an (Belagerungsschild, 2 Onager, 8 Schwertkämpfer, 8 Speerwerfer, 8 Reiter), spielt selbst den Onager (Belohnung: Onager); verteidigt mit Reitern, Speerwerfern, Schwertkämpfern
+      steinmetzbrocken: { income: 10, incomeEvery: 5, farmers: 8, holzfaeller: 2, huntLead: 15, hunt: [['sword', 2]], huntEvery: 40, huntLater: [{ after: 3, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 2, turm: { archer: 2 }, wallClear: true, attackGold: 208, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 4, buy: [['onager', 2]] }, { after: 5, buy: [['sword', 8]] }, { after: 8, buy: [['javelin', 8]] }, { after: 16, buy: [['rider', 8]] }],
                     defPlus: 1, defPool: ['rider', 'javelin', 'sword'], noOutput: 10 },
       // «Gräfin Eisenhand» (Story-Platz 15, braucht ein Konto): 8 Bauern und 6 Holzfäller, Adelshaus ab 100 Gold (Belohnung: Adelshaus), Mauer bis Stufe 3 mit 4 Bogenschützen,
@@ -1150,7 +1150,7 @@
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
       schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 22, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, ausholen: 0.5, kegel: { winkel: 120, r: 1 } }, // ausholen: vor dem ersten Schlag 0,5 s ausholen // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
-      raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1 } },
+      raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1 }, nurFern: true }, // nurFern (23.11.): greift nur Fernkämpfer, Wirtschaft (Bauer, Holzfäller, Karawane) und Fernkampf-Kriegsmaschinen an
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
@@ -1214,7 +1214,7 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 8, staerke: 1, hp: 6, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 9, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
       ladder: { cat: 'melee', name: 'Leiterträger', cost: 4, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.08, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,08 = sehr kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
@@ -1411,7 +1411,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'b98b6b3889'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '8d0186ca51'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2234,12 +2234,14 @@
     return false;
   }
   // Bandit: unsichtbar, ausser kurz nach einem eigenen Angriff (dann sichtbar.sichtbar Sekunden lang); unsichtbar = kann nicht anvisiert werden (Flächenschaden trifft trotzdem)
+  // Bandit (nurFern, 23.11.): erlaubte Ziele = Fernkämpfer, Wirtschaftseinheiten und Kriegsmaschinen mit Fernkampf (Reichweite > 1,5)
+  function nurFernZiel(e) { var ed = CONFIG.units[e.type]; return !!ed && (ed.cat === 'ranged' || ed.cat === 'eco' || (ed.cat === 'siege' && ed.range > 1.5)); }
   function unsichtbar(u) { var d = CONFIG.units[u.type]; return !!(d && d.unsichtbar && (u.atkT === undefined || clock - u.atkT >= d.unsichtbar.sichtbar)); }
   // Hat u einen angreifbaren Gegner in Reichweite? Dann kämpft es zuerst, statt in den Turm zu laufen.
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue;
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e))) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;
@@ -3153,6 +3155,7 @@
         var e = units[j];
         if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (d.bekehren && !bekehrbar(e)) continue; // Prinzessin: nur Gegner, die sie bekehren kann
+        if (d.nurFern && !nurFernZiel(e)) continue; // Bandit: nur Fernkämpfer, Wirtschaft, Fernkampf-Kriegsmaschinen
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen
@@ -5123,6 +5126,7 @@
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
     if (d.bekehren) a.push('<b>Verzaubert:</b> zielt nur auf Gegner, die sie bekehren kann (nicht: König, Gebäude, Wirtschaft, Turmbesatzung). Ab ' + fmtN(d.range) + ' Kacheln sprüht sie Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln: <b>Getroffene Gegner wechseln die Seite</b>.');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
+    if (d.nurFern) a.push('<b>Greift nur</b> Fernkämpfer, Bauern, Holzfäller, Karawanen und Fernkampf-Kriegsmaschinen an.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
     if (d.holz) a.push('Geht zum nächsten Baum und fällt ihn: <b>alle ' + d.holz.alle + ' s +' + d.holz.gold + ' Gold</b>. Ein Baum gibt höchstens ' + CONFIG.BAEUME.holz + ' Gold, dann bleibt nur der Stumpf. Höchstens ' + d.holz.proBaum + ' Holzfäller pro Baum.');
     if (d.karawane) a.push('Geht zum Teich und wieder zurück. <b>+' + d.karawane.gold + ' Gold</b>.' + (d.karawane.tempoVoll ? ' Voll beladen langsamer (Tempo ' + fmtN(d.karawane.tempoVoll) + ').' : '') + (d.steigt ? ' Kosten steigen mit jeder weiteren Karawane.' : ''));
