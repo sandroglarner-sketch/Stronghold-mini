@@ -18,7 +18,7 @@
 
 ## Nach jeder Änderung
 1. `node werkzeuge/bauen.js` (erzeugt `index.html` und `build/…`; `index.html` nie von Hand ändern).
-2. Tests: `node tests/pruefen.js` (braucht `google-chrome`). Fehler melden, nicht verschweigen.
+2. Tests: `node tests/pruefen.js` (braucht `google-chrome`, ca. 20 s; prüft auch Code-Regeln und Determinismus). Fehler melden, nicht verschweigen. Dieselbe Prüfung läuft auf GitHub bei jedem Pull Request (`.github/workflows/pruefen.yml`); vor «mergen» muss sie grün sein.
 3. `STAND.md` nur anpassen, wenn sich etwas Grundsätzliches ändert (Aufbau, Grundsätze, nächste freie Bot-nr, offene Punkte); kurz halten. Bei Bedarf diese CLAUDE.md.
    Einzelne Wertänderungen gehören in die Commit-Nachricht: Was, alte → neue Werte, warum (z. B. «Schwertkämpfer 8 → 9 Gold, 6 → 7 Leben»).
 4. Committen und auf den Arbeitszweig pushen (`git push -u origin <zweig>`).

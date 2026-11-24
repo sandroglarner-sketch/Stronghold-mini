@@ -1,0 +1,23 @@
+# Automatische Prüfung bei jedem Pull Request und jedem Push auf main:
+# 1. baut das Spiel neu und prüft, dass die hochgeladene index.html dazu passt (Render liefert genau diese Datei aus),
+# 2. Code-Regeln und Spieltests (tests/pruefen.js, inkl. Determinismus aller Bot-Partien).
+name: Prüfen
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Bauen
+        run: node werkzeuge/bauen.js
+      - name: index.html aktuell?
+        run: git diff --exit-code index.html || (echo "index.html passt nicht zum Code – node werkzeuge/bauen.js ausführen und committen" && exit 1)
+      - name: Tests
+        run: node tests/pruefen.js

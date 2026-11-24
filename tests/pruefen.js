@@ -2,13 +2,44 @@
 // Aufruf: node werkzeuge/bauen.js && node tests/pruefen.js   (braucht google-chrome)
 'use strict';
 const fs = require('fs'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
+// Zuerst die Code-Regeln (ohne Browser)
+let codeOk = true;
+try { process.stdout.write(execFileSync('node', [path.join(__dirname, 'codepruefung.js')], { encoding: 'utf8' })); } catch (e) { process.stdout.write(e.stdout || String(e)); codeOk = false; }
 const root = path.join(__dirname, '..');
 let s = fs.readFileSync(path.join(root, 'build/artifact.html'), 'utf8');
 // Zugriff auf das Spielinnere (nur in der Testseite)
-s = s.replace('  function frame(ts) {', "  window.__X = { get units() { return units; }, spawn: spawn, upd: update, reset: reset, get walls() { return walls; }, get bases() { return bases; }, get gold() { return gold; }, CONFIG: CONFIG };\n  function frame(ts) {");
+s = s.replace('  function frame(ts) {', "  window.__X = { get units() { return units; }, spawn: spawn, upd: update, reset: reset, get walls() { return walls; }, get bases() { return bases; }, get gold() { return gold; }, CONFIG: CONFIG, buy: buy, hash: pvpHash, mulberry32: mulberry32, get state() { return state; }, get winner() { return winner; }, get clock() { return clock; }, setRand: function (f) { simRand = f; }, setState: function (z) { state = z; }, setBot: function (b) { botType = b; } };\n  function frame(ts) {");
 s = s.replace('    requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);', '  }');
 
+// Eine ganze Bot-Partie mit festem Startwert (wie im Spiel: Schritte von 1/60 s). Links kauft ein fester Plan, rechts spielt der Bot.
+// Ergebnis = Prüfsummen des Spielzustands alle 10 s, am Schluss Sieger und Dauer. mr ersetzt Math.random während der Partie.
+function botPartie(X, bot, seed, mr, sek) {
+  var altMR = Math.random; Math.random = mr;
+  try {
+    X.setRand(X.mulberry32(seed)); X.setBot(bot); X.reset(); X.setState('playing');
+    var plan = ['farmer', 'farmer', 'spear', 'archer', 'farmer', 'sword', 'wall', 'knight', 'catapult', 'shield', 'rider', 'mage', 'ram'], k = 0, h = [];
+    for (var t = 0; t < 60 * sek && X.state === 'playing'; t++) {
+      if (t % 90 === 0 && X.buy(0, plan[k % plan.length])) k++;
+      X.upd(1 / 60);
+      if (t % 600 === 0) h.push(X.hash());
+    }
+    h.push(X.hash(), X.state, X.winner, t);
+    return h.join(',');
+  } finally { Math.random = altMR; X.setState('ready'); }
+}
+
 const TESTS = {
+  'Determinismus: gleiche Bot-Partien bei gleichem Startwert, unabhängig von Math.random (alle Bots)': function (X) {
+    var falsch = [];
+    Object.keys(X.CONFIG.BOTS).forEach(function (bot, i) {
+      var a = botPartie(X, bot, 1000 + i, X.mulberry32(11), 150);
+      var b = botPartie(X, bot, 1000 + i, X.mulberry32(22), 150);
+      if (a !== b) falsch.push(bot);
+    });
+    var c = botPartie(X, 'bauern', 7, Math.random, 30), d = botPartie(X, 'bauern', 8, Math.random, 30);
+    if (c === d) return 'verschiedene Startwerte ergeben dieselbe Partie – der Test prüft nichts';
+    return falsch.length ? 'Partie läuft je nach Math.random anders (online würden die Spieler auseinanderlaufen): ' + falsch.join(', ') : true;
+  },
   'Onager: 20 Direktschaden + 1 Flächenschaden an der Mauer': function (X) {
     X.reset(); X.units.length = 0;
     X.walls[1] = { team: 1, hp: 120, built: true, hit: 0, lastHit: -99, stage: 3, peak: 120 };
@@ -73,13 +104,13 @@ const TESTS = {
 
 const out = {};
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sm-test-'));
-const page = s + '<script>setTimeout(function () { var R = {}, T = ' + '{' + Object.keys(TESTS).map((k) => JSON.stringify(k) + ':' + TESTS[k].toString()).join(',') + '};' +
+const page = s + '<script>setTimeout(function () { ' + botPartie.toString() + ' var R = {}, T = ' + '{' + Object.keys(TESTS).map((k) => JSON.stringify(k) + ':' + TESTS[k].toString()).join(',') + '};' +
   ' for (var k in T) { try { R[k] = T[k](window.__X); } catch (e) { R[k] = "Fehler: " + e.message; } } document.title = "RES " + JSON.stringify(R); }, 500);</script>';
 fs.writeFileSync(path.join(dir, 'test.html'), page);
 const dom = execFileSync('google-chrome', ['--headless=new', '--no-sandbox', '--disable-gpu', '--virtual-time-budget=10000', '--dump-dom', 'file://' + path.join(dir, 'test.html')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 const m = dom.match(/<title>RES ([^<]*)<\/title>/);
 if (!m) { console.log('Keine Ergebnisse (Seite lief nicht durch)'); process.exit(1); }
 const res = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
-let ok = true;
+let ok = codeOk;
 for (const k in res) { const pass = res[k] === true; ok = ok && pass; console.log((pass ? 'OK    ' : 'FEHLER') + '  ' + k + (pass ? '' : '  -> ' + res[k])); }
 process.exit(ok ? 0 : 1);
