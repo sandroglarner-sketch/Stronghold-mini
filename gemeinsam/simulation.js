@@ -109,7 +109,7 @@
       var fb = bases[1 - s.team];
       fb.hp = Math.max(0, fb.hp - d.atk); fb.flash = 0.2; fb.lastHit = clock;
     }
-    if (s.type === 'baliste') effects.push({ kind: 'bolthit', x: cx, y: cy, ang: Math.atan2(cy - s.sy, cx - s.sx), t: 0, dur: 0.35 }); // Einschlag des Bolzens
+    if (s.type === 'baliste') effects.push({ kind: 'bolthit', x: cx, y: cy, ang: Math.atan2(cy - s.sy, cx - s.sx), t: 0, dur: 0.35 }); // Einschlag des Bolzens (nur Zeichnung)
     if (d.splash) applySplash(s.team, s.sx, s.sy, cx, cy, d, tgt, !!s.wall, aimBase);
     if (d.blast) applySplash(s.team, s.sx, s.sy, s.tx, s.ty, { atk: d.blast.atk, splash: d.blast.r, range: d.range }, null, false, false); // Onager: zusätzlich Flächenschaden um den Einschlagpunkt, trifft alles (auch die getroffene Mauer/Burg nochmals)
   }
@@ -243,9 +243,9 @@
             if (vic && u.bogenT >= 1 && u.cd <= 0) {
               shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
               u.cd = CONFIG.BASE_CD; u.atkT = clock;
-              u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel
-              effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand
-            } else if (vic && u.bogenT < 1) { u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock - CONFIG.BASE_CD * 0.5; } // dreht sich schon beim Hervorholen zum Ziel
+              u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel (nur Zeichnung)
+              effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand (nur Zeichnung)
+            } else if (vic && u.bogenT < 1) { u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock - CONFIG.BASE_CD * 0.5; } // dreht sich schon beim Hervorholen zum Ziel (nur Zeichnung)
             continue;
           }
         }
@@ -340,7 +340,7 @@
           u.x = gv.ox; u.y = gv.oy;
           var hasW = !!(ewl && ewl.built);
           if (d.ladder) {
-            if (hasW) { u.climb = { t: 0 }; effects.push({ kind: 'ladder', x: (gv.ox + gv.ix) / 2, y: (gv.oy + gv.iy) / 2, ang: Math.atan2(gv.iy - gv.oy, gv.ix - gv.ox), len: hyp(gv.ix - gv.ox, gv.iy - gv.oy) + 0.3, team: u.team, t: 0, dur: d.ladder.show }); }
+            if (hasW) { u.climb = { t: 0 }; effects.push({ kind: 'ladder', x: (gv.ox + gv.ix) / 2, y: (gv.oy + gv.iy) / 2, ang: Math.atan2(gv.iy - gv.oy, gv.ix - gv.ox), len: hyp(gv.ix - gv.ox, gv.iy - gv.oy) + 0.3, team: u.team, t: 0, dur: d.ladder.show }); } // Leiter-Effekt (nur Zeichnung)
             else { u.goWall = null; u.climbed = true; } // keine fertige Mauer: kämpft gleich normal
           } else if (d.belfry) { u.dock = { t: 0, n: 0, wall: hasW }; }
           continue;
@@ -400,7 +400,7 @@
         }
         u.hackt = false;
         if (hb) {
-          var hw = u.platz ? 0 : Math.PI, hsx = hb.x + Math.cos(hw) * (hb.r + 0.32), hsy = hb.y; // Platz links (0) oder rechts (1) vom Stamm
+          var hsx = hb.x + (u.platz ? 1 : -1) * (hb.r + 0.32), hsy = hb.y; // Platz links (0) oder rechts (1) vom Stamm
           var hdx = hsx - u.x, hdy = hsy - u.y, hdl = hyp(hdx, hdy);
           if (hdl > 0.05) { var hv = umGebaeude(u, hdx / hdl, hdy / hdl, null), hs = Math.min(spd * dt, hdl); u.x += hv.x * hs; u.y += hv.y * hs; if (Math.abs(hv.x) > 0.1) u.face = hv.x > 0 ? 1 : -1; u.hackT = 0; }
           else {

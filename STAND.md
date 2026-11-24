@@ -13,6 +13,7 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - `gemeinsam/` Regeln ohne Bildschirm: `mathe.js`, `spielzustand.js` (reset, spawn, buy, `nurFernZiel`), `bots.js` (Computergegner), `simulation.js` (update, Kampf, Gold).
 - `spiel/` Darstellung, Menüs, Shop, Online (`online.js`), Freunde/Zuschauen (`sozial.js`).
 - `werkzeuge/reihenfolge.txt` = Reihenfolge der Skriptteile (wichtig, gemeinsamer Bereich). `bauen.js` erzeugt `index.html` (online), `build/artifact.html`, `build/bot-editor.html`, `build/botdatenbank.html`.
+- Tests: `tests/pruefen.js` (Spielregeln in Chrome, Determinismus aller Bot-Partien) und `tests/codepruefung.js` (in `gemeinsam/` kein `Math.random`/`hypot`/`sin`/`cos`/`atan2`…, ausser in Zeilen mit «nur Zeichnung»). Läuft auch automatisch auf GitHub (Actions) bei jedem PR, inkl. Prüfung, dass `index.html` frisch gebaut ist.
 - `server.js`: Node ohne Abhängigkeiten, eigenes WebSocket, Paarung, Lockstep-Weiterleitung, Konto-API (`/api/konto`, `/api/kaufen`, `/api/geschenk` …), Elo, Edelsteine, Freunde, Zuschauen. Version = Prüfsumme des Spielcodes; nur gleiche Versionen werden gepaart.
 
 ## Technik, die man kennen muss
