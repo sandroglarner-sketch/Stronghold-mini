@@ -1,7 +1,7 @@
   // ---------- Computergegner ----------
   // Alle Stufen spielen dieselbe Strategie, sie unterscheiden sich nur im Gold pro Auszahlung.
   // Der Computer entscheidet nur, was er wann kauft, seine Einheiten verhalten sich exakt wie deine.
-  var ai = { think: 1.2, leadT: 0, defCool: 0, huntCool: 0, towerCool: 0, attackLock: 0, wave: null, queue: [], steps: [] };
+  var ai = { think: 1.2, leadT: 0, defCool: 0, huntCool: 0, towerCool: 0, karawaneCool: 0, attackLock: 0, wave: null, queue: [], steps: [] };
   var level = 'normal';
   var botType = 'bauern';
   var botEl = $('botType');
@@ -117,6 +117,7 @@
     ai.wave = null;
     ai.huntCool = 0;
     ai.towerCool = 0;
+    ai.karawaneCool = 0;
     ai.attackLock = 0;
     ai.queue = [];
     ai.steps = [];
@@ -129,6 +130,7 @@
     ai.defCool = Math.max(0, ai.defCool - dt);   // Sperre für Einheitenkäufe nach einer Verteidigung
     ai.huntCool = Math.max(0, ai.huntCool - dt);
     ai.towerCool = Math.max(0, ai.towerCool - dt);
+    ai.karawaneCool = Math.max(0, ai.karawaneCool - dt); // Sperre für Karawanen (CONFIG.AI.karawaneCool s nach jeder Karawane)
     if (countFarmers(0, true) > countFarmers(1, true)) ai.leadT += dt; else ai.leadT = 0; // so lange hast du schon mehr Bauern
     // Zeitversetzte Käufe (Jagd, Verteidigung), immer pünktlich
     while (ai.queue.length && clock >= ai.queue[0].at) {
@@ -210,9 +212,8 @@
     // Wirtschaft (22.11.): keine Bauern, Karawanen, Holzfäller, solange eine gegnerische Einheit über der Mitte steht (vorher: solange du mehr Kampfeinheiten hattest)
     var wirtschaft = !gegnerUeberMitte(), guard = 0;
     while (guard++ < 3 && clock >= (R.bauernAb || 0) /* bauernAb = erst ab dieser Sekunde Bauern */ && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ wirtschaft && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
-    // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
-    guard = 0;
-    while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && wirtschaft && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
+    // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern; nach jeder Karawane karawaneCool (4) s Sperre für Karawanen (alle Bots, 26.11.)
+    if (ai.karawaneCool <= 0 && countType(1, 'karawane') < (R.karawanen || 0) && wirtschaft && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) ai.karawaneCool = CONFIG.AI.karawaneCool;
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && wirtschaft && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
