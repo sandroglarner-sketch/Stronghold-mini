@@ -529,6 +529,10 @@
   html.phone .ovright:has(#appBtn:not([hidden])) :is(.ovapp, .ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
   html.phone .ovkonto { white-space: nowrap; }
   html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
+  html.app .fsbar #fsExit { display: none; }
+  html.phone.app .overlay.menu .ovtop { padding-right: 0; }
+  html.phone.app .storykopf { right: 8px; }
+  html.phone.app :is(.ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
   .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
   html.phone .storykopf .ghost { padding: 0 9px; }
   html.phone .storykopf b { font-size: 0.85rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
