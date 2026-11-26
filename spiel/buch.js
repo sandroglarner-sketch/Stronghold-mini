@@ -5,11 +5,28 @@
   var GEB_MAX = 2; // höchstens so viele Gebäude im Deck (= Gebäudeplätze)
   var DECK_MAX = 10, DECK_START = TUT_TYPES.slice(); // Startauswahl beim ersten Spielen = Tutorial-Einheiten
   var DECK = DECK_START.slice();
+  // Drei Deck-Plätze (Kartenbuch oben rechts: 1, 2, 3): 'stronghold-decks' = [Deck1, Deck2, Deck3] (null = noch leer), 'stronghold-deck-nr' = gewählter Platz.
+  // 'stronghold-deck' bleibt das aktuelle Deck (wie früher). Ein leerer Platz übernimmt beim ersten Wählen das aktuelle Deck.
+  var DECKS = [null, null, null], DECK_NR = 0;
+  function deckPruefen(dk) { if (!Array.isArray(dk)) return null; var ngeb = 0; dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0 && !(CONFIG.units[t].cat === 'building' && ++ngeb > GEB_MAX); }).slice(0, DECK_MAX); return dk.length ? dk : null; }
   try {
-    var dk = JSON.parse(localStorage.getItem('stronghold-deck') || 'null');
-    if (Array.isArray(dk)) { var ngeb = 0; dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0 && !(CONFIG.units[t].cat === 'building' && ++ngeb > 2); }).slice(0, DECK_MAX); if (dk.length) DECK = dk; }
+    var dk = deckPruefen(JSON.parse(localStorage.getItem('stronghold-deck') || 'null')); if (dk) DECK = dk;
+    var dks = JSON.parse(localStorage.getItem('stronghold-decks') || 'null');
+    if (Array.isArray(dks)) for (var di = 0; di < 3; di++) DECKS[di] = deckPruefen(dks[di]);
+    DECK_NR = Math.max(0, Math.min(2, parseInt(localStorage.getItem('stronghold-deck-nr') || '0', 10) || 0));
+    if (DECKS[DECK_NR]) DECK = DECKS[DECK_NR].slice();
   } catch (err) {}
-  function saveDeck() { try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); } catch (err) {} }
+  function saveDeck() {
+    DECKS[DECK_NR] = DECK.slice();
+    try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); localStorage.setItem('stronghold-decks', JSON.stringify(DECKS)); localStorage.setItem('stronghold-deck-nr', String(DECK_NR)); } catch (err) {}
+  }
+  function deckWaehlen(nr) { // anderen Deck-Platz wählen: das aktuelle Deck ist schon gespeichert (saveDeck bei jeder Änderung)
+    if (nr === DECK_NR) return;
+    saveDeck(); DECK_NR = nr;
+    if (DECKS[nr]) DECK = DECKS[nr].slice();
+    if (kontoAn() && !(konto && konto.user)) { var rest = DECK.filter(function (t) { return !unitLocked(t); }); DECK = rest.length ? rest : DECK_START.slice(); } // gesperrte Karten (ohne Konto) wie beim Laden weglassen
+    saveDeck(); applyDeck();
+  }
   function applyDeck() {
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e'], n = 0;
     BUY_TYPES.forEach(function (t) {
@@ -142,6 +159,7 @@
     $('bookPrev').disabled = book.page <= 0;
     $('bookNext').disabled = book.page >= pages - 1;
     $('bookN').textContent = DECK.length;
+    Array.prototype.forEach.call($('deckPlatz').children, function (b, i) { b.classList.toggle('on', i === DECK_NR); b.setAttribute('aria-pressed', i === DECK_NR ? 'true' : 'false'); });
     $('bookN').parentNode.classList.toggle('full', DECK.length === DECK_MAX);
   }
   function placeBook(bk) { // Buch (und Shop) über dem Menü: rundum etwas Landschaft frei, unten bleibt das Deck (Einheitenknöpfe) sichtbar
@@ -228,6 +246,7 @@
   $('bookDetail').addEventListener('click', bookClick);
   $('bookPrev').addEventListener('click', function () { flipBook(-1); });
   $('bookNext').addEventListener('click', function () { flipBook(1); });
+  $('deckPlatz').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-d]') : null; if (!b) return; deckWaehlen(+b.getAttribute('data-d')); renderBook(); $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; });
   (function () { // Wischen zum Blättern
     var sx = null, sy = 0;
     $('bookArea').addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; });

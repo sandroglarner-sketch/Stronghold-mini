@@ -28,9 +28,8 @@
   }
   function menuAktuell() {
     $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();
-    var n = storyAnzahl(), d = $('storyDots'), h = '', nx = storyNaechster();
-    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (istBesiegt(STORY[i].id) ? 'voll' : '') + '"></i>';
-    d.innerHTML = h + '<em>' + n + ' von ' + STORY.length + ' besiegt</em>';
+    var n = storyAnzahl(), nx = storyNaechster(); // Balken = Anteil besiegter Story-Gegner (passt sich neuen Gegnern automatisch an)
+    $('storyDots').innerHTML = '<i><b style="width:' + (STORY.length ? Math.round(100 * n / STORY.length) : 0) + '%"></b></i><em>' + n + ' von ' + STORY.length + ' besiegt</em>';
     $('storyText').textContent = nx < 0 ? 'Alle Gegner besiegt – spiele sie nochmals' : (storyNeu(nx) ? 'Neuer Gegner: ' : 'Weiter gegen: ') + STORY[nx].name;
     var on = sozial.liste.filter(function (f) { return f.status !== 'offline'; }).length;
     $('freundeZahl').hidden = !on; $('freundeZahl').textContent = on;
@@ -79,7 +78,6 @@
   function storyMalen() {
     var n = storyFront(), h = '', bs = storyBesiegt();
     var seiten = Math.ceil(STORY.length / STORY_PRO_SEITE);
-    $('storyTitel').textContent = 'Story-Modus · ' + storyAnzahl() + ' von ' + STORY.length + (seiten > 1 ? ' · Seite ' + (storySeite + 1) + '/' + seiten : '');
     $('storyZurueck').hidden = storySeite <= 0; $('storyWeiter').hidden = storySeite >= seiten - 1;
     $('storyRein').style.display = storySeite > 0 ? '' : 'none'; $('storyRaus').style.display = storySeite < seiten - 1 ? '' : 'none';
     STORY.forEach(function (g, i) {
