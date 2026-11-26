@@ -38,7 +38,8 @@
   var fsFull = $('fsFull'), fsHint = $('fsHint'), deEl = document.documentElement;
   var isIPhone = /iPhone|iPod/.test(navigator.userAgent || '');
   function fsActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  function fsStandalone() { try { return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); } catch (err) { return false; } }
+  // Installierte App: das Manifest startet sie mit display «fullscreen» (Android), am iPhone/PC «standalone»
+  function fsStandalone() { try { return !!(window.navigator.standalone || (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches))); } catch (err) { return false; } }
   deEl.classList.toggle('app', fsStandalone()); // installierte App: kein ✕ (Vollbild verlassen) und kein ⛶, dafür mehr Platz oben rechts im Menü
   function fsCan() { return !!(deEl.requestFullscreen || deEl.webkitRequestFullscreen); }
   function updFsFull() { var hide = fsActive() || fsStandalone() || (!fsCan() && !isIPhone); if (fsFull.hidden !== hide) fsFull.hidden = hide; if (hide) fsHint.hidden = true; }
