@@ -596,6 +596,7 @@ async function storySieg(c) {
   if (i > front) return antwort(false, 'reihenfolge');
   const log = ma.log.slice(), r = await storyPruefen({ bot: ma.bot, seed: ma.seed, log, letzte: ma.letzte });
   if (!r.ok || r.winner !== 0) { console.error('storysieg abgelehnt', c.user.id, ma.storyId, JSON.stringify(r)); return antwort(false, r.ok ? 'kein Sieg' : r.grund); }
+  console.log('storysieg geprüft', ma.storyId, r.ticks, 'Schritte', r.ms, 'ms');
   if (Date.now() - ma.start < r.ticks / 60 * 1000 * 0.8) { console.error('storysieg zu schnell', c.user.id, ma.storyId); return antwort(false, 'zu schnell'); }
   const l2 = await besiegtLesen(c.user.id).catch(() => null), b2 = l2 ? l2.besiegt : b.slice(); // neu lesen (andere Geräte)
   if (b2.indexOf(ma.storyId) < 0) { b2.push(ma.storyId); await besiegtSchreiben(c.user.id, b2); edelMelden(c.user.id, EDEL().bot, 'bot').catch(() => {}); }

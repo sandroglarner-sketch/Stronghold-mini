@@ -46,7 +46,9 @@ function nachrechnen(p) {
   try { return fabrik()()(String(p.bot), p.seed | 0, Array.isArray(p.log) ? p.log : [], p.letzte | 0); }
   catch (e) { return { ok: false, grund: 'fehler: ' + e.message }; }
 }
-// Im Server: ein Hilfs-Thread für alle Prüfungen (nacheinander); hängt eine Prüfung länger als 60 s, wird der Thread neu gestartet
+// Im Server: ein Hilfs-Thread für alle Prüfungen (nacheinander); hängt eine Prüfung länger als ZEIT_MAX, wird der Thread neu gestartet.
+// 26.11.: früher 60 s – zu kurz für Render Gratis (0,1 CPU): eine 5-min-Partie braucht lokal ~10 s, dort ~100 s. Der Thread läuft mit tiefer Priorität (Online-Partien zuerst).
+const ZEIT_MAX = 20 * 60000;
 let worker = null, naechste = 1;
 const offen = new Map();
 function pruefen(p) {
@@ -58,10 +60,13 @@ function pruefen(p) {
       worker.unref();
     }
     const id = naechste++;
-    const zeit = setTimeout(() => { offen.delete(id); ok({ ok: false, grund: 'zeit' }); if (worker) { worker.terminate(); worker = null; } }, 60000);
+    const zeit = setTimeout(() => { offen.delete(id); ok({ ok: false, grund: 'zeit' }); if (worker) { worker.terminate(); worker = null; } }, ZEIT_MAX);
     offen.set(id, { ok, zeit });
     worker.postMessage({ id, p });
   });
 }
 module.exports = { nachrechnen, pruefen };
-if (!isMainThread && parentPort) parentPort.on('message', (m) => parentPort.postMessage({ id: m.id, r: nachrechnen(m.p) }));
+if (!isMainThread && parentPort) {
+  try { require('os').setPriority(19); } catch (e) { /* egal */ } // Linux: nur dieser Thread
+  parentPort.on('message', (m) => { const t0 = Date.now(), r = nachrechnen(m.p); r.ms = Date.now() - t0; parentPort.postMessage({ id: m.id, r }); });
+}
