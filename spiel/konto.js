@@ -141,7 +141,7 @@
     var inv = on && !pw && ONLINE && !!konto.code;
     $('kontoInv').hidden = !inv;
     if (inv) {
-      $('kontoInvText').textContent = 'Für jeden Freund, der über deinen Link mindestens 30 s spielt, bekommst du ' + CONFIG.FREI.edel.freund + ' Edelsteine. Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
+      var EF = CONFIG.FREI.edel; $('kontoInvText').textContent = 'Für jeden Freund, der über deinen Link mindestens 30 s spielt, bekommst du ' + EF.freund + ' Edelsteine' + (EF.freundMax ? ' (für höchstens ' + EF.freundMax + ' Freunde)' : '') + '. Eingeladene Freunde: ' + (konto.freunde || 0) + '.';
       $('kontoLink').value = einladeLink();
     }
   }

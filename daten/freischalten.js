@@ -40,8 +40,9 @@
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),
-    // jeder besiegte Story-Gegner einmal, jeder eingeladene Freund (hat über den Link mind. 30 s gespielt). Online-Partien unter minPartie Sekunden zählen nicht.
-    edel: { sieg: 2, niederlage: 1, bot: 1, freund: 20, minPartie: 30 },
+    // jeder besiegte Story-Gegner einmal (vom Server nachgerechnet), jeder eingeladene Freund (hat über den Link mind. 30 s gespielt), höchstens für freundMax Freunde.
+    // Online-Partien unter minPartie Sekunden zählen nicht.
+    edel: { sieg: 2, niederlage: 1, bot: 1, freund: 20, freundMax: 5, minPartie: 30 },
     // Regel einer Karte: Eintrag oben, null = für alle frei, sonst { entwicklung: true } (Spiel, Online-Kontrolle und Server nutzen diese Funktion)
     regel: function (t) { return CONFIG.FREI.einheiten[t] || (CONFIG.FREI.frei.indexOf(t) >= 0 ? null : { entwicklung: true }); }
   };

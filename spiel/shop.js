@@ -44,7 +44,7 @@
   function shopMalen() {
     var k = konto || {}, E = CONFIG.FREI.edel, q = k.quellen, l = shopTypen();
     if (l.indexOf(shopSel) < 0) shopSel = l.filter(function (t) { return unitLocked(t); })[0] || l[0] || '';
-    $('shopRegeln').innerHTML = '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine">👥 Freund einladen: <b>+' + edelText(E.freund) + '</b></button>'; // übrige Belohnungen: Online-Feld im Menü, Story-Gegner
+    $('shopRegeln').innerHTML = '<button type="button" id="shopEinladen" title="Spielt ein Freund über deinen Link mindestens 30 s, bekommst du die Edelsteine' + (E.freundMax ? ' (für höchstens ' + E.freundMax + ' Freunde)' : '') + '">👥 Freund einladen: <b>+' + edelText(E.freund) + '</b></button>'; // übrige Belohnungen: Online-Feld im Menü, Story-Gegner
     var g = $('shopKarten'); g.innerHTML = l.map(shopMini).join(''); drawCardIcons(g);
     var dt = $('shopDetail'); dt.innerHTML = shopSel ? shopDetail(shopSel) : ''; drawCardIcons(dt);
     dt.style.setProperty('--bk-fs', Math.max(10, Math.min(14, (dt.clientHeight || 300) / 24)).toFixed(1) + 'px');

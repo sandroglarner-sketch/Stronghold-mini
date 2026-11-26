@@ -42,9 +42,12 @@
       var n = parseInt(localStorage.getItem('stronghold-story') || '0', 10) || 0, v = parseInt(localStorage.getItem('stronghold-story-v') || '1', 10) || 1;
       localStorage.setItem('stronghold-besiegt', JSON.stringify((STORY_ALT[v] || STORY_ALT[1]).slice(0, n))); } } catch (e) {}
   })();
-  function storyBesiegt() { // alle besiegten Story-Gegner (Browser und Server zusammen)
+  // Mit Konto (26.11.): es zählen nur Siege, die der Server nachgerechnet hat (sozial.ich.besiegt), plus Siege dieser Sitzung, deren Prüfung noch läuft (storyOffen).
+  // Ohne Konto: Liste im Browser.
+  var storyOffen = [];
+  function storyBesiegt() {
+    if (sozial && sozial.ich) { var s = (sozial.ich.besiegt || []).slice(); storyOffen.forEach(function (id) { if (s.indexOf(id) < 0) s.push(id); }); return s; } // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
     var l = []; try { l = JSON.parse(localStorage.getItem('stronghold-besiegt') || '[]') || []; } catch (e) {}
-    if (sozial && sozial.ich && sozial.ich.besiegt) sozial.ich.besiegt.forEach(function (id) { if (l.indexOf(id) < 0) l.push(id); }); // sozial ist beim Start (Deck laden) evtl. noch nicht gesetzt
     return l;
   }
   function istBesiegt(id) { return storyBesiegt().indexOf(id) >= 0; }
@@ -52,10 +55,16 @@
   function storyFront() { var b = storyBesiegt(), f = 0; STORY.forEach(function (g, i) { if (b.indexOf(g.id) >= 0) f = i + 1; }); return f; } // erster Platz hinter dem letzten Sieg
   function storyNeu(i) { return i < storyFront() && !istBesiegt(STORY[i].id); } // später weiter vorne eingefügt: spielbar, «neu»
   function storyNaechster() { var f = storyFront(); if (f < STORY.length) return f; for (var i = 0; i < STORY.length; i++) if (!istBesiegt(STORY[i].id)) return i; return -1; }
-  function storySpeichern(id) {
+  function storySpeichern(id) { // false = zählt nicht (mit Konto ohne Verbindung zum Server)
+    if (sozial.ich) {
+      if (!bl.live) return false;
+      if (storyOffen.indexOf(id) < 0) storyOffen.push(id);
+      setTimeout(function () { pvpSend({ k: 'storysieg' }); }, 50); // nach der letzten Meldung des Spielschritts: der Server rechnet die Partie nach
+      return true;
+    }
     var l = storyBesiegt(); if (l.indexOf(id) < 0) l.push(id);
     try { localStorage.setItem('stronghold-besiegt', JSON.stringify(l)); } catch (e) {}
-    if (sozial.ich) { sozial.ich.besiegt = l.slice(); pvpSend({ k: 'story', ids: l }); }
+    return true;
   }
   function storySperre(i) { // '' = spielbar, sonst warum nicht (Reihenfolge oder Regel aus daten/freischalten.js)
     if (tester) return '';
@@ -123,7 +132,7 @@
     if (spielArt !== 'story' || w !== 0) return '';
     var g = STORY[storyIdx];
     if (!g || istBesiegt(g.id)) return '';
-    storySpeichern(g.id);
+    if (!storySpeichern(g.id)) return ' Ohne Verbindung zum Server zählt der Sieg nicht. Bitte mit Verbindung nochmals spielen.';
     var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t] && !unitLocked(t); }); // Belohnung: Karte(n) für diesen Sieg
     ovKarten = karten; // showOverlay zeigt sie mit Bild
     return (karten.length ? ' Neue Karte: ' + karten.map(function (t) { return CONFIG.units[t].name; }).join(', ') + '!' : '') + (storyAnzahl() >= STORY.length ? ' Du hast alle Gegner besiegt!' : '');
@@ -167,7 +176,7 @@
     $('inviteBtn').hidden = !kontoAn(); $('freundForm').hidden = !angemeldet || !ONLINE;
     var fk = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].freunde && CONFIG.units[t]; }), ik = $('inviteKarten'); // Karten, die nur über eingeladene Freunde frei werden
     ik.hidden = !kontoAn();
-    if (!ik.hidden && !fk.length) ik.innerHTML = '<p class="frinvedel">Pro Freund, der über deinen Link mind. 30 s spielt: <b>+' + CONFIG.FREI.edel.freund + ' ' + EDEL_SVG + '</b></p>'; // Belohnung = Edelsteine (Shop)
+    if (!ik.hidden && !fk.length) ik.innerHTML = '<p class="frinvedel">Pro Freund, der über deinen Link mind. 30 s spielt: <b>+' + CONFIG.FREI.edel.freund + ' ' + EDEL_SVG + '</b>' + (CONFIG.FREI.edel.freundMax ? ' (höchstens ' + CONFIG.FREI.edel.freundMax + ' Freunde)' : '') + '</p>'; // Belohnung = Edelsteine (Shop)
     else if (!ik.hidden) {
       ik.innerHTML = '<span class="blabel">Freund einladen und ' + (fk.length === 1 ? 'diese Karte' : 'diese Karten') + ' freischalten:</span>' + belohnungHtml(fk.map(function (t) { return [t, regelErfuellt(CONFIG.FREI.einheiten[t])]; }));
       drawCardIcons(ik);
@@ -257,15 +266,21 @@
       if (m.plus > 0 && state === 'over' && !overlay.hidden && !overlay.classList.contains('menu')) { var ed = document.createElement('div'); ed.className = 'ovedelplus'; ed.innerHTML = '+' + m.plus + ' ' + EDEL_SVG + (m.plus === 1 ? ' Edelstein' : ' Edelsteine'); ovText.appendChild(ed); }
       return;
     }
+    if (m.k === 'storysieg') { // Antwort auf die Prüfung eines Story-Siegs
+      var oi = storyOffen.indexOf(m.id); if (oi >= 0) storyOffen.splice(oi, 1);
+      if (m.ok && sozial.ich && Array.isArray(m.besiegt)) sozial.ich.besiegt = m.besiegt;
+      if (!m.ok && m.id && state === 'over' && !overlay.hidden && !overlay.classList.contains('menu')) { var sn = document.createElement('div'); sn.className = 'ovstorynein'; sn.textContent = 'Der Server konnte den Sieg nicht bestätigen' + (m.grund === 'keine Verbindung' ? ' (Verbindung unterbrochen)' : '') + '. Bitte nochmals spielen.'; ovText.appendChild(sn); }
+      if (!m.ok) { applyDeck(); if (!$('book').hidden) renderBook(); }
+      if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
+      if (!$('story').hidden) storyMalen();
+      return;
+    }
     if (m.k === 'name_ok') { if (sozial.ich) sozial.ich.name = m.name; $('kontoName').value = m.name; kontoMsg('Gespeichert: ' + m.name, true); kontoView(); return; }
     if (m.k === 'name_fehler') { kontoMsg(m.text || 'Name nicht gespeichert.'); return; }
     if (m.k === 'ich') {
       sozial.ich = m.id ? { id: m.id, name: m.name, besiegt: Array.isArray(m.besiegt) ? m.besiegt : [], elo: typeof m.elo === 'number' ? m.elo : null, partien: m.partien | 0, rid: m.rid || '' } : null;
       if (sozial.ich) { // Siege aus dem Browser, die der Server noch nicht kennt, nachtragen
-        var lokal = []; try { lokal = JSON.parse(localStorage.getItem('stronghold-besiegt') || '[]') || []; } catch (e) {}
-        var fehlt = lokal.filter(function (id) { return sozial.ich.besiegt.indexOf(id) < 0; });
-        try { localStorage.setItem('stronghold-besiegt', JSON.stringify(storyBesiegt())); } catch (e) {}
-        if (fehlt.length) pvpSend({ k: 'story', ids: storyBesiegt() });
+        // 26.11.: Siege aus dem Browser werden nicht mehr hochgeladen (zählen mit Konto nur, wenn der Server die Partie nachgerechnet hat)
         if (m.decksAn) decksVomKonto(m.decks);
         freundeHolen(); }
       if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
