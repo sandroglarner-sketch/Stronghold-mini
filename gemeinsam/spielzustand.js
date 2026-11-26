@@ -312,7 +312,7 @@
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e)) || (d.cat === 'siege' && CONFIG.units[e.type].cat === 'eco')) continue; // Belagerungsmaschinen: keine Wirtschaftseinheiten
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e))) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;

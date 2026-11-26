@@ -1384,7 +1384,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '17bb8bb2bd'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'c85295b06c'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2214,7 +2214,7 @@
   function unitInFight(u, d) {
     for (var j = 0; j < units.length; j++) {
       var e = units[j];
-      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e)) || (d.cat === 'siege' && CONFIG.units[e.type].cat === 'eco')) continue; // Belagerungsmaschinen: keine Wirtschaftseinheiten
+      if (e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5) || (d.nurFern && !nurFernZiel(e))) continue;
       if (hyp(e.x - u.x, e.y - u.y) <= d.range) return true;
     }
     return false;
@@ -3136,7 +3136,6 @@
         var e = units[j];
         if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (d.bekehren && !bekehrbar(e)) continue; // Prinzessin: nur Gegner, die sie bekehren kann
-        if (d.cat === 'siege' && CONFIG.units[e.type].cat === 'eco') continue; // Belagerungsmaschinen visieren keine Wirtschaftseinheiten an (Flächenschaden trifft sie trotzdem)
         if (d.nurFern && !nurFernZiel(e)) continue; // Bandit: nur Fernkämpfer, Wirtschaft, Fernkampf-Kriegsmaschinen
         if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
@@ -5158,7 +5157,6 @@
     if (d.rangedTaken) a.push('Erleidet von Fernkämpfern nur <b>' + Math.round(d.rangedTaken * 100) + ' % Schaden</b>.');
     if (d.ladder) a.push('<b>Rennt direkt zur gegnerischen Mauer</b> (zufälliger Punkt zwischen den Türmen), stellt eine Leiter an und <b>klettert hinüber</b>. Danach kämpft er mit dem Schwert.');
     if (d.belfry) return '<b>Dockt an der gegnerischen Mauer an:</b> ' + d.belfry.troops + ' Schwertkämpfer klettern innerhalb von ' + Math.round(d.belfry.troops * d.belfry.every) + ' s hinüber. Oben stehen ' + d.belfry.archers + ' Bogenschützen, die nur ' + Math.round(WALL.tower.taken * 100) + '% Fernkampfschaden erleiden.'; // Beschreibung endet hier
-    if (d.cat === 'siege' && !d.ram && d.atk && !d.belfry) a.push('Visiert <b>keine Bauern, Holzfäller oder Karawanen</b> an (Flächenschaden trifft sie trotzdem).');
     if (d.minRange) a.push('Kann Ziele <b>näher als ' + fmtN(d.minRange) + ' Kacheln</b> nicht angreifen.');
     return a.join(' ');
   }
