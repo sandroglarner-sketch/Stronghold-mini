@@ -86,6 +86,7 @@
     if (d.rangedTaken) a.push('Erleidet von Fernkämpfern nur <b>' + Math.round(d.rangedTaken * 100) + ' % Schaden</b>.');
     if (d.ladder) a.push('<b>Rennt direkt zur gegnerischen Mauer</b> (zufälliger Punkt zwischen den Türmen), stellt eine Leiter an und <b>klettert hinüber</b>. Danach kämpft er mit dem Schwert.');
     if (d.belfry) return '<b>Dockt an der gegnerischen Mauer an:</b> ' + d.belfry.troops + ' Schwertkämpfer klettern innerhalb von ' + Math.round(d.belfry.troops * d.belfry.every) + ' s hinüber. Oben stehen ' + d.belfry.archers + ' Bogenschützen, die nur ' + Math.round(WALL.tower.taken * 100) + '% Fernkampfschaden erleiden.'; // Beschreibung endet hier
+    if (d.cat === 'siege' && !d.ram && d.atk && !d.belfry) a.push('Visiert <b>keine Bauern, Holzfäller oder Karawanen</b> an (Flächenschaden trifft sie trotzdem).');
     if (d.minRange) a.push('Kann Ziele <b>näher als ' + fmtN(d.minRange) + ' Kacheln</b> nicht angreifen.');
     return a.join(' ');
   }
