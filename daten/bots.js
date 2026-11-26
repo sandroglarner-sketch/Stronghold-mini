@@ -116,5 +116,11 @@
       // baut die ersten 11 s keine Bauern (bauernAb), jagt mit 2 Speerträgern (5 s Vorsprung, alle 30 s), 1 s später 1 Bogenschütze, greift bei 240 Gold an (Welle 343: Trebuchet, 8+4+4+4+4 Speer, Baliste, 4 Bogen, 20 Leitern)
       kaiseringoldfeder: { income: 10, incomeEvery: 5, farmers: 10, bauernAb: 11, karawanen: 3, huntLead: 5, hunt: [['spear', 2]], huntEvery: 30, huntLater: [{ after: 1, buy: [['archer', 1]] }], wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, baliste: 2 }, wallClear: true, attackGold: 240, lockSecs: 17,
                     attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 1, buy: [['spear', 4], ['baliste', 1]] }, { after: 2, buy: [['archer', 4]] }, { after: 3, buy: [['spear', 4]] }, { after: 6, buy: [['spear', 4]] }, { after: 9, buy: [['spear', 4]] }, { after: 12, buy: [['spear', 4]] }, { after: 16, buy: [['ladder', 20]] }],
-                    defPool: ['spear', 'archer', 'rider'], noOutput: 10 }
+                    defPool: ['spear', 'archer', 'rider'], noOutput: 10 },
+      // «Der Bärenfürst» (Story-Platz 18, braucht ein Konto, 26.11.): 11 Bauern und 8 Holzfäller, Schmiede ab 40 Gold (bis Stufe 2, gebMax), Mauer bis Stufe 3 mit 4 Bogenschützen,
+      // jagt mit 2 Schwertkämpfern (5 s Vorsprung, alle 30 s), 3 s später 2 Speerwerfer, greift bei 230 Gold an (Welle 338: Belagerungsschild, Belagerungsturm, Rammbock, 6 Schwert, 4 + 20 Leitern, 8 Speerwerfer),
+      // spielt selbst den Belagerungsturm (Belohnung: Belagerungsturm); verteidigt mit höchstens 60 Gold pro Welle, danach 5 s Sperre
+      baerenfuerst: { income: 10, incomeEvery: 5, farmers: 11, holzfaeller: 8, gebaeude: [{ type: 'schmiede', gold: 40 }], gebMax: { schmiede: 2 }, huntLead: 5, hunt: [['sword', 2]], huntEvery: 30, huntLater: [{ after: 3, buy: [['javelin', 2]] }], wallGold: 80, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 230, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['belfry', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 5, buy: [['sword', 6]] }, { after: 6, buy: [['ladder', 4]] }, { after: 7, buy: [['javelin', 8]] }, { after: 13, buy: [['ladder', 20]] }],
+                    defMaxGold: 60, defPool: ['digger', 'sword', 'catapult', 'javelin'], noOutput: 5 }
   };

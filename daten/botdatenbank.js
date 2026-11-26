@@ -18,7 +18,7 @@
     { id: 'raubritterkuno', name: 'Raubritter Kuno', koenig: 'raubritterkuno', platz: null, logik: null },
     { id: 'graefineisenhand', name: 'Gräfin Eisenhand', koenig: 'graefineisenhand', platz: 15, logik: 'graefineisenhand', nr: 19 }, // seit 21.11. 16:09, braucht ein Konto
     { id: 'drachenkoenig', name: 'Der Drachenkönig', koenig: 'drachenkoenig', platz: 16, logik: 'drachenkoenig', nr: 20 }, // seit 21.11. 21:44, braucht ein Konto
-    { id: 'baerenfuerst', name: 'Der Bärenfürst', koenig: 'baerenfuerst', platz: null, logik: null },
+    { id: 'baerenfuerst', name: 'Der Bärenfürst', koenig: 'baerenfuerst', platz: 18, logik: 'baerenfuerst', nr: 22 }, // seit 26.11., braucht ein Konto
     { id: 'herzognebelwald', name: 'Herzog Nebelwald', koenig: 'herzognebelwald', platz: null, logik: null },
     { id: 'sumpfhexe', name: 'Die Sumpfhexe', koenig: 'sumpfhexe', platz: null, logik: null },
     { id: 'koenigrotbart', name: 'König Rotbart', koenig: 'koenigrotbart', platz: 11, logik: 'koenigrotbart', nr: 15 }, // seit 20.11. 16:56, braucht ein Konto
