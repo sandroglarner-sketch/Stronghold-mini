@@ -67,6 +67,18 @@ function koenigMerken(c) {
   letzterKoenig.set(c.user.id, c.koenig);
   if (KONTO_SECRET && SPALTE_KOENIG) db('PATCH', 'spieler?user_id=eq.' + c.user.id, { koenig: c.koenig }).catch((e) => { if (e.status === 400) SPALTE_KOENIG = false; });
 }
+// Deck-Plätze (Kartenbuch 1/2/3) mit Konto: spieler.decks (text, JSON { nr, decks: [[typ, …] | null ×3] }). Fehlt die Spalte, bleiben die Decks nur im Browser.
+let SPALTE_DECKS = true;
+function decksPruefen(x) {
+  if (!x || typeof x !== 'object' || !Array.isArray(x.decks)) return null;
+  const decks = [0, 1, 2].map((i) => { const d = x.decks[i]; if (!Array.isArray(d)) return null; const l = d.filter((t) => typeof t === 'string' && /^[a-z0-9_]{1,24}$/.test(t)).slice(0, 12); return l.length ? l : null; });
+  return { nr: Math.max(0, Math.min(2, x.nr | 0)), decks };
+}
+async function decksLesen(userId) {
+  if (!SPALTE_DECKS || !KONTO_SECRET) return null;
+  try { const l = await db('GET', 'spieler?select=decks&user_id=eq.' + userId); return l && l[0] && l[0].decks ? decksPruefen(JSON.parse(l[0].decks)) : null; }
+  catch (e) { if (e.status === 400) SPALTE_DECKS = false; return null; }
+}
 const ELO_START = 1000, ELO_K = 32;
 function rangId(id) { return crypto.createHash('sha256').update(String(id)).digest('hex').slice(0, 10); } // öffentliche Kennung in der Rangliste (keine user_id)
 async function eloLesen(ids) {
@@ -615,7 +627,8 @@ async function sozial(c, m) {
     if (er && er[0]) { elo = er[0].elo; partien = er[0].partien | 0; }
     koenigMerken(c);
     c.user.elo = typeof elo === 'number' ? elo : (SPALTE_ELO && KONTO_SECRET ? ELO_START : null); // für die Anzeige vor Online-Partien
-    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id) });
+    const decks = await decksLesen(c.user.id).catch(() => null); // null = noch keine auf dem Konto: der Browser schickt seine
+    return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id), decks, decksAn: SPALTE_DECKS && !!KONTO_SECRET });
   }
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); koenigMerken(c); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
@@ -633,6 +646,12 @@ async function sozial(c, m) {
     storyIds(m.ids).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
     await besiegtSchreiben(c.user.id, b);
     if (zahl() > vorher) edelMelden(c.user.id, (zahl() - vorher) * EDEL().bot, 'bot').catch(() => {}); // Edelsteine für neu besiegte Story-Gegner
+    return;
+  }
+  if (m.k === 'decks') { // Deck-Plätze aufs Konto (nach jeder Änderung im Kartenbuch)
+    const d = decksPruefen(m);
+    if (!d || !SPALTE_DECKS) return;
+    await db('PATCH', 'spieler?user_id=eq.' + c.user.id, { decks: JSON.stringify(d) }).catch((e) => { if (e.status === 400) SPALTE_DECKS = false; });
     return;
   }
   if (m.k === 'freunde') return freundesliste(c);

@@ -266,6 +266,7 @@
         var fehlt = lokal.filter(function (id) { return sozial.ich.besiegt.indexOf(id) < 0; });
         try { localStorage.setItem('stronghold-besiegt', JSON.stringify(storyBesiegt())); } catch (e) {}
         if (fehlt.length) pvpSend({ k: 'story', ids: storyBesiegt() });
+        if (m.decksAn) decksVomKonto(m.decks);
         freundeHolen(); }
       if (!overlay.hidden && overlay.classList.contains('menu')) menuAktuell();
       sozialStatus(state === 'playing' && !pvp.on ? (tut.on ? 'tutorial' : 'story') : 'menu', spielArt === 'story' && state === 'playing' ? 'Story gegen ' + STORY[storyIdx].name : '');
