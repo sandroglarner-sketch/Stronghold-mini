@@ -16,9 +16,24 @@
     DECK_NR = Math.max(0, Math.min(2, parseInt(localStorage.getItem('stronghold-deck-nr') || '0', 10) || 0));
     if (DECKS[DECK_NR]) DECK = DECKS[DECK_NR].slice();
   } catch (err) {}
+  // Mit Konto liegen die Decks zusätzlich auf dem Server (spieler.decks): jede Änderung wird kurz danach geschickt, beim Anmelden gilt der Stand vom Konto.
+  var deckSendT = 0;
   function saveDeck() {
     DECKS[DECK_NR] = DECK.slice();
     try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); localStorage.setItem('stronghold-decks', JSON.stringify(DECKS)); localStorage.setItem('stronghold-deck-nr', String(DECK_NR)); } catch (err) {}
+    if (sozial && sozial.ich) { clearTimeout(deckSendT); deckSendT = setTimeout(decksSenden, 800); } // sozial ist beim Start evtl. noch nicht gesetzt
+  }
+  function decksSenden() { if (sozial && sozial.ich) pvpSend({ k: 'decks', nr: DECK_NR, decks: DECKS }); }
+  function decksVomKonto(d) { // Antwort 'ich' beim Anmelden: Decks vom Konto übernehmen (oder, wenn dort noch keine sind, die aus dem Browser hochladen)
+    if (!d || !Array.isArray(d.decks)) { saveDeck(); return; } // saveDeck füllt den aktuellen Platz und schickt alle drei
+    for (var i = 0; i < 3; i++) DECKS[i] = deckPruefen(d.decks[i]);
+    DECK_NR = Math.max(0, Math.min(2, d.nr | 0));
+    if (!DECKS[DECK_NR]) DECKS[DECK_NR] = DECK.slice();
+    DECK = DECKS[DECK_NR].slice();
+    var rest = DECK.filter(function (t) { return !unitLocked(t); }); if (rest.length) DECK = rest; // noch gesperrte Karten nicht in die Knöpfe
+    try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); localStorage.setItem('stronghold-decks', JSON.stringify(DECKS)); localStorage.setItem('stronghold-deck-nr', String(DECK_NR)); } catch (err) {}
+    applyDeck();
+    if (!$('book').hidden) renderBook();
   }
   function deckWaehlen(nr) { // anderen Deck-Platz wählen: das aktuelle Deck ist schon gespeichert (saveDeck bei jeder Änderung)
     if (nr === DECK_NR) return;

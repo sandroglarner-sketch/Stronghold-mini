@@ -76,3 +76,6 @@ alter table public.freischaltungen add column if not exists gezeigt boolean not 
 -- on conflict (user_id, einheit) do update set grund = 'geschenk', gezeigt = false;
 -- Geschenk wieder wegnehmen:
 -- delete from public.freischaltungen where einheit = 'prinzessin' and user_id = (select id from auth.users where email = 'name@beispiel.ch');
+
+-- 26.11.: Deck-Plätze 1/2/3 aus dem Kartenbuch aufs Konto (JSON { nr, decks }), damit sie auf jedem Gerät gleich sind
+alter table public.spieler add column if not exists decks text;
