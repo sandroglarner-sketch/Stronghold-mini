@@ -39,6 +39,7 @@
   var isIPhone = /iPhone|iPod/.test(navigator.userAgent || '');
   function fsActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function fsStandalone() { try { return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); } catch (err) { return false; } }
+  deEl.classList.toggle('app', fsStandalone()); // installierte App: kein ✕ (Vollbild verlassen) und kein ⛶, dafür mehr Platz oben rechts im Menü
   function fsCan() { return !!(deEl.requestFullscreen || deEl.webkitRequestFullscreen); }
   function updFsFull() { var hide = fsActive() || fsStandalone() || (!fsCan() && !isIPhone); if (fsFull.hidden !== hide) fsFull.hidden = hide; if (hide) fsHint.hidden = true; }
   fsFull.addEventListener('click', function () {

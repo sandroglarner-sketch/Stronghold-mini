@@ -550,6 +550,10 @@
   html.phone .ovright:has(#appBtn:not([hidden])) :is(.ovapp, .ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
   html.phone .ovkonto { white-space: nowrap; }
   html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
+  html.app .fsbar #fsExit { display: none; }
+  html.phone.app .overlay.menu .ovtop { padding-right: 0; }
+  html.phone.app .storykopf { right: 8px; }
+  html.phone.app :is(.ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
   .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
   html.phone .storykopf .ghost { padding: 0 9px; }
   html.phone .storykopf b { font-size: 0.85rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -1370,7 +1374,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'd13661c18a'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '1a914a42b4'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -6940,6 +6944,7 @@
   var isIPhone = /iPhone|iPod/.test(navigator.userAgent || '');
   function fsActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function fsStandalone() { try { return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); } catch (err) { return false; } }
+  deEl.classList.toggle('app', fsStandalone()); // installierte App: kein ✕ (Vollbild verlassen) und kein ⛶, dafür mehr Platz oben rechts im Menü
   function fsCan() { return !!(deEl.requestFullscreen || deEl.webkitRequestFullscreen); }
   function updFsFull() { var hide = fsActive() || fsStandalone() || (!fsCan() && !isIPhone); if (fsFull.hidden !== hide) fsFull.hidden = hide; if (hide) fsHint.hidden = true; }
   fsFull.addEventListener('click', function () {
