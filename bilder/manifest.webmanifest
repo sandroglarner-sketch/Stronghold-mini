@@ -2,6 +2,7 @@
   "name": "Stronghold Mini",
   "short_name": "Stronghold",
   "description": "Kleines Echtzeitstrategie-Spiel: Burg und Mauer bauen, Einheiten ausbilden, gegen Bots oder online spielen.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

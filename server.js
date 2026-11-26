@@ -334,6 +334,14 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+  if (url === '/sw.js') { // Service Worker der installierbaren App (spiel/sw.js); nie lange zwischenspeichern, damit Änderungen ankommen
+    fs.readFile(path.join(__dirname, 'spiel', 'sw.js'), (err, data) => {
+      if (err) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' });
+      res.end(data);
+    });
+    return;
+  }
   const bild = BILDER[url]; // Symbol für den Startbildschirm, Browser-Tab und App-Beschreibung (Ordner bilder/)
   if (bild) {
     fs.readFile(path.join(__dirname, 'bilder', bild[0]), (err, data) => {

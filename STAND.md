@@ -14,6 +14,7 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - `spiel/` Darstellung, Menüs, Shop, Online (`online.js`), Freunde/Zuschauen (`sozial.js`).
 - `werkzeuge/reihenfolge.txt` = Reihenfolge der Skriptteile (wichtig, gemeinsamer Bereich). `bauen.js` erzeugt `index.html` (online), `build/artifact.html`, `build/bot-editor.html`, `build/botdatenbank.html`.
 - Tests: `tests/pruefen.js` (Spielregeln in Chrome, Determinismus aller Bot-Partien) und `tests/codepruefung.js` (in `gemeinsam/` kein `Math.random`/`hypot`/`sin`/`cos`/`atan2`…, ausser in Zeilen mit «nur Zeichnung»). Läuft auch automatisch auf GitHub (Actions) bei jedem PR, inkl. Prüfung, dass `index.html` frisch gebaut ist.
+- PWA (installierbar, startet offline für Bot-Partien): `bilder/manifest.webmanifest`, Service Worker `spiel/sw.js` (Seite immer zuerst vom Netz), Anmeldung im Kopf in `bauen.js`.
 - `server.js`: Node ohne Abhängigkeiten, eigenes WebSocket, Paarung, Lockstep-Weiterleitung, Konto-API (`/api/konto`, `/api/kaufen`, `/api/geschenk` …), Elo, Edelsteine, Freunde, Zuschauen. Version = Prüfsumme des Spielcodes; nur gleiche Versionen werden gepaart.
 
 ## Technik, die man kennen muss
@@ -32,4 +33,4 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - Artifact-Veröffentlichungslabels max. 60 Zeichen.
 
 ## Offen / Ideen
-- Eigene Domain, Google Search Console, Namenshinweis «Stronghold» (Firefly Studios), evtl. PWA/App.
+- Eigene Domain, Google Search Console, Namenshinweis «Stronghold» (Firefly Studios), evtl. Store-App (Hülle um die Online-Seite).
