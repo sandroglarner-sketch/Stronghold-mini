@@ -558,6 +558,7 @@ function matchAus(ma) {
 function botAus(c, grund) {
   const ma = c.botma; if (!ma) return;
   c.botma = null; ma.aus = true;
+  c.botAlt = ma; // für die Sieg-Prüfung: der Browser meldet 'storysieg' erst nach 'bende' (26.11.)
   for (const s of ma.zuschauer) { s.schaut = null; s.send({ k: 'zende', bot: true, grund }); }
   ma.zuschauer.clear();
 }
@@ -585,7 +586,7 @@ function botLive(c, m) {
 // gemeldeten Käufen nach (nachrechnen.js). Zählt nur, wenn der Spieler wirklich gewonnen hat, die Prüfsummen stimmen, die Partie nicht
 // schneller als in Echtzeit lief und der Gegner nach der Story-Reihenfolge schon spielbar war. Dann: besiegt speichern, Edelsteine.
 async function storySieg(c) {
-  const ma = c.botma, antwort = (ok, grund, besiegt) => c.send({ k: 'storysieg', ok, grund: grund || '', id: ma ? ma.storyId : '', besiegt });
+  const ma = c.botma || c.botAlt, antwort = (ok, grund, besiegt) => c.send({ k: 'storysieg', ok, grund: grund || '', id: ma ? ma.storyId : '', besiegt });
   if (!ma || ma.art !== 'story' || !ma.storyId) return antwort(false, 'keine Verbindung');
   if (ma.geprueft) return; ma.geprueft = true;
   if (ma.zuLang) return antwort(false, 'zu lang');
