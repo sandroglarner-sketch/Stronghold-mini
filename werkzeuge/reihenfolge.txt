@@ -25,4 +25,5 @@ spiel/sozial.js
 spiel/koenigwahl.js
 spiel/wertekarte.js
 spiel/vollbild.js
+spiel/app-installieren.js
 spiel/main.js
