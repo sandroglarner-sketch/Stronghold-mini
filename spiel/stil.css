@@ -275,6 +275,8 @@
   .kontolink { background: none; border: 0; padding: 0; color: var(--me); font-size: 0.82rem; text-decoration: underline; justify-self: center; }
   .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
   .konto .kontomsg.ok { color: #2f8a3e; }
+  .appschritte { margin: 0; padding-left: 1.4em; text-align: left; display: grid; gap: 6px; font-size: 0.9rem; }
+  .appdlg .primary { margin-top: 4px; }
   .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
   .mcard.lockd canvas, .ucard.lockd canvas, .mcard.lockd .mc { filter: grayscale(1); opacity: 0.45; }
   .mcard.lockd .pick, .ucard.lockd .pick { background: var(--line); border-color: var(--line); }
@@ -523,6 +525,9 @@
   html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsGive,
   html.phone .stage:has(.story:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.story:not([hidden])) .fsbar #fsGive { display: none; }
   html.phone .overlay.menu .ovtop { padding-right: 76px; }
+  /* Handy quer mit Knopf «App installieren»: App, Rangliste und Freunde nur als Symbol, sonst reicht der Platz nicht (in der installierten App fehlt der Knopf, dann wie bisher) */
+  html.phone .ovright:has(#appBtn:not([hidden])) :is(.ovapp, .ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
+  html.phone .ovkonto { white-space: nowrap; }
   html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
   .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
   html.phone .storykopf .ghost { padding: 0 9px; }

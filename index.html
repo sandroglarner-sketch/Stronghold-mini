@@ -296,6 +296,8 @@
   .kontolink { background: none; border: 0; padding: 0; color: var(--me); font-size: 0.82rem; text-decoration: underline; justify-self: center; }
   .konto .kontomsg { color: var(--foe); min-height: 1.2em; }
   .konto .kontomsg.ok { color: #2f8a3e; }
+  .appschritte { margin: 0; padding-left: 1.4em; text-align: left; display: grid; gap: 6px; font-size: 0.9rem; }
+  .appdlg .primary { margin-top: 4px; }
   .kontox { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
   .mcard.lockd canvas, .ucard.lockd canvas, .mcard.lockd .mc { filter: grayscale(1); opacity: 0.45; }
   .mcard.lockd .pick, .ucard.lockd .pick { background: var(--line); border-color: var(--line); }
@@ -544,6 +546,9 @@
   html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.overlay.menu:not([hidden])) .fsbar #fsGive,
   html.phone .stage:has(.story:not([hidden])) .fsbar #fsPause, html.phone .stage:has(.story:not([hidden])) .fsbar #fsGive { display: none; }
   html.phone .overlay.menu .ovtop { padding-right: 76px; }
+  /* Handy quer mit Knopf «App installieren»: App, Rangliste und Freunde nur als Symbol, sonst reicht der Platz nicht (in der installierten App fehlt der Knopf, dann wie bisher) */
+  html.phone .ovright:has(#appBtn:not([hidden])) :is(.ovapp, .ovrang, .ovfr) > span:not(.ovbadge) { display: none; }
+  html.phone .ovkonto { white-space: nowrap; }
   html.phone .storykopf { right: 84px; left: 8px; top: 6px; }
   .storykopf .ghost { white-space: nowrap; padding: 0 12px; }
   html.phone .storykopf .ghost { padding: 0 9px; }
@@ -796,6 +801,7 @@
           <button class="ghost ovshop" id="shopBtn" type="button" hidden title="Shop: Karten mit Edelsteinen freischalten"><span>Shop</span><i class="ovedelsym"></i><b class="ovedel" id="edelZahl"></b></button>
         </span>
         <span class="ovright">
+          <button class="ghost ovapp" id="appBtn" type="button" hidden title="Das Spiel als App auf diesem Gerät installieren"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 17v3h16v-3"></path></svg><span>App installieren</span></button>
           <button class="ghost ovrang" id="rangBtn" type="button" title="Rangliste der Online-Partien"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"></path></svg><span>Rangliste</span></button>
           <button class="ghost ovfr" id="freundeBtn" type="button" title="Freunde: einladen, herausfordern, zuschauen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><circle cx="17" cy="9" r="2.8"></circle><path d="M16 14.2a5.5 5.5 0 0 1 6 5.8"></path></svg><span>Freunde</span><span class="ovbadge" id="freundeZahl" hidden>0</span></button>
           <button class="ghost ovkonto" id="kontoBtn" type="button" hidden title="Gratis-Konto: schaltet weitere Karten frei">👤 Konto</button>
@@ -904,6 +910,13 @@
       <div class="kontorow" id="kontoIn" hidden><button class="ghost" id="kontoPwBtn" type="button">Passwort ändern</button><button class="ghost" id="kontoOut" type="button">Abmelden</button></div>
       <p class="kontomsg" id="kontoMsg"></p>
       <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
+    </div>
+    <div class="konto appdlg" id="appDlg" hidden role="dialog" aria-label="App installieren">
+      <h3>App installieren</h3>
+      <p id="appText"></p>
+      <ol class="appschritte" id="appSchritte"></ol>
+      <button class="primary" id="appOk" type="button">Verstanden</button>
+      <button class="kontox" id="appZu" type="button" aria-label="Schliessen">✕</button>
     </div>
     <div class="tut" id="tutPanel" hidden><button class="ghost" id="tutEnd" type="button">Tutorial beenden</button></div>
     <div class="tutbox" id="tutBox" hidden><p id="tutBoxText"></p><button class="primary" id="tutOk" type="button">Verstanden</button></div>
@@ -1357,7 +1370,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'a9c9c75574'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'd13661c18a'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -6969,6 +6982,42 @@
   try { localStorage.removeItem('kasernenkrieg-phone'); } catch (err) {}
   checkAutoPhone();
 
+  // ---------- Knopf «App installieren» (nur online, nicht in der installierten App) ----------
+  // Chrome/Edge/Android: der Browser meldet «beforeinstallprompt» -> ein Klick öffnet direkt seinen Installieren-Dialog.
+  // Sonst (iPhone/iPad, Safari, Firefox …): Fenster mit der passenden Anleitung für dieses Gerät.
+  var appBtn = $('appBtn'), appDlg = $('appDlg'), appWarten = null;
+  function appAnleitung() {
+    var ua = navigator.userAgent || '';
+    var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var android = /Android/.test(ua), firefox = /Firefox|FxiOS/.test(ua);
+    var safariMac = !ios && /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg|Firefox/.test(ua);
+    if (ios) return { text: 'So kommt das Spiel auf deinen Home-Bildschirm:', schritte: ['Auf <b>Teilen</b> tippen (Quadrat mit Pfeil nach oben □↑, unten oder oben in der Leiste).', 'Nach unten scrollen und <b>«Zum Home-Bildschirm»</b> wählen.', 'Auf <b>«Hinzufügen»</b> tippen und das Spiel künftig über das neue Symbol starten.'] };
+    if (android) return { text: 'So kommt das Spiel auf deinen Startbildschirm:', schritte: ['Oben rechts das Browser-Menü <b>⋮</b> öffnen.', 'Auf <b>«App installieren»</b> oder <b>«Zum Startbildschirm hinzufügen»</b> tippen' + (firefox ? ' (Firefox: <b>«Installieren»</b>)' : '') + '.', 'Bestätigen und das Spiel künftig über das neue Symbol starten.'] };
+    if (safariMac) return { text: 'In Safari am Mac:', schritte: ['Oben im Menü <b>Ablage</b> öffnen.', '<b>«Zum Dock hinzufügen …»</b> wählen und bestätigen.'] };
+    if (firefox) return { text: 'Firefox am Computer kann keine Apps installieren.', schritte: ['Die Seite in <b>Chrome</b> oder <b>Edge</b> öffnen.', 'Dort rechts in der Adressleiste auf das <b>Installieren-Symbol</b> klicken.'] };
+    return { text: 'So installierst du das Spiel auf diesem Computer:', schritte: ['Rechts in der Adressleiste auf das <b>Installieren-Symbol</b> klicken (Bildschirm mit Pfeil).', 'Oder im Browser-Menü <b>⋮</b> → <b>«Streamen, speichern und teilen»</b> → <b>«Seite als App installieren»</b>.', 'Bestätigen: das Spiel öffnet sich dann in einem eigenen Fenster.'] };
+  }
+  function appZeigen(an) {
+    if (an) {
+      var a = appAnleitung();
+      $('appText').textContent = a.text;
+      $('appSchritte').innerHTML = a.schritte.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    }
+    appDlg.hidden = !an;
+  }
+  function appKnopf() { appBtn.hidden = !ONLINE || fsStandalone(); }
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); appWarten = e; appKnopf(); });
+  window.addEventListener('appinstalled', function () { appWarten = null; appBtn.hidden = true; appZeigen(false); });
+  appBtn.addEventListener('click', function () {
+    appBtn.blur();
+    if (appWarten) {
+      var ev = appWarten; appWarten = null; // ein Ereignis kann nur einmal benutzt werden; der Browser schickt bei Bedarf ein neues
+      try { ev.prompt(); ev.userChoice.then(function (w) { if (w && w.outcome === 'accepted') appBtn.hidden = true; }).catch(function () {}); } catch (err) { appZeigen(true); }
+    } else appZeigen(true);
+  });
+  $('appOk').addEventListener('click', function () { appZeigen(false); });
+  $('appZu').addEventListener('click', function () { appZeigen(false); });
+  appKnopf();
   // ---------- Start ----------
   readPalette();
   buildBackdrop();
