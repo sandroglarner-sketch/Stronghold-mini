@@ -1,7 +1,7 @@
   // ---------- Computergegner ----------
   // Alle Stufen spielen dieselbe Strategie, sie unterscheiden sich nur im Gold pro Auszahlung.
   // Der Computer entscheidet nur, was er wann kauft, seine Einheiten verhalten sich exakt wie deine.
-  var ai = { think: 1.2, leadT: 0, defCool: 0, huntCool: 0, towerCool: 0, attackLock: 0, wave: null, queue: [], steps: [] };
+  var ai = { think: 1.2, leadT: 0, defCool: 0, huntCool: 0, towerCool: 0, karawaneCool: 0, attackLock: 0, wave: null, queue: [], steps: [] };
   var level = 'normal';
   var botType = 'bauern';
   var botEl = $('botType');
@@ -81,14 +81,8 @@
     }
     return false;
   }
-  // Wie viele Einheiten der Seite stehen auf den Türmen?
-  // Bots, Verteidigung (alle Bots, für den Gegner und die eigenen Einheiten): jede Einheit zählt mit ihrem Stärkewert (CONFIG.units[..].staerke, sonst 1)
+    // Bots, Verteidigung (alle Bots, für den Gegner und die eigenen Einheiten): jede Einheit zählt mit ihrem Stärkewert (CONFIG.units[..].staerke, sonst 1)
   function defW(type) { var st = CONFIG.units[type] && CONFIG.units[type].staerke; return st === undefined ? 1 : st; }
-  function countTowerUnits(team) {
-    var n = 0;
-    for (var i = 0; i < units.length; i++) if (units[i].team === team && units[i].hp > 0 && units[i].tower) n += defW(units[i].type);
-    return n;
-  }
   // Wie viele Kampfeinheiten des Gegners (ohne Bauern, Arbeiter, König, Grabende) stehen in der Spielfeldhälfte des Computers?
   function countEnemiesInMyHalf() {
     var n = 0;
@@ -107,6 +101,15 @@
     }
     return n;
   }
+  // Goldwert der Kampfeinheiten (gleiche Auswahl wie countFighters, aber mit CONFIG.units[..].cost statt Stärkewert); für die Verteidigung
+  function fighterGold(team, noTower) {
+    var g = 0, i, u, ud;
+    for (i = 0; i < units.length; i++) {
+      u = units[i]; ud = CONFIG.units[u.type];
+      if (u.team === team && u.hp > 0 && !ud.passive && !ud.worker && !ud.king && !(team === 0 && u.dig) && !(noTower && u.tower)) g += ud.cost || 0;
+    }
+    return g;
+  }
   function aiRoll() {
     ai.think = 1.2;
     ai.leadT = 0;
@@ -114,6 +117,7 @@
     ai.wave = null;
     ai.huntCool = 0;
     ai.towerCool = 0;
+    ai.karawaneCool = 0;
     ai.attackLock = 0;
     ai.queue = [];
     ai.steps = [];
@@ -126,6 +130,7 @@
     ai.defCool = Math.max(0, ai.defCool - dt);   // Sperre für Einheitenkäufe nach einer Verteidigung
     ai.huntCool = Math.max(0, ai.huntCool - dt);
     ai.towerCool = Math.max(0, ai.towerCool - dt);
+    ai.karawaneCool = Math.max(0, ai.karawaneCool - dt); // Sperre für Karawanen (CONFIG.AI.karawaneCool s nach jeder Karawane)
     if (countFarmers(0, true) > countFarmers(1, true)) ai.leadT += dt; else ai.leadT = 0; // so lange hast du schon mehr Bauern
     // Zeitversetzte Käufe (Jagd, Verteidigung), immer pünktlich
     while (ai.queue.length && clock >= ai.queue[0].at) {
@@ -148,7 +153,9 @@
     if (clock < ai.attackLock) return; // nach Beginn des Angriffs lockSecs Sekunden lang nichts kaufen, ausser den Schritten des Angriffs
     var free = ai.defCool <= 0;
 
-    // Verteidigung: wird etwas angegriffen, so viele Einheiten wie du hast plus defPlus (erlaubte Einheiten), danach noOutput Sekunden keine Einheiten
+    // Verteidigung (26.11., alle Bots): wird etwas angegriffen, vergleicht er den Goldwert (CONFIG.units[..].cost) deiner Kampfeinheiten auf dem Feld (ohne Türme)
+    // mit dem seiner Turmbesatzung plus seiner Kampfeinheiten auf dem Feld und kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens die Differenz kosten
+    // (höchstens defMaxGold Gold pro Verteidigung, ohne Angabe unbegrenzt); danach noOutput Sekunden keine Einheiten
     // (gilt für alle Gegner) auch ohne Angriff: stehen mindestens 2 gegnerische Einheiten in seiner Hälfte und hat der Gegner insgesamt mehr Einheiten (ohne Turmbesatzung) als er (mit Turmbesatzung)
     var invaded = countEnemiesInMyHalf() >= 2 && countFighters(0, true) > countFighters(1, false);
     // Spezialregel (alle Gegner): hat der Gegner auf dem Feld (nicht auf Türmen) nur noch Katapulte und wird irgendetwas von ihnen angegriffen, wird in jedem Fall verteidigt
@@ -158,22 +165,24 @@
     }
     var defHold = false; // Verteidigung geht vor: solange sie gebraucht wird, kein Gold für die Neubesetzung der Türme
     if (free && ((isAttacked() && !enemyIsWeak()) || invaded || catOnly)) {
-      var nDef = Math.max(0, countFighters(0, true) - countTowerUnits(1) + R.defPlus), tDef, nBought = 0;
+      var dGold = Math.max(0, fighterGold(0, true) - fighterGold(1, false)), tDef, nBought = 0, dSpent = 0;
+      var dCap = R.defMaxGold > 0 ? R.defMaxGold : Infinity; // höchstens so viel Gold pro Verteidigung
       var pool = R.defPool; // Eismagier nur, wenn er in defPool steht (defMage/defMageAtt gibt es seit 21.11. nicht mehr)
       if (R.defDiggerAt) { // Tunnelgräber nur, wenn du genug Bogenschützen und Magier hast
         var shooters = 0;
         for (i = 0; i < units.length; i++) if (units[i].team === 0 && units[i].hp > 0 && !units[i].dig && (units[i].type === 'archer' || units[i].type === 'mage')) shooters++;
         if (shooters >= R.defDiggerAt) pool = pool.concat(['digger']);
       }
-      if (catOnly) nDef = Math.max(nDef, 1); // mindestens eine Einheit
-      var iStart = 0;
-      if (R.defDiggerVsCatapult && units.some(function (c) { return c.team === 0 && c.type === 'catapult' && c.hp > 0 && !c.tower; })) { // der Gegner hat ein Katapult auf dem Feld: mindestens 1 Tunnelgräber gehört zur Verteidigung
-        nDef = Math.max(nDef, R.defDiggerVsCatapult);
-        while (iStart < R.defDiggerVsCatapult && spendable() >= CONFIG.units.digger.cost && buy(1, 'digger')) { nBought++; iStart++; }
-      }
+      var defMin1 = catOnly && dGold <= 0; // mindestens eine Einheit
       var dmZ = {}; // defMax: höchstens so viele je Einheit pro Verteidigung (z. B. { catapult: 1 })
-      for (i = iStart; i < nDef && (tDef = randomAffordable(R.defMax ? pool.filter(function (t) { return !(R.defMax[t] !== undefined && (dmZ[t] || 0) >= R.defMax[t]); }) : pool, spendable())); i += defW(tDef)) { if (!buy(1, tDef)) break; nBought++; dmZ[tDef] = (dmZ[tDef] || 0) + 1; } // eigene Belagerungsmaschinen zählen mehrfach
-      defHold = nDef > 0;
+      if (R.defDiggerVsCatapult && units.some(function (c) { return c.team === 0 && c.type === 'catapult' && c.hp > 0 && !c.tower; })) { // der Gegner hat ein Katapult auf dem Feld: mindestens so viele Tunnelgräber gehören zur Verteidigung
+        for (i = 0; i < R.defDiggerVsCatapult && spendable() >= CONFIG.units.digger.cost && dSpent + CONFIG.units.digger.cost <= dCap && buy(1, 'digger'); i++) { nBought++; dSpent += CONFIG.units.digger.cost; dmZ.digger = (dmZ.digger || 0) + 1; }
+      }
+      while ((dSpent < dGold || (defMin1 && !nBought)) && (tDef = randomAffordable(R.defMax ? pool.filter(function (t) { return !(R.defMax[t] !== undefined && (dmZ[t] || 0) >= R.defMax[t]); }) : pool, Math.min(spendable(), dCap - dSpent)))) {
+        if (!buy(1, tDef)) break;
+        nBought++; dSpent += CONFIG.units[tDef].cost; dmZ[tDef] = (dmZ[tDef] || 0) + 1;
+      }
+      defHold = dGold > 0 || defMin1;
       if (nBought) { ai.defCool = R.noOutput; free = false; } // die Sperre gilt nur, wenn wirklich verteidigt wurde
     }
     // Mauer (keine Einheit, die Sperre gilt hier nicht): ab wallGold Gold, nur ohne Gegner in seiner Hälfte; repariert wird nie, nur neu gebaut
@@ -203,9 +212,8 @@
     // Wirtschaft (22.11.): keine Bauern, Karawanen, Holzfäller, solange eine gegnerische Einheit über der Mitte steht (vorher: solange du mehr Kampfeinheiten hattest)
     var wirtschaft = !gegnerUeberMitte(), guard = 0;
     while (guard++ < 3 && clock >= (R.bauernAb || 0) /* bauernAb = erst ab dieser Sekunde Bauern */ && countFarmers(1) < R.farmers && /* genau so viele Bauern wie angegeben (Karawanen zählen hier nicht) */ wirtschaft && spendable() >= CONFIG.units.farmer.cost && findSpot(1, null)) buy(1, 'farmer');
-    // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern
-    guard = 0;
-    while (guard++ < 3 && countType(1, 'karawane') < (R.karawanen || 0) && wirtschaft && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) { /* weiter */ }
+    // Karawanen: so viele strebt er an (R.karawanen), gleiche Bedingung wie bei den Bauern; nach jeder Karawane karawaneCool (4) s Sperre für Karawanen (alle Bots, 26.11.)
+    if (ai.karawaneCool <= 0 && countType(1, 'karawane') < (R.karawanen || 0) && wirtschaft && spendable() >= preisVon(1, 'karawane') && buy(1, 'karawane')) ai.karawaneCool = CONFIG.AI.karawaneCool;
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && wirtschaft && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }

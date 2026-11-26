@@ -2,7 +2,7 @@
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
     // bonus = Gold mehr bei jeder Auszahlung (erst wenn er steht)
   // staerke = interner Stärkewert (nur für die Bots): Kampfeinheiten 1, Belagerungsmaschinen mindestens 2 (Katapult 4, Trebuchet 6, Belagerungsturm 8), Bauer 0.
-  //   Die Bots verteidigen mit Stärke des Angriffs (ohne seine Turmbesatzung) + defPlus (= 1); eigene Einheiten zählen dabei mit ihrem Stärkewert.
+  //   Die Verteidigung der Bots rechnet seit 26.11. mit dem Goldwert (cost), nicht mit der Stärke.
   // Gesperrte Karten (Konto, Freunde, Story-Siege): siehe daten/freischalten.js
   CONFIG.units = {
       farmer: { cat: 'eco', name: 'Bauer',         cost: 4, staerke: 0,  hp: 2,  atk: 0, range: 1, speed: 1.0, cd: 1, r: 0.26, key: '1', passive: true, bonus: 1, bonusEvery: 5 }, // bonus Gold alle bonusEvery Sekunden, Takt startet beim Niederlassen
