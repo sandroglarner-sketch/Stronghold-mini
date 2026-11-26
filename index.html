@@ -182,20 +182,18 @@
   .ovmode.ovstory span { color: #fff; }
   .ovonl { margin-top: auto; font-weight: 600; color: #1d7a3a !important; }
   .ovonl.ovgrau { color: var(--muted) !important; font-weight: 500; }
-  .ovdots { margin-top: auto; display: flex; gap: 5px; align-items: center; }
-  .ovdots i { width: 20px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.45); display: inline-block; }
-  .ovdots i.voll { background: #fff; }
-  .ovdots em { font-style: normal; font-size: 0.8rem; margin-left: 4px; }
+  .ovdots { margin-top: auto; display: flex; gap: 8px; align-items: center; width: 100%; }
+  .ovdots i { flex: 1 1 auto; min-width: 30px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.35); overflow: hidden; display: block; }
+  .ovdots i b { display: block; height: 100%; border-radius: 4px; background: #fff; }
+  .ovdots em { flex: 0 0 auto; font-style: normal; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
   /* Story-Karte */
   .story { position: absolute; inset: 0; z-index: 5; background: var(--grass-a); overflow: hidden; border-radius: 10px; }
   .story[hidden] { display: none; }
   .storymap { position: absolute; inset: 0; width: 100%; height: 100%; }
   .storykopf { position: absolute; left: 14px; right: 14px; top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; } /* gleiche Lage wie .ovtop im Menü (Padding 12px 14px), damit Kartenbuch und König nicht springen */
-  .storykopf .ovleft + .ghost { margin-right: auto; margin-left: 0; } /* «‹ Menü» rückt rechts neben Kartenbuch und König */
-  .storykopf b { margin-right: auto; }
+  .storykopf #storyZu { margin-left: auto; } /* «‹ Menü» oben rechts */
   .storykopf .ghost { height: 40px; background: var(--panel); border-radius: 10px; font-weight: 600; }
   .storykopf b { padding: 7px 14px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); font-family: var(--display); font-size: 1.05rem; }
-  .storyleer { width: 80px; }
   .sknoten { position: absolute; transform: translate(-50%, -50%); width: 66px; height: 66px; overflow: visible; border-radius: 50%; border: 4px solid; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
   .sknoten canvas { width: 100%; height: 100%; border-radius: 50%; display: block; }
   .sknoten.besiegt { background: #e3f1e5; border-color: #1d7a3a; color: #1d7a3a; }
@@ -351,7 +349,10 @@
   .bookfilter button { flex: 0 0 auto; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 999px; padding: 3px 9px; font: inherit; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
   html.phone .bookfilter button span { display: none; }
   .bookfilter button.on { background: var(--me); border-color: var(--me); color: #fff; }
-  .bookcnt { font-weight: 600; white-space: nowrap; margin-left: auto; }
+  .bookcnt { font-weight: 600; white-space: nowrap; }
+  .deckplatz { display: flex; gap: 3px; margin-left: auto; flex: 0 0 auto; }
+  .deckplatz button { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 8px; font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+  .deckplatz button.on { background: var(--me); border-color: var(--me); color: #fff; }
   .bookcnt.full { color: #2f8a3e; }
   .bookbody { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: 4px; margin-top: 6px; }
   .bookarrow { flex: 0 0 34px; border: 0; background: transparent; color: var(--fg); font-size: 2.2rem; line-height: 1; cursor: pointer; padding: 0; border-radius: 8px; }
@@ -843,7 +844,7 @@
         <path id="storyWeg1" d="M130 336 C 210 336, 260 220, 340 216 S 470 322, 560 317 S 700 190, 800 184" fill="none" stroke="var(--dirt-edge)" stroke-width="26" stroke-linecap="round"></path>
         <path d="M130 336 C 210 336, 260 220, 340 216 S 470 322, 560 317 S 700 190, 800 184" fill="none" stroke="var(--dirt)" stroke-width="18" stroke-linecap="round"></path>
       </svg>
-      <div class="storykopf"><button class="ghost" id="storyZu" type="button">‹ Menü</button><b id="storyTitel">Story-Modus</b><span class="storyleer"></span></div>
+      <div class="storykopf"><button class="ghost" id="storyZu" type="button">‹ Menü</button></div>
       <div id="storyKnoten"></div>
       <button type="button" class="sblatt links" id="storyZurueck" aria-label="Vorige Seite">‹</button><button type="button" class="sblatt rechts" id="storyWeiter" aria-label="Nächste Seite">›</button>
       <div class="storykarte" id="storyKarte"></div>
@@ -869,7 +870,7 @@
     <div class="zbanner" id="zBanner" hidden><span class="zbtext"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="zText"></span></span><button class="ghost" id="zRaus" type="button">Verlassen</button></div>
     <div class="augen" id="augen" hidden aria-live="polite"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="augenZahl">0</span></div>
     <div class="book" id="book" hidden role="dialog" aria-label="Kartenbuch">
-      <div class="bookhead"><b>Kartenbuch</b><span class="bookfilter" id="bookFilter" role="group" aria-label="Nach Typ filtern"><button type="button" data-f="" class="on">Alle</button><button type="button" data-f="building" title="Gebäude">🏠<span> Gebäude</span></button><button type="button" data-f="eco" title="Wirtschaft">🌾<span> Wirtschaft</span></button><button type="button" data-f="melee" title="Nahkampf">🗡️<span> Nahkampf</span></button><button type="button" data-f="ranged" title="Fernkampf">🏹<span> Fernkampf</span></button><button type="button" data-f="siege" title="Belagerung">🔨<span> Belagerung</span></button></span><span class="bookcnt">Deck <span id="bookN">0</span> / 10</span><button class="ghost bookx" id="bookClose" type="button" aria-label="Buch schliessen">✕</button></div>
+      <div class="bookhead"><b>Kartenbuch</b><span class="bookfilter" id="bookFilter" role="group" aria-label="Nach Typ filtern"><button type="button" data-f="" class="on">Alle</button><button type="button" data-f="building" title="Gebäude">🏠<span> Gebäude</span></button><button type="button" data-f="eco" title="Wirtschaft">🌾<span> Wirtschaft</span></button><button type="button" data-f="melee" title="Nahkampf">🗡️<span> Nahkampf</span></button><button type="button" data-f="ranged" title="Fernkampf">🏹<span> Fernkampf</span></button><button type="button" data-f="siege" title="Belagerung">🔨<span> Belagerung</span></button></span><span class="deckplatz" id="deckPlatz" role="group" aria-label="Deck wählen"><button type="button" data-d="0" title="Deck 1">1</button><button type="button" data-d="1" title="Deck 2">2</button><button type="button" data-d="2" title="Deck 3">3</button></span><span class="bookcnt">Deck <span id="bookN">0</span> / 10</span><button class="ghost bookx" id="bookClose" type="button" aria-label="Buch schliessen">✕</button></div>
       <div class="bookbody">
         <button class="bookarrow" id="bookPrev" type="button" aria-label="Zurückblättern">‹</button>
         <div class="bookarea" id="bookArea"><div class="bookpage" id="bookPage"></div></div>
@@ -1374,7 +1375,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '2cad92844d'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '4206198d96'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5058,11 +5059,28 @@
   var GEB_MAX = 2; // höchstens so viele Gebäude im Deck (= Gebäudeplätze)
   var DECK_MAX = 10, DECK_START = TUT_TYPES.slice(); // Startauswahl beim ersten Spielen = Tutorial-Einheiten
   var DECK = DECK_START.slice();
+  // Drei Deck-Plätze (Kartenbuch oben rechts: 1, 2, 3): 'stronghold-decks' = [Deck1, Deck2, Deck3] (null = noch leer), 'stronghold-deck-nr' = gewählter Platz.
+  // 'stronghold-deck' bleibt das aktuelle Deck (wie früher). Ein leerer Platz übernimmt beim ersten Wählen das aktuelle Deck.
+  var DECKS = [null, null, null], DECK_NR = 0;
+  function deckPruefen(dk) { if (!Array.isArray(dk)) return null; var ngeb = 0; dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0 && !(CONFIG.units[t].cat === 'building' && ++ngeb > GEB_MAX); }).slice(0, DECK_MAX); return dk.length ? dk : null; }
   try {
-    var dk = JSON.parse(localStorage.getItem('stronghold-deck') || 'null');
-    if (Array.isArray(dk)) { var ngeb = 0; dk = dk.filter(function (t) { return t !== 'wall' && BUY_TYPES.indexOf(t) >= 0 && !(CONFIG.units[t].cat === 'building' && ++ngeb > 2); }).slice(0, DECK_MAX); if (dk.length) DECK = dk; }
+    var dk = deckPruefen(JSON.parse(localStorage.getItem('stronghold-deck') || 'null')); if (dk) DECK = dk;
+    var dks = JSON.parse(localStorage.getItem('stronghold-decks') || 'null');
+    if (Array.isArray(dks)) for (var di = 0; di < 3; di++) DECKS[di] = deckPruefen(dks[di]);
+    DECK_NR = Math.max(0, Math.min(2, parseInt(localStorage.getItem('stronghold-deck-nr') || '0', 10) || 0));
+    if (DECKS[DECK_NR]) DECK = DECKS[DECK_NR].slice();
   } catch (err) {}
-  function saveDeck() { try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); } catch (err) {} }
+  function saveDeck() {
+    DECKS[DECK_NR] = DECK.slice();
+    try { localStorage.setItem('stronghold-deck', JSON.stringify(DECK)); localStorage.setItem('stronghold-decks', JSON.stringify(DECKS)); localStorage.setItem('stronghold-deck-nr', String(DECK_NR)); } catch (err) {}
+  }
+  function deckWaehlen(nr) { // anderen Deck-Platz wählen: das aktuelle Deck ist schon gespeichert (saveDeck bei jeder Änderung)
+    if (nr === DECK_NR) return;
+    saveDeck(); DECK_NR = nr;
+    if (DECKS[nr]) DECK = DECKS[nr].slice();
+    if (kontoAn() && !(konto && konto.user)) { var rest = DECK.filter(function (t) { return !unitLocked(t); }); DECK = rest.length ? rest : DECK_START.slice(); } // gesperrte Karten (ohne Konto) wie beim Laden weglassen
+    saveDeck(); applyDeck();
+  }
   function applyDeck() {
     var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'e'], n = 0;
     BUY_TYPES.forEach(function (t) {
@@ -5195,6 +5213,7 @@
     $('bookPrev').disabled = book.page <= 0;
     $('bookNext').disabled = book.page >= pages - 1;
     $('bookN').textContent = DECK.length;
+    Array.prototype.forEach.call($('deckPlatz').children, function (b, i) { b.classList.toggle('on', i === DECK_NR); b.setAttribute('aria-pressed', i === DECK_NR ? 'true' : 'false'); });
     $('bookN').parentNode.classList.toggle('full', DECK.length === DECK_MAX);
   }
   function placeBook(bk) { // Buch (und Shop) über dem Menü: rundum etwas Landschaft frei, unten bleibt das Deck (Einheitenknöpfe) sichtbar
@@ -5281,6 +5300,7 @@
   $('bookDetail').addEventListener('click', bookClick);
   $('bookPrev').addEventListener('click', function () { flipBook(-1); });
   $('bookNext').addEventListener('click', function () { flipBook(1); });
+  $('deckPlatz').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-d]') : null; if (!b) return; deckWaehlen(+b.getAttribute('data-d')); renderBook(); $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; });
   (function () { // Wischen zum Blättern
     var sx = null, sy = 0;
     $('bookArea').addEventListener('pointerdown', function (e) { sx = e.clientX; sy = e.clientY; });
@@ -6357,9 +6377,8 @@
   }
   function menuAktuell() {
     $('deckZahl').textContent = DECK.length + '/' + DECK_MAX; neuZahl();
-    var n = storyAnzahl(), d = $('storyDots'), h = '', nx = storyNaechster();
-    for (var i = 0; i < STORY.length; i++) h += '<i class="' + (istBesiegt(STORY[i].id) ? 'voll' : '') + '"></i>';
-    d.innerHTML = h + '<em>' + n + ' von ' + STORY.length + ' besiegt</em>';
+    var n = storyAnzahl(), nx = storyNaechster(); // Balken = Anteil besiegter Story-Gegner (passt sich neuen Gegnern automatisch an)
+    $('storyDots').innerHTML = '<i><b style="width:' + (STORY.length ? Math.round(100 * n / STORY.length) : 0) + '%"></b></i><em>' + n + ' von ' + STORY.length + ' besiegt</em>';
     $('storyText').textContent = nx < 0 ? 'Alle Gegner besiegt – spiele sie nochmals' : (storyNeu(nx) ? 'Neuer Gegner: ' : 'Weiter gegen: ') + STORY[nx].name;
     var on = sozial.liste.filter(function (f) { return f.status !== 'offline'; }).length;
     $('freundeZahl').hidden = !on; $('freundeZahl').textContent = on;
@@ -6408,7 +6427,6 @@
   function storyMalen() {
     var n = storyFront(), h = '', bs = storyBesiegt();
     var seiten = Math.ceil(STORY.length / STORY_PRO_SEITE);
-    $('storyTitel').textContent = 'Story-Modus · ' + storyAnzahl() + ' von ' + STORY.length + (seiten > 1 ? ' · Seite ' + (storySeite + 1) + '/' + seiten : '');
     $('storyZurueck').hidden = storySeite <= 0; $('storyWeiter').hidden = storySeite >= seiten - 1;
     $('storyRein').style.display = storySeite > 0 ? '' : 'none'; $('storyRaus').style.display = storySeite < seiten - 1 ? '' : 'none';
     STORY.forEach(function (g, i) {
