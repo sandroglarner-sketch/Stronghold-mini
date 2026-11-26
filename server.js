@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const vm = require('vm');
+const { pruefen: storyPruefen } = require('./nachrechnen.js'); // Story-Siege nachrechnen (eigener Thread)
 
 const PORT = process.env.PORT || 3000;
 const ROOT_INDEX = path.join(__dirname, 'index.html'); // index.html liegt entweder direkt neben server.js oder im Ordner public
@@ -44,7 +45,7 @@ async function freischaltungenTabelle(userId) {
   return ((await db('GET', q + 'einheit')) || []).map((x) => ({ einheit: x.einheit, grund: '', gezeigt: true }));
 }
 // Regeln aus daten/freischalten.js (dieselbe Datei wie im Spiel) und Story-Reihenfolge aus daten/botdatenbank.js
-let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_NR = {}, STORY_ALT = { 1: [] };
+let FREI = { einheiten: {}, story: { kontoAb: '', gegner: {} } }, STORY_IDS = [], STORY_NR = {}, STORY_ALT = { 1: [] }, STORY_BOT = {}; // STORY_BOT: id -> { logik, name }
 // spieler.story: besiegte Story-Gegner als 1000 + Bitmaske über die festen Nummern (BOT_DB nr, höchstens 30): 1000 + Summe 2^(nr-1);
 // alte Werte (nur Anzahl): 1–99 = Version 1, ab 100 = Version*100 + Anzahl -> die ersten n Gegner der damaligen Reihenfolge (STORY_ALT)
 function storyAus(s) {
@@ -111,13 +112,19 @@ function ergebnis(c, wRoh) { // ein Browser meldet das Ende der Online-Partie; g
   const ma = c.match; if (!ma || ma.bewertet) return;
   const t = ma.a === c ? 0 : 1, w = wRoh === 0 || wRoh === 1 ? wRoh : -1, o = t === 0 ? ma.b : ma.a;
   ma.erg = ma.erg || {}; ma.erg[t] = w;
+  if (!o.alive && ma.wartet) { clearTimeout(ma.wartet); return abschluss(ma, w); } // der andere ist gegangen, nachdem er gemeldet hat: es gilt, was der Bleibende meldet
   if (ma.erg[1 - t] !== undefined) { if (ma.erg[1 - t] === w) abschluss(ma, w); else ma.bewertet = true; } // unterschiedlich: nicht werten
   else if (!o.alive && w === t) abschluss(ma, w);
 }
 function verlassen(c) { // Verbindung weg während einer Online-Partie: wer geht, verliert (ausser beide hatten das Ende schon gemeldet)
   const ma = c.match; if (!ma || ma.bewertet || (!ma.a.user && !ma.b.user)) return;
-  const t = ma.a === c ? 0 : 1, w = ma.erg && ma.erg[1 - t] !== undefined ? ma.erg[1 - t] : ma.erg && ma.erg[t] !== undefined ? ma.erg[t] : 1 - t;
-  abschluss(ma, w);
+  const t = ma.a === c ? 0 : 1;
+  if (ma.erg && ma.erg[1 - t] !== undefined) return abschluss(ma, ma.erg[1 - t]); // der Bleibende hat das Ende schon gemeldet: das gilt
+  if (ma.erg && ma.erg[t] !== undefined) { // 26.11.: nur der Gehende hat gemeldet (z. B. «gewonnen» und sofort weg): auf die Meldung des anderen warten, sonst verliert der Gehende
+    ma.wartet = setTimeout(() => { if (!ma.bewertet) abschluss(ma, 1 - t); }, 15000);
+    return;
+  }
+  abschluss(ma, 1 - t);
 }
 async function apiRangliste(res) {
   if (!KONTO_SECRET || !SPALTE_ELO) return json(res, 200, { liste: [], aus: true });
@@ -151,6 +158,7 @@ try {
   vm.runInContext(['daten/freischalten.js', 'daten/botdatenbank.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n') + '\nthis.__BOT = BOT_DB;', ctx);
   FREI = ctx.CONFIG.FREI;
   STORY_IDS = ctx.__BOT.filter((b) => b.platz && b.logik).sort((a, b) => a.platz - b.platz).map((b) => b.id);
+  ctx.__BOT.forEach((b) => { if (STORY_IDS.indexOf(b.id) >= 0) STORY_BOT[b.id] = { logik: b.logik, name: b.name }; });
   ctx.__BOT.forEach((b) => { if (b.nr && b.nr <= 30) STORY_NR[b.id] = b.nr; });
   STORY_ALT = ctx.STORY_ALT || STORY_ALT;
 } catch (e) { console.error('Freischaltungen nicht geladen:', e.message); }
@@ -192,7 +200,7 @@ function gekauftListe(z) { return String((z && z.gekauft) || '').split(',').filt
 function gekauftAus(z) { return gekauftListe(z).map((e) => e.t).filter((t) => FREI.einheiten[t] && FREI.einheiten[t].kaufen); }
 function gekauftText(l) { return l.map((e) => e.t + '@' + e.p).join(','); }
 // Alles zum Konto eines Spielers: Freunde, Story-Siege, gekaufte Karten, freigeschaltete Karten, Edelsteine
-async function kontoStand(userId, besiegtGemeldet) {
+async function kontoStand(userId) {
   const [ein, sp, tab, z] = await Promise.all([
     db('GET', 'einladungen?select=code&user_id=eq.' + encodeURIComponent(userId)).catch(() => []),
     besiegtLesen(userId).catch(() => null),
@@ -200,8 +208,7 @@ async function kontoStand(userId, besiegtGemeldet) {
     edelZeile(userId).catch(() => null)]);
   let freunde = 0;
   if (ein && ein.length) { const b = await db('GET', 'einladung_besuche?select=geraet&code=eq.' + ein[0].code).catch(() => []); freunde = (b || []).length; }
-  const bServer = sp ? sp.besiegt.slice() : [], b = bServer.slice();
-  storyIds(besiegtGemeldet).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
+  const bServer = sp ? sp.besiegt.slice() : [], b = bServer.slice(); // nur vom Server geprüfte Siege (26.11.: gemeldete Siege zählen mit Konto nicht mehr)
   const gekauft = gekauftAus(z);
   const st = { konto: true, freunde, besiegt: b, gekauft };
   const einheiten = Object.keys(FREI.einheiten || {}).filter((t) => regelOk(FREI.einheiten[t], st, t));
@@ -210,7 +217,8 @@ async function kontoStand(userId, besiegtGemeldet) {
   const erg = { code: ein && ein.length ? ein[0].code : '', freunde, einheiten, gekauft, geschenke, shop: !!z, edel: null, quellen: null, zeile: z };
   if (z) {
     const E = EDEL(), pv = pvpZahlen(z), bots = bServer.filter((id) => STORY_IDS.indexOf(id) >= 0).length;
-    const verdient = pv.siege * E.sieg + pv.niederlagen * E.niederlage + bots * E.bot + freunde * E.freund;
+    const freundeEdel = E.freundMax > 0 ? Math.min(freunde, E.freundMax) : freunde; // 26.11.: Edelsteine höchstens für freundMax eingeladene Freunde
+    const verdient = pv.siege * E.sieg + pv.niederlagen * E.niederlage + bots * E.bot + freundeEdel * E.freund;
     // Einmalige Nachzahlung (NACHZAHLEN): wer billiger gekauft hat, zahlt die Differenz, höchstens bis Kontostand 0.
     // Sonst ändern Preisänderungen im Shop NICHTS am Kontostand (Wunsch Besitzer 22.11.).
     const gl = gekauftListe(z); let nach = 0, geaendert = false;
@@ -221,11 +229,11 @@ async function kontoStand(userId, besiegtGemeldet) {
       await db('PATCH', 'spieler?user_id=eq.' + encodeURIComponent(userId), { edel_ausgegeben: z.edel_ausgegeben, gekauft: z.gekauft }).catch((e) => console.error('nachzahlen', e.message));
     }
     erg.edel = Math.max(0, verdient - (z.edel_ausgegeben | 0));
-    erg.quellen = { siege: pv.siege, niederlagen: pv.niederlagen, bots, freunde, ausgegeben: z.edel_ausgegeben | 0 };
+    erg.quellen = { siege: pv.siege, niederlagen: pv.niederlagen, bots, freunde: freundeEdel, ausgegeben: z.edel_ausgegeben | 0 };
   }
   return erg;
 }
-async function freischaltungen(userId, besiegtGemeldet) { return (await kontoStand(userId, besiegtGemeldet)).einheiten; }
+async function freischaltungen(userId) { return (await kontoStand(userId)).einheiten; }
 function edelDaten(st) { return { edel: st.edel, quellen: st.quellen, gekauft: st.gekauft, shop: st.shop, einheiten: st.einheiten, geschenke: st.geschenke }; }
 // neuen Kontostand an alle offenen Verbindungen des Spielers schicken (plus = gerade dazugekommen, fürs Ergebnisfenster)
 async function edelMelden(userId, plus, grund) {
@@ -445,7 +453,7 @@ class Client {
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
       this.koenig = koenigId(m.koenig);
       if (typeof m.token === 'string' && m.token.length < 4096) {
-        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id, m.besiegt).catch(() => freiGast(m.besiegt)) : freiGast(m.besiegt); })
+        kontoUser(m.token).then((u) => { this.acc = !!u; return u && KONTO_SECRET ? freischaltungen(u.id).catch(() => freiGast([])) : freiGast(m.besiegt); })
           .then((frei) => { this.frei = frei; if (this.alive) enqueue(this); });
       } else { this.acc = false; this.frei = freiGast(m.besiegt); enqueue(this); }
       return;
@@ -561,15 +569,36 @@ function botLive(c, m) {
     if (!/^[a-z0-9_]{1,40}$/.test(bot) || !seed) return;
     const koenige = Array.isArray(m.koenige) ? [koenigId(m.koenige[0]), koenigId(m.koenige[1])] : ['standard', 'standard'];
     c.botma = { a: c, b: null, bot, seed, art: m.art === 'story' ? 'story' : '', namen: [c.user.name, String(m.gegner || 'Bot').slice(0, 40)], koenige, log: [], letzte: -1, zuschauer: new Set(), start: Date.now() };
+    if (c.botma.art === 'story') { const l = STORY_IDS.filter((id) => STORY_BOT[id].logik === bot); c.botma.storyId = l.find((id) => STORY_BOT[id].name === c.botma.namen[1]) || l[0] || ''; } // welcher Story-Gegner
     return;
   }
   const ma = c.botma; if (!ma) return;
   if (m.k === 'bende') return botAus(c, m.grund === 'aufgegeben' ? 'aufgegeben' : m.grund === 'fertig' ? 'fertig' : 'verlassen');
-  if (typeof m.t !== 'number' || m.t < ma.letzte || ma.log.length > 20000) return;
+  if (typeof m.t !== 'number' || m.t < ma.letzte) return;
+  if (ma.log.length > 20000) { ma.zuLang = true; return; } // sehr lange Partie: kann nicht mehr nachgerechnet werden
   const cmds = Array.isArray(m.c) ? m.c.filter((x) => typeof x === 'string' && x.length < 30).slice(0, 6) : [];
   ma.letzte = m.t;
   if (cmds.length || typeof m.h === 'number') ma.log.push([0, m.t, cmds, typeof m.h === 'number' ? m.h : undefined]);
   if (ma.zuschauer.size) { const z = JSON.stringify({ k: 'zt', p: 0, t: m.t, c: cmds, h: typeof m.h === 'number' ? m.h : undefined }); for (const s of ma.zuschauer) s.sendRaw(z); }
+}
+// Story-Sieg (26.11.): der Browser meldet nach einer gewonnenen Story-Partie 'storysieg'. Der Server rechnet die Partie aus Startwert und
+// gemeldeten Käufen nach (nachrechnen.js). Zählt nur, wenn der Spieler wirklich gewonnen hat, die Prüfsummen stimmen, die Partie nicht
+// schneller als in Echtzeit lief und der Gegner nach der Story-Reihenfolge schon spielbar war. Dann: besiegt speichern, Edelsteine.
+async function storySieg(c) {
+  const ma = c.botma, antwort = (ok, grund, besiegt) => c.send({ k: 'storysieg', ok, grund: grund || '', id: ma ? ma.storyId : '', besiegt });
+  if (!ma || ma.art !== 'story' || !ma.storyId) return antwort(false, 'keine Verbindung');
+  if (ma.geprueft) return; ma.geprueft = true;
+  if (ma.zuLang) return antwort(false, 'zu lang');
+  const l = await besiegtLesen(c.user.id).catch(() => null), b = l ? l.besiegt : [];
+  if (b.indexOf(ma.storyId) >= 0) return antwort(true, '', b); // schon besiegt
+  const i = STORY_IDS.indexOf(ma.storyId); let front = 0; STORY_IDS.forEach((id, k) => { if (b.indexOf(id) >= 0) front = k + 1; });
+  if (i > front) return antwort(false, 'reihenfolge');
+  const log = ma.log.slice(), r = await storyPruefen({ bot: ma.bot, seed: ma.seed, log, letzte: ma.letzte });
+  if (!r.ok || r.winner !== 0) { console.error('storysieg abgelehnt', c.user.id, ma.storyId, JSON.stringify(r)); return antwort(false, r.ok ? 'kein Sieg' : r.grund); }
+  if (Date.now() - ma.start < r.ticks / 60 * 1000 * 0.8) { console.error('storysieg zu schnell', c.user.id, ma.storyId); return antwort(false, 'zu schnell'); }
+  const l2 = await besiegtLesen(c.user.id).catch(() => null), b2 = l2 ? l2.besiegt : b.slice(); // neu lesen (andere Geräte)
+  if (b2.indexOf(ma.storyId) < 0) { b2.push(ma.storyId); await besiegtSchreiben(c.user.id, b2); edelMelden(c.user.id, EDEL().bot, 'bot').catch(() => {}); }
+  for (const z of online.get(c.user.id) || []) z.send({ k: 'storysieg', ok: true, id: ma.storyId, besiegt: b2 }); // alle offenen Geräte
 }
 function zuschauenAus(c) { const ma = c.schaut; c.schaut = null; if (ma) { ma.zuschauer.delete(c); zuschauerMelden(ma); } }
 async function sindFreunde(a, b) { if (!KONTO_SECRET) return false; const l = await db('GET', 'freunde?select=freund_id&user_id=eq.' + a + '&freund_id=eq.' + b); return !!(l && l.length); }
@@ -640,14 +669,8 @@ async function sozial(c, m) {
     for (const z of online.get(c.user.id) || []) { if (z.user) z.user.name = r.name; z.send({ k: 'name_ok', name: r.name }); }
     return;
   }
-  if (m.k === 'story') { // neue Siege dazunehmen (nie etwas wegnehmen)
-    const l = await besiegtLesen(c.user.id).catch(() => null);
-    const b = l ? l.besiegt : [], zahl = () => b.filter((id) => STORY_IDS.indexOf(id) >= 0).length, vorher = zahl();
-    storyIds(m.ids).forEach((id) => { if (b.indexOf(id) < 0) b.push(id); });
-    await besiegtSchreiben(c.user.id, b);
-    if (zahl() > vorher) edelMelden(c.user.id, (zahl() - vorher) * EDEL().bot, 'bot').catch(() => {}); // Edelsteine für neu besiegte Story-Gegner
-    return;
-  }
+  if (m.k === 'story') return; // 26.11.: vom Browser gemeldete Siege zählen nicht mehr (alte Spielversion); nur noch geprüfte ('storysieg')
+  if (m.k === 'storysieg') return storySieg(c);
   if (m.k === 'decks') { // Deck-Plätze aufs Konto (nach jeder Änderung im Kartenbuch)
     const d = decksPruefen(m);
     if (!d || !SPALTE_DECKS) return;
