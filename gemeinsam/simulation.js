@@ -653,6 +653,10 @@
           effects.push({ kind: 'fackel', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
           effects.push({ kind: 'fbrand', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.6 });
         }
+        else if (d.feuerpfeil) { // Feuerbogenschütze: brennender Pfeil, Brand am Einschlag wie beim Fackelwerfer
+          effects.push({ kind: 'farrow', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });
+          effects.push({ kind: 'fbrand', x: tx, y: ty, r: d.splash, t: -d.delay, dur: 0.6 });
+        }
         else if (d.multi) { /* Trebuchet: Steine und Einschläge zeichnet fireMulti, keine Stich-/Ziellinie */ }
         else if (u.type === 'onager') { // Onager: grauer Stein fliegt gerade, Einschlag mit Staub
           effects.push({ kind: 'rock', x1: lp.x, y1: lp.y, x2: tx, y2: ty, t: 0, dur: d.delay });

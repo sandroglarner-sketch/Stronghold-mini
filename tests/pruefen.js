@@ -110,6 +110,16 @@ const TESTS = {
     var nachher = [f.team, s.team].join('/');
     return vorher === 'false/1/1' && nachher === '1/0' ? true : 'bei 4 Kacheln (zaubert?/Bauer/Speer): ' + vorher + ', bei 2,8: ' + nachher;
   },
+  'Feuerbogenschütze: trifft auf 4 Kacheln, Flächenschaden 1 im Radius 0,8': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'feuerbogen'); X.spawn(1, 'knight'); X.spawn(1, 'knight'); X.spawn(1, 'knight');
+    var a = X.units[0], k1 = X.units[1], k2 = X.units[2], k3 = X.units[3];
+    a.x = 8; a.y = 5; k1.x = 11.9; k1.y = 5; k2.x = 11.9; k2.y = 5.6; k3.x = 11.9; k3.y = 6.2;
+    a.cd = 0; [k1, k2, k3].forEach(function (k) { k.cd = 99; k.speed = 0; });
+    for (var i = 0; i < 12; i++) { X.upd(0.05); [k1, k2, k3].forEach(function (k) { k.x = 11.9; }); a.x = 8; a.y = 5; }
+    var r = [k1.hp, k2.hp, k3.hp].join('/');
+    return r === '19/19/20' ? true : 'Leben der Ritter (Ziel / 0,6 daneben / 1,2 daneben): ' + r;
+  },
 };
 
 const out = {};

@@ -4,7 +4,7 @@
   // ANIM[type] = { wind: Sekunden Ausholen vor dem Treffer, after: Sekunden Nachschwingen danach }.
   // attackPose liefert die Stellung für drawUnit; at = Sekunden relativ zum Treffer/Abschuss (undefined = Ruhe).
   var LAUNCH = { javelin: [1.2, -0.5], fackel: [1.0, -0.5], crossbow: [1.6, 0], trebuchet: [0, 0], // Trebuchet: Steine kommen mittig heraus (dort pendelt die Schlinge oben aus)
-    archer: [1.4, 0], baliste: [1.6, 0], onager: [0.4, 0], mage: [1.9, 0.35], catapult: [1.2, 0] }; // Abschusspunkt der Geschosse (Vielfache von r, vor der Einheit)
+    archer: [1.4, 0], feuerbogen: [1.4, 0], baliste: [1.6, 0], onager: [0.4, 0], mage: [1.9, 0.35], catapult: [1.2, 0] }; // Abschusspunkt der Geschosse (Vielfache von r, vor der Einheit)
   function launchPt(u, d, tx, ty) { var L = LAUNCH[u.type]; if (!L) return { x: u.x, y: u.y }; var a = Math.atan2(ty - u.y, tx - u.x), ca = Math.cos(a), sa = Math.sin(a); return { x: u.x + (ca * L[0] - sa * L[1]) * d.r, y: u.y + (sa * L[0] + ca * L[1]) * d.r }; } // nur Darstellung (Effekte)
   // Stellung für die Darstellung: kurz vor dem Treffer ausholen (u.ready = Ziel in Reichweite, u.cd = Restzeit), danach nachschwingen (u.atkT = Zeitpunkt des letzten Angriffs)
   function unitAt(u, type) {
@@ -18,7 +18,7 @@
   var ANIM = {
     spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.45 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
     javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
-    king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
+    king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, feuerbogen: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
   };
   function sm(k) { k = k < 0 ? 0 : k > 1 ? 1 : k; return k * k * (3 - 2 * k); }
@@ -61,6 +61,7 @@
     return ik(lerp(b0[0], ruheX, e), lerp(b0[1], ruheY, e), lerp(0.35 + 0.35 * aD, R.rot, e));
   }
   function attackPose(type, at, r) {
+    if (type === 'feuerbogen') type = 'archer'; // Feuerbogenschütze: gleiche Bewegung wie der Bogenschütze
     var a = ANIM[type], P0 = { off: 0, rot: 0, lunge: 0, arm: Math.PI, ball: 1, str: 0, vib: 0, tens: 0, arrow: 1, bolt: 1, orb: 1, glow: 0, spin: 0 };
     if (type === 'archer') P0.arrow = 0; // der Bogenschütze legt den Pfeil erst beim Spannen auf
     if (type === 'crossbow') P0.str = 0; // Armbrust gespannt, Bolzen eingelegt
@@ -896,10 +897,13 @@
         c.fillStyle = '#d9a066'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1; c.beginPath(); c.arc(hx, hy, r * 0.15, 0, Math.PI * 2); c.fill(); c.stroke();
         c.restore();
       }
-    } else if (type === 'archer') {
-      c.fillStyle = '#8a6a44'; // brauner Lederhelm wie Speersoldat/Speerwerfer
+    } else if (type === 'archer' || type === 'feuerbogen') {
+      var fbg = type === 'feuerbogen'; // Feuerbogenschütze: russgeschwärzte Kappe, Feuertopf am Gürtel, brennende Pfeilspitze
+      if (fbg) { c.fillStyle = '#4a3a30'; c.beginPath(); c.arc(-r * 0.55, r * 0.6, r * 0.24, 0, Math.PI * 2); c.fill(); c.fillStyle = 'rgba(255,140,40,' + (0.55 + 0.25 * Math.sin(performance.now() / 90)) + ')'; c.beginPath(); c.arc(-r * 0.55, r * 0.6, r * 0.13, 0, Math.PI * 2); c.fill(); } // Glut im Feuertopf
+      c.fillStyle = fbg ? '#5a4636' : '#8a6a44'; // brauner Lederhelm wie Speersoldat/Speerwerfer
       c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
       c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      if (fbg) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(r * 0.1, -r * 0.15, r * 0.2, 0, Math.PI * 2); c.fill(); } // Russfleck
       var bspan = 1.0 - 0.12 * A.tens; // gespannter Bogen biegt sich etwas mehr
       c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
       c.beginPath(); c.arc(r * 0.3, 0, r * 1.2, -bspan, bspan); c.stroke();
@@ -911,6 +915,10 @@
         c.strokeStyle = P.wood; c.lineWidth = 2;
         c.beginPath(); c.moveTo(bmx, 0); c.lineTo(bmx + r * 1.5, 0); c.stroke();
         c.fillStyle = P.steel; c.beginPath(); c.moveTo(bmx + r * 1.85, 0); c.lineTo(bmx + r * 1.45, -r * 0.16); c.lineTo(bmx + r * 1.45, r * 0.16); c.closePath(); c.fill();
+        if (fbg) { var ffl = 0.85 + 0.15 * Math.sin(performance.now() / 70); // brennender Lappen hinter der Spitze
+          c.fillStyle = 'rgba(255,150,40,0.35)'; c.beginPath(); c.arc(bmx + r * 1.45, 0, r * 0.36 * ffl, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#e8641e'; c.beginPath(); c.arc(bmx + r * 1.42, 0, r * 0.2 * ffl, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#ffd25a'; c.beginPath(); c.arc(bmx + r * 1.44, 0, r * 0.1, 0, Math.PI * 2); c.fill(); }
         c.globalAlpha = 1;
       }
       if (A.tens > 0) { c.fillStyle = '#d9a066'; c.beginPath(); c.arc(bmx, 0, r * 0.15, 0, Math.PI * 2); c.fill(); } // Zughand
