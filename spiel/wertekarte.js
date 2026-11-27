@@ -3,7 +3,7 @@
     farmer: 'Bringt alle 5 s +1 Gold, sobald er an seinem Platz steht.',
     archer: 'Setzt sich in Türme (ab Mauer 2) und nimmt dort nur 25 % Fernkampfschaden.',
     feuerbogen: 'Brennende Pfeile mit Flächenschaden (Radius 0,8). Setzt sich in Türme.',
-    mage: 'Flächenschaden (Radius 1) und bremst Getroffene 3 s lang auf halbes Tempo. Setzt sich in Türme.',
+    mage: 'Flächenschaden (Radius 1) und bremst Getroffene 3 s lang auf halbes Tempo und halbe Angriffsgeschwindigkeit. Setzt sich in Türme.',
     rider: 'Sehr schnell.',
     knight: 'Hält am meisten aus.',
     digger: 'Gräbt sich unsichtbar zu einem gegnerischen Fernkämpfer (nicht auf Türmen, nie näher als 6 Kacheln an der Burg).',

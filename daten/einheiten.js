@@ -16,7 +16,7 @@
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
-      mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.4, secs: 3 } }, // Eismagier (21.11.): bremst Getroffene auf 40 % Tempo
+      mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, atk: 0.5, secs: 3 } }, // Eismagier: bremst Getroffene auf 50 % Tempo (27.11., vorher 40 %) und 50 % Angriffsgeschwindigkeit (atk, 27.11. neu)
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
       schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 22, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, ausholen: 0.5, kegel: { winkel: 120, r: 1 } }, // ausholen: vor dem ersten Schlag 0,5 s ausholen // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
@@ -100,9 +100,9 @@
       trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 10, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
-      fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 8, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
+      fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 9, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       // Feuerbogenschütze (27.11.): wie der Bogenschütze, aber brennende Pfeile mit Flächenschaden (Radius 0,8); Brand am Einschlag wie beim Fackelwerfer
-      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 20, staerke: 1, hp: 1, atk: 1, range: 4, speed: 0.8, cd: 1.5, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
+      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 18, staerke: 1, hp: 1, atk: 1, range: 4, speed: 0.8, cd: 1.5, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
       prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 3, speed: 0.8, cd: 3, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): zielt nur auf bekehrbare Gegner, ab 3 Kacheln; Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
       crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
