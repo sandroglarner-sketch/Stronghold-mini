@@ -226,6 +226,7 @@
   // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
   function startZuschauen(m) {
     freundeOpen(false); toastWeg();
+    if (m.duo) { duoZuschauen(m); return; } // Duokampf (spiel/duo.js)
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
     pvp.namen = m.namen || ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null];
@@ -243,7 +244,9 @@
     $('zBanner').hidden = false;
   }
   function zuschauTick(team, t, c, h) {
-    if (team !== 0 && team !== 1 || typeof t !== 'number') return;
+    if (duo.on ? duo.spieler.indexOf(team) < 0 || (duo.bot && team === 1) : team !== 0 && team !== 1 || typeof t !== 'number') return;
+    if (typeof t !== 'number') return;
+    if (duo.on && !(t <= (pvp.dl[team] === undefined ? -1 : pvp.dl[team]))) pvp.dl[team] = t; // Duokampf: bis hier ohne Eintrag = kein Kauf
     if (pvp.bot && typeof h === 'number') pvp.zh[t] = h;
     var box = pvp.inbox[t] = pvp.inbox[t] || {};
     box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];

@@ -84,7 +84,7 @@
     if (m.k === 'duo_weg') { // ein Mitspieler hat die Partie verlassen: ab Schritt ab rechnen alle ohne ihn (sein König fällt)
       if (!duo.on || !pvp.on || typeof m.p !== 'number' || duo.spieler.indexOf(m.p) < 0 || m.p === MP) return;
       duo.weg[m.p] = Math.max(PVP_DELAY, m.ab | 0);
-      if (state === 'playing') hinweis((duo.namen[m.p] || 'Ein Spieler') + ' hat die Partie verlassen.');
+      if (state === 'playing' && !pvp.zuschauer) hinweis((duo.namen[m.p] || 'Ein Spieler') + ' hat die Partie verlassen.');
       return;
     }
   }
@@ -102,6 +102,20 @@
     if (duo.bot) duoBotWuerfeln(m.seed | 0);
     pvp.namen = [duoTeamName(0), duoTeamName(1)];
     startPvp(ich % 2, m.seed | 0, ich);
+  }
+  // Zuschauen (Freunde): der Server schickt die Startdaten der Partie, alle bisherigen Käufe (log), den letzten Schritt je Spieler (letzt) und wer gegangen ist (weg)
+  function duoZuschauen(m) {
+    duoStarten(Object.assign({}, m, { sitz: 0 }));
+    clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2); $('duoDeck').hidden = true;
+    intro.t = 0; // ohne Namens-Einblendung, gleich nachrechnen
+    pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0; MP = -1; pvp.dl = {};
+    document.documentElement.classList.remove('guest');
+    document.documentElement.classList.add('zuschauer');
+    if (m.weg) Object.keys(m.weg).forEach(function (p) { duo.weg[p] = Math.max(PVP_DELAY, m.weg[p] | 0); });
+    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2]); });
+    if (m.letzt) Object.keys(m.letzt).forEach(function (p) { var t = m.letzt[p] | 0; pvp.dl[p] = Math.max(pvp.dl[p] === undefined ? -1 : pvp.dl[p], t); if (t > pvp.letzte) pvp.letzte = t; });
+    $('zText').textContent = 'Du schaust ' + pvp.namen[0] + ' gegen ' + pvp.namen[1] + ' zu';
+    $('zBanner').hidden = false;
   }
   // Bot für «2 gegen Bot»: aus dem Startwert, damit alle Browser denselben nehmen (alle Story-Gegner, egal ob besiegt)
   function duoBotWuerfeln(seed) {
@@ -135,7 +149,7 @@
       showOverlay('Aufgegeben', 'Dein König ist gefallen.' + (partnerDa ? ' Dein Partner kämpft allein weiter.' : ''), 'Zum Menü', false);
       if (!partnerDa) return; // das Team ist besiegt: das Ergebnis folgt gleich (finish)
       pvp.ended = true; // «Zum Menü» verlässt die Partie
-    } else if (!duo.weg[p] || pvp.tick !== duo.weg[p]) hinweis((duo.namen[p] || 'Ein Spieler') + ' hat aufgegeben.');
+    } else if (!pvp.zuschauer && (!duo.weg[p] || pvp.tick !== duo.weg[p])) hinweis((duo.namen[p] || 'Ein Spieler') + ' hat aufgegeben.');
   }
   // Sind die Befehle aller Spieler für Schritt T da? Bot und gegangene Spieler: leer (beim Gehen einmal 'resign')
   function duoBoxFertig(T, box) {
@@ -143,6 +157,7 @@
       var p = duo.spieler[i], ab = duo.weg[p];
       if (duo.bot && p === 1) { box[1] = []; continue; }
       if (ab !== undefined && T >= ab) { if (!box[p]) box[p] = T === ab ? ['resign'] : []; continue; }
+      if (!box[p] && pvp.zuschauer && pvp.dl && T <= (pvp.dl[p] === undefined ? -1 : pvp.dl[p])) box[p] = []; // Zuschauer: gemeldeter Schritt ohne Kauf
       if (!box[p]) return false;
     }
     return true;

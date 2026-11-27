@@ -1437,7 +1437,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '8936718490'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '56b8373273'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5530,7 +5530,7 @@
   applyDeck();
 
   function syncUi() {
-    var gm = gold[MP] - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
+    var gm = (gold[MP] || 0) - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
     var canGive = state === 'playing' || state === 'paused';
     var tv = tut.on && canGive;
     if (tutPanelEl.hidden === tv) tutPanelEl.hidden = !tv;
@@ -5629,7 +5629,7 @@
     }
     if (pvp.on && pvp.zuschauer) { // Zuschauer: neutral, wer gewonnen hat
       pvp.ended = true; state = 'over'; winner = w;
-      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
+      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + (duo.on && spielerIm(w).length > 1 ? ' haben gewonnen.' : ' hat gewonnen.') : duo.on ? 'Unentschieden: alle Könige sind gefallen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
       return;
     }
     if (pvp.on && !pvp.ended) pvpSend({ k: 'ergebnis', w: w }); // Ende an den Server melden (Elo); w = Sieger-Team, -1 = unentschieden
@@ -6799,6 +6799,7 @@
   // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
   function startZuschauen(m) {
     freundeOpen(false); toastWeg();
+    if (m.duo) { duoZuschauen(m); return; } // Duokampf (spiel/duo.js)
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
     pvp.namen = m.namen || ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null];
@@ -6816,7 +6817,9 @@
     $('zBanner').hidden = false;
   }
   function zuschauTick(team, t, c, h) {
-    if (team !== 0 && team !== 1 || typeof t !== 'number') return;
+    if (duo.on ? duo.spieler.indexOf(team) < 0 || (duo.bot && team === 1) : team !== 0 && team !== 1 || typeof t !== 'number') return;
+    if (typeof t !== 'number') return;
+    if (duo.on && !(t <= (pvp.dl[team] === undefined ? -1 : pvp.dl[team]))) pvp.dl[team] = t; // Duokampf: bis hier ohne Eintrag = kein Kauf
     if (pvp.bot && typeof h === 'number') pvp.zh[t] = h;
     var box = pvp.inbox[t] = pvp.inbox[t] || {};
     box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
@@ -7012,7 +7015,7 @@
     if (m.k === 'duo_weg') { // ein Mitspieler hat die Partie verlassen: ab Schritt ab rechnen alle ohne ihn (sein König fällt)
       if (!duo.on || !pvp.on || typeof m.p !== 'number' || duo.spieler.indexOf(m.p) < 0 || m.p === MP) return;
       duo.weg[m.p] = Math.max(PVP_DELAY, m.ab | 0);
-      if (state === 'playing') hinweis((duo.namen[m.p] || 'Ein Spieler') + ' hat die Partie verlassen.');
+      if (state === 'playing' && !pvp.zuschauer) hinweis((duo.namen[m.p] || 'Ein Spieler') + ' hat die Partie verlassen.');
       return;
     }
   }
@@ -7030,6 +7033,20 @@
     if (duo.bot) duoBotWuerfeln(m.seed | 0);
     pvp.namen = [duoTeamName(0), duoTeamName(1)];
     startPvp(ich % 2, m.seed | 0, ich);
+  }
+  // Zuschauen (Freunde): der Server schickt die Startdaten der Partie, alle bisherigen Käufe (log), den letzten Schritt je Spieler (letzt) und wer gegangen ist (weg)
+  function duoZuschauen(m) {
+    duoStarten(Object.assign({}, m, { sitz: 0 }));
+    clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2); $('duoDeck').hidden = true;
+    intro.t = 0; // ohne Namens-Einblendung, gleich nachrechnen
+    pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0; MP = -1; pvp.dl = {};
+    document.documentElement.classList.remove('guest');
+    document.documentElement.classList.add('zuschauer');
+    if (m.weg) Object.keys(m.weg).forEach(function (p) { duo.weg[p] = Math.max(PVP_DELAY, m.weg[p] | 0); });
+    (m.log || []).forEach(function (e) { zuschauTick(e[0], e[1], e[2]); });
+    if (m.letzt) Object.keys(m.letzt).forEach(function (p) { var t = m.letzt[p] | 0; pvp.dl[p] = Math.max(pvp.dl[p] === undefined ? -1 : pvp.dl[p], t); if (t > pvp.letzte) pvp.letzte = t; });
+    $('zText').textContent = 'Du schaust ' + pvp.namen[0] + ' gegen ' + pvp.namen[1] + ' zu';
+    $('zBanner').hidden = false;
   }
   // Bot für «2 gegen Bot»: aus dem Startwert, damit alle Browser denselben nehmen (alle Story-Gegner, egal ob besiegt)
   function duoBotWuerfeln(seed) {
@@ -7063,7 +7080,7 @@
       showOverlay('Aufgegeben', 'Dein König ist gefallen.' + (partnerDa ? ' Dein Partner kämpft allein weiter.' : ''), 'Zum Menü', false);
       if (!partnerDa) return; // das Team ist besiegt: das Ergebnis folgt gleich (finish)
       pvp.ended = true; // «Zum Menü» verlässt die Partie
-    } else if (!duo.weg[p] || pvp.tick !== duo.weg[p]) hinweis((duo.namen[p] || 'Ein Spieler') + ' hat aufgegeben.');
+    } else if (!pvp.zuschauer && (!duo.weg[p] || pvp.tick !== duo.weg[p])) hinweis((duo.namen[p] || 'Ein Spieler') + ' hat aufgegeben.');
   }
   // Sind die Befehle aller Spieler für Schritt T da? Bot und gegangene Spieler: leer (beim Gehen einmal 'resign')
   function duoBoxFertig(T, box) {
@@ -7071,6 +7088,7 @@
       var p = duo.spieler[i], ab = duo.weg[p];
       if (duo.bot && p === 1) { box[1] = []; continue; }
       if (ab !== undefined && T >= ab) { if (!box[p]) box[p] = T === ab ? ['resign'] : []; continue; }
+      if (!box[p] && pvp.zuschauer && pvp.dl && T <= (pvp.dl[p] === undefined ? -1 : pvp.dl[p])) box[p] = []; // Zuschauer: gemeldeter Schritt ohne Kauf
       if (!box[p]) return false;
     }
     return true;

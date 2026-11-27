@@ -284,7 +284,7 @@
   applyDeck();
 
   function syncUi() {
-    var gm = gold[MP] - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
+    var gm = (gold[MP] || 0) - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
     var canGive = state === 'playing' || state === 'paused';
     var tv = tut.on && canGive;
     if (tutPanelEl.hidden === tv) tutPanelEl.hidden = !tv;
@@ -383,7 +383,7 @@
     }
     if (pvp.on && pvp.zuschauer) { // Zuschauer: neutral, wer gewonnen hat
       pvp.ended = true; state = 'over'; winner = w;
-      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
+      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + (duo.on && spielerIm(w).length > 1 ? ' haben gewonnen.' : ' hat gewonnen.') : duo.on ? 'Unentschieden: alle Könige sind gefallen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
       return;
     }
     if (pvp.on && !pvp.ended) pvpSend({ k: 'ergebnis', w: w }); // Ende an den Server melden (Elo); w = Sieger-Team, -1 = unentschieden
