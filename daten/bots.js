@@ -124,9 +124,14 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['belfry', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 5, buy: [['sword', 6]] }, { after: 6, buy: [['ladder', 4]] }, { after: 7, buy: [['javelin', 8]] }, { after: 13, buy: [['ladder', 20]] }],
                     defMaxGold: 60, defPool: ['digger', 'sword', 'catapult', 'javelin'], noOutput: 5 },
       // «Herzog Nebelwald» (Story-Platz 19, braucht ein Konto, 26.11.): 9 Bauern, Brandstelle ab 40 Gold, Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Katapulten,
-      // jagt mit 2 Banditen (5 s Vorsprung, alle 20 s), greift bei 260 Gold an (Welle 341: Belagerungsschild, Katapult, Onager, 2 Ritter, 4 Speer, 8 Bogen, 20 Leitern),
+      // jagt mit 1 Banditen (5 s Vorsprung, alle 15 s; 27.11., vorher 2 alle 20 s), greift bei 260 Gold an (Welle 341: Belagerungsschild, Katapult, Onager, 2 Ritter, 4 Speer, 8 Bogen, 20 Leitern),
       // spielt selbst den Banditen (Belohnung: Bandit); verteidigt mit höchstens 50 Gold pro Welle, danach 5 s Sperre
-      herzognebelwald: { income: 10, incomeEvery: 5, farmers: 9, gebaeude: [{ type: 'brand', gold: 40 }], huntLead: 5, hunt: [['raeuber', 2]], huntEvery: 20, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 260, lockSecs: 15,
+      herzognebelwald: { income: 10, incomeEvery: 5, farmers: 9, gebaeude: [{ type: 'brand', gold: 40 }], huntLead: 5, hunt: [['raeuber', 1]], huntEvery: 15, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 260, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['onager', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 8]] }, { after: 14, buy: [['ladder', 20]] }],
-                    defMaxGold: 50, defPool: ['archer', 'knight', 'mage', 'raeuber', 'spear'], noOutput: 5 }
+                    defMaxGold: 50, defPool: ['archer', 'knight', 'mage', 'raeuber', 'spear'], noOutput: 5 },
+      // «Händlerfürst Goldsand» (Story-Platz 20, braucht ein Konto, 27.11.): 10 Bauern, 2 Karawanen und 10 Bürger (Belohnung: Bürger), Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Trebuchets,
+      // jagt mit 2 Reitern (5 s Vorsprung, alle 30 s), greift bei 150 Gold an (Welle 238: Trebuchet, 8 Speer, 6 Fackelwerfer, 4 Speer, 15 Leitern); verteidigt mit höchstens 60 Gold pro Welle, danach 5 s Sperre
+      haendlerfuerstgoldsand: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 2, buerger: 10, huntLead: 5, hunt: [['rider', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, trebuchet: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 3, buy: [['spear', 8]] }, { after: 4, buy: [['fackel', 6]] }, { after: 6, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
+                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 }
   };

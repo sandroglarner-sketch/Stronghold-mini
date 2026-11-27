@@ -1102,11 +1102,16 @@
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['belfry', 1]] }, { after: 3, buy: [['ram', 1]] }, { after: 5, buy: [['sword', 6]] }, { after: 6, buy: [['ladder', 4]] }, { after: 7, buy: [['javelin', 8]] }, { after: 13, buy: [['ladder', 20]] }],
                     defMaxGold: 60, defPool: ['digger', 'sword', 'catapult', 'javelin'], noOutput: 5 },
       // «Herzog Nebelwald» (Story-Platz 19, braucht ein Konto, 26.11.): 9 Bauern, Brandstelle ab 40 Gold, Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Katapulten,
-      // jagt mit 2 Banditen (5 s Vorsprung, alle 20 s), greift bei 260 Gold an (Welle 341: Belagerungsschild, Katapult, Onager, 2 Ritter, 4 Speer, 8 Bogen, 20 Leitern),
+      // jagt mit 1 Banditen (5 s Vorsprung, alle 15 s; 27.11., vorher 2 alle 20 s), greift bei 260 Gold an (Welle 341: Belagerungsschild, Katapult, Onager, 2 Ritter, 4 Speer, 8 Bogen, 20 Leitern),
       // spielt selbst den Banditen (Belohnung: Bandit); verteidigt mit höchstens 50 Gold pro Welle, danach 5 s Sperre
-      herzognebelwald: { income: 10, incomeEvery: 5, farmers: 9, gebaeude: [{ type: 'brand', gold: 40 }], huntLead: 5, hunt: [['raeuber', 2]], huntEvery: 20, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 260, lockSecs: 15,
+      herzognebelwald: { income: 10, incomeEvery: 5, farmers: 9, gebaeude: [{ type: 'brand', gold: 40 }], huntLead: 5, hunt: [['raeuber', 1]], huntEvery: 15, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, catapult: 2 }, wallClear: true, attackGold: 260, lockSecs: 15,
                     attack: [{ after: 0, buy: [['shield', 1]] }, { after: 2, buy: [['catapult', 1]] }, { after: 3, buy: [['onager', 1]] }, { after: 4, buy: [['knight', 2]] }, { after: 6, buy: [['spear', 4]] }, { after: 7, buy: [['archer', 8]] }, { after: 14, buy: [['ladder', 20]] }],
-                    defMaxGold: 50, defPool: ['archer', 'knight', 'mage', 'raeuber', 'spear'], noOutput: 5 }
+                    defMaxGold: 50, defPool: ['archer', 'knight', 'mage', 'raeuber', 'spear'], noOutput: 5 },
+      // «Händlerfürst Goldsand» (Story-Platz 20, braucht ein Konto, 27.11.): 10 Bauern, 2 Karawanen und 10 Bürger (Belohnung: Bürger), Mauer bis Stufe 5 mit 6 Bogenschützen und 2 Trebuchets,
+      // jagt mit 2 Reitern (5 s Vorsprung, alle 30 s), greift bei 150 Gold an (Welle 238: Trebuchet, 8 Speer, 6 Fackelwerfer, 4 Speer, 15 Leitern); verteidigt mit höchstens 60 Gold pro Welle, danach 5 s Sperre
+      haendlerfuerstgoldsand: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 2, buerger: 10, huntLead: 5, hunt: [['rider', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, trebuchet: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 3, buy: [['spear', 8]] }, { after: 4, buy: [['fackel', 6]] }, { after: 6, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
+                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1309,7 +1314,7 @@
     // neue Bots (20.11.), noch ohne Logik. Idee: jeder Bot spielt selbst die Karte, die man durch einen Sieg gegen ihn freischaltet (Vorschlag in Klammern)
     { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: 2, logik: 'hauptmannschildwall', nr: 6 }, // Belohnung: Belagerungsschild
     { id: 'glutmeisterin', name: 'Die Glutmeisterin', koenig: 'glutmeisterin', platz: null, logik: null }, // (Fackelwerfer)
-    { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
+    { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: 20, logik: 'haendlerfuerstgoldsand', nr: 24 }, // seit 27.11., braucht ein Konto (Belohnung: Bürger)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: 14, logik: 'steinmetzbrocken', nr: 18 }, // seit 21.11. 14:07, braucht ein Konto // (Onager)
     { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: 4, logik: 'meisterglutfaust', nr: 7 } // Belohnung: Schmiede (daten/freischalten.js)
@@ -1360,13 +1365,14 @@
       fackel: { besiegt: 'drachenkoenig' }, // Belohnung für den Drachenkönig (Story-Platz 16, braucht ein Konto)
       belfry: { besiegt: 'baerenfuerst' }, // Belohnung für den Bärenfürsten (Story-Platz 18, braucht ein Konto)
       raeuber: { besiegt: 'herzognebelwald' }, // Belohnung für Herzog Nebelwald (Story-Platz 19, braucht ein Konto)
+      buerger: { besiegt: 'haendlerfuerstgoldsand' }, // Belohnung für Händlerfürst Goldsand (Story-Platz 20, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true } } },
+    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true }, haendlerfuerstgoldsand: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
-    frei: ['wall', 'farmer', 'buerger', 'spear', 'archer', 'rider', 'knight', 'ram'],
+    frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),
     // jeder besiegte Story-Gegner einmal (vom Server nachgerechnet), jeder eingeladene Freund (hat über den Link mind. 30 s gespielt), höchstens für freundMax Freunde.
     // Online-Partien unter minPartie Sekunden zählen nicht.
@@ -1394,7 +1400,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '6b0539c954'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '65f9acf592'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).

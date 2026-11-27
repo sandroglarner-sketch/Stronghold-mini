@@ -38,7 +38,7 @@
     // neue Bots (20.11.), noch ohne Logik. Idee: jeder Bot spielt selbst die Karte, die man durch einen Sieg gegen ihn freischaltet (Vorschlag in Klammern)
     { id: 'hauptmannschildwall', name: 'Hauptmann Schildwall', koenig: 'hauptmannschildwall', platz: 2, logik: 'hauptmannschildwall', nr: 6 }, // Belohnung: Belagerungsschild
     { id: 'glutmeisterin', name: 'Die Glutmeisterin', koenig: 'glutmeisterin', platz: null, logik: null }, // (Fackelwerfer)
-    { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: null, logik: null }, // (Karawane)
+    { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: 20, logik: 'haendlerfuerstgoldsand', nr: 24 }, // seit 27.11., braucht ein Konto (Belohnung: Bürger)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: 14, logik: 'steinmetzbrocken', nr: 18 }, // seit 21.11. 14:07, braucht ein Konto // (Onager)
     { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: 4, logik: 'meisterglutfaust', nr: 7 } // Belohnung: Schmiede (daten/freischalten.js)
