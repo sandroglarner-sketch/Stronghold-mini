@@ -299,6 +299,15 @@
         ctx.fillStyle = P.steel;
         ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(6, -4); ctx.lineTo(6, 4); ctx.closePath(); ctx.fill();
         ctx.restore();
+      } else if (e.kind === 'farrow') { // brennender Pfeil des Feuerbogenschützen: Pfeil mit Flammenkopf, Funkenschweif
+        var fax = lerp(e.x1, e.x2, k) * T, fay = lerp(e.y1, e.y2, k) * T, faa = Math.atan2(e.y2 - e.y1, e.x2 - e.x1);
+        ctx.fillStyle = 'rgba(255,170,60,0.6)'; for (var fas = 1; fas <= 3; fas++) { var fak = Math.max(0, k - fas * 0.06); ctx.beginPath(); ctx.arc(lerp(e.x1, e.x2, fak) * T, lerp(e.y1, e.y2, fak) * T, 2.2 - fas * 0.5, 0, Math.PI * 2); ctx.fill(); }
+        ctx.save(); ctx.translate(fax, fay); ctx.rotate(faa); ctx.lineCap = 'round';
+        ctx.strokeStyle = P.wood; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(8, 0); ctx.stroke();
+        ctx.fillStyle = P.steel; ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(6, -4); ctx.lineTo(6, 4); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,150,40,0.4)'; ctx.beginPath(); ctx.arc(6, 0, 5.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e8641e'; ctx.beginPath(); ctx.arc(6, 0, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffd25a'; ctx.beginPath(); ctx.arc(6, 0, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
       } else if (e.kind === 'javelin' || e.kind === 'cbolt') { // Wurfspeer (leichter Bogen, lang) bzw. Armbrustbolzen (kurz, dunkel, gerade)
         var jv = e.kind === 'javelin', jx = lerp(e.x1, e.x2, k) * T, jy = lerp(e.y1, e.y2, k) * T - (jv ? Math.sin(k * Math.PI) * 14 : 0);
         var jang = Math.atan2(e.y2 - e.y1, e.x2 - e.x1) + (jv ? (0.5 - k) * -0.6 * Math.cos(Math.atan2(e.y2 - e.y1, e.x2 - e.x1)) : 0);

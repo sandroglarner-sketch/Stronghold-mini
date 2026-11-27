@@ -15,6 +15,7 @@
       schwarzritter: { kaufen: 40 }, // Shop (22.11. 08:40: 40, vorher 25; Käufer zahlten einmalig die Differenz nach, server.js NACHZAHLEN)
       bank: { kaufen: 35 }, // Shop
       dieb: { kaufen: 30 }, // Shop (Diebeshaus)
+      feuerbogen: { kaufen: 25 }, // Shop (27.11.)
       prinzessin: { geschenk: true }, // Geschenk vom Entwickler (22.11.)
       ladder: { besiegt: 'tollpatsch' }, // Belohnung für den ersten Story-Gegner
       shield: { besiegt: 'hauptmannschildwall' }, // Belohnung für den zweiten Story-Gegner
