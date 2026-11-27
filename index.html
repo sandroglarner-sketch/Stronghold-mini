@@ -1402,7 +1402,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '0ef3aa4913'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'd5f36b6aae'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -3631,6 +3631,13 @@
       c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5;
       c.beginPath(); c.ellipse(r * 0.55 * cbk, r * 0.62, r * 0.3, r * 0.22, 0.4, 0, Math.PI * 2); c.fill(); c.stroke(); // Knie vorne
     }
+    if (type === 'raeuber') { // Bandit: kleiner zerfetzter schwarzer Umhang hinter dem Körper, flattert leicht
+      var rw = Math.sin(performance.now() / 240) * r * 0.06, RZ = [[-1.42, -0.32], [-1.22, -0.18], [-1.48, 0], [-1.22, 0.18], [-1.42, 0.32]];
+      c.beginPath(); c.moveTo(-r * 0.15, -r * 0.72); c.quadraticCurveTo(-r * 1.0, -r * 0.85 + rw, -r * 1.25, -r * 0.5 + rw);
+      RZ.forEach(function (q, i) { c.lineTo(r * q[0], r * q[1] + (i % 2 ? -rw : rw)); });
+      c.lineTo(-r * 1.25, r * 0.5 - rw); c.quadraticCurveTo(-r * 1.0, r * 0.85 - rw, -r * 0.15, r * 0.72); c.closePath();
+      c.fillStyle = '#1c1a18'; c.fill(); c.strokeStyle = '#000'; c.lineWidth = Math.max(1, r * 0.06); c.stroke();
+    }
     c.fillStyle = col;
     c.strokeStyle = 'rgba(0,0,0,0.45)';
     c.lineWidth = 2;
@@ -4331,12 +4338,22 @@
         c.restore();
       }
     } else if (type === 'archer' || type === 'feuerbogen') {
-      var fbg = type === 'feuerbogen'; // Feuerbogenschütze: russgeschwärzte Kappe, Feuertopf am Gürtel, brennende Pfeilspitze
-      if (fbg) { c.fillStyle = '#4a3a30'; c.beginPath(); c.arc(-r * 0.55, r * 0.6, r * 0.24, 0, Math.PI * 2); c.fill(); c.fillStyle = 'rgba(255,140,40,' + (0.55 + 0.25 * Math.sin(performance.now() / 90)) + ')'; c.beginPath(); c.arc(-r * 0.55, r * 0.6, r * 0.13, 0, Math.PI * 2); c.fill(); } // Glut im Feuertopf
-      c.fillStyle = fbg ? '#5a4636' : '#8a6a44'; // brauner Lederhelm wie Speersoldat/Speerwerfer
-      c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
-      if (fbg) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.arc(r * 0.1, -r * 0.15, r * 0.2, 0, Math.PI * 2); c.fill(); } // Russfleck
+      var fbg = type === 'feuerbogen'; // Feuerbogenschütze (Optik 27.11.): oranges Stirnband mit wehenden Enden, Feuerschale an der Seite, brennende Pfeilspitze
+      if (fbg) {
+        var fbw = Math.sin(performance.now() / 200) * r * 0.08;
+        c.strokeStyle = '#e8641e'; c.lineWidth = Math.max(1.5, r * 0.13); c.beginPath(); c.moveTo(-r * 0.5, -r * 0.1); c.quadraticCurveTo(-r * 0.85, -r * 0.2 + fbw, -r * 1.1, -r * 0.1 - fbw); c.moveTo(-r * 0.5, r * 0.05); c.quadraticCurveTo(-r * 0.85, r * 0.15 - fbw, -r * 1.05, r * 0.3 + fbw); c.stroke(); // Bandenden
+        c.fillStyle = '#6b4a2b'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.5, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke(); // Haar
+        c.strokeStyle = '#e8641e'; c.lineWidth = Math.max(2, r * 0.14); c.beginPath(); c.arc(-r * 0.05, 0, r * 0.47, -2.2, 2.2); c.stroke(); // Stirnband
+        var fsx = r * 0.15, fsy = r * 1.05, fsz = 0.85 + 0.15 * Math.sin(performance.now() / 60); // Feuerschale seitlich vorne
+        c.fillStyle = '#4a4f54'; c.beginPath(); c.arc(fsx, fsy, r * 0.32, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#2c2f33'; c.lineWidth = 1.2; c.stroke();
+        c.fillStyle = 'rgba(255,140,40,0.3)'; c.beginPath(); c.arc(fsx, fsy, r * 0.42 * fsz, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#e8641e'; c.beginPath(); c.arc(fsx, fsy, r * 0.22 * fsz, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffd25a'; c.beginPath(); c.arc(fsx, fsy, r * 0.11, 0, Math.PI * 2); c.fill();
+      } else {
+        c.fillStyle = '#8a6a44'; // brauner Lederhelm wie Speersoldat/Speerwerfer
+        c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+      }
       var bspan = 1.0 - 0.12 * A.tens; // gespannter Bogen biegt sich etwas mehr
       c.strokeStyle = P.wood; c.lineWidth = Math.max(2, r * 0.2);
       c.beginPath(); c.arc(r * 0.3, 0, r * 1.2, -bspan, bspan); c.stroke();
@@ -4386,10 +4403,12 @@
       c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
       c.restore();
     } else if (type === 'raeuber') {
-      // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)
-      c.fillStyle = '#34302c'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); // Kapuze
-      c.fillStyle = '#c99a72'; c.beginPath(); c.arc(r * 0.28, 0, r * 0.22, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
-      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.2, -0.9, 0.9); c.lineTo(r * 0.32, 0); c.fill(); // Halstuch
+      // Bandit (Optik 27.11.): grosse schwarze spitze Kapuze (Zipfel nach hinten), nur die Augen leuchten, rotes Halstuch, Dolch (Stoss nach vorn)
+      c.fillStyle = '#1f1c1a'; c.strokeStyle = '#000'; c.lineWidth = 1.5;
+      c.beginPath(); c.arc(-r * 0.02, 0, r * 0.7, -Math.PI * 0.78, Math.PI * 0.78); c.lineTo(-r * 1.08, 0); c.closePath(); c.fill(); c.stroke(); // Kapuze
+      c.fillStyle = '#0d0c0b'; c.beginPath(); c.arc(r * 0.2, 0, r * 0.36, -Math.PI / 2, Math.PI / 2); c.fill(); // Schatten in der Kapuze
+      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.22, -1.0, 1.0); c.lineTo(r * 0.3, 0); c.fill(); // Halstuch
+      c.fillStyle = '#f0e6c8'; c.beginPath(); c.arc(r * 0.38, -r * 0.09, r * 0.035, 0, Math.PI * 2); c.arc(r * 0.38, r * 0.09, r * 0.035, 0, Math.PI * 2); c.fill(); // Augen im Dunkeln
       c.save(); c.translate(A.off, 0);
       c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.16); c.beginPath(); c.moveTo(r * 0.35, r * 0.55); c.lineTo(r * 0.7, r * 0.55); c.stroke(); // Griff
       c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 0.7, r * 0.45); c.lineTo(r * 1.35, r * 0.55); c.lineTo(r * 0.7, r * 0.65); c.closePath(); c.fill(); // Klinge
