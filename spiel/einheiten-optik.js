@@ -198,13 +198,6 @@
       c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5;
       c.beginPath(); c.ellipse(r * 0.55 * cbk, r * 0.62, r * 0.3, r * 0.22, 0.4, 0, Math.PI * 2); c.fill(); c.stroke(); // Knie vorne
     }
-    if (type === 'raeuber') { // Bandit: kleiner zerfetzter schwarzer Umhang hinter dem Körper, flattert leicht
-      var rw = Math.sin(performance.now() / 240) * r * 0.06, RZ = [[-1.42, -0.32], [-1.22, -0.18], [-1.48, 0], [-1.22, 0.18], [-1.42, 0.32]];
-      c.beginPath(); c.moveTo(-r * 0.15, -r * 0.72); c.quadraticCurveTo(-r * 1.0, -r * 0.85 + rw, -r * 1.25, -r * 0.5 + rw);
-      RZ.forEach(function (q, i) { c.lineTo(r * q[0], r * q[1] + (i % 2 ? -rw : rw)); });
-      c.lineTo(-r * 1.25, r * 0.5 - rw); c.quadraticCurveTo(-r * 1.0, r * 0.85 - rw, -r * 0.15, r * 0.72); c.closePath();
-      c.fillStyle = '#1c1a18'; c.fill(); c.strokeStyle = '#000'; c.lineWidth = Math.max(1, r * 0.06); c.stroke();
-    }
     c.fillStyle = col;
     c.strokeStyle = 'rgba(0,0,0,0.45)';
     c.lineWidth = 2;
@@ -970,12 +963,10 @@
       c.fillStyle = '#f1c9a5'; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill(); // Hand
       c.restore();
     } else if (type === 'raeuber') {
-      // Bandit (Optik 27.11.): grosse schwarze spitze Kapuze (Zipfel nach hinten), nur die Augen leuchten, rotes Halstuch, Dolch (Stoss nach vorn)
-      c.fillStyle = '#1f1c1a'; c.strokeStyle = '#000'; c.lineWidth = 1.5;
-      c.beginPath(); c.arc(-r * 0.02, 0, r * 0.7, -Math.PI * 0.78, Math.PI * 0.78); c.lineTo(-r * 1.08, 0); c.closePath(); c.fill(); c.stroke(); // Kapuze
-      c.fillStyle = '#0d0c0b'; c.beginPath(); c.arc(r * 0.2, 0, r * 0.36, -Math.PI / 2, Math.PI / 2); c.fill(); // Schatten in der Kapuze
-      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.22, -1.0, 1.0); c.lineTo(r * 0.3, 0); c.fill(); // Halstuch
-      c.fillStyle = '#f0e6c8'; c.beginPath(); c.arc(r * 0.38, -r * 0.09, r * 0.035, 0, Math.PI * 2); c.arc(r * 0.38, r * 0.09, r * 0.035, 0, Math.PI * 2); c.fill(); // Augen im Dunkeln
+      // Bandit: dunkle Kapuze, rotes Halstuch über Mund und Nase, Dolch (Stoss nach vorn)
+      c.fillStyle = '#34302c'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1.5; c.stroke(); // Kapuze
+      c.fillStyle = '#c99a72'; c.beginPath(); c.arc(r * 0.28, 0, r * 0.22, -Math.PI / 2, Math.PI / 2); c.fill(); // Gesicht
+      c.fillStyle = '#a3271f'; c.beginPath(); c.arc(r * 0.32, 0, r * 0.2, -0.9, 0.9); c.lineTo(r * 0.32, 0); c.fill(); // Halstuch
       c.save(); c.translate(A.off, 0);
       c.strokeStyle = '#5a3d22'; c.lineWidth = Math.max(2, r * 0.16); c.beginPath(); c.moveTo(r * 0.35, r * 0.55); c.lineTo(r * 0.7, r * 0.55); c.stroke(); // Griff
       c.fillStyle = P.steel; c.beginPath(); c.moveTo(r * 0.7, r * 0.45); c.lineTo(r * 1.35, r * 0.55); c.lineTo(r * 0.7, r * 0.65); c.closePath(); c.fill(); // Klinge
