@@ -150,7 +150,7 @@
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
     if (d.karawane) { var ku = units[units.length - 1]; ku.x = x; ku.y = (b.y1 + b.y2) / 2 - SPAWN_BAND / 2; } // Karawane: immer am selben Ort, oberes Ende des Spawn-Bands (Zufall wird trotzdem gezogen, gleiche Folge wie vorher)
-    if (d.passive && !d.karawane && !d.holz) pickSpot(units[units.length - 1]);
+    if (d.passive && !d.karawane && !d.holz && !d.buerger) pickSpot(units[units.length - 1]);
     if (d.range > 1.5 && !d.king && !d.ram) seekSlot(units[units.length - 1]); // Fernkämpfer: Turmplatz suchen (welche Typen wo stehen dürfen, steht in WALL.tower.levels)
     if (d.dig) units[units.length - 1].dig = pickDigTarget(team);
     if (d.ladder || d.belfry) { // läuft direkt zur gegnerischen Mauer
@@ -249,7 +249,7 @@
   }
 
   // Spielprotokoll: wann welche Seite was gekauft hat (f Bauer, s Speer, b Bogen, r Reiter, m Magier, k Ritter)
-  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', schwarzritter: 'K', raeuber: 'R', prinzessin: 'P' };
+  var LOGKEY = { farmer: 'f', spear: 's', archer: 'b', rider: 'r', mage: 'm', knight: 'k', digger: 'g', wall: 'w', ram: 'x', shield: 'h', catapult: 'p', baliste: 'a', sword: 'v', ladder: 'l', belfry: 't', trebuchet: 'u', javelin: 'j', crossbow: 'c', onager: 'o', schmiede: 'n', adel: 'd', bank: 'y', dieb: 'z', kirche: 'e', karawane: 'q', brand: 'i', fackel: 'F', holzfaeller: 'H', buerger: 'B', schwarzritter: 'K', raeuber: 'R', prinzessin: 'P' };
   var rec = [[], []], gaveUp = false;
 
   // Mauer: Standort, Anlegen und die Arbeiter, die sie bauen oder reparieren
@@ -258,6 +258,14 @@
   function wallD(team, x, y) {
     var b = bases[team];
     return hyp(x - clamp(x, b.x1, b.x2), y - clamp(y, b.y1, b.y2));
+  }
+  function buergerZiel(u) { // Bürger: zufälliger Punkt im eigenen Mauerbereich (nicht in der Burg, nicht am Rand), höchstens 3 Kacheln weg
+    var b = bases[u.team], R = WALL.dist - 0.5;
+    for (var k = 0; k < 12; k++) {
+      var x = clamp(u.x + (simRand() * 2 - 1) * 3, 0.5, W - 0.5), y = clamp(u.y + (simRand() * 2 - 1) * 3, 0.5, H - 0.5), wd = wallD(u.team, x, y);
+      if (wd >= 0.6 && wd <= R && hyp(x - u.x, y - u.y) >= 0.8) { u.bx = x; u.by = y; return; }
+    }
+    u.bx = u.team === 0 ? b.x2 + 1 : b.x1 - 1; u.by = (b.y1 + b.y2) / 2; // nichts gefunden: vor die Burg
   }
   function wallOut(w, x, y) { return wallD(w.team, x, y) > WALL.dist; }
   // Blockiert die Mauer des Gegners den Weg oder Schuss? Nur fertige, nur von außen nach innen.

@@ -385,6 +385,22 @@
         }
         continue;
       }
+      if (d.buerger) { // Bürger: schlendert im eigenen Mauerbereich umher, bleibt ab und zu stehen (kratzt sich am Kopf, schaut umher); alle alle s +gold Gold
+        var BG = d.buerger;
+        u.bT = (u.bT || 0) + dt;
+        if (u.bT >= BG.alle) { u.bT -= BG.alle; if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + BG.gold); effects.push({ kind: 'text', text: '+' + BG.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 }); } }
+        if (u.bz === undefined) { u.bz = 'geht'; u.bzT = 0; buergerZiel(u); }
+        u.bzT += dt;
+        if (u.bz === 'geht') {
+          var bdx = u.bx - u.x, bdy = u.by - u.y, bdl = hyp(bdx, bdy);
+          if (bdl > 0.05 && u.bzT < 15) { var bv = umGebaeude(u, bdx / bdl, bdy / bdl, null), bs = Math.min(spd * dt, bdl); u.x += bv.x * bs; u.y += bv.y * bs; if (Math.abs(bv.x) > 0.1) u.face = bv.x > 0 ? 1 : -1; }
+          else if (simRand() < BG.halt) { u.bz = 'kratzt'; u.bzT = 0; }
+          else { u.bzT = 0; buergerZiel(u); }
+        } else if (u.bz === 'kratzt' && u.bzT >= BG.kratzen) { u.bz = 'schaut'; u.bzT = 0; }
+        else if (u.bz === 'schaut' && u.bzT >= BG.schauen) { u.bz = 'geht'; u.bzT = 0; buergerZiel(u); }
+        u.settled = { z: u.bz, t: u.bzT }; // nur für die Zeichnung
+        continue;
+      }
       if (d.holz) { // Holzfäller: zum nächsten Baum mit Holz, fällen (alle 3 s +1 Gold), ist der Baum leer, zum nächsten
         var HZ = d.holz, hb = u.baum !== undefined ? baeume[u.baum] : null;
         if (!hb || hb.holz <= 0) { // neuen Baum suchen: der nächste mit Holz und freiem Platz (höchstens proBaum Holzfäller, beide Teams zusammen)

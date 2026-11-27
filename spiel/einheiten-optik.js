@@ -188,7 +188,7 @@
       c.beginPath(); c.moveTo(-r * 1.25, 0); c.lineTo(-r * 1.8, r * 0.3); c.stroke();
     }
 
-    var bodyR = type === 'knight' || type === 'schwarzritter' ? r * 0.9 : type === 'raeuber' ? r * 0.85 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
+    var bodyR = type === 'knight' || type === 'schwarzritter' ? r * 0.9 : type === 'raeuber' ? r * 0.85 : type === 'rider' ? r * 0.6 : type === 'karawane' ? r * 0.5 : (type === 'ram' || type === 'catapult' || type === 'shield' || type === 'baliste' || type === 'king' || type === 'kingbow' || type === 'belfry' || type === 'trebuchet' || type === 'onager') ? 0 : CONFIG.units[type] && CONFIG.units[type].gebaeude ? 0 : type === 'farmer' || type === 'holzfaeller' || type === 'buerger' ? r * 0.82 : r * 0.9; // Bauer: schmalerer Rand in Teamfarbe; Gebäude ohne Körper
     // Armbrustschütze beim Einrichten (settled = Aufbaugrad 0..1): kniet ab (Körper tiefer = kleiner, Knie vorne, Fuss hinten) und kurbelt die Armbrust
     var cbk = type === 'crossbow' && typeof settled === 'number' ? Math.min(1, settled * 4) : 0, cbc = type === 'crossbow' && typeof settled === 'number' && settled > 0 && settled < 1;
     if (cbk > 0) {
@@ -773,6 +773,14 @@
           }
         }
       }
+    } else if (type === 'buerger') {
+      // Bürger: brauner Filzhut mit Krempe; beim Kratzen (settled.z = 'kratzt') fährt die Hand zum Kopf und kratzt
+      var BZ = settled && typeof settled === 'object' ? settled : { z: 'geht', t: 0 }, bkr = BZ.z === 'kratzt' ? Math.max(0, Math.min(1, BZ.t / 0.2, (CONFIG.units.buerger.buerger.kratzen - BZ.t) / 0.2)) : 0;
+      c.fillStyle = '#7a5530'; c.beginPath(); c.arc(0, 0, r * 0.7, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke(); // Krempe
+      c.fillStyle = '#5c3d20'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.4, 0, Math.PI * 2); c.fill(); // Hutkopf
+      c.fillStyle = '#c9a227'; c.fillRect(-r * 0.12, -r * 0.42, r * 0.1, r * 0.84); // Hutband
+      var bhx = r * 0.3 * (1 - bkr) + r * 0.05 * bkr, bhy = r * 0.75 * (1 - bkr) + (r * 0.35 + Math.sin(performance.now() / 1000 * 25) * r * 0.08) * bkr;
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(bhx, bhy, r * 0.17, 0, Math.PI * 2); c.fill(); // Hand (beim Kratzen am Kopf)
     } else if (type === 'holzfaeller') {
       // Holzfäller: rote Wollmütze, Bart, Axt; beim Fällen schwingt er die Axt (settled.hackt)
       var HS = settled && typeof settled === 'object' ? settled : { hackt: false }, hsw = HS.hackt ? Math.sin(performance.now() / 1000 * Math.PI * 2 / 1.0) : 0;

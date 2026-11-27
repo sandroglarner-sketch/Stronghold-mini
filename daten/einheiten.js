@@ -9,6 +9,9 @@
       // Karawane (Wirtschaft): 1. kostet 5 Gold, jede weitere 5 mehr (stirbt eine, sinkt der Preis wieder); geht (Tempo 0.8) zur Mitte unterhalb des Teichs, füllt in 3 s (Annahme) alle 4 Töpfe mit Wasser, geht zurück zur Burg: +10 Gold; dann wieder von vorn.
       karawane: { cat: 'eco', name: 'Karawane', cost: 10, staerke: 0, hp: 3, atk: 0, range: 0, speed: 0.9, cd: 1, r: 0.34, push: 0.38, passive: true, karawane: { gold: 20, fuellen: 2, toepfe: 4, tempoVoll: 0.6 } }, // 22.11.: immer 10 Gold, bringt 20 Gold pro Gang, hat einen Körper (push)
       // Holzfäller (Wirtschaft): 6 Gold, hat einen Körper (steht anderen im Weg), höchstens 2 pro Baum; geht zum nächsten freien Baum (CONFIG.BAEUME) und fällt ihn: alle 5 s +2 Gold; ein Baum gibt höchstens 20 Gold, dann bleibt der Stumpf (für den Rest des Spiels)
+      // Bürger (Wirtschaft, 27.11.): 2 Gold, jeder weitere lebende Bürger +2 (steigt); schlendert langsam im eigenen Mauerbereich umher, bleibt ab und zu stehen (halt = Anteil),
+      // kratzt sich kratzen s am Kopf, schaut schauen s umher, geht weiter; alle 5 s +1 Gold
+      buerger: { cat: 'eco', name: 'Bürger', cost: 2, steigt: 2, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.4, cd: 1, r: 0.25, passive: true, buerger: { alle: 5, gold: 1, halt: 0.5, kratzen: 1, schauen: 2 } },
       holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 6, staerke: 0, hp: 2, atk: 0, range: 0, speed: 1, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2, proBaum: 2 } },
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
       archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
