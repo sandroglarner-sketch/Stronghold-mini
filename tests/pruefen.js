@@ -110,6 +110,16 @@ const TESTS = {
     var nachher = [f.team, s.team].join('/');
     return vorher === 'false/1/1' && nachher === '1/0' ? true : 'bei 4 Kacheln (zaubert?/Bauer/Speer): ' + vorher + ', bei 2,8: ' + nachher;
   },
+  'Eismagier: Getroffene 3 s auf 50 % Tempo und 50 % Angriffsgeschwindigkeit': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(0, 'mage'); X.spawn(1, 'knight');
+    var m = X.units[0], k = X.units[1];
+    for (var i = 0; i < 40 && !(k.slow > 0); i++) { m.x = 8; m.y = 5; k.x = 11; k.y = 5; k.cd = 99; X.upd(0.05); } // Frost trifft den Ritter
+    var ok1 = k.slow > 0 && k.slowF === 0.5 && k.slowA === 0.5;
+    m.hp = 0; X.spawn(0, 'spear'); var s = X.units[X.units.length - 1]; s.x = k.x + 0.6; s.y = k.y; s.cd = 99; k.cd = 0;
+    X.upd(0.01); // Ritter schlägt zu: nächster Schlag erst nach 2 s statt 1 s
+    return ok1 && Math.abs(k.cd - 2) < 0.02 ? true : 'gebremst ' + k.slow + '/' + k.slowF + '/' + k.slowA + ', Nachladen ' + k.cd;
+  },
   'Feuerbogenschütze: trifft auf 4 Kacheln, Flächenschaden 1 im Radius 0,8': function (X) {
     X.reset(); X.units.length = 0;
     X.spawn(0, 'feuerbogen'); X.spawn(1, 'knight'); X.spawn(1, 'knight'); X.spawn(1, 'knight');

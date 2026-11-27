@@ -30,7 +30,7 @@
       var sG = CONFIG.units[sv.type] && CONFIG.units[sv.type].gebaeude; // Gebäude: Abstand zum Rand (w x h), nicht zur Mitte (wie bei der Burg)
       if ((sG ? hyp(Math.max(0, Math.abs(sv.x - cx) - sG.w / 2), Math.max(0, Math.abs(sv.y - cy) - sG.h / 2)) : hyp(sv.x - cx, sv.y - cy)) > d.splash) continue;
       if (sv !== exclude) { hurt(sv, d.atk, d); sv.hit = 0.15; sv.lastHit = clock; }
-      if (d.slow) { sv.slow = d.slow.secs; sv.slowF = d.slow.factor; } // Tempo während der Verlangsamung
+      if (d.slow) { sv.slow = d.slow.secs; sv.slowF = d.slow.factor; sv.slowA = d.slow.atk || 1; } // Tempo und Angriffsgeschwindigkeit während der Verlangsamung
     }
   }
   // Morgenstern (Schwarzer Ritter): trifft zusätzlich jede gegnerische Einheit im Bogen d.kegel.winkel (Mitte = Richtung zum Ziel),
@@ -322,7 +322,7 @@
         u.atSpot = true; u.setupT = (u.setupT || 0) + dt;
         if (u.setupT >= d.setup) {
           u.ready = true; u.aimX = tsp2.tx; u.aimY = tsp2.ty;
-          if (u.cd <= 0) { u.cd = d.cd * (u.cdm || 1); u.atkT = clock; u.face = tsp2.tx > u.x ? 1 : -1; fireMulti(u, d, tsp2.tx, tsp2.ty); }
+          if (u.cd <= 0) { u.cd = d.cd * (u.cdm || 1) / (u.slow > 0 ? (u.slowA || 1) : 1); u.atkT = clock; u.face = tsp2.tx > u.x ? 1 : -1; fireMulti(u, d, tsp2.tx, tsp2.ty); }
         }
         continue;
       }
@@ -627,7 +627,7 @@
       if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
       u.warBereit = u.ready;
       if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && !(d.bekehren && !tgt)) {
-        u.cd = d.cd * (u.cdm || 1);
+        u.cd = d.cd * (u.cdm || 1) / (u.slow > 0 ? (u.slowA || 1) : 1);
         u.atkT = clock; var lp = launchPt(u, d, tx, ty);
         if (Math.abs(tx - u.x) > 0.05) u.face = tx > u.x ? 1 : -1;
         if (d.delay) {
