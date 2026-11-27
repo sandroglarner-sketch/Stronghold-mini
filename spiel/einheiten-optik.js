@@ -151,7 +151,7 @@
     }
     var A = attackPose(type, at, r);
     if (type === 'knight' || type === 'schwarzritter') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
-    var col = team === 0 ? P.me : P.foe;
+    var col = farbeVon(team); // team = Spieler (Duokampf: 2 violett, 3 orange)
     c.save();
     c.translate(x, y);
     c.fillStyle = P.shade;

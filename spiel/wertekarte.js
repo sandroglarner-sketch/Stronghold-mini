@@ -52,6 +52,7 @@
     if (e.detail > 0) b.blur();
   });
   ovBtn.addEventListener('click', function () {
+    if (duoOvBtn()) return; // Duokampf: Partner suchen / Suche abbrechen
     if (pvp.searching) { pvpCancel(); return; }
     if (sozial.forderungRaus) { forderungAbbrechen(); return; }
     if (ovZumMenu) { zeigeMenu(); return; }

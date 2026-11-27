@@ -191,7 +191,10 @@
     }
 
     // Goldmenge in der Burg (unter dem Bergfried)
-    if (gold && !(tut.on && b.team === 1)) coinText(ctx, String(Math.floor(gold[b.team] - (b.team === ME ? deployGold() : 0))), cx, y + h * 0.79, 14, '#ffffff', 'rgba(0,0,0,0.55)'); // im Tutorial keine Goldanzeige beim Gegner
+    if (gold && zweierTeam(b.team)) spielerIm(b.team).forEach(function (p) { // Duokampf: Gold beider Spieler am unteren Rand, links der erste, rechts der Partner (Rand in Spielerfarbe)
+      coinText(ctx, String(Math.floor(gold[p] - (p === MP ? deployGold() : 0))), cx + (p < 2 ? -0.19 : 0.19) * w, y + h * 0.93, 12, '#ffffff', farbeVon(p));
+    });
+    else if (gold && !(tut.on && b.team === 1)) coinText(ctx, String(Math.floor(gold[duo.on ? spielerIm(b.team)[0] : b.team] - (b.team === ME ? deployGold() : 0))), cx, y + h * 0.79, 14, '#ffffff', 'rgba(0,0,0,0.55)'); // im Tutorial keine Goldanzeige beim Gegner
     if (tut.on && tut.hlGold && b.team === 0) { // Tutorial: Schatzkammer (Gold in der Burg) grün umranden
       var gk = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       ctx.save(); ctx.strokeStyle = '#1fae4b'; ctx.lineWidth = 3 + 2 * gk;
@@ -583,22 +586,22 @@
         ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
       if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
-      if (u.type === 'king') kZust[u.team] = { zieh: u.bogenT || 0, nah: u.waffeZ || 0 }; // was der König gerade in der Hand hat
+      if (u.type === 'king') kZust[pOf(u)] = { zieh: u.bogenT || 0, nah: u.waffeZ || 0 }; // was der König gerade in der Hand hat
       if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
         var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
         // alle 15 s kratzt er sich am Kopf (nur Darstellung, 2,4 s = halbes Tempo, nur mit leeren Händen; Team 1 um 5,3 s versetzt)
-        var kz = (clock + u.team * 5.3) % KRATZ.alle;
-        kKratz[u.team] = kz < KRATZ.dauer && !(u.bogenT > 0) && !(u.waffeZ > 0) ? kz / KRATZ.dauer : 0;
+        var kz = (clock + pOf(u) * 5.3) % KRATZ.alle;
+        kKratz[pOf(u)] = kz < KRATZ.dauer && !(u.bogenT > 0) && !(u.waffeZ > 0) ? kz / KRATZ.dauer : 0;
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
-        drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
+        drawUnit(ctx, 'kingbow', 0, 0, r, pOf(u), 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
       } else if (unsichtbar(u)) { // unsichtbarer Bandit: Deckkraft schwankt zwischen 50 % und 80 %
         ctx.save(); ctx.globalAlpha = 0.65 + 0.15 * Math.sin(performance.now() / 1000 * 3 + u.id);
-        drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
+        drawUnit(ctx, u.type, u.x * T, u.y * T, r, pOf(u), u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
         ctx.restore();
-      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
+      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, pOf(u), u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
       if (u.slow > 0) { // Frost auf der Einheit: heller Reif darüber und kleine Eiskristalle rundherum (blendet in der letzten halben Sekunde aus)
         var fsl = Math.min(1, u.slow / 0.5), fsx = u.x * T, fsy = u.y * T, fsn = performance.now() / 1000;
@@ -616,7 +619,7 @@
       if (u.hp < u.max && !(u.fade > 0)) {
         var bw = 30, bx = u.x * T - bw / 2, by = u.y * T - r - 12;
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
-        ctx.fillStyle = u.team === 0 ? P.me : P.foe; ctx.fillRect(bx, by, bw * u.hp / u.max, 5);
+        ctx.fillStyle = farbeVon(pOf(u)); ctx.fillRect(bx, by, bw * u.hp / u.max, 5);
       }
     }
     drawEffects();

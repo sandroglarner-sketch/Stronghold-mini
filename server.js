@@ -459,6 +459,7 @@ class Client {
       return;
     }
     if (m.k === 'cancel') { dequeue(this); return; }
+    if (m.k.startsWith('duo_') || (this.duoMa && (m.k === 't' || m.k === 'ergebnis'))) { duoNachricht(this, m); return; } // Duokampf (27.11.)
     if (this.peer && m.k === 't') { // Spielschritt-Nachrichten 1:1 weitergeben
       const peer = this.peer;
       if (TEST_DELAY > 0) setTimeout(() => peer.sendRaw(text), TEST_DELAY); else peer.sendRaw(text);
@@ -485,6 +486,7 @@ class Client {
     matchAus(this.match);
     botAus(this, 'verlassen');
     if (this.schaut) zuschauenAus(this);
+    duoWeg(this);
     if (this.user) { const set = online.get(this.user.id); if (set) { set.delete(this); if (!set.size) online.delete(this.user.id); } }
     clients.delete(this);
     broadcastInfo();
@@ -495,7 +497,7 @@ const clients = new Set();
 let queue = [];
 
 function enqueue(c) {
-  if (c.peer || c.queued) return;
+  if (c.peer || c.queued || c.duo || c.duoMa) return;
   c.queued = true;
   queue.push(c);
   tryMatch();
@@ -530,6 +532,137 @@ function starteMatch(a, b) {
   b.send({ k: 'match', me: 1, seed, acc, frei, namen, elos, koenige });
   broadcastInfo();
 }
+// ---------- Duokampf (27.11.): 2 gegen 2 oder 2 gegen einen zufälligen Story-Bot ----------
+// Ablauf: Partner finden (zufällig über duoSolo oder Einladung eines Freundes) -> Team sucht Gegner (duoTeams). Klicken beide auf «Zufälliger Bot»,
+// spielen sie gegen einen Bot (den würfeln die Browser aus dem Startwert aus). Plätze: Team A = Spieler 0 und 2, Team B = 1 und 3 (gegen den Bot: 1 = Bot).
+// Der Server leitet die Spielschritte an alle anderen weiter (mit Spielernummer p). Wer geht, gibt auf: ab dem Schritt nach seinem letzten (ab) rechnen alle ohne ihn.
+let duoSolo = [], duoTeams = [];
+function duoDeck(x) { return Array.isArray(x) ? x.filter((t) => typeof t === 'string' && /^[a-z0-9_]{1,24}$/.test(t)).slice(0, 12) : []; }
+function duoProfil(c) { return { name: c.user ? c.user.name : 'Gast', koenig: c.koenig || 'standard', deck: c.duoDeck || [] }; }
+function duoListen() { duoSolo = duoSolo.filter((c) => c.alive && c.duoSucht); duoTeams = duoTeams.filter((T) => !T.aus && T.a.alive && T.b.alive); }
+function duoInfoSenden() {
+  duoListen(); broadcastInfo();
+  const info = { k: 'duo_info', solo: duoSolo.length, teams: duoTeams.length, online: clients.size };
+  for (const c of duoSolo) c.send(info);
+  for (const T of duoTeams) { T.a.send(info); T.b.send(info); }
+}
+async function duoDaten(c, m) { // Deck, König, freigeschaltete Karten (wie bei der Warteschlange)
+  c.koenig = koenigId(m.koenig); c.duoDeck = duoDeck(m.deck);
+  if (typeof m.token === 'string' && m.token.length < 4096) {
+    const u = await kontoUser(m.token).catch(() => null); c.acc = !!u;
+    c.frei = u && KONTO_SECRET ? await freischaltungen(u.id).catch(() => freiGast([])) : freiGast(m.besiegt);
+  } else { c.acc = false; c.frei = freiGast(m.besiegt); }
+}
+function duoTeamBilden(a, b, art) {
+  a.duoSucht = b.duoSucht = false;
+  const T = { a, b, art, bot: [false, false], aus: false };
+  a.duo = b.duo = T;
+  a.send({ k: 'duo_team', partner: duoProfil(b) }); b.send({ k: 'duo_team', partner: duoProfil(a) });
+  duoTeams.push(T);
+  duoPaaren();
+}
+function duoPaaren() {
+  duoListen();
+  while (duoSolo.length >= 2) { const a = duoSolo.shift(), b = duoSolo.shift(); duoTeamBilden(a, b, 'zufall'); }
+  duoListen();
+  while (duoTeams.length >= 2) { const A = duoTeams.shift(), B = duoTeams.shift(); duoStart([A.a, B.a, A.b, B.b], false, [A, B]); }
+  duoInfoSenden();
+}
+function duoStart(sitze, bot, teams) {
+  teams.forEach((T) => { T.aus = true; T.a.duo = T.b.duo = null; });
+  duoTeams = duoTeams.filter((T) => !T.aus);
+  const seed = crypto.randomInt(1, 2147483647), spieler = bot ? [0, 1, 2] : [0, 1, 2, 3];
+  const leer = { name: 'Bot', koenig: 'standard', deck: [] }, pr = sitze.map((c) => c ? duoProfil(c) : leer);
+  const daten = { k: 'duo_match', seed, bot, spieler, namen: pr.map((x) => x.name), koenige: pr.map((x) => x.koenig), decks: pr.map((x) => x.deck),
+    frei: sitze.map((c) => (c && c.frei) || []), acc: sitze.map((c) => !!(c && c.acc)) };
+  // log = nur Schritte mit Käufen [p, t, cmds]; letzt = letzter gemeldeter Schritt je Spieler (Zuschauer: bis dorthin ohne Eintrag = kein Kauf)
+  const ma = { duo: true, sitze, bot, seed, letzt: {}, weg: {}, start: Date.now(), namen: pr.map((x) => x.name), daten, log: [], zuschauer: new Set() };
+  sitze.forEach((c, i) => { if (!c) return; c.duoMa = ma; c.sitz = i; c.send(Object.assign({ sitz: i }, daten)); });
+  broadcastInfo();
+}
+function duoTeamAuf(c, grund) { // c verlässt sein Team (vor der Partie): der Partner sucht weiter (zufällig) oder geht zurück ins Menü (Freund)
+  const T = c.duo; if (!T) return;
+  T.aus = true; T.a.duo = T.b.duo = null;
+  const p = T.a === c ? T.b : T.a;
+  duoTeams = duoTeams.filter((x) => x !== T);
+  if (p.alive) {
+    if (T.art === 'zufall') { p.duoSucht = true; duoSolo.push(p); p.send({ k: 'duo_partnerweg', weiter: true, grund }); duoPaaren(); }
+    else p.send({ k: 'duo_partnerweg', weiter: false, grund });
+  }
+  duoInfoSenden();
+}
+function duoAus(ma) { // alle Spieler weg: Zuschauer verlassen die Partie
+  if (ma.aus || ma.sitze.some((o) => o && o.alive && o.duoMa === ma)) return;
+  ma.aus = true;
+  for (const s of ma.zuschauer) { s.schaut = null; s.send({ k: 'zende' }); }
+  ma.zuschauer.clear();
+}
+function duoWeg(c) { // Verbindung weg oder Partie verlassen
+  c.duoSucht = false; duoSolo = duoSolo.filter((x) => x !== c);
+  if (c.duo) duoTeamAuf(c, 'weg');
+  const ma = c.duoMa; if (!ma) return;
+  c.duoMa = null;
+  const p = c.sitz;
+  if (ma.weg[p] === undefined) {
+    ma.weg[p] = (ma.letzt[p] === undefined ? 6 : ma.letzt[p]) + 1; // ab diesem Schritt ohne ihn (vorher kam alles schon an)
+    const w = { k: 'duo_weg', p, ab: ma.weg[p] };
+    ma.sitze.forEach((o) => { if (o && o !== c && o.alive && o.duoMa === ma) o.send(w); });
+    for (const s of ma.zuschauer) s.send(w);
+  }
+  duoAus(ma);
+  broadcastInfo();
+}
+async function duoNachricht(c, m) {
+  const ma = c.duoMa;
+  if (m.k === 't') { // Spielschritt an alle anderen (mit Spielernummer)
+    if (!ma || typeof m.t !== 'number') return;
+    const p = c.sitz;
+    if (ma.letzt[p] === undefined || m.t > ma.letzt[p]) ma.letzt[p] = m.t;
+    const o = { k: 't', t: m.t, p, c: Array.isArray(m.c) ? m.c.filter((x) => typeof x === 'string' && x.length < 30).slice(0, 6) : [] };
+    if (typeof m.ht === 'number' && typeof m.h === 'number') { o.ht = m.ht; o.h = m.h; }
+    const txt = JSON.stringify(o);
+    ma.sitze.forEach((x) => { if (x && x !== c && x.alive && x.duoMa === ma) { if (TEST_DELAY > 0) setTimeout(() => x.sendRaw(txt), TEST_DELAY); else x.sendRaw(txt); } });
+    if (o.c.length && ma.log.length < 50000) ma.log.push([p, m.t, o.c]); // für Zuschauer, die später kommen
+    if (ma.zuschauer.size) { const z = JSON.stringify({ k: 'zt', p, t: m.t, c: o.c }); for (const s of ma.zuschauer) s.sendRaw(z); }
+    return;
+  }
+  if (m.k === 'ergebnis') return; // Duokampf: keine Belohnung (keine Edelsteine, keine Elo)
+  if (m.k === 'duo_suche') { // zufälligen Partner suchen
+    if (SPIEL_V && m.v !== SPIEL_V) { c.send({ k: 'alt', v: SPIEL_V }); return; }
+    if (c.peer || c.queued || c.duo || c.duoMa || c.duoSucht) return;
+    c.duoSucht = true; // gleich vormerken (die Kontoprüfung dauert)
+    await duoDaten(c, m);
+    if (!c.alive || !c.duoSucht) return;
+    duoSolo.push(c); duoPaaren();
+    return;
+  }
+  if (m.k === 'duo_ab') { c.duoSucht = false; duoSolo = duoSolo.filter((x) => x !== c); if (c.duo) duoTeamAuf(c, 'ab'); duoInfoSenden(); return; }
+  if (m.k === 'duo_verlassen') { duoWeg(c); return; } // laufende Partie verlassen (Verbindung bleibt)
+  if (m.k === 'duo_bot') { // «Zufälliger Bot»: klicken beide, geht es gegen einen Bot
+    const T = c.duo; if (!T || T.aus) return;
+    const i = T.a === c ? 0 : 1, p = i ? T.a : T.b;
+    T.bot[i] = !!m.an;
+    p.send({ k: 'duo_bot', an: T.bot[i] });
+    if (T.bot[0] && T.bot[1]) duoStart([T.a, null, T.b, null], true, [T]);
+    return;
+  }
+  if (m.k === 'duo_daten') { await duoDaten(c, m); return; } // vor einer Einladung (Deck, König)
+  if (m.k === 'duo_fordern') { // Freund zum Duokampf einladen (wie Herausfordern)
+    if (!c.user || !KONTO_SECRET) return c.send({ k: 'sozialfehler', text: 'Dafür brauchst du ein Konto.' });
+    const ziel = String(m.an || ''), v = verbindung(ziel);
+    if (!(await sindFreunde(c.user.id, ziel))) return;
+    if (!v || v.peer || v.queued || v.duo || v.duoMa || v.duoSucht || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
+    if (c.peer || c.duo || c.duoMa) return;
+    if (SPIEL_V && (c.v !== SPIEL_V || v.v !== SPIEL_V)) return c.send({ k: 'forderung_aus', grund: 'version' });
+    await duoDaten(c, m);
+    const id = crypto.randomBytes(6).toString('hex');
+    const timer = setTimeout(() => { if (forderungen.delete(id)) { c.send({ k: 'forderung_aus', grund: 'zeit' }); const z = verbindung(ziel); if (z) z.send({ k: 'forderung_weg', id }); } }, 30000);
+    forderungen.set(id, { von: c, an: ziel, timer, duo: true });
+    c.send({ k: 'forderung_raus', id, an: ziel, duo: true });
+    for (const z of online.get(ziel) || []) z.send({ k: 'forderung', id, von: { id: c.user.id, name: c.user.name }, duo: true });
+  }
+}
+
 // ---------- Freunde, Herausfordern, Zuschauen, Story ----------
 const online = new Map(); // user_id -> Set der Verbindungen dieses Spielers
 const forderungen = new Map(); // id -> { von: Client, an: user_id, timer }
@@ -544,7 +677,7 @@ function nameCheck(x) {
   return { name: n };
 }
 function nameAus(email) { return String(email || 'Spieler').split('@')[0].slice(0, 24) || 'Spieler'; }
-function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; [ma.a, ma.b].forEach((c) => c && c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
+function zuschauerMelden(ma) { const n = { k: 'zuschauer', n: ma.zuschauer.size }; (ma.duo ? ma.sitze : [ma.a, ma.b]).forEach((c) => c && c.alive && c.send(n)); for (const s of ma.zuschauer) s.send(n); }
 function matchAus(ma) {
   if (!ma || ma.aus) return;
   if (ma.a.alive && ma.a.match === ma && ma.b.alive && ma.b.match === ma) return; // läuft noch
@@ -625,6 +758,7 @@ async function freundesliste(c) {
       if (v.koenig) e.koenig = v.koenig;
       const ma = v.match && !v.match.aus && v.peer ? v.match : null;
       if (ma) { const ich = ma.a === v ? 0 : 1; e.status = 'pvp'; e.info = 'gegen ' + ma.namen[1 - ich]; e.seit = ma.start; e.zuschauer = ma.zuschauer.size; }
+      else if (v.duoMa && !v.duoMa.aus) { const dm = v.duoMa; e.status = 'pvp'; e.info = 'Duokampf' + (dm.bot ? ' gegen ' + (dm.namen[1] || 'Bot') : ''); e.seit = dm.start; e.zuschauer = dm.zuschauer.size; } // auch zuschaubar
       else if (v.botma && !v.botma.aus) { e.status = 'pvp'; e.info = (v.botma.art === 'story' ? 'Story gegen ' : 'gegen ') + v.botma.namen[1]; e.seit = v.botma.start; e.zuschauer = v.botma.zuschauer.size; } // Bot-Partie: auch zuschaubar
       else if (v.status === 'story' || v.status === 'tutorial') { e.status = 'spiel'; e.info = v.info || (v.status === 'tutorial' ? 'Tutorial' : 'Story'); }
       else e.status = 'menu';
@@ -695,8 +829,8 @@ async function sozial(c, m) {
   if (m.k === 'fordern') { // einen Freund zu einer Online-Partie herausfordern
     const ziel = String(m.an || ''), v = verbindung(ziel);
     if (!(await sindFreunde(c.user.id, ziel))) return;
-    if (!v || v.peer || v.queued || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
-    if (c.peer) return;
+    if (!v || v.peer || v.queued || v.duo || v.duoMa || v.duoSucht || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
+    if (c.peer || c.duo || c.duoMa) return;
     if (SPIEL_V && (c.v !== SPIEL_V || v.v !== SPIEL_V)) return c.send({ k: 'forderung_aus', grund: 'version' });
     const id = crypto.randomBytes(6).toString('hex');
     const timer = setTimeout(() => { if (forderungen.delete(id)) { c.send({ k: 'forderung_aus', grund: 'zeit' }); const z = verbindung(ziel); if (z) z.send({ k: 'forderung_weg', id }); } }, 30000);
@@ -713,23 +847,25 @@ async function sozial(c, m) {
     for (const z of online.get(f.an) || []) if (z !== c) z.send({ k: 'forderung_weg', id: m.id });
     if (m.k === 'fordern_ab') return;
     if (!m.ja) return f.von.send({ k: 'forderung_aus', grund: 'abgelehnt' });
-    if (!f.von.alive || f.von.peer || c.peer) return c.send({ k: 'forderung_weg', id: m.id });
+    if (!f.von.alive || f.von.peer || c.peer || f.von.duo || f.von.duoMa || c.duo || c.duoMa) return c.send({ k: 'forderung_weg', id: m.id });
+    if (f.duo) { await duoDaten(c, m); if (!f.von.alive || f.von.duo || c.duo) return; return duoTeamBilden(f.von, c, 'freund'); } // Duokampf: zusammen ein Team, dann Gegner suchen
     return starteMatch(f.von, c);
   }
   if (m.k === 'zuschauen') {
-    const ziel = String(m.id || ''), v = verbindung(ziel), ma = v && v.peer ? v.match : v && v.botma && !v.botma.aus ? v.botma : null;
+    const ziel = String(m.id || ''), v = verbindung(ziel), ma = v && v.duoMa ? v.duoMa : v && v.peer ? v.match : v && v.botma && !v.botma.aus ? v.botma : null;
     if (!(await sindFreunde(c.user.id, ziel))) return;
     if (!ma || ma.aus) return c.send({ k: 'sozialfehler', text: 'Diese Partie ist schon vorbei.' });
     if (c.schaut) zuschauenAus(c);
     c.schaut = ma; ma.zuschauer.add(c);
-    if (ma.bot) c.send({ k: 'zuschau', bot: ma.bot, art: ma.art, seed: ma.seed, namen: ma.namen, koenige: ma.koenige, log: ma.log, letzte: ma.letzte, v: SPIEL_V });
+    if (ma.duo) c.send(Object.assign({}, ma.daten, { k: 'zuschau', duo: true, log: ma.log, letzt: ma.letzt, weg: ma.weg, v: SPIEL_V }));
+    else if (ma.bot) c.send({ k: 'zuschau', bot: ma.bot, art: ma.art, seed: ma.seed, namen: ma.namen, koenige: ma.koenige, log: ma.log, letzte: ma.letzte, v: SPIEL_V });
     else c.send({ k: 'zuschau', seed: ma.seed, acc: ma.acc, frei: ma.frei, namen: ma.namen, elos: ma.elos, koenige: ma.koenige, log: ma.log, v: SPIEL_V });
     return zuschauerMelden(ma);
   }
   if (m.k === 'nichtzuschauen') return zuschauenAus(c);
 }
 function broadcastInfo() {
-  const info = { k: 'info', online: clients.size, queued: queue.length, v: SPIEL_V };
+  const info = { k: 'info', online: clients.size, queued: queue.length, duo: duoSolo.filter((c) => c.alive).length + 2 * duoTeams.filter((T) => !T.aus).length, v: SPIEL_V };
   for (const c of clients) if (c.queued || !c.peer) c.send(info);
 }
 

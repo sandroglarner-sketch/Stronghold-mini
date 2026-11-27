@@ -8,7 +8,7 @@ try { process.stdout.write(execFileSync('node', [path.join(__dirname, 'codepruef
 const root = path.join(__dirname, '..');
 let s = fs.readFileSync(path.join(root, 'build/artifact.html'), 'utf8');
 // Zugriff auf das Spielinnere (nur in der Testseite)
-s = s.replace('  function frame(ts) {', "  window.__X = { get units() { return units; }, spawn: spawn, upd: update, reset: reset, get walls() { return walls; }, get bases() { return bases; }, get gold() { return gold; }, CONFIG: CONFIG, buy: buy, hash: pvpHash, mulberry32: mulberry32, get state() { return state; }, get winner() { return winner; }, get clock() { return clock; }, setRand: function (f) { simRand = f; }, setState: function (z) { state = z; }, setBot: function (b) { botType = b; } };\n  function frame(ts) {");
+s = s.replace('  function frame(ts) {', "  window.__X = { get units() { return units; }, spawn: spawn, upd: update, reset: reset, get walls() { return walls; }, get bases() { return bases; }, get gold() { return gold; }, CONFIG: CONFIG, buy: buy, hash: pvpHash, mulberry32: mulberry32, get state() { return state; }, get winner() { return winner; }, get clock() { return clock; }, duo: duo, get kTot() { return kTot; }, setRand: function (f) { simRand = f; }, setState: function (z) { state = z; }, setBot: function (b) { botType = b; } };\n  function frame(ts) {");
 s = s.replace('    requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);', '  }');
 
 // Eine ganze Bot-Partie mit festem Startwert (wie im Spiel: Schritte von 1/60 s). Links kauft ein fester Plan, rechts spielt der Bot.
@@ -129,6 +129,67 @@ const TESTS = {
     for (var i = 0; i < 12; i++) { X.upd(0.05); [k1, k2, k3].forEach(function (k) { k.x = 11.9; }); a.x = 8; a.y = 5; }
     var r = [k1.hp, k2.hp, k3.hp].join('/');
     return r === '19/19/20' ? true : 'Leben der Ritter (Ziel / 0,6 daneben / 1,2 daneben): ' + r;
+  },
+  'Duokampf 2 gegen 2: Gold pro Spieler (5 Start, +5 alle 5 s), Käufe vom eigenen Gold, Partie deterministisch': function (X) {
+    function partie(seed, mr) {
+      var altMR = Math.random; Math.random = mr;
+      try {
+        X.duo.on = true; X.duo.bot = false; X.duo.spieler = [0, 1, 2, 3];
+        X.setRand(X.mulberry32(seed)); X.reset(); X.setState('playing');
+        var plan = [['farmer', 'spear', 'archer', 'sword', 'wall', 'knight'], ['spear', 'farmer', 'archer', 'rider', 'mage', 'ram'], ['archer', 'farmer', 'spear', 'shield', 'catapult', 'sword'], ['farmer', 'archer', 'knight', 'spear', 'wall', 'rider']], k = [0, 0, 0, 0], h = [];
+        for (var t = 0; t < 60 * 120 && X.state === 'playing'; t++) {
+          for (var p = 0; p < 4; p++) if ((t + p * 20) % 100 === 0 && X.buy(p, plan[p][k[p] % 6])) k[p]++;
+          X.upd(1 / 60);
+          if (t % 600 === 0) h.push(X.hash());
+        }
+        return h.join(',') + ',' + X.state + ',' + X.winner;
+      } finally { Math.random = altMR; X.setState('ready'); X.duo.on = false; X.duo.spieler = [0, 1]; }
+    }
+    X.duo.on = true; X.duo.bot = false; X.duo.spieler = [0, 1, 2, 3];
+    try {
+      X.setRand(X.mulberry32(5)); X.reset(); X.setState('playing');
+      if (X.gold.join() !== '5,5,5,5') return 'Startgold ' + X.gold.join();
+      var kings = X.units.filter(function (u) { return u.type === 'king'; });
+      if (kings.length !== 4 || !kings.every(function (u) { return u.halb; })) return 'Könige: ' + kings.length;
+      for (var i = 0; i < 301; i++) X.upd(1 / 60);
+      if (X.gold.join() !== '10,10,10,10') return 'nach 5 s ' + X.gold.join();
+      X.buy(2, 'spear');
+      var sp = X.units.filter(function (u) { return u.type === 'spear'; })[0];
+      if (X.gold[2] !== 10 - X.CONFIG.units.spear.cost || X.gold[0] !== 10 || !sp || sp.team !== 0 || sp.pl !== 2) return 'Kauf Spieler 2: Gold ' + X.gold.join() + ', Einheit ' + (sp && sp.team + '/' + sp.pl);
+    } finally { X.setState('ready'); X.duo.on = false; X.duo.spieler = [0, 1]; }
+    var a = partie(77, X.mulberry32(1)), b = partie(77, X.mulberry32(2));
+    return a === b ? true : 'Partie läuft je nach Math.random anders';
+  },
+  'Duokampf: Könige halber Schaden, verloren erst ohne beide Könige, Rückkehr nach 15 s ohne Schaden': function (X) {
+    X.duo.on = true; X.duo.bot = true; X.duo.spieler = [0, 1, 2];
+    try {
+      X.setRand(X.mulberry32(9)); X.reset(); X.setState('playing'); X.units.length = 0;
+      X.reset(); X.setState('playing');
+      var k = X.units.filter(function (u) { return u.type === 'king'; });
+      var k0 = k.filter(function (u) { return u.pl === 0; })[0], k2 = k.filter(function (u) { return u.pl === 2; })[0], k1 = k.filter(function (u) { return u.pl === 1; })[0];
+      if (!k0 || !k2 || !k1 || k1.halb || !k0.halb || Math.abs(k0.y - k2.y) < 0.5) return 'Könige falsch aufgestellt';
+      // Nahkampf: König ohne Burg gegen einen Speerträger
+      X.units.length = 0; X.units.push(k0, k2, k1);
+      X.bases[0].hp = 0; X.upd(1 / 60); // Burg kaputt: Könige steigen herab
+      X.spawn(1, 'spear'); var sp = X.units[X.units.length - 1]; sp.x = k0.x + 0.6; sp.y = k0.y; sp.cd = 99; sp.hp = 100; sp.max = 100;
+      var start = sp.hp, hits = [];
+      for (var i = 0; i < 60 * 6; i++) { sp.cd = 99; var vor = sp.hp; X.upd(1 / 60); if (sp.hp < vor) hits.push(+(vor - sp.hp).toFixed(3)); }
+      var atk = X.CONFIG.units.king.atk * X.CONFIG.DUO.koenigSchaden;
+      if (!hits.length || !hits.every(function (h) { return Math.abs(h - atk) < 1e-6 || Math.abs(h - 2 * atk) < 1e-6; })) return 'Nahkampftreffer ' + hits.join(',');
+      // ein König fällt: noch nicht verloren; nach 15 s ohne Schaden kommt er zurück
+      X.units.length = 0; X.reset(); X.setState('playing');
+      var kk = X.units.filter(function (u) { return u.type === 'king' && u.pl === 2; })[0];
+      kk.hp = 0; X.upd(1 / 60);
+      if (X.state !== 'playing') return 'verloren mit einem lebenden König';
+      if (X.units.some(function (u) { return u.type === 'king' && u.pl === 2; })) return 'toter König noch da';
+      for (i = 0; i < 60 * 14.5; i++) X.upd(1 / 60);
+      if (X.units.some(function (u) { return u.type === 'king' && u.pl === 2; })) return 'König zu früh zurück';
+      for (i = 0; i < 60 * 1; i++) X.upd(1 / 60);
+      if (!X.units.some(function (u) { return u.type === 'king' && u.pl === 2 && u.hp > 0 && u.inCastle; })) return 'König nach 15 s nicht zurück';
+      // beide tot: verloren
+      X.units.forEach(function (u) { if (u.type === 'king' && u.team === 0) u.hp = 0; }); X.upd(1 / 60);
+      return X.state === 'over' && X.winner === 1 ? true : 'beide Könige tot, Zustand ' + X.state + '/' + X.winner;
+    } finally { X.setState('ready'); X.duo.on = false; X.duo.bot = false; X.duo.spieler = [0, 1]; }
   },
 };
 

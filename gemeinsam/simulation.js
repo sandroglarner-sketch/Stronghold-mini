@@ -4,6 +4,13 @@
     return team === 1 ? (CONFIG.levels[level] || CONFIG.levels.normal).income : CONFIG.GOLD_AMOUNT;
   }
 
+  // Dieb, Brandstifter: nimmt jedem Spieler des Gegnerteams prozent % seines Goldes (aufgerundet); Ergebnis = Summe
+  function klauGold(team, prozent) {
+    var l = spielerIm(1 - team), s = 0;
+    for (var i = 0; i < l.length; i++) { var k = Math.ceil(Math.max(0, gold[l[i]]) * prozent / 100); gold[l[i]] -= k; s += k; }
+    return s;
+  }
+
   function nearestOnRect(u, b) {
     return { x: clamp(u.x, b.x1, b.x2), y: clamp(u.y, b.y1, b.y2) };
   }
@@ -72,7 +79,7 @@
     }
     for (j = 0; j < l.length; j++) {
       var b = l[j], bd = CONFIG.units[b.type];
-      b.team = neu; b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
+      b.team = neu; b.pl = pOf(u); b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
       b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
       if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
       effects.push({ kind: 'bekehrt', x: b.x, y: b.y, team: neu, t: 0, dur: 0.9 });
@@ -83,7 +90,7 @@
   function landShot(s) {
     if (s.base) { // Pfeil der Kaserne
       var bv = s.tgt;
-      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK, { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
+      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK * (s.f || 1), { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
       return;
     }
     var d = CONFIG.units[s.type], tgt = s.tgt, cx = s.tx, cy = s.ty, aimBase = !s.tgt && !s.wall;
@@ -116,7 +123,7 @@
 
   // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
   function botEinkommen() {
-    if (pvp && pvp.on && !pvp.bot) return null; // Online-Partie: kein Bot (Zuschauer einer Bot-Partie: doch)
+    if (duo.on ? !duo.bot : pvp && pvp.on && !pvp.bot) return null; // Online-Partie und Duokampf 2 gegen 2: kein Bot (Zuschauer einer Bot-Partie und Duokampf gegen den Bot: doch)
     var R = CONFIG.BOTS[botType]; if (!R) return null;
     return { gold: R.income === undefined ? income(1) : R.income, alle: Math.max(0.5, R.incomeEvery || CONFIG.GOLD_EVERY) };
   }
@@ -135,13 +142,15 @@
     payT += dt;
     if (payT >= CONFIG.GOLD_EVERY) {
       payT -= CONFIG.GOLD_EVERY;
-      for (var t = 0; t < 2; t++) {
+      var zahler = duo.on ? duo.spieler : [0, 1]; // Duokampf: jeder Spieler bekommt sein eigenes Grundeinkommen
+      for (var zi = 0; zi < zahler.length; zi++) {
+        var t = zahler[zi];
         if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
         if (t === 1 && botEinkommen()) continue; // Bot: eigenes Grundeinkommen (unten)
-        var amt = income(t);
+        var amt = duo.on ? CONFIG.DUO.income : income(t);
         gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
-        var bb = bases[t];
-        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2, y: bb.y1 + 0.55, t: 0, dur: 1.2 }); // Grundeinkommen im oberen Bereich der Burg
+        var bb = bases[t % 2];
+        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2 + (zweierTeam(t % 2) ? (t < 2 ? -0.45 : 0.45) : 0), y: bb.y1 + 0.55, t: 0, dur: 1.2, pl: t }); // Grundeinkommen im oberen Bereich der Burg
       }
     }
     for (var gi = 0; gi < units.length; gi++) { // Bauern: jeder bringt alle bonusEvery Sekunden bonus Gold, sein Takt startet beim Niederlassen
@@ -150,12 +159,12 @@
       gu.gT = (gu.gT || 0) + dt;
       if (gu.gT >= gd.bonusEvery) {
         gu.gT -= gd.bonusEvery;
-        gold[gu.team] = Math.min(CONFIG.GOLD_MAX, gold[gu.team] + gd.bonus);
+        gold[pOf(gu)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(gu)] + gd.bonus);
         effects.push({ kind: 'text', text: '+' + gd.bonus, x: gu.x, y: gu.y - 0.55, farmer: true, t: 0, dur: 1.1 });
         gu.grabT = clock; // nur für die Darstellung: gräbt kurz mit der Heugabel
       }
     }
-    if (!tut.on && (!pvp.on || pvp.bot)) aiUpdate(dt);
+    if (!tut.on && (duo.on ? duo.bot : (!pvp.on || pvp.bot))) aiUpdate(dt); // Duokampf: nur gegen den Bot (auch online, beide Browser rechnen ihn)
 
     var i, j;
     for (i = 0; i < units.length; i++) {
@@ -171,13 +180,13 @@
           var GD = d.gebaeude, galt = u.gT; u.gT += dt;
           if (GD.art === 'dieb' && !tut.on) { // Dieb: klaut in der gegnerischen Burg, liefert in der eigenen ab
             var fb = bases[1 - u.team], ob = bases[u.team];
-            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
-            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = klauGold(u.team, GD.prozent); u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
           }
           if (GD.art === 'brand' && !tut.on) { // Brandstifter: legt in der gegnerischen Burg Feuer, der Gegner verliert Gold
             var bfb = bases[1 - u.team];
             if (galt < GD.zuenden && u.gT >= GD.zuenden) effects.push({ kind: 'feuer', x: (bfb.x1 + bfb.x2) / 2, y: (bfb.y1 + bfb.y2) / 2, w: bfb.x2 - bfb.x1, h: bfb.y2 - bfb.y1, t: 0, dur: GD.klauen - GD.zuenden + 0.5 }); // kurzer, kleiner Brand (1,5 s)
-            if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= vb; if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = klauGold(u.team, GD.prozent); if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
           }
           if (GD.art === 'kirche') { // Gebet und Unwetter
             u.gT = 0;
@@ -200,9 +209,9 @@
           }
           else if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
-            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
+            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[pOf(u)]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
             u.zahl = (u.zahl || 0) + 1;
-            if (gg > 0 && !(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
+            if (gg > 0 && !(tut.on && u.team === 1)) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
         var kbp = bases[u.team], kpx = clamp(u.x, kbp.x1 + 0.3, kbp.x2 - 0.3), kpy = clamp(u.y, kbp.y1 + 0.3, kbp.y2 - 0.3);
@@ -222,7 +231,7 @@
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
       var spd = (d.karawane && u.voll >= 1 && d.karawane.tempoVoll ? d.karawane.tempoVoll : d.speed) * (u.slow > 0 ? (u.slowF || 0.5) : 1); // Karawane: mit vollen Töpfen langsamer (22.11.)
       if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
-        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
+        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2 + koenigVersatz(pOf(u)), KL = d.king.leash, kdx, kdy, kdl; // Duokampf: zwei Könige nebeneinander
         if (u.inCastle) {
           if (kb.down) u.inCastle = false;
           else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
@@ -241,7 +250,7 @@
             if (vic) u.bogenT = Math.min(1, u.bogenT + dt / CONFIG.KING_BOW.draw);
             else u.bogenT = Math.max(0, u.bogenT - dt / CONFIG.KING_BOW.stow);
             if (vic && u.bogenT >= 1 && u.cd <= 0) {
-              shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
+              shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY, f: u.halb ? CONFIG.DUO.koenigSchaden : 1 });
               u.cd = CONFIG.BASE_CD; u.atkT = clock;
               u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel (nur Zeichnung)
               effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand (nur Zeichnung)
@@ -286,7 +295,7 @@
         if (kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001 && u.cd <= 0) {
           u.cd = d.cd; u.atkT = clock;
           if (Math.abs(kt.x - u.x) > 0.05) u.face = kt.x > u.x ? 1 : -1;
-          hurt(kt, d.atk, d); kt.hit = 0.15; kt.lastHit = clock;
+          hurt(kt, d.atk * (u.halb ? CONFIG.DUO.koenigSchaden : 1), d); kt.hit = 0.15; kt.lastHit = clock;
           effects.push({ kind: 'stab', heavy: true, x1: u.x, y1: u.y, x2: kt.x, y2: kt.y, t: 0, dur: 0.16 });
         }
         continue;
@@ -356,7 +365,7 @@
           var bc = d.belfry, sg = u.team === 0 ? 1 : -1;
           u.dock.t += dt;
           while (u.dock.n < bc.troops && u.dock.t >= u.dock.n * bc.every) {
-            spawn(u.team, 'sword');
+            spawn(pOf(u), 'sword');
             var sw = units[units.length - 1], so = ((u.dock.n % 3) - 1) * 0.25;
             if (u.dock.wall) { sw.x = gv.ix - sg * 0.1; sw.y = gv.iy + so; } else { sw.x = u.x + sg * 0.7; sw.y = u.y + so; }
             sw.face = sg; sw.fromBf = true;
@@ -388,7 +397,7 @@
       if (d.buerger) { // Bürger: schlendert im eigenen Mauerbereich umher, bleibt ab und zu stehen (kratzt sich am Kopf, schaut umher); alle alle s +gold Gold
         var BG = d.buerger;
         u.bT = (u.bT || 0) + dt;
-        if (u.bT >= BG.alle) { u.bT -= BG.alle; if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + BG.gold); effects.push({ kind: 'text', text: '+' + BG.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 }); } }
+        if (u.bT >= BG.alle) { u.bT -= BG.alle; if (!(tut.on && u.team === 1)) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + BG.gold); effects.push({ kind: 'text', text: '+' + BG.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 }); } }
         if (u.bz === undefined) { u.bz = 'geht'; u.bzT = 0; buergerZiel(u); }
         u.bzT += dt;
         if (u.bz === 'geht') {
@@ -424,7 +433,7 @@
             if (u.hackT >= HZ.alle) {
               u.hackT -= HZ.alle;
               var hg = Math.min(HZ.gold, hb.holz); hb.holz -= hg;
-              gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + hg);
+              gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + hg);
               effects.push({ kind: 'text', text: '+' + hg, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
               effects.push({ kind: 'spaene', x: hb.x, y: hb.y, t: 0, dur: 0.5 });
               if (hb.holz <= 0) effects.push({ kind: 'puff', x: hb.x, y: hb.y, team: u.team, t: 0, dur: 0.6 }); // Baum fällt
@@ -476,7 +485,7 @@
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
           else if (u.kz === 'zurueck' && !u.kw) u.kw = 1; // Wegpunkt erreicht: weiter zur Burg
           else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft
-            gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
+            gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'spawn'; u.voll = 0;
           }
@@ -725,6 +734,7 @@
     // König gefallen? (nur möglich, wenn die Burg zerstört ist; ein heimkehrender König, der oben ankommt, zählt nicht)
     var kdead = [false, false];
     for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
+    if (duo.on) kdead = duoKoenige(); // Duokampf: verloren erst, wenn beide Könige eines Teams tot sind
 
     // Gebäude: niemand steht darin (Bauern regeln das selbst über farmerStand)
     for (i = 0; i < units.length; i++) {
@@ -801,6 +811,29 @@
       }
     }
     if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));
+  }
+
+  // Duokampf: gefallene Könige merken; ein Team ist erst besiegt, wenn keiner seiner Könige mehr lebt. Lebt der andere noch und hat er
+  // CONFIG.DUO.wiederkehr s lang keinen Schaden erlitten (und ist der Tod so lange her), kehrt der gefallene König auf die Burg zurück.
+  function duoKoenige() {
+    var lebt = [0, 0], letzter = [-1e9, -1e9], i, u;
+    for (i = 0; i < units.length; i++) {
+      u = units[i]; if (u.type !== 'king') continue;
+      if (u.hp <= 0) { if (kTot[pOf(u)] === undefined) kTot[pOf(u)] = clock; }
+      else { lebt[u.team]++; letzter[u.team] = Math.max(letzter[u.team], u.lastHit); }
+    }
+    var tot = [lebt[0] === 0, lebt[1] === 0];
+    for (i = 0; i < duo.spieler.length; i++) {
+      var p = duo.spieler[i], kt = kTot[p], tm = p % 2;
+      if (kt === undefined || kt === Infinity || tot[tm]) continue;
+      if (clock - kt >= CONFIG.DUO.wiederkehr && clock - letzter[tm] >= CONFIG.DUO.wiederkehr) { delete kTot[p]; spawnKing(p); }
+    }
+    return tot;
+  }
+  // Duokampf: ein Spieler gibt auf oder geht: sein König fällt und kehrt nicht zurück, er kauft nichts mehr
+  function duoAufgeben(p) {
+    for (var i = 0; i < units.length; i++) if (units[i].type === 'king' && pOf(units[i]) === p) units[i].hp = 0;
+    kTot[p] = Infinity;
   }
 
   function updateEffects(dt) {

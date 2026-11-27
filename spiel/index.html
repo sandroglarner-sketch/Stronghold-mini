@@ -37,6 +37,7 @@
     <div class="fshint" id="fsHint" hidden>Echtes Vollbild am iPhone: unten auf <b>Teilen</b> (□↑) tippen, dann <b>«Zum Home-Bildschirm»</b> und das Spiel über das neue Symbol starten.</div>
     <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
     <div class="units" id="units"></div>
+    <div class="duodeck" id="duoDeck" hidden aria-live="polite"></div>
     <div class="overlay menu" id="overlay">
       <div class="ovtop">
         <span class="ovleft">
@@ -56,7 +57,10 @@
       <div class="ovmodes">
         <button class="ovmode ovstory" id="storyBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14"></path><path d="M15 6v14"></path></svg><b>Story-Modus</b><span id="storyText">Besiege einen Gegner nach dem anderen</span><span class="ovdots" id="storyDots"></span></button>
         <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovpvpedel" id="pvpEdel" hidden></span><span class="ovonl" id="pvpOnline"></span></button>
+        <div class="ovsplit">
         <button class="ovmode" id="tutBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"></path><path d="M22 9v6"></path></svg><b>Tutorial</b><span>Lerne jede Einheit kennen</span><span class="ovonl ovgrau">ca. 5 Minuten</span></button>
+        <button class="ovmode" id="duoBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--p2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="7.5" r="3.2"></circle><path d="M2 20a6 6 0 0 1 12 0"></path><circle cx="16.5" cy="7.5" r="3.2"></circle><path d="M14.5 13.6A6 6 0 0 1 22 20"></path></svg><b>Duokampf</b><span>2 gegen 2 mit einem Partner</span><span class="ovonl" id="duoOnline"></span></button>
+        </div>
       </div>
       <div class="ovrow">
         <span class="choice" id="ovChoice" hidden>
@@ -68,6 +72,8 @@
           </select>
         </span>
         <button class="primary" id="ovBtn" type="button">Spiel starten</button>
+        <button class="ghost" id="duoFreundBtn" type="button" hidden>Freund einladen</button>
+        <button class="ghost duobot" id="duoBotBtn" type="button" hidden aria-pressed="false">Zufälliger Bot</button>
         <button class="ghost" id="menuBtn" type="button" hidden>Zum Menü</button>
         <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 9999 Gold, der Gegner mit 160">Sandbox</button>
       </div>

@@ -24,8 +24,11 @@
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
   // deploys = eigene Käufe unterwegs {type, cost, t, net}; ihr Gold ist reserviert (nur Anzeige/Kaufprüfung, die Simulation zieht es beim Ausführen ab)
   var DEPLOY = 0.35, deploys = [];
-  function deployGold() { var s = 0; for (var i = 0; i < deploys.length; i++) s += deploys[i].cost; return s; }
+  function deployGold() { var s = 0; for (var i = 0; i < deploys.length; i++) if (deploys[i].p === undefined || deploys[i].p === MP) s += deploys[i].cost; return s; } // nur deine (Tester-Duokampf: Tab wechselt den Spieler)
   var ME = 0; // welches Team du bist (0 = links/blau, 1 = rechts/rot im Online-Spiel)
+  // Duokampf (27.11.): Spieler 0 und 2 bilden Team 0 (blau, violett), 1 und 3 Team 1 (rot, orange); Spieler p gehört zu Team p % 2.
+  // duo.spieler = Spieler in der Partie (gegen den Bot [0, 1, 2], 1 = Bot); MP = welcher Spieler du bist (sonst = ME); duo.weg = Spieler, die gegangen sind (Spielschritt)
+  var MP = 0, duo = { on: false, bot: false, spieler: [0, 1], namen: [], decks: [], weg: {} };
   var pvp = { on: false, me: 0, ws: null, searching: false, ended: false, tick: 0, acc: 0, alpha: 0, inbox: {}, sent: {}, pending: [], hashes: {}, remoteHash: {}, stall: 0 };
   var sandbox = false, sandBtn = $('sandBtn');
   // Tester-Modus (19.11.): nur ausserhalb der Online-Seite (Claude-Artifact). Zeigt die Sandbox und schaltet alle Einheiten und Gegner frei.
@@ -40,11 +43,12 @@
   var payFill = $('payFill'), payText = $('payText'), unitsEl = $('units');
 
   // ---------- Farben aus dem Theme ----------
-  var TOKENS = ['me', 'foe', 'gold', 'gold-fill', 'grass-a', 'grass-b', 'tuft', 'dirt', 'dirt-edge', 'tree',
+  var TOKENS = ['me', 'foe', 'p2', 'p3', 'gold', 'gold-fill', 'grass-a', 'grass-b', 'tuft', 'dirt', 'dirt-edge', 'tree',
     'tree-hi', 'water', 'water-hi', 'stone', 'stone-dark', 'wood', 'steel', 'shade', 'bg', 'line'];
   var P = {};
   function readPalette() {
     var cs = getComputedStyle(document.documentElement);
     for (var i = 0; i < TOKENS.length; i++) P[TOKENS[i]] = cs.getPropertyValue('--' + TOKENS[i]).trim();
   }
+  function farbeVon(p) { return p === 1 ? P.foe : p === 2 ? P.p2 : p === 3 ? P.p3 : P.me; } // Farbe eines Spielers (0 blau, 1 rot, 2 violett, 3 orange)
 

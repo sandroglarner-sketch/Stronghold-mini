@@ -284,7 +284,7 @@
   applyDeck();
 
   function syncUi() {
-    var gm = gold[ME] - deployGold(), gf = gold[1 - ME];
+    var gm = (gold[MP] || 0) - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
     var canGive = state === 'playing' || state === 'paused';
     var tv = tut.on && canGive;
     if (tutPanelEl.hidden === tv) tutPanelEl.hidden = !tv;
@@ -327,7 +327,7 @@
     }
     payFill.style.width = (payT / CONFIG.GOLD_EVERY * 100) + '%';
     var sec = Math.ceil(CONFIG.GOLD_EVERY - payT);
-    var inc = income(ME);
+    var inc = duo.on ? CONFIG.DUO.income : income(ME);
     if (sec !== ui.sec || inc !== ui.inc) {
       payText.textContent = '+' + inc + ' Gold in ' + sec + ' s';
       ui.sec = sec;
@@ -383,7 +383,7 @@
     }
     if (pvp.on && pvp.zuschauer) { // Zuschauer: neutral, wer gewonnen hat
       pvp.ended = true; state = 'over'; winner = w;
-      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + ' hat gewonnen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
+      showOverlay('Partie beendet', w >= 0 ? pvp.namen[w] + (duo.on && spielerIm(w).length > 1 ? ' haben gewonnen.' : ' hat gewonnen.') : duo.on ? 'Unentschieden: alle Könige sind gefallen.' : 'Unentschieden: beide Könige sind gefallen.', 'Zum Menü', false);
       return;
     }
     if (pvp.on && !pvp.ended) pvpSend({ k: 'ergebnis', w: w }); // Ende an den Server melden (Elo); w = Sieger-Team, -1 = unentschieden
@@ -393,6 +393,7 @@
     winner = w;
     var again = pvp.on ? 'Zum Menü' : 'Nochmal';
     var stats = 'Spielzeit ' + fmtTime(clock) + ', ' + produced + (produced === 1 ? ' Einheit' : ' Einheiten') + ' gebaut.';
+    if (duo.on && !note) note = (w === 0 ? 'Beide gegnerischen Könige sind gefallen. ' : w === 1 ? 'Beide Könige eures Teams sind gefallen. ' : 'Alle Könige sind gefallen. ') + stats; // Duokampf
     if (w === 0) showOverlay('Sieg!', note || 'Der gegnerische König ist gefallen. ' + stats, again);
     else if (w === 1) showOverlay('Niederlage', note || 'Dein König ist gefallen. ' + stats, again);
     else showOverlay('Unentschieden', 'Beide Könige sind gleichzeitig gefallen. ' + stats, again);
@@ -448,6 +449,7 @@
 
   function start(keepTut) {
     if (keepTut !== true) tut.on = false;
+    if (duo.on && spielArt !== 'duolokal') duoAus(); // Tester-Duokampf nur, wenn er gewählt ist (auch bei «Nochmal»)
     blVorbereiten(sandbox); // Bot-Partie: fester Startwert (vor reset), feste Spielschritte
     reset();
     disarmGive();
@@ -455,8 +457,9 @@
     jingle('start');
     overlay.hidden = true;
     $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true; $('shop').hidden = true;
-    koenigTeam = [meinKoenig(), botEintrag(botType).koenig]; // Aussehen der beiden Könige
-    intro.t = 0;
+    koenigTeam = [meinKoenig(), botEintrag(botType).koenig, 'standard', 'standard']; // Aussehen der Könige (Index = Spieler)
+    intro.t = 0; MP = ME;
+    if (duo.on) duoIntro(); // Tester-Duokampf: Namen und Deck des Partners
     if (spielArt === 'story' && !tut.on) startIntro(meinName(), STORY[storyIdx].name); // auch bei «Nochmal»
     openBook(false);
     applyDeck();

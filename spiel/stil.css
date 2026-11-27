@@ -7,6 +7,8 @@
     --line: #ccd6d9;
     --me: #2a64b8;
     --foe: #c23a2e;
+    --p2: #7d4bc2; /* Duokampf: Partner im blauen Team (violett) */
+    --p3: #e07b16; /* Duokampf: Partner im roten Team (orange) */
     --gold: #9a6f00;
     --gold-fill: #e3ad22;
     --grass-a: #8ab565;
@@ -745,3 +747,25 @@
     .geschenk { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translateX(-50%); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px); }
   }
   @media (max-height: 460px) { .gbuehne { min-height: 0; } .gkiste { top: 20px; } .gkarte { font-size: 10px; width: 170px; } .geschenk p { display: none; } }
+
+  /* Duokampf (27.11.): Tutorial und Duokampf teilen sich eine Spalte (oben / unten) */
+  .ovsplit { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-height: 0; }
+  .ovsplit .ovmode { padding: 10px 14px; gap: 2px; }
+  .ovsplit .ovmode b { font-size: 1.15rem; margin-top: 2px; }
+  .ovsplit .ovmode svg { width: 24px; height: 24px; flex: none; }
+  html.phone .ovsplit { gap: 8px; }
+  html.phone .ovsplit .ovmode { padding: 6px 10px; }
+  html.phone .ovsplit .ovmode svg { width: 18px; height: 18px; }
+  @media (max-width: 640px) { .ovsplit .ovmode b { font-size: 0.95rem; } }
+  @media (max-width: 900px), (max-height: 560px) { .ovsplit .ovonl { display: none; } } /* halbe Höhe: Zusatzzeile weglassen */
+  .ovrow .duobot[aria-pressed="true"] { background: var(--p2); border-color: var(--p2); color: #fff; }
+  .ovduo { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-top: 8px; font-size: 0.9rem; }
+  .ovduo b { font-weight: 600; }
+  .ovduo i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  /* Deck des Partners zu Beginn der Partie */
+  .duodeck { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(255,255,255,0.93); border: 2px solid var(--p2); border-radius: 12px; padding: 6px 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 6; text-align: center; max-width: calc(100% - 20px); transition: opacity 0.6s; pointer-events: none; }
+  .duodeck.weg { opacity: 0; }
+  .duodeck b { display: block; font-family: var(--display); font-size: 0.9rem; margin-bottom: 4px; }
+  .duodeck .ddk { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .duodeck canvas { width: 40px; height: 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  html.phone .duodeck canvas { width: 30px; height: 30px; }
