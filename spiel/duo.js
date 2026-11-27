@@ -66,7 +66,7 @@
   function duoMsg(m) {
     if (m.k === 'duo_info') { duoS.info = m; if (duoS.phase === 'partner' || duoS.phase === 'gegner') duoStatusText(); return; }
     if (m.k === 'duo_team') { // Partner gefunden: jetzt Gegner suchen
-      toastWeg(); freundeOpen(false); sozial.forderungRaus = null;
+      freundeOpen(false); sozial.forderungRaus = null; // eine offene Einladung an dich bleibt stehen (noch kein Spiel)
       duoS.phase = 'gegner'; duoS.partner = m.partner || { name: 'Partner', koenig: 'standard', deck: [] }; duoS.ichBot = duoS.partnerBot = false;
       pvp.searching = true;
       duoFenster('Duokampf', ''); duoStatusText();
@@ -91,7 +91,7 @@
   // Partie beginnt: alle Browser bekommen dieselben Daten (Plätze 0–3, Startwert, Namen, Könige, Decks, freigeschaltete Karten)
   function duoStarten(m) {
     var ich = m.sitz | 0;
-    duoS.phase = ''; duoKnoepfe(); toastWeg(); freundeOpen(false);
+    duoS.phase = ''; duoKnoepfe(); if (!m.zuschau) forderungAblehnen(); freundeOpen(false);
     duo.on = true; duo.bot = !!m.bot; duo.spieler = m.bot ? [0, 1, 2] : [0, 1, 2, 3]; duo.weg = {};
     duo.namen = Array.isArray(m.namen) ? m.namen.map(String) : ['', '', '', ''];
     duo.decks = Array.isArray(m.decks) ? m.decks : [[], [], [], []];
@@ -105,7 +105,7 @@
   }
   // Zuschauen (Freunde): der Server schickt die Startdaten der Partie, alle bisherigen Käufe (log), den letzten Schritt je Spieler (letzt) und wer gegangen ist (weg)
   function duoZuschauen(m) {
-    duoStarten(Object.assign({}, m, { sitz: 0 }));
+    duoStarten(Object.assign({}, m, { sitz: 0, zuschau: true }));
     clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2); $('duoDeck').hidden = true;
     intro.t = 0; // ohne Namens-Einblendung, gleich nachrechnen
     pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0; MP = -1; pvp.dl = {};

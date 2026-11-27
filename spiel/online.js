@@ -78,7 +78,7 @@
       if (typeof m.duo === 'number') $('duoOnline').textContent = m.duo ? m.duo + (m.duo === 1 ? ' Spieler sucht' : ' Spieler suchen') : ''; // Duokampf: wer gerade Partner oder Gegner sucht
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; forderungAblehnen(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && !duo.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
     else if (m.k.indexOf('duo_') === 0) duoMsg(m);

@@ -449,6 +449,7 @@
 
   function start(keepTut) {
     if (keepTut !== true) tut.on = false;
+    forderungAblehnen(); // ein Spiel beginnt: offene Einladung ablehnen
     if (duo.on && spielArt !== 'duolokal') duoAus(); // Tester-Duokampf nur, wenn er gewählt ist (auch bei «Nochmal»)
     blVorbereiten(sandbox); // Bot-Partie: fester Startwert (vor reset), feste Spielschritte
     reset();

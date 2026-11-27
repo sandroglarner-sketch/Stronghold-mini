@@ -1437,7 +1437,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '56b8373273'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = 'af68c65eab'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -5695,6 +5695,7 @@
 
   function start(keepTut) {
     if (keepTut !== true) tut.on = false;
+    forderungAblehnen(); // ein Spiel beginnt: offene Einladung ablehnen
     if (duo.on && spielArt !== 'duolokal') duoAus(); // Tester-Duokampf nur, wenn er gewählt ist (auch bei «Nochmal»)
     blVorbereiten(sandbox); // Bot-Partie: fester Startwert (vor reset), feste Spielschritte
     reset();
@@ -6338,7 +6339,7 @@
       if (typeof m.duo === 'number') $('duoOnline').textContent = m.duo ? m.duo + (m.duo === 1 ? ' Spieler sucht' : ' Spieler suchen') : ''; // Duokampf: wer gerade Partner oder Gegner sucht
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
-    else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
+    else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; forderungAblehnen(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
     else if (m.k === 'left') { if (pvp.on && !duo.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
     else if (m.k.indexOf('duo_') === 0) duoMsg(m);
@@ -6792,13 +6793,21 @@
   // ----- Herausforderungen -----
   function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
   function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
-  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  // Einladung angenommen: eigene Suche, Duokampf-Team oder Zuschauen zuerst verlassen (der Server räumt bei sich ebenfalls auf)
+  function fuerEinladungFrei() {
+    if (pvp.on && pvp.zuschauer) zuschauenVerlassen();
+    else if (pvp.searching || duoS.phase) { pvp.searching = false; duoS.phase = ''; duoS.partner = null; duoKnoepfe(); showMenu(); }
+    freundeOpen(false);
+  }
+  // Einladung, die noch offen ist, ablehnen (z. B. weil gerade ein Spiel beginnt)
+  function forderungAblehnen() { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); }
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; fuerEinladungFrei(); if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
   $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
   function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
 
   // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
   function startZuschauen(m) {
-    freundeOpen(false); toastWeg();
+    freundeOpen(false); // eine offene Einladung bleibt: Zuschauen ist kein Spiel
     if (m.duo) { duoZuschauen(m); return; } // Duokampf (spiel/duo.js)
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
@@ -6824,6 +6833,12 @@
     var box = pvp.inbox[t] = pvp.inbox[t] || {};
     box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
     if (t > pvp.letzte) pvp.letzte = t;
+  }
+  function zuschauenVerlassen() { // ohne die Verbindung zu trennen (z. B. Einladung angenommen)
+    pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); augen(0);
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; MP = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    duoAus(); state = 'ready'; ui.gm = ui.gf = ui.cdown = -1;
+    showMenu();
   }
   function zuschauenEnde() { $('zBanner').hidden = true; document.documentElement.classList.remove('zuschauer'); pvp.zuschauer = false; }
   $('zRaus').addEventListener('click', function () { pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); pvpLeave(); });
@@ -6886,7 +6901,10 @@
       return;
     }
     if (m.k === 'forderung') {
-      if (state === 'playing' || pvp.on || pvp.searching || duoS.phase) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      // Einladung erscheint immer, ausser du bist gerade in einem Spiel (Zuschauen zählt nicht) oder hast selbst eine Einladung verschickt
+      var imSpiel = !pvp.zuschauer && (pvp.on || state === 'playing' || state === 'paused');
+      if (imSpiel || sozial.forderungRaus) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      if (sozial.forderungRein && sozial.forderungRein.id !== m.id) pvpSend({ k: 'antwort', id: sozial.forderungRein.id, ja: false }); // ältere Einladung wird ersetzt
       sozial.forderungRein = { id: m.id, von: m.von, duo: !!m.duo };
       toast(m.duo ? m.von.name + ' lädt dich zum Duokampf ein (ihr zwei gegen zwei andere)' : m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
       return;
@@ -6997,7 +7015,7 @@
   function duoMsg(m) {
     if (m.k === 'duo_info') { duoS.info = m; if (duoS.phase === 'partner' || duoS.phase === 'gegner') duoStatusText(); return; }
     if (m.k === 'duo_team') { // Partner gefunden: jetzt Gegner suchen
-      toastWeg(); freundeOpen(false); sozial.forderungRaus = null;
+      freundeOpen(false); sozial.forderungRaus = null; // eine offene Einladung an dich bleibt stehen (noch kein Spiel)
       duoS.phase = 'gegner'; duoS.partner = m.partner || { name: 'Partner', koenig: 'standard', deck: [] }; duoS.ichBot = duoS.partnerBot = false;
       pvp.searching = true;
       duoFenster('Duokampf', ''); duoStatusText();
@@ -7022,7 +7040,7 @@
   // Partie beginnt: alle Browser bekommen dieselben Daten (Plätze 0–3, Startwert, Namen, Könige, Decks, freigeschaltete Karten)
   function duoStarten(m) {
     var ich = m.sitz | 0;
-    duoS.phase = ''; duoKnoepfe(); toastWeg(); freundeOpen(false);
+    duoS.phase = ''; duoKnoepfe(); if (!m.zuschau) forderungAblehnen(); freundeOpen(false);
     duo.on = true; duo.bot = !!m.bot; duo.spieler = m.bot ? [0, 1, 2] : [0, 1, 2, 3]; duo.weg = {};
     duo.namen = Array.isArray(m.namen) ? m.namen.map(String) : ['', '', '', ''];
     duo.decks = Array.isArray(m.decks) ? m.decks : [[], [], [], []];
@@ -7036,7 +7054,7 @@
   }
   // Zuschauen (Freunde): der Server schickt die Startdaten der Partie, alle bisherigen Käufe (log), den letzten Schritt je Spieler (letzt) und wer gegangen ist (weg)
   function duoZuschauen(m) {
-    duoStarten(Object.assign({}, m, { sitz: 0 }));
+    duoStarten(Object.assign({}, m, { sitz: 0, zuschau: true }));
     clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2); $('duoDeck').hidden = true;
     intro.t = 0; // ohne Namens-Einblendung, gleich nachrechnen
     pvp.me = -1; pvp.zuschauer = true; pvp.letzte = 0; ME = 0; MP = -1; pvp.dl = {};
