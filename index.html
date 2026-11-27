@@ -28,6 +28,8 @@
     --line: #ccd6d9;
     --me: #2a64b8;
     --foe: #c23a2e;
+    --p2: #7d4bc2; /* Duokampf: Partner im blauen Team (violett) */
+    --p3: #e07b16; /* Duokampf: Partner im roten Team (orange) */
     --gold: #9a6f00;
     --gold-fill: #e3ad22;
     --grass-a: #8ab565;
@@ -766,6 +768,28 @@
     .geschenk { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translateX(-50%); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px); }
   }
   @media (max-height: 460px) { .gbuehne { min-height: 0; } .gkiste { top: 20px; } .gkarte { font-size: 10px; width: 170px; } .geschenk p { display: none; } }
+
+  /* Duokampf (27.11.): Tutorial und Duokampf teilen sich eine Spalte (oben / unten) */
+  .ovsplit { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-height: 0; }
+  .ovsplit .ovmode { padding: 10px 14px; gap: 2px; }
+  .ovsplit .ovmode b { font-size: 1.15rem; margin-top: 2px; }
+  .ovsplit .ovmode svg { width: 24px; height: 24px; flex: none; }
+  html.phone .ovsplit { gap: 8px; }
+  html.phone .ovsplit .ovmode { padding: 6px 10px; }
+  html.phone .ovsplit .ovmode svg { width: 18px; height: 18px; }
+  @media (max-width: 640px) { .ovsplit .ovmode b { font-size: 0.95rem; } }
+  @media (max-width: 900px), (max-height: 560px) { .ovsplit .ovonl { display: none; } } /* halbe Höhe: Zusatzzeile weglassen */
+  .ovrow .duobot[aria-pressed="true"] { background: var(--p2); border-color: var(--p2); color: #fff; }
+  .ovduo { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-top: 8px; font-size: 0.9rem; }
+  .ovduo b { font-weight: 600; }
+  .ovduo i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  /* Deck des Partners zu Beginn der Partie */
+  .duodeck { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(255,255,255,0.93); border: 2px solid var(--p2); border-radius: 12px; padding: 6px 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 6; text-align: center; max-width: calc(100% - 20px); transition: opacity 0.6s; pointer-events: none; }
+  .duodeck.weg { opacity: 0; }
+  .duodeck b { display: block; font-family: var(--display); font-size: 0.9rem; margin-bottom: 4px; }
+  .duodeck .ddk { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .duodeck canvas { width: 40px; height: 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  html.phone .duodeck canvas { width: 30px; height: 30px; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -799,6 +823,7 @@
     <div class="fshint" id="fsHint" hidden>Echtes Vollbild am iPhone: unten auf <b>Teilen</b> (□↑) tippen, dann <b>«Zum Home-Bildschirm»</b> und das Spiel über das neue Symbol starten.</div>
     <canvas id="field" aria-label="Spielfeld von oben: links deine Burg, rechts die des Gegners"></canvas>
     <div class="units" id="units"></div>
+    <div class="duodeck" id="duoDeck" hidden aria-live="polite"></div>
     <div class="overlay menu" id="overlay">
       <div class="ovtop">
         <span class="ovleft">
@@ -818,7 +843,10 @@
       <div class="ovmodes">
         <button class="ovmode ovstory" id="storyBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14"></path><path d="M15 6v14"></path></svg><b>Story-Modus</b><span id="storyText">Besiege einen Gegner nach dem anderen</span><span class="ovdots" id="storyDots"></span></button>
         <button class="ovmode" id="pvpBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--foe)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path><path d="M9.5 6.5 18 3h3v3l-3.5 8.5"></path></svg><b>Online 1 vs 1</b><span>Gegen einen zufälligen Spieler</span><span class="ovpvpedel" id="pvpEdel" hidden></span><span class="ovonl" id="pvpOnline"></span></button>
+        <div class="ovsplit">
         <button class="ovmode" id="tutBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"></path><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"></path><path d="M22 9v6"></path></svg><b>Tutorial</b><span>Lerne jede Einheit kennen</span><span class="ovonl ovgrau">ca. 5 Minuten</span></button>
+        <button class="ovmode" id="duoBtn" type="button"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--p2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="7.5" r="3.2"></circle><path d="M2 20a6 6 0 0 1 12 0"></path><circle cx="16.5" cy="7.5" r="3.2"></circle><path d="M14.5 13.6A6 6 0 0 1 22 20"></path></svg><b>Duokampf</b><span>2 gegen 2 mit einem Partner</span><span class="ovonl" id="duoOnline"></span></button>
+        </div>
       </div>
       <div class="ovrow">
         <span class="choice" id="ovChoice" hidden>
@@ -830,6 +858,8 @@
           </select>
         </span>
         <button class="primary" id="ovBtn" type="button">Spiel starten</button>
+        <button class="ghost" id="duoFreundBtn" type="button" hidden>Freund einladen</button>
+        <button class="ghost duobot" id="duoBotBtn" type="button" hidden aria-pressed="false">Zufälliger Bot</button>
         <button class="ghost" id="menuBtn" type="button" hidden>Zum Menü</button>
         <button class="ghost" id="sandBtn" type="button" title="Zum Ausprobieren: du startest mit 9999 Gold, der Gegner mit 160">Sandbox</button>
       </div>
@@ -960,6 +990,10 @@
     BASE_CD: 1,
     BASE_DELAY: 0.5, // Flugzeit des Kasernenpfeils in Sekunden
     // Computergegner: bekommt wie du 10 Gold pro Auszahlung (ohne Bauernbonus). 
+    // Duokampf (27.11.): 2 gegen 2 oder 2 gegen einen zufälligen Story-Bot. Pro Spieler income Gold alle GOLD_EVERY s, Start mit startGold.
+    // koenigSchaden = Faktor für Nah- und Fernkampf der Könige eines Zweierteams; wiederkehr = so viele s nach dem Tod kehrt ein König zurück,
+    // wenn der andere König seines Teams so lange keinen Schaden erlitten hat. Der Bot spielt normal (eigenes Einkommen, voller Schaden).
+    DUO: { income: 5, startGold: 5, koenigSchaden: 0.5, wiederkehr: 15, koenigAbstand: 0.55 },
     levels: {
       normal: { income: 10 }
     },
@@ -1403,14 +1437,17 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '4b87a0fbc1'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '8936718490'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
   // deploys = eigene Käufe unterwegs {type, cost, t, net}; ihr Gold ist reserviert (nur Anzeige/Kaufprüfung, die Simulation zieht es beim Ausführen ab)
   var DEPLOY = 0.35, deploys = [];
-  function deployGold() { var s = 0; for (var i = 0; i < deploys.length; i++) s += deploys[i].cost; return s; }
+  function deployGold() { var s = 0; for (var i = 0; i < deploys.length; i++) if (deploys[i].p === undefined || deploys[i].p === MP) s += deploys[i].cost; return s; } // nur deine (Tester-Duokampf: Tab wechselt den Spieler)
   var ME = 0; // welches Team du bist (0 = links/blau, 1 = rechts/rot im Online-Spiel)
+  // Duokampf (27.11.): Spieler 0 und 2 bilden Team 0 (blau, violett), 1 und 3 Team 1 (rot, orange); Spieler p gehört zu Team p % 2.
+  // duo.spieler = Spieler in der Partie (gegen den Bot [0, 1, 2], 1 = Bot); MP = welcher Spieler du bist (sonst = ME); duo.weg = Spieler, die gegangen sind (Spielschritt)
+  var MP = 0, duo = { on: false, bot: false, spieler: [0, 1], namen: [], decks: [], weg: {} };
   var pvp = { on: false, me: 0, ws: null, searching: false, ended: false, tick: 0, acc: 0, alpha: 0, inbox: {}, sent: {}, pending: [], hashes: {}, remoteHash: {}, stall: 0 };
   var sandbox = false, sandBtn = $('sandBtn');
   // Tester-Modus (19.11.): nur ausserhalb der Online-Seite (Claude-Artifact). Zeigt die Sandbox und schaltet alle Einheiten und Gegner frei.
@@ -1425,13 +1462,14 @@
   var payFill = $('payFill'), payText = $('payText'), unitsEl = $('units');
 
   // ---------- Farben aus dem Theme ----------
-  var TOKENS = ['me', 'foe', 'gold', 'gold-fill', 'grass-a', 'grass-b', 'tuft', 'dirt', 'dirt-edge', 'tree',
+  var TOKENS = ['me', 'foe', 'p2', 'p3', 'gold', 'gold-fill', 'grass-a', 'grass-b', 'tuft', 'dirt', 'dirt-edge', 'tree',
     'tree-hi', 'water', 'water-hi', 'stone', 'stone-dark', 'wood', 'steel', 'shade', 'bg', 'line'];
   var P = {};
   function readPalette() {
     var cs = getComputedStyle(document.documentElement);
     for (var i = 0; i < TOKENS.length; i++) P[TOKENS[i]] = cs.getPropertyValue('--' + TOKENS[i]).trim();
   }
+  function farbeVon(p) { return p === 1 ? P.foe : p === 2 ? P.p2 : p === 3 ? P.p3 : P.me; } // Farbe eines Spielers (0 blau, 1 rot, 2 violett, 3 orange)
 
   // ---------- Hilfsfunktionen ----------
   function mulberry32(a) {
@@ -1538,10 +1576,10 @@
   // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
   // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
-  var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
-  var kZust = [null, null]; // je Team im Spiel: { zieh: Bogen 0..1, nah: Nahkampfwaffe 0..1 }, gesetzt in zeichnen.js
+  var koenigTeam = ['standard', 'bandit', 'standard', 'standard']; // Optik der Könige in der laufenden Partie (Index = Spieler; 2, 3 nur im Duokampf)
+  var kZust = [null, null, null, null]; // je Spieler im Spiel: { zieh: Bogen 0..1, nah: Nahkampfwaffe 0..1 }, gesetzt in zeichnen.js
   var KRATZ = { alle: 15, dauer: 2.4 }; // Kopfkratzen: alle 15 s, dauert 2,4 s (halbes Tempo)
-  var kKratz = [0, 0]; // Kopfkratzen in der Burg je Team (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
+  var kKratz = [0, 0, 0, 0]; // Kopfkratzen in der Burg je Spieler (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
   var KSCHRAEG = -0.5; // Nahkampfwaffe schräg nach vorn gehalten (Bogenmass)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
   function koenigOptik(id) { return KOENIGE[id] || KOENIGE.standard; }
@@ -1932,6 +1970,12 @@
     return { team: team, x1: x1, x2: x1 + 2, y1: 3.5, y2: 6.5, hp: CONFIG.BASE_HP, flash: 0, cd: 0, lastHit: -99, down: false };
   }
 
+  // Duokampf: Spieler einer Einheit (wem ihr Gold gehört, Farbe); ohne Duokampf = Team
+  function pOf(u) { return u.pl === undefined ? u.team : u.pl; }
+  function spielerIm(team) { if (!duo.on) return [team]; return duo.spieler.filter(function (p) { return p % 2 === team; }); } // Spieler eines Teams in dieser Partie
+  function zweierTeam(team) { return duo.on && spielerIm(team).length > 1; }
+  var kTot = {}; // Duokampf: gefallene Könige (Spieler -> Zeitpunkt; Infinity = aufgegeben/gegangen, kommt nicht zurück)
+
   function reset() {
     deploys = [];
     units = [];
@@ -1941,15 +1985,17 @@
     bases = [makeBase(0), makeBase(1)];
     walls = [null, null];
     nextId = 1; // vor den Königen: sonst hängen die Nummern von der vorigen Partie ab (Online/Zuschauer würden auseinanderlaufen)
-    spawnKing(0); spawnKing(1);
-    gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
+    kTot = {};
+    if (duo.on) duo.spieler.forEach(function (p) { spawnKing(p); }); else { spawnKing(0); spawnKing(1); }
+    gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD, 0, 0]; // Index = Spieler (2, 3 nur im Duokampf)
+    if (duo.on) duo.spieler.forEach(function (p) { if (!(duo.bot && p === 1)) gold[p] = CONFIG.DUO.startGold; }); // der Bot startet normal
     sandbox = false;
     payT = 0; payT1 = 0;
     clock = 0;
     produced = 0;
     winner = -1;
     aiRoll();
-    rec = [[], []];
+    rec = [[], [], [], []];
     gaveUp = false;
   }
 
@@ -2060,12 +2106,12 @@
     u.ty = spot ? spot.y : null;
   }
 
-  function spawn(team, type) {
-    var d = CONFIG.units[type], b = bases[team];
+  function spawn(p, type) { // p = Spieler (ohne Duokampf = Team)
+    var team = p % 2, d = CONFIG.units[type], b = bases[team];
     var x = team === 0 ? b.x2 + 0.5 : b.x1 - 0.5;
     var SPAWN_BAND = 2.8, y = (b.y1 + b.y2) / 2 - SPAWN_BAND / 2 + simRand() * SPAWN_BAND; // neue Einheiten: zufällig in einem Band von 2,8 Kacheln (Mitte = Burgmitte)
     units.push({
-      id: nextId++, team: team, type: type,
+      id: nextId++, team: team, pl: p, type: type,
       x: x + (simRand() - 0.5) * 0.2, y: y,
       hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
@@ -2078,7 +2124,7 @@
       var bu = units[units.length - 1];
       bu.goWall = pickWallSpot(team, d.r); if (d.belfry) bu.bfTower = true;
       if (d.belfry) for (var bi = 0; bi < d.belfry.archers; bi++) { // Bogenschützen oben auf dem Turm
-        spawn(team, 'archer');
+        spawn(p, 'archer');
         var ba = units[units.length - 1];
         ba.gar = null; ba.bf = bu; ba.bfSlot = bi % 2 ? 1 : -1; ba.tower = true;
         ba.x = bu.x; ba.y = bu.y + ba.bfSlot * 0.22;
@@ -2130,15 +2176,18 @@
   function belfryManned(b) { for (var q = 0; q < units.length; q++) if (units[q].bf === b && units[q].hp > 0) return true; return false; }
 
   // Der König ist eine Einheit, die in der Burg sitzen kann (inCastle): oben Bogenschütze und unverwundbar, ohne Burg Nahkämpfer
-  function spawnKing(team) {
-    var kd = CONFIG.units.king, kb = bases[team];
+  function spawnKing(p) { // p = Spieler (ohne Duokampf = Team)
+    var team = p % 2, kd = CONFIG.units.king, kb = bases[team], halb = zweierTeam(team);
     units.push({
-      id: nextId++, team: team, type: 'king',
-      x: (kb.x1 + kb.x2) / 2, y: (kb.y1 + kb.y2) / 2,
+      id: nextId++, team: team, pl: p, type: 'king', halb: halb, // halb: Zweierteam im Duokampf, halber Schaden
+      x: (kb.x1 + kb.x2) / 2, y: (kb.y1 + kb.y2) / 2 + koenigVersatz(p),
       hp: kd.hp, max: kd.hp, cd: 0.5, inCastle: true,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
   }
+
+  // Duokampf: zwei Könige auf einer Burg sitzen nebeneinander (der erste Spieler oben, der Partner unten)
+  function koenigVersatz(p) { return zweierTeam(p % 2) ? (p < 2 ? -1 : 1) * CONFIG.DUO.koenigAbstand : 0; }
 
   // Ziel eines Tunnelgräbers: ein zufälliger Punkt im Umkreis einer zufälligen gegnerischen Einheit auf dem Feld, die weiter als 1 Kachel schiesst
   // (Bogenschütze, Magier, Baliste, Katapult, Trebuchet …) (gibt es keinen, ein Punkt in der Spielfeldmitte), nie näher als minBase an der gegnerischen Kaserne.
@@ -2313,7 +2362,7 @@
     if (g.stufe >= st.length) return Infinity;
     return st[g.stufe].cost;
   }
-  function buyGebaeude(team, type) {
+  function buyGebaeude(team, type, pl) { // pl = Spieler, der baut (bekommt den Ertrag); Gebäude gehören dem Team, beide dürfen ausbauen
     var d = CONFIG.units[type], G = d.gebaeude, g = meinGebaeude(team, type), dir = team === 0 ? 1 : -1;
     if (g && G.gebet) { // Kirche: ein Priester betet (danach Gunst +1)
       if (g.bau || g.gebetT > 0 || (g.gunst || 0) >= G.gunstMax) return false;
@@ -2325,7 +2374,7 @@
     } else {
       var frei = gebPlaetze(team); if (!frei.length) return false;
       var p = frei[Math.floor(simRand() * frei.length)];
-      g = { id: nextId++, team: team, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
+      g = { id: nextId++, team: team, pl: pl === undefined ? team : pl, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
             bau: true, stufe: 0, ziel: 1, gT: 0, nx: 0, ny: p.y < H / 2 ? 1 : -1 }; // nx/ny = Vorderseite: zur Mitte (brauner Weg)
       units.push(g);
     }
@@ -2333,25 +2382,26 @@
     var wk = units[units.length - 1]; wk.bank = g; wk.bp = { x: g.x - dir * (G.w / 2 + 0.25), y: g.y }; // baut an der Seite zur Burg (läuft nicht über das Dach)
     return true;
   }
-  function buy(team, type) {
+  function buy(p, type) { // p = Spieler (ohne Duokampf = Team); bezahlt wird mit dem Gold des Spielers, Preise (Karawane, Bürger, Gebäude) gelten fürs Team
     if (state !== 'playing') return false;
-    var d = CONFIG.units[type];
-    if (!d || d.hidden || gold[team] < preisVon(team, type)) return false;
+    var team = p % 2, d = CONFIG.units[type];
+    if (!d || d.hidden || gold[p] < preisVon(team, type)) return false;
+    if (duo.on && kTot[p] === Infinity) return false; // aufgegeben oder gegangen
     if (tut.on && team === 0 && tut.avail.indexOf(type) < 0) return false; // im Tutorial nur, was gerade verlangt ist
     if (d.wall) {
       if (!buyWall(team)) return false;
-      gold[team] -= d.cost;
+      gold[p] -= d.cost;
       if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
-      rec[team].push(clock.toFixed(1) + LOGKEY[type]);
+      rec[p].push(clock.toFixed(1) + LOGKEY[type]);
       return true;
     }
     var preis = preisVon(team, type);
-    if (d.gebaeude && !buyGebaeude(team, type)) return false; // kein Platz frei / schon höchste Stufe
-    gold[team] -= preis;
+    if (d.gebaeude && !buyGebaeude(team, type, p)) return false; // kein Platz frei / schon höchste Stufe
+    gold[p] -= preis;
     if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
-    rec[team].push(clock.toFixed(1) + LOGKEY[type]);
-    if (!d.gebaeude) spawn(team, type);
-    if (team === ME) produced++;
+    rec[p].push(clock.toFixed(1) + LOGKEY[type]);
+    if (!d.gebaeude) spawn(p, type);
+    if (p === MP) produced++;
     return true;
   }
 
@@ -2618,6 +2668,13 @@
     return team === 1 ? (CONFIG.levels[level] || CONFIG.levels.normal).income : CONFIG.GOLD_AMOUNT;
   }
 
+  // Dieb, Brandstifter: nimmt jedem Spieler des Gegnerteams prozent % seines Goldes (aufgerundet); Ergebnis = Summe
+  function klauGold(team, prozent) {
+    var l = spielerIm(1 - team), s = 0;
+    for (var i = 0; i < l.length; i++) { var k = Math.ceil(Math.max(0, gold[l[i]]) * prozent / 100); gold[l[i]] -= k; s += k; }
+    return s;
+  }
+
   function nearestOnRect(u, b) {
     return { x: clamp(u.x, b.x1, b.x2), y: clamp(u.y, b.y1, b.y2) };
   }
@@ -2686,7 +2743,7 @@
     }
     for (j = 0; j < l.length; j++) {
       var b = l[j], bd = CONFIG.units[b.type];
-      b.team = neu; b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
+      b.team = neu; b.pl = pOf(u); b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
       b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
       if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
       effects.push({ kind: 'bekehrt', x: b.x, y: b.y, team: neu, t: 0, dur: 0.9 });
@@ -2697,7 +2754,7 @@
   function landShot(s) {
     if (s.base) { // Pfeil der Kaserne
       var bv = s.tgt;
-      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK, { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
+      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK * (s.f || 1), { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
       return;
     }
     var d = CONFIG.units[s.type], tgt = s.tgt, cx = s.tx, cy = s.ty, aimBase = !s.tgt && !s.wall;
@@ -2730,7 +2787,7 @@
 
   // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
   function botEinkommen() {
-    if (pvp && pvp.on && !pvp.bot) return null; // Online-Partie: kein Bot (Zuschauer einer Bot-Partie: doch)
+    if (duo.on ? !duo.bot : pvp && pvp.on && !pvp.bot) return null; // Online-Partie und Duokampf 2 gegen 2: kein Bot (Zuschauer einer Bot-Partie und Duokampf gegen den Bot: doch)
     var R = CONFIG.BOTS[botType]; if (!R) return null;
     return { gold: R.income === undefined ? income(1) : R.income, alle: Math.max(0.5, R.incomeEvery || CONFIG.GOLD_EVERY) };
   }
@@ -2749,13 +2806,15 @@
     payT += dt;
     if (payT >= CONFIG.GOLD_EVERY) {
       payT -= CONFIG.GOLD_EVERY;
-      for (var t = 0; t < 2; t++) {
+      var zahler = duo.on ? duo.spieler : [0, 1]; // Duokampf: jeder Spieler bekommt sein eigenes Grundeinkommen
+      for (var zi = 0; zi < zahler.length; zi++) {
+        var t = zahler[zi];
         if (tut.on && t === 1) continue; // der Trainingsgegner bekommt kein Gold
         if (t === 1 && botEinkommen()) continue; // Bot: eigenes Grundeinkommen (unten)
-        var amt = income(t);
+        var amt = duo.on ? CONFIG.DUO.income : income(t);
         gold[t] = Math.min(CONFIG.GOLD_MAX, gold[t] + amt);
-        var bb = bases[t];
-        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2, y: bb.y1 + 0.55, t: 0, dur: 1.2 }); // Grundeinkommen im oberen Bereich der Burg
+        var bb = bases[t % 2];
+        effects.push({ kind: 'text', text: '+' + amt, x: (bb.x1 + bb.x2) / 2 + (zweierTeam(t % 2) ? (t < 2 ? -0.45 : 0.45) : 0), y: bb.y1 + 0.55, t: 0, dur: 1.2, pl: t }); // Grundeinkommen im oberen Bereich der Burg
       }
     }
     for (var gi = 0; gi < units.length; gi++) { // Bauern: jeder bringt alle bonusEvery Sekunden bonus Gold, sein Takt startet beim Niederlassen
@@ -2764,12 +2823,12 @@
       gu.gT = (gu.gT || 0) + dt;
       if (gu.gT >= gd.bonusEvery) {
         gu.gT -= gd.bonusEvery;
-        gold[gu.team] = Math.min(CONFIG.GOLD_MAX, gold[gu.team] + gd.bonus);
+        gold[pOf(gu)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(gu)] + gd.bonus);
         effects.push({ kind: 'text', text: '+' + gd.bonus, x: gu.x, y: gu.y - 0.55, farmer: true, t: 0, dur: 1.1 });
         gu.grabT = clock; // nur für die Darstellung: gräbt kurz mit der Heugabel
       }
     }
-    if (!tut.on && (!pvp.on || pvp.bot)) aiUpdate(dt);
+    if (!tut.on && (duo.on ? duo.bot : (!pvp.on || pvp.bot))) aiUpdate(dt); // Duokampf: nur gegen den Bot (auch online, beide Browser rechnen ihn)
 
     var i, j;
     for (i = 0; i < units.length; i++) {
@@ -2785,13 +2844,13 @@
           var GD = d.gebaeude, galt = u.gT; u.gT += dt;
           if (GD.art === 'dieb' && !tut.on) { // Dieb: klaut in der gegnerischen Burg, liefert in der eigenen ab
             var fb = bases[1 - u.team], ob = bases[u.team];
-            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= kl; u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
-            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var kl = klauGold(u.team, GD.prozent); u.beute = (u.beute || 0) + kl; if (kl) effects.push({ kind: 'text', text: '-' + kl, x: (fb.x1 + fb.x2) / 2, y: fb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+            if (galt < GD.abladen && u.gT >= GD.abladen && u.beute) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + u.beute); effects.push({ kind: 'text', text: '+' + u.beute, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.4 }); u.beute = 0; } // kommt im Diebeshaus an
           }
           if (GD.art === 'brand' && !tut.on) { // Brandstifter: legt in der gegnerischen Burg Feuer, der Gegner verliert Gold
             var bfb = bases[1 - u.team];
             if (galt < GD.zuenden && u.gT >= GD.zuenden) effects.push({ kind: 'feuer', x: (bfb.x1 + bfb.x2) / 2, y: (bfb.y1 + bfb.y2) / 2, w: bfb.x2 - bfb.x1, h: bfb.y2 - bfb.y1, t: 0, dur: GD.klauen - GD.zuenden + 0.5 }); // kurzer, kleiner Brand (1,5 s)
-            if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = Math.ceil(Math.max(0, gold[1 - u.team]) * GD.prozent / 100); gold[1 - u.team] -= vb; if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
+            if (galt < GD.klauen && u.gT >= GD.klauen) { var vb = klauGold(u.team, GD.prozent); if (vb) effects.push({ kind: 'text', text: '-' + vb, x: (bfb.x1 + bfb.x2) / 2, y: bfb.y1 + 0.9, farmer: true, rot: true, t: 0, dur: 1.4 }); }
           }
           if (GD.art === 'kirche') { // Gebet und Unwetter
             u.gT = 0;
@@ -2814,9 +2873,9 @@
           }
           else if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
-            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[u.team]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
+            var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[pOf(u)]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
             u.zahl = (u.zahl || 0) + 1;
-            if (gg > 0 && !(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
+            if (gg > 0 && !(tut.on && u.team === 1)) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
         var kbp = bases[u.team], kpx = clamp(u.x, kbp.x1 + 0.3, kbp.x2 - 0.3), kpy = clamp(u.y, kbp.y1 + 0.3, kbp.y2 - 0.3);
@@ -2836,7 +2895,7 @@
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
       var spd = (d.karawane && u.voll >= 1 && d.karawane.tempoVoll ? d.karawane.tempoVoll : d.speed) * (u.slow > 0 ? (u.slowF || 0.5) : 1); // Karawane: mit vollen Töpfen langsamer (22.11.)
       if (d.king) { // König ohne Burg: kämpft nur nahe der Burg und kehrt zurück
-        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2, KL = d.king.leash, kdx, kdy, kdl;
+        var kb = bases[u.team], kcx = (kb.x1 + kb.x2) / 2, kcy = (kb.y1 + kb.y2) / 2 + koenigVersatz(pOf(u)), KL = d.king.leash, kdx, kdy, kdl; // Duokampf: zwei Könige nebeneinander
         if (u.inCastle) {
           if (kb.down) u.inCastle = false;
           else { // oben auf der Burg: unverwundbar, schießt wie ein Bogenschütze auf den nächsten Gegner in Reichweite
@@ -2855,7 +2914,7 @@
             if (vic) u.bogenT = Math.min(1, u.bogenT + dt / CONFIG.KING_BOW.draw);
             else u.bogenT = Math.max(0, u.bogenT - dt / CONFIG.KING_BOW.stow);
             if (vic && u.bogenT >= 1 && u.cd <= 0) {
-              shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY });
+              shots.push({ base: true, team: u.team, tgt: vic, t: CONFIG.BASE_DELAY, f: u.halb ? CONFIG.DUO.koenigSchaden : 1 });
               u.cd = CONFIG.BASE_CD; u.atkT = clock;
               u.aim = Math.atan2(vic.y - kcy, vic.x - kcx); u.aimT = clock; // dreht sich zum Ziel (nur Zeichnung)
               effects.push({ kind: 'arrow', x1: kcx + Math.cos(u.aim) * 0.35, y1: kcy + Math.sin(u.aim) * 0.35, x2: vic.x, y2: vic.y, t: 0, dur: CONFIG.BASE_DELAY }); // der Pfeil startet beim König (Bogen), nicht am Burgrand (nur Zeichnung)
@@ -2900,7 +2959,7 @@
         if (kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001 && u.cd <= 0) {
           u.cd = d.cd; u.atkT = clock;
           if (Math.abs(kt.x - u.x) > 0.05) u.face = kt.x > u.x ? 1 : -1;
-          hurt(kt, d.atk, d); kt.hit = 0.15; kt.lastHit = clock;
+          hurt(kt, d.atk * (u.halb ? CONFIG.DUO.koenigSchaden : 1), d); kt.hit = 0.15; kt.lastHit = clock;
           effects.push({ kind: 'stab', heavy: true, x1: u.x, y1: u.y, x2: kt.x, y2: kt.y, t: 0, dur: 0.16 });
         }
         continue;
@@ -2970,7 +3029,7 @@
           var bc = d.belfry, sg = u.team === 0 ? 1 : -1;
           u.dock.t += dt;
           while (u.dock.n < bc.troops && u.dock.t >= u.dock.n * bc.every) {
-            spawn(u.team, 'sword');
+            spawn(pOf(u), 'sword');
             var sw = units[units.length - 1], so = ((u.dock.n % 3) - 1) * 0.25;
             if (u.dock.wall) { sw.x = gv.ix - sg * 0.1; sw.y = gv.iy + so; } else { sw.x = u.x + sg * 0.7; sw.y = u.y + so; }
             sw.face = sg; sw.fromBf = true;
@@ -3002,7 +3061,7 @@
       if (d.buerger) { // Bürger: schlendert im eigenen Mauerbereich umher, bleibt ab und zu stehen (kratzt sich am Kopf, schaut umher); alle alle s +gold Gold
         var BG = d.buerger;
         u.bT = (u.bT || 0) + dt;
-        if (u.bT >= BG.alle) { u.bT -= BG.alle; if (!(tut.on && u.team === 1)) { gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + BG.gold); effects.push({ kind: 'text', text: '+' + BG.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 }); } }
+        if (u.bT >= BG.alle) { u.bT -= BG.alle; if (!(tut.on && u.team === 1)) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + BG.gold); effects.push({ kind: 'text', text: '+' + BG.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 }); } }
         if (u.bz === undefined) { u.bz = 'geht'; u.bzT = 0; buergerZiel(u); }
         u.bzT += dt;
         if (u.bz === 'geht') {
@@ -3038,7 +3097,7 @@
             if (u.hackT >= HZ.alle) {
               u.hackT -= HZ.alle;
               var hg = Math.min(HZ.gold, hb.holz); hb.holz -= hg;
-              gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + hg);
+              gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + hg);
               effects.push({ kind: 'text', text: '+' + hg, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
               effects.push({ kind: 'spaene', x: hb.x, y: hb.y, t: 0, dur: 0.5 });
               if (hb.holz <= 0) effects.push({ kind: 'puff', x: hb.x, y: hb.y, team: u.team, t: 0, dur: 0.6 }); // Baum fällt
@@ -3090,7 +3149,7 @@
           else if (u.kz === 'anfahrt') { u.x = FPX; u.y = FPY; u.kz = 'fuellen'; }
           else if (u.kz === 'zurueck' && !u.kw) u.kw = 1; // Wegpunkt erreicht: weiter zur Burg
           else if (u.kz === 'zurueck') { // an der Burg: Wasser verkauft
-            gold[u.team] = Math.min(CONFIG.GOLD_MAX, gold[u.team] + KW.gold);
+            gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + KW.gold);
             effects.push({ kind: 'text', text: '+' + KW.gold, x: u.x, y: u.y - 0.55, farmer: true, t: 0, dur: 1.1 });
             u.kz = 'spawn'; u.voll = 0;
           }
@@ -3339,6 +3398,7 @@
     // König gefallen? (nur möglich, wenn die Burg zerstört ist; ein heimkehrender König, der oben ankommt, zählt nicht)
     var kdead = [false, false];
     for (i = 0; i < units.length; i++) if (units[i].type === 'king' && units[i].hp <= 0) kdead[units[i].team] = true;
+    if (duo.on) kdead = duoKoenige(); // Duokampf: verloren erst, wenn beide Könige eines Teams tot sind
 
     // Gebäude: niemand steht darin (Bauern regeln das selbst über farmerStand)
     for (i = 0; i < units.length; i++) {
@@ -3415,6 +3475,29 @@
       }
     }
     if (kdead[0] || kdead[1]) finish(kdead[0] && kdead[1] ? -1 : (kdead[0] ? 1 : 0));
+  }
+
+  // Duokampf: gefallene Könige merken; ein Team ist erst besiegt, wenn keiner seiner Könige mehr lebt. Lebt der andere noch und hat er
+  // CONFIG.DUO.wiederkehr s lang keinen Schaden erlitten (und ist der Tod so lange her), kehrt der gefallene König auf die Burg zurück.
+  function duoKoenige() {
+    var lebt = [0, 0], letzter = [-1e9, -1e9], i, u;
+    for (i = 0; i < units.length; i++) {
+      u = units[i]; if (u.type !== 'king') continue;
+      if (u.hp <= 0) { if (kTot[pOf(u)] === undefined) kTot[pOf(u)] = clock; }
+      else { lebt[u.team]++; letzter[u.team] = Math.max(letzter[u.team], u.lastHit); }
+    }
+    var tot = [lebt[0] === 0, lebt[1] === 0];
+    for (i = 0; i < duo.spieler.length; i++) {
+      var p = duo.spieler[i], kt = kTot[p], tm = p % 2;
+      if (kt === undefined || kt === Infinity || tot[tm]) continue;
+      if (clock - kt >= CONFIG.DUO.wiederkehr && clock - letzter[tm] >= CONFIG.DUO.wiederkehr) { delete kTot[p]; spawnKing(p); }
+    }
+    return tot;
+  }
+  // Duokampf: ein Spieler gibt auf oder geht: sein König fällt und kehrt nicht zurück, er kauft nichts mehr
+  function duoAufgeben(p) {
+    for (var i = 0; i < units.length; i++) if (units[i].type === 'king' && pOf(units[i]) === p) units[i].hp = 0;
+    kTot[p] = Infinity;
   }
 
   function updateEffects(dt) {
@@ -3585,7 +3668,7 @@
     }
     var A = attackPose(type, at, r);
     if (type === 'knight' || type === 'schwarzritter') r *= 0.85; // Ritter optisch kleiner (nur Darstellung)
-    var col = team === 0 ? P.me : P.foe;
+    var col = farbeVon(team); // team = Spieler (Duokampf: 2 violett, 3 orange)
     c.save();
     c.translate(x, y);
     c.fillStyle = P.shade;
@@ -4656,7 +4739,10 @@
     }
 
     // Goldmenge in der Burg (unter dem Bergfried)
-    if (gold && !(tut.on && b.team === 1)) coinText(ctx, String(Math.floor(gold[b.team] - (b.team === ME ? deployGold() : 0))), cx, y + h * 0.79, 14, '#ffffff', 'rgba(0,0,0,0.55)'); // im Tutorial keine Goldanzeige beim Gegner
+    if (gold && zweierTeam(b.team)) spielerIm(b.team).forEach(function (p) { // Duokampf: Gold beider Spieler am unteren Rand, links der erste, rechts der Partner (Rand in Spielerfarbe)
+      coinText(ctx, String(Math.floor(gold[p] - (p === MP ? deployGold() : 0))), cx + (p < 2 ? -0.19 : 0.19) * w, y + h * 0.93, 12, '#ffffff', farbeVon(p));
+    });
+    else if (gold && !(tut.on && b.team === 1)) coinText(ctx, String(Math.floor(gold[duo.on ? spielerIm(b.team)[0] : b.team] - (b.team === ME ? deployGold() : 0))), cx, y + h * 0.79, 14, '#ffffff', 'rgba(0,0,0,0.55)'); // im Tutorial keine Goldanzeige beim Gegner
     if (tut.on && tut.hlGold && b.team === 0) { // Tutorial: Schatzkammer (Gold in der Burg) grün umranden
       var gk = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       ctx.save(); ctx.strokeStyle = '#1fae4b'; ctx.lineWidth = 3 + 2 * gk;
@@ -5048,22 +5134,22 @@
         ctx.beginPath(); ctx.arc(u.x * T, u.y * T, r * 1.25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
       if (u.fade > 0) ctx.globalAlpha = Math.max(0, Math.min(1, u.fade / WALL.fade));
-      if (u.type === 'king') kZust[u.team] = { zieh: u.bogenT || 0, nah: u.waffeZ || 0 }; // was der König gerade in der Hand hat
+      if (u.type === 'king') kZust[pOf(u)] = { zieh: u.bogenT || 0, nah: u.waffeZ || 0 }; // was der König gerade in der Hand hat
       if (u.type === 'king' && u.inCastle) { // oben auf der Burg: Bogenschütze, dreht sich zum Ziel
         var kwant = u.aimT !== undefined && clock - u.aimT < 1.5 ? u.aim : (u.team === 0 ? 0 : Math.PI);
         // alle 15 s kratzt er sich am Kopf (nur Darstellung, 2,4 s = halbes Tempo, nur mit leeren Händen; Team 1 um 5,3 s versetzt)
-        var kz = (clock + u.team * 5.3) % KRATZ.alle;
-        kKratz[u.team] = kz < KRATZ.dauer && !(u.bogenT > 0) && !(u.waffeZ > 0) ? kz / KRATZ.dauer : 0;
+        var kz = (clock + pOf(u) * 5.3) % KRATZ.alle;
+        kKratz[pOf(u)] = kz < KRATZ.dauer && !(u.bogenT > 0) && !(u.waffeZ > 0) ? kz / KRATZ.dauer : 0;
         if (u.ang === undefined) u.ang = kwant;
         u.ang += Math.atan2(Math.sin(kwant - u.ang), Math.cos(kwant - u.ang)) * 0.15;
         ctx.save(); ctx.translate(u.x * T, u.y * T); ctx.rotate(u.ang);
-        drawUnit(ctx, 'kingbow', 0, 0, r, u.team, 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
+        drawUnit(ctx, 'kingbow', 0, 0, r, pOf(u), 1, u.hit, u.bogenT || 0, unitAt(u, 'kingbow')); // bogenT: Bogen hervorgeholt (0..1)
         ctx.restore();
       } else if (unsichtbar(u)) { // unsichtbarer Bandit: Deckkraft schwankt zwischen 50 % und 80 %
         ctx.save(); ctx.globalAlpha = 0.65 + 0.15 * Math.sin(performance.now() / 1000 * 3 + u.id);
-        drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
+        drawUnit(ctx, u.type, u.x * T, u.y * T, r, pOf(u), u.face, u.hit, u.settled, unitAt(u, u.type), faceAngle(u));
         ctx.restore();
-      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, u.team, u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
+      } else drawUnit(ctx, u.type, u.x * T, u.y * T, r, pOf(u), u.face, u.hit, u.type === 'belfry' ? (u.dock ? Math.min(1, u.dock.t / 0.6) : 0) : d.setup ? Math.min(1, (u.setupT || 0) / d.setup) : u.type === 'ladder' ? (u.climbed ? 1 : u.climb ? 0.5 : 0) : u.settled, unitAt(u, u.type), CONFIG.units[u.type].gebaeude ? 0 : faceAngle(u)); // Gebäude drehen sich nicht
       if (u.fade > 0) ctx.globalAlpha = 1;
       if (u.slow > 0) { // Frost auf der Einheit: heller Reif darüber und kleine Eiskristalle rundherum (blendet in der letzten halben Sekunde aus)
         var fsl = Math.min(1, u.slow / 0.5), fsx = u.x * T, fsy = u.y * T, fsn = performance.now() / 1000;
@@ -5081,7 +5167,7 @@
       if (u.hp < u.max && !(u.fade > 0)) {
         var bw = 30, bx = u.x * T - bw / 2, by = u.y * T - r - 12;
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
-        ctx.fillStyle = u.team === 0 ? P.me : P.foe; ctx.fillRect(bx, by, bw * u.hp / u.max, 5);
+        ctx.fillStyle = farbeVon(pOf(u)); ctx.fillRect(bx, by, bw * u.hp / u.max, 5);
       }
     }
     drawEffects();
@@ -5444,7 +5530,7 @@
   applyDeck();
 
   function syncUi() {
-    var gm = gold[ME] - deployGold(), gf = gold[1 - ME];
+    var gm = gold[MP] - deployGold(), gf = duo.on ? spielerIm(1 - ME).map(function (p) { return gold[p]; }).join(' · ') : gold[1 - ME]; // Duokampf: du zahlst nur mit deinem Gold
     var canGive = state === 'playing' || state === 'paused';
     var tv = tut.on && canGive;
     if (tutPanelEl.hidden === tv) tutPanelEl.hidden = !tv;
@@ -5487,7 +5573,7 @@
     }
     payFill.style.width = (payT / CONFIG.GOLD_EVERY * 100) + '%';
     var sec = Math.ceil(CONFIG.GOLD_EVERY - payT);
-    var inc = income(ME);
+    var inc = duo.on ? CONFIG.DUO.income : income(ME);
     if (sec !== ui.sec || inc !== ui.inc) {
       payText.textContent = '+' + inc + ' Gold in ' + sec + ' s';
       ui.sec = sec;
@@ -5553,6 +5639,7 @@
     winner = w;
     var again = pvp.on ? 'Zum Menü' : 'Nochmal';
     var stats = 'Spielzeit ' + fmtTime(clock) + ', ' + produced + (produced === 1 ? ' Einheit' : ' Einheiten') + ' gebaut.';
+    if (duo.on && !note) note = (w === 0 ? 'Beide gegnerischen Könige sind gefallen. ' : w === 1 ? 'Beide Könige eures Teams sind gefallen. ' : 'Alle Könige sind gefallen. ') + stats; // Duokampf
     if (w === 0) showOverlay('Sieg!', note || 'Der gegnerische König ist gefallen. ' + stats, again);
     else if (w === 1) showOverlay('Niederlage', note || 'Dein König ist gefallen. ' + stats, again);
     else showOverlay('Unentschieden', 'Beide Könige sind gleichzeitig gefallen. ' + stats, again);
@@ -5608,6 +5695,7 @@
 
   function start(keepTut) {
     if (keepTut !== true) tut.on = false;
+    if (duo.on && spielArt !== 'duolokal') duoAus(); // Tester-Duokampf nur, wenn er gewählt ist (auch bei «Nochmal»)
     blVorbereiten(sandbox); // Bot-Partie: fester Startwert (vor reset), feste Spielschritte
     reset();
     disarmGive();
@@ -5615,8 +5703,9 @@
     jingle('start');
     overlay.hidden = true;
     $('story').hidden = true; $('freunde').hidden = true; $('koenigWahl').hidden = true; $('shop').hidden = true;
-    koenigTeam = [meinKoenig(), botEintrag(botType).koenig]; // Aussehen der beiden Könige
-    intro.t = 0;
+    koenigTeam = [meinKoenig(), botEintrag(botType).koenig, 'standard', 'standard']; // Aussehen der Könige (Index = Spieler)
+    intro.t = 0; MP = ME;
+    if (duo.on) duoIntro(); // Tester-Duokampf: Namen und Deck des Partners
     if (spielArt === 'story' && !tut.on) startIntro(meinName(), STORY[storyIdx].name); // auch bei «Nochmal»
     openBook(false);
     applyDeck();
@@ -6230,13 +6319,14 @@
     pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
     setTimeout(presenceOpen, 300);
     zuschauenEnde(); augen(0);
-    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; MP = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    duoAus();
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
     showMenu();
   }
   function pvpLost() {
-    if (pvp.searching) { pvp.searching = false; pvp.ended = true; showOverlay('Keine Verbindung', 'Der Server ist gerade nicht erreichbar. Versuche es gleich noch einmal.', 'Zum Menü', false); }
+    if (pvp.searching) { pvp.searching = false; pvp.ended = true; duoS.phase = ''; duoKnoepfe(); showOverlay('Keine Verbindung', 'Der Server ist gerade nicht erreichbar. Versuche es gleich noch einmal.', 'Zum Menü', false); }
     else if (pvp.on && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Verbindung verloren', 'Die Verbindung zum Server wurde getrennt.', 'Zum Menü', false); }
   }
   function pvpMsg(m) {
@@ -6244,17 +6334,19 @@
     if ((m.k === 'info' || m.k === 'alt') && m.v && m.v !== VERSION) veraltet(m.v);
     if (m.k === 'alt') return;
     if (m.k === 'info') {
-      if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (pvp.searching && !duoS.phase) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (typeof m.duo === 'number') $('duoOnline').textContent = m.duo ? m.duo + (m.duo === 1 ? ' Spieler sucht' : ' Spieler suchen') : ''; // Duokampf: wer gerade Partner oder Gegner sucht
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
     else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
-    else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else if (m.k === 'left') { if (pvp.on && !duo.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else if (m.k.indexOf('duo_') === 0) duoMsg(m);
     else sozialMsg(m);
   }
-  function startPvp(me, seed) {
+  function startPvp(me, seed, ich) { // me = dein Team; ich = dein Spieler (Duokampf, sonst = me)
     blStop('verlassen');
-    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; pvp.zuschauer = false; augen(0);
+    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; MP = ich === undefined ? me : ich; pvp.zuschauer = false; augen(0);
     document.documentElement.classList.toggle('guest', me === 1);
     simRand = mulberry32(seed);
     tut.on = false; sandbox = false;
@@ -6267,46 +6359,52 @@
     applyDeck();
     pauseBtn.hidden = true;
     ui.gm = ui.gf = ui.sec = ui.inc = -1; ui.cdown = -1;
-    koenigTeam = Array.isArray(pvp.koenige) ? [String(pvp.koenige[0]), String(pvp.koenige[1])] : ['standard', 'standard'];
-    intro.t = 0; spielArt = 'pvp';
-    startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot', pvp.bot ? null : pvp.elos);
+    koenigTeam = Array.isArray(pvp.koenige) ? [0, 1, 2, 3].map(function (i) { return String(pvp.koenige[i] || 'standard'); }) : ['standard', 'standard', 'standard', 'standard'];
+    intro.t = 0; spielArt = duo.on ? 'duo' : 'pvp';
+    if (duo.on) duoIntro(); else startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot', pvp.bot ? null : pvp.elos);
     pvp.zh = {}; pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
-    for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
+    for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [], 2: [], 3: [] };
   }
   function pvpHash() {
     var h = 2166136261;
     function mix(n) { h ^= n | 0; h = Math.imul(h, 16777619); }
     mix(units.length);
     for (var i = 0; i < units.length; i++) { var u = units[i]; mix(u.id); mix(Math.round(u.x * 1000)); mix(Math.round(u.y * 1000)); mix(Math.round(u.hp * 1000)); }
-    mix(gold[0]); mix(gold[1]); mix(Math.round(bases[0].hp * 100)); mix(Math.round(bases[1].hp * 100));
+    mix(gold[0]); mix(gold[1]); if (duo.on) { mix(gold[2]); mix(gold[3]); } mix(Math.round(bases[0].hp * 100)); mix(Math.round(bases[1].hp * 100));
     return h >>> 0;
   }
   function pvpDesync() {
     if (state !== 'playing') return;
     state = 'over'; pvp.ended = true;
     if (pvp.bot) { showOverlay('Synchronisationsfehler', 'Deine Ansicht ist von der Partie abgewichen. Schau einfach noch einmal zu.', 'Zum Menü', false); return; }
-    showOverlay('Synchronisationsfehler', 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
+    showOverlay('Synchronisationsfehler', duo.on ? 'Die Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.' : 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
   }
   function pvpCheck(t, h) {
+    if (duo.on) { pvp.remoteHash[t] = pvp.remoteHash[t] || []; pvp.remoteHash[t].push(h); if (pvp.hashes[t] !== undefined) duoHashPruefen(t); return; } // Duokampf: mehrere Mitspieler
     if (pvp.hashes[t] !== undefined) { if (pvp.hashes[t] !== h) pvpDesync(); delete pvp.hashes[t]; }
     else pvp.remoteHash[t] = h;
   }
+  function duoHashPruefen(t) { var l = pvp.remoteHash[t] || []; for (var i = 0; i < l.length; i++) if (l[i] !== pvp.hashes[t]) { pvpDesync(); return; } delete pvp.remoteHash[t]; }
   function pvpValid(c) { return c === 'resign' || (typeof c === 'string' && CONFIG.units[c] && !CONFIG.units[c].hidden); }
   function pvpRecv(m) {
     if (!pvp.on || typeof m.t !== 'number' || m.t < pvp.tick || m.t > pvp.tick + 60) return;
-    var box = pvp.inbox[m.t] = pvp.inbox[m.t] || {};
-    box[1 - pvp.me] = Array.isArray(m.c) ? m.c.filter(pvpValid).slice(0, 6) : [];
+    var box = pvp.inbox[m.t] = pvp.inbox[m.t] || {}, von = duo.on ? m.p : 1 - pvp.me;
+    if (duo.on && (duo.spieler.indexOf(von) < 0 || von === MP || (duo.bot && von === 1))) return;
+    box[von] = Array.isArray(m.c) ? m.c.filter(pvpValid).slice(0, 6) : [];
     if (typeof m.ht === 'number' && typeof m.h === 'number') pvpCheck(m.ht, m.h);
   }
   function pvpSendTick(T) {
     var target = T + PVP_DELAY, cmds = pvp.pending.splice(0, 6), msg = { k: 't', t: target, c: cmds };
     var box = pvp.inbox[target] = pvp.inbox[target] || {};
-    box[pvp.me] = cmds;
+    box[MP] = cmds;
     pvp.sent[target] = true;
-    if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h; if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
+    if (duo.on) msg.p = MP;
+    if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h;
+      if (duo.on) { pvp.hashes[T] = h; duoHashPruefen(T); }
+      else if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
     pvpSend(msg);
   }
-  // Darf dieses Team diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für beide Browser gleich)
+  // Darf dieser Spieler (ohne Duokampf = Team) diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für alle Browser gleich)
   function pvpErlaubt(team, type) {
     if (pvp.bot) return true; // Zuschauer einer Bot-Partie: der Spieler hat schon geprüft
     var d = CONFIG.units[type];
@@ -6314,11 +6412,12 @@
     if (!CONFIG.FREI.regel(type)) return true; // keine Regel: für alle frei (Tutorial-Karten, Mauer); Karten in Entwicklung nur, wenn der Server sie bestätigt
     return !!(pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0); // der Server hat nach daten/freischalten.js geprüft
   }
-  function pvpApply(team, cmds) {
+  function pvpApply(team, cmds) { // team = Spieler (ohne Duokampf = Team)
     for (var i = 0; i < cmds.length && state === 'playing'; i++) {
-      if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
+      if (cmds[i] === 'resign' && duo.on) duoResign(team);
+      else if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
       else {
-        if (team === pvp.me) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
+        if (team === MP) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
         if (!pvpErlaubt(team, cmds[i])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
         buy(team, cmds[i]);
       }
@@ -6338,9 +6437,11 @@
       var box = pvp.inbox[T];
       if (state !== 'playing') break;
       if (pvp.bot) { if (T > bis) { waited = true; break; } box = pvp.inbox[T] = box || {}; box[0] = box[0] || []; box[1] = []; } // Bot-Partie: Schritte bis zur letzten Meldung sind vollständig (ohne Eintrag = kein Kauf)
-      if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
+      if (duo.on) { box = pvp.inbox[T] = box || {}; if (!duoBoxFertig(T, box)) { waited = true; break; } }
+      else if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
-      pvpApply(0, box[0]); pvpApply(1, box[1]);
+      if (duo.on) duo.spieler.forEach(function (p) { pvpApply(p, box[p]); }); // feste Reihenfolge: für alle Browser gleich
+      else { pvpApply(0, box[0]); pvpApply(1, box[1]); }
       if (state === 'playing') update(ST);
       if (pvp.bot && pvp.zh[T] !== undefined) { if (state === 'playing' && pvp.zh[T] !== pvpHash()) pvpDesync(); delete pvp.zh[T]; } // Prüfsumme des Spielers
       pvp.tick = T + 1; delete pvp.inbox[T]; delete pvp.sent[T];
@@ -6353,7 +6454,7 @@
     pvp.stall = waited ? pvp.stall + rdt : 0;
     if (nach && !waited) pvp.acc = 0;
     if (pvp.bot && waited) pvp.acc = Math.min(pvp.acc, ST); // kurz gewartet: danach nicht ruckartig nachholen
-    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
+    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) { if (duo.on) { state = 'over'; pvp.ended = true; showOverlay('Verbindung verloren', 'Ein Mitspieler antwortet nicht mehr. Die Partie wurde abgebrochen.', 'Zum Menü', false); } else finish(pvp.me, 'Dein Gegner antwortet nicht mehr.'); }
     pvp.alpha = Math.min(1, pvp.acc / ST);
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
@@ -6405,14 +6506,15 @@
     if (state !== 'playing' || intro.t > 0) return; // während der Namen noch nichts kaufen
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
     if (unitLocked(type)) return; // braucht ein Konto
-    if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
+    if (pvp.on && !pvpErlaubt(MP, type)) return; // online zählt, was der Server bestätigt hat
+    if (duo.on && kTot[MP] === Infinity) return; // Duokampf: aufgegeben
     var ok, pd = CONFIG.units[type];
-    ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= preisOnline(type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
+    ok = !!pd && !pd.hidden && gold[MP] - deployGold() >= preisOnline(type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet
       if (units.some(function (w) { return w.team === ME && w.type === 'worker' && w.hp > 0 && !w.bank; }) || deploys.some(function (q) { return CONFIG.units[q.type].wall; })) ok = false;
     }
     if (ok) {
-      deploys.push({ type: type, cost: preisOnline(type), t: 0, net: pvp.on }); // Gold ist ab sofort reserviert
+      deploys.push({ type: type, cost: preisOnline(type), t: 0, net: pvp.on, p: MP }); // Gold ist ab sofort reserviert
       if (pvp.on) pvp.pending.push(type); // online: wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später)
       if (el) { el.classList.remove('press'); void el.offsetWidth; el.classList.add('press'); } // Knopf drückt sich kurz ein
     }
@@ -6437,7 +6539,7 @@
     simRand = mulberry32(bl.seed);
   }
   function blLos() {
-    if (!bl.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return;
+    if (!bl.on || duo.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return; // Duokampf (Tester, ohne Server): nicht zum Zuschauen melden
     bl.live = true;
     var name = spielArt === 'story' && STORY[storyIdx] ? STORY[storyIdx].name : botEintrag(botType).name;
     pvpSend({ k: 'bstart', v: VERSION, seed: bl.seed, bot: botType, art: spielArt === 'story' ? 'story' : '', gegner: name, koenige: koenigTeam });
@@ -6456,7 +6558,7 @@
       var T = bl.tick, cmds = [];
       for (var dj = 0; dj < deploys.length; dj++) { // fällige Käufe in diesem Schritt
         var dpl = deploys[dj]; dpl.t += BL_STEP;
-        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(0, dpl.type); }
+        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(dpl.p === undefined ? MP : dpl.p, dpl.type); }
       }
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
       if (state === 'playing') update(BL_STEP);
@@ -6488,6 +6590,8 @@
     ovleftZurueck();
     if (bl.live && state !== 'playing') blStop(gaveUp ? 'aufgegeben' : state === 'over' ? 'fertig' : 'verlassen');
     if (pvp.on) return;
+    if (duo.on) duoAus(); // nach dem Tester-Duokampf
+    duoS.phase = ''; duoKnoepfe();
     overlay.classList.add('menu');
     overlay.hidden = false;
     pauseBtn.hidden = false;
@@ -6636,6 +6740,7 @@
   // ----- Freundesliste -----
   var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
   function freundeOpen(on) {
+    if (!on) sozial.duoEinladen = false; // Liste wieder mit «Herausfordern»
     $('freunde').hidden = !on;
     if (on) $('freunde').scrollTop = 0; // immer oben öffnen (✕ sichtbar)
     if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
@@ -6664,7 +6769,9 @@
         : f.status === 'pvp' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + ' · ' + zeitSeit(f.seit) + '</span>'
         : f.status === 'spiel' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + '</span>'
         : '<span style="color:var(--muted)">' + gesehen(f.gesehen) + '</span>';
-      var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
+      var knopf = f.status === 'menu' && frei && sozial.duoEinladen ? '<button class="primary" type="button" data-duo="' + esc(f.id) + '">Zum Duokampf einladen</button>'
+        : sozial.duoEinladen ? ''
+        : f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
         : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
       return '<div class="frzeile"><span class="frava frkoenig"><b class="fkrund"><canvas width="36" height="36" data-fk="' + esc(f.koenig || 'standard') + '"' + (f.status === 'offline' ? ' data-grau="1"' : '') + ' aria-hidden="true"></canvas></b>' + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
         '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '<span class="frwerte">' + (typeof f.elo === 'number' ? kranzSvg(15) + ' ' + f.elo + (f.partien ? ' (' + f.partien + ' Partien)' : '') + ' · ' : '') + 'Story ' + (f.story | 0) + '/' + (f.storyMax | 0) + '</span></span>' + knopf + '</div>';
@@ -6676,15 +6783,16 @@
   $('freundeZu').addEventListener('click', function () { freundeOpen(false); });
   $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
   $('freundListe').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau]') : null; if (!b) return;
-    if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
+    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau],[data-duo]') : null; if (!b) return;
+    if (b.hasAttribute('data-duo')) { var dm = duoDatenNachricht('duo_fordern'); dm.an = b.getAttribute('data-duo'); pvpSend(dm); freundMsg('Einladung wird geschickt …'); }
+    else if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
     else pvpSend({ k: 'zuschauen', id: b.getAttribute('data-schau') });
   });
 
   // ----- Herausforderungen -----
   function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
   function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
-  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
   $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
   function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
 
@@ -6765,6 +6873,7 @@
       var f = sozial.liste.filter(function (x) { return x.id === m.an; })[0];
       sozial.forderungRaus = { id: m.id };
       freundeOpen(false);
+      if (m.duo) { duoS.phase = 'einladen'; showOverlay('Duokampf', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false); duoKnoepfe(); return; }
       showOverlay('Herausforderung', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false);
       return;
     }
@@ -6774,9 +6883,9 @@
       return;
     }
     if (m.k === 'forderung') {
-      if (state === 'playing' || pvp.on || pvp.searching) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
-      sozial.forderungRein = { id: m.id, von: m.von };
-      toast(m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
+      if (state === 'playing' || pvp.on || pvp.searching || duoS.phase) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      sozial.forderungRein = { id: m.id, von: m.von, duo: !!m.duo };
+      toast(m.duo ? m.von.name + ' lädt dich zum Duokampf ein (ihr zwei gegen zwei andere)' : m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
       return;
     }
     if (m.k === 'forderung_weg') { if (sozial.forderungRein && sozial.forderungRein.id === m.id) toastWeg(); return; }
@@ -6817,6 +6926,197 @@
   }
   $('rangBtn').addEventListener('click', function () { freundeOpen(false); rangOpen(true); });
   $('rangZu').addEventListener('click', function () { rangOpen(false); });
+  // ---------- Duokampf (27.11.): 2 gegen 2 oder 2 gegen einen zufälligen Story-Bot ----------
+  // Ablauf: Menü «Duokampf» -> «Zufälliger Partner» (Server sucht) oder «Freund einladen» (Freundesliste) -> mit Partner Gegner suchen.
+  // Während der Suche kann jeder «Zufälliger Bot» drücken; haben es beide gedrückt, geht es gegen einen Bot (aus dem Startwert gewürfelt).
+  // Die Partie läuft wie online (Lockstep, spiel/online.js) mit 3 oder 4 Spielern; Spieler p gehört zu Team p % 2 (gemeinsam/spielzustand.js).
+  // Ohne Server (Artifact) gibt es im Tester-Modus einen Duokampf gegen den Bot, in dem Tab zwischen dir und deinem Partner wechselt.
+  var duoS = { phase: '', partner: null, ichBot: false, partnerBot: false, info: null }; // phase: '' | 'wahl' | 'partner' | 'gegner' | 'einladen'
+
+  function duoDatenNachricht(k) { // was der Server über dich braucht (Deck des Partners, König, freigeschaltete Karten)
+    var m = { k: k, v: VERSION, koenig: meinKoenig(), besiegt: storyBesiegt(), deck: DECK.filter(function (t) { return !unitLocked(t); }) };
+    if (konto.token) m.token = konto.token;
+    return m;
+  }
+  function duoKnoepfe() { // Zusatzknöpfe im Fenster (unter dem Text)
+    $('duoFreundBtn').hidden = duoS.phase !== 'wahl';
+    $('duoBotBtn').hidden = duoS.phase !== 'gegner';
+    $('duoBotBtn').setAttribute('aria-pressed', duoS.ichBot ? 'true' : 'false');
+    $('duoBotBtn').textContent = duoS.ichBot ? '✓ Zufälliger Bot' : 'Zufälliger Bot';
+  }
+  function duoFenster(titel, text) {
+    showOverlay(titel, text, duoS.phase === 'wahl' ? 'Zufälliger Partner' : 'Abbrechen', false);
+    $('menuBtn').hidden = duoS.phase !== 'wahl'; $('menuBtn').textContent = 'Zurück';
+    duoKnoepfe();
+  }
+  function duoWahl() { // erstes Fenster: Partner wählen
+    if (!ONLINE) {
+      if (tester) { duoLokal(); return; }
+      hinweis('Den Duokampf gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.');
+      return;
+    }
+    if (neueVersion && neueVersion !== VERSION) { veraltet(neueVersion); }
+    if (pvp.on || pvp.searching) return;
+    spielArt = 'duo';
+    duoS.phase = 'wahl';
+    duoFenster('Duokampf', 'Du und ein Partner gegen zwei andere Spieler. Jeder baut mit seinem eigenen Gold, auf eurer Burg sitzen beide Könige. Verloren hat ein Team erst, wenn beide Könige gefallen sind.');
+  }
+  function duoVerbinden(dann) { // wie die Gegnersuche: der Gratis-Server braucht evtl. bis zu einer Minute zum Aufwachen
+    pvp.searching = true; pvp.ended = false; pvp.tries = 0;
+    if (pvp.ws && pvp.ws.readyState === 1) dann(); else { pvpClose(); pvpOpen(dann); }
+  }
+  function duoZufall() {
+    duoS.phase = 'partner'; duoS.ichBot = duoS.partnerBot = false;
+    duoFenster('Duokampf', 'Suche einen Partner …');
+    duoVerbinden(function () { pvpSend(duoDatenNachricht('duo_suche')); });
+  }
+  function duoAbbrechen() { // Suche oder Team verlassen (vor der Partie)
+    pvpSend({ k: 'duo_ab' });
+    duoS.phase = ''; duoS.partner = null; pvp.searching = false;
+    duoKnoepfe(); showMenu();
+  }
+  function duoStatusText() {
+    var p = duoS.partner, t = '';
+    if (duoS.phase === 'partner') t = 'Suche einen Partner …';
+    else if (duoS.phase === 'gegner') {
+      t = 'Suche Gegner …';
+      var andere = duoS.info ? Math.max(0, duoS.info.teams - 1) : 0; // ohne euer eigenes Team
+      if (andere) t += ' (' + andere + (andere === 1 ? ' anderes Team wartet' : ' andere Teams warten') + ')';
+      t += duoS.ichBot && duoS.partnerBot ? '' : duoS.ichBot ? ' Du willst gegen einen Bot spielen – wartet auf ' + (p ? p.name : 'deinen Partner') + '.' : duoS.partnerBot ? ' ' + (p ? p.name : 'Dein Partner') + ' möchte gegen einen zufälligen Bot spielen.' : ' Oder spielt zu zweit gegen einen zufälligen Bot.';
+    }
+    ovText.textContent = t;
+    if (duoS.phase === 'gegner' && p) { // Partner mit Farbe und Deck
+      var el = document.createElement('div'); el.className = 'ovduo';
+      el.innerHTML = '<span><i style="background:' + farbeVon(0) + '"></i><b>' + esc(meinName()) + '</b></span><span><i style="background:' + farbeVon(2) + '"></i><b>' + esc(p.name) + '</b> (Partner)</span>';
+      ovText.appendChild(el);
+    }
+  }
+  function duoMsg(m) {
+    if (m.k === 'duo_info') { duoS.info = m; if (duoS.phase === 'partner' || duoS.phase === 'gegner') duoStatusText(); return; }
+    if (m.k === 'duo_team') { // Partner gefunden: jetzt Gegner suchen
+      toastWeg(); freundeOpen(false); sozial.forderungRaus = null;
+      duoS.phase = 'gegner'; duoS.partner = m.partner || { name: 'Partner', koenig: 'standard', deck: [] }; duoS.ichBot = duoS.partnerBot = false;
+      pvp.searching = true;
+      duoFenster('Duokampf', ''); duoStatusText();
+      jingle('start');
+      return;
+    }
+    if (m.k === 'duo_bot') { duoS.partnerBot = !!m.an; if (duoS.phase === 'gegner') duoStatusText(); return; }
+    if (m.k === 'duo_partnerweg') {
+      var name = duoS.partner ? duoS.partner.name : 'Dein Partner'; duoS.partner = null; duoS.ichBot = duoS.partnerBot = false;
+      if (m.weiter) { duoS.phase = 'partner'; duoFenster('Duokampf', ''); duoStatusText(); hinweis(name + ' hat die Suche verlassen. Du suchst einen neuen Partner.'); }
+      else { duoS.phase = ''; pvp.searching = false; showMenu(); hinweis(name + ' hat das Team verlassen.'); }
+      return;
+    }
+    if (m.k === 'duo_match') { duoStarten(m); return; }
+    if (m.k === 'duo_weg') { // ein Mitspieler hat die Partie verlassen: ab Schritt ab rechnen alle ohne ihn (sein König fällt)
+      if (!duo.on || !pvp.on || typeof m.p !== 'number' || duo.spieler.indexOf(m.p) < 0 || m.p === MP) return;
+      duo.weg[m.p] = Math.max(PVP_DELAY, m.ab | 0);
+      if (state === 'playing') hinweis((duo.namen[m.p] || 'Ein Spieler') + ' hat die Partie verlassen.');
+      return;
+    }
+  }
+  // Partie beginnt: alle Browser bekommen dieselben Daten (Plätze 0–3, Startwert, Namen, Könige, Decks, freigeschaltete Karten)
+  function duoStarten(m) {
+    var ich = m.sitz | 0;
+    duoS.phase = ''; duoKnoepfe(); toastWeg(); freundeOpen(false);
+    duo.on = true; duo.bot = !!m.bot; duo.spieler = m.bot ? [0, 1, 2] : [0, 1, 2, 3]; duo.weg = {};
+    duo.namen = Array.isArray(m.namen) ? m.namen.map(String) : ['', '', '', ''];
+    duo.decks = Array.isArray(m.decks) ? m.decks : [[], [], [], []];
+    pvp.bot = false; pvp.botEnde = null; pvp.elos = [null, null];
+    pvp.koenige = Array.isArray(m.koenige) ? m.koenige.slice(0, 4) : ['standard', 'standard', 'standard', 'standard'];
+    pvp.frei = [0, 1, 2, 3].map(function (i) { return Array.isArray(m.frei) && Array.isArray(m.frei[i]) ? m.frei[i].slice() : []; });
+    pvp.konten = [0, 1, 2, 3].map(function (i) { return !!(Array.isArray(m.acc) && m.acc[i]); });
+    if (duo.bot) duoBotWuerfeln(m.seed | 0);
+    pvp.namen = [duoTeamName(0), duoTeamName(1)];
+    startPvp(ich % 2, m.seed | 0, ich);
+  }
+  // Bot für «2 gegen Bot»: aus dem Startwert, damit alle Browser denselben nehmen (alle Story-Gegner, egal ob besiegt)
+  function duoBotWuerfeln(seed) {
+    var g = STORY[seed % STORY.length] || { bot: 'bauern', name: 'Der Bandit', koenig: 'bandit' };
+    botType = CONFIG.BOTS[g.bot] ? g.bot : 'bauern';
+    duo.namen[1] = g.name; duo.botName = g.name;
+    if (pvp.koenige) pvp.koenige[1] = g.koenig || botEintrag(botType).koenig;
+  }
+  function duoTeamName(team) { return spielerIm(team).map(function (p) { return duo.namen[p] || ''; }).join(' & '); }
+  function duoIntro() { // Namen beider Teams wie im 1 vs 1, dazu das Deck deines Partners
+    startIntro(duoTeamName(0), duoTeamName(1), null);
+    var partner = MP < 2 ? MP + 2 : MP - 2, dk = (duo.decks[partner] || []).filter(function (t) { return CONFIG.units[t] && !CONFIG.units[t].hidden; }), el = $('duoDeck');
+    clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2);
+    if (!dk.length) { el.hidden = true; return; }
+    el.style.borderColor = farbeVon(partner);
+    el.innerHTML = '<b>Deck von ' + esc(duo.namen[partner] || 'deinem Partner') + '</b><span class="ddk">' + dk.map(function (t) { return '<canvas width="88" height="88" data-t="' + t + '" title="' + esc(CONFIG.units[t].name) + '"></canvas>'; }).join('') + '</span>';
+    el.querySelectorAll('canvas').forEach(function (cv) { // in der Farbe des Partners
+      var t = cv.getAttribute('data-t'), c = cv.getContext('2d'), ext = ICON_EXT[t] || [1, 2], span = ext[0] + ext[1], r = Math.min(24, 78 / span);
+      drawUnit(c, t, (88 - span * r) / 2 + ext[0] * r, 44, r, partner, 1, 0, t !== 'ladder');
+    });
+    el.classList.remove('weg'); el.hidden = false;
+    duoS.deckT = setTimeout(function () { el.classList.add('weg'); }, 7000);
+    duoS.deckT2 = setTimeout(function () { el.hidden = true; }, 7700);
+  }
+  function duoResign(p) { // Spieler p gibt auf (oder ist gegangen): sein König fällt, er kauft nichts mehr; sein Team verliert erst ohne Könige
+    if (kTot[p] === Infinity) return;
+    duoAufgeben(p);
+    if (p === MP) {
+      deploys = [];
+      var partnerDa = spielerIm(ME).some(function (q) { return q !== MP && kTot[q] !== Infinity; });
+      showOverlay('Aufgegeben', 'Dein König ist gefallen.' + (partnerDa ? ' Dein Partner kämpft allein weiter.' : ''), 'Zum Menü', false);
+      if (!partnerDa) return; // das Team ist besiegt: das Ergebnis folgt gleich (finish)
+      pvp.ended = true; // «Zum Menü» verlässt die Partie
+    } else if (!duo.weg[p] || pvp.tick !== duo.weg[p]) hinweis((duo.namen[p] || 'Ein Spieler') + ' hat aufgegeben.');
+  }
+  // Sind die Befehle aller Spieler für Schritt T da? Bot und gegangene Spieler: leer (beim Gehen einmal 'resign')
+  function duoBoxFertig(T, box) {
+    for (var i = 0; i < duo.spieler.length; i++) {
+      var p = duo.spieler[i], ab = duo.weg[p];
+      if (duo.bot && p === 1) { box[1] = []; continue; }
+      if (ab !== undefined && T >= ab) { if (!box[p]) box[p] = T === ab ? ['resign'] : []; continue; }
+      if (!box[p]) return false;
+    }
+    return true;
+  }
+  function duoAus() { // nach der Partie (pvpLeave) oder beim Verlassen
+    duo.on = false; duo.bot = false; duo.spieler = [0, 1]; duo.weg = {}; duo.namen = []; duo.decks = [];
+    duoS.phase = ''; duoS.partner = null; duoKnoepfe();
+    clearTimeout(duoS.deckT); clearTimeout(duoS.deckT2); $('duoDeck').hidden = true;
+    koenigTeam = [meinKoenig(), botEintrag(botType).koenig, 'standard', 'standard'];
+  }
+
+  // ----- Tester (ohne Server): du und ein Partner gegen einen zufälligen Bot; Tab wechselt, für wen du kaufst -----
+  function duoLokal() {
+    duo.on = true; duo.bot = true; duo.spieler = [0, 1, 2]; duo.weg = {};
+    var seed = 1 + Math.floor(Math.random() * 2147483646);
+    duo.namen = [meinName(), '', 'Partner']; duo.decks = [DECK.slice(), [], DECK.slice()];
+    pvp.koenige = [meinKoenig(), 'standard', 'standard'];
+    duoBotWuerfeln(seed);
+    spielArt = 'duolokal'; MP = 0; ME = 0;
+    start(); // setzt die Könige und zeigt Namen und Deck (duoIntro)
+    hinweis('Tester-Duokampf gegen ' + duo.botName + ': Tab wechselt zwischen dir (blau) und deinem Partner (violett).');
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab' || !duo.on || pvp.on || state !== 'playing') return;
+    e.preventDefault();
+    MP = MP === 0 ? 2 : 0; ui.gm = -1;
+    hinweis('Du kaufst jetzt für ' + (MP === 0 ? 'dich (blau)' : 'den Partner (violett)') + '.');
+  });
+
+  $('duoBtn').addEventListener('click', duoWahl);
+  $('duoFreundBtn').addEventListener('click', function () { // Freund einladen: Freundesliste mit «Einladen»-Knöpfen
+    if (!konto.user) { hinweis('Zum Einladen brauchst du ein Konto (👤 Konto).'); return; }
+    sozial.duoEinladen = true; freundeOpen(true);
+  });
+  $('duoBotBtn').addEventListener('click', function (e) {
+    if (duoS.phase !== 'gegner') return;
+    duoS.ichBot = !duoS.ichBot; pvpSend({ k: 'duo_bot', an: duoS.ichBot });
+    duoKnoepfe(); duoStatusText();
+    if (e.detail > 0) $('duoBotBtn').blur();
+  });
+  // Knopf im Fenster: in der Wahl «Zufälliger Partner», sonst «Abbrechen» (true = erledigt)
+  function duoOvBtn() {
+    if (duoS.phase === 'wahl') { duoZufall(); return true; }
+    if (duoS.phase === 'partner' || duoS.phase === 'gegner') { duoAbbrechen(); return true; }
+    return false;
+  }
   // ---------- Königswahl, Königsbilder, Namen zu Beginn (19.11.) ----------
   // Frei: die eigenen Könige (KOENIG_SPIELER) und der König jedes besiegten Story-Bots; im Tester-Modus alle.
   function koenigFrei(id) {
@@ -7019,6 +7319,7 @@
     if (e.detail > 0) b.blur();
   });
   ovBtn.addEventListener('click', function () {
+    if (duoOvBtn()) return; // Duokampf: Partner suchen / Suche abbrechen
     if (pvp.searching) { pvpCancel(); return; }
     if (sozial.forderungRaus) { forderungAbbrechen(); return; }
     if (ovZumMenu) { zeigeMenu(); return; }
@@ -7202,7 +7503,7 @@
     else if (state === 'playing') {
       for (var dj = 0; dj < deploys.length; dj++) { // offline: fällige Käufe ausführen (Echtzeit, unabhängig vom Tutorial-Zeitlupentempo)
         var dpl = deploys[dj]; dpl.t += rdt;
-        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; buy(0, dpl.type); }
+        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; buy(dpl.p === undefined ? MP : dpl.p, dpl.type); }
       }
       var gdt = dt * tutScale(); // im Tutorial läuft das Spiel bei Hinweisen und Kaufschritten stark verlangsamt
       update(gdt); updateEffects(gdt);

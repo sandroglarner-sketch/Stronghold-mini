@@ -17,6 +17,10 @@
     BASE_CD: 1,
     BASE_DELAY: 0.5, // Flugzeit des Kasernenpfeils in Sekunden
     // Computergegner: bekommt wie du 10 Gold pro Auszahlung (ohne Bauernbonus). 
+    // Duokampf (27.11.): 2 gegen 2 oder 2 gegen einen zufälligen Story-Bot. Pro Spieler income Gold alle GOLD_EVERY s, Start mit startGold.
+    // koenigSchaden = Faktor für Nah- und Fernkampf der Könige eines Zweierteams; wiederkehr = so viele s nach dem Tod kehrt ein König zurück,
+    // wenn der andere König seines Teams so lange keinen Schaden erlitten hat. Der Bot spielt normal (eigenes Einkommen, voller Schaden).
+    DUO: { income: 5, startGold: 5, koenigSchaden: 0.5, wiederkehr: 15, koenigAbstand: 0.55 },
     levels: {
       normal: { income: 10 }
     },

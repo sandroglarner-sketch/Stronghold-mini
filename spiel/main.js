@@ -17,7 +17,7 @@
     else if (state === 'playing') {
       for (var dj = 0; dj < deploys.length; dj++) { // offline: fällige Käufe ausführen (Echtzeit, unabhängig vom Tutorial-Zeitlupentempo)
         var dpl = deploys[dj]; dpl.t += rdt;
-        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; buy(0, dpl.type); }
+        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; buy(dpl.p === undefined ? MP : dpl.p, dpl.type); }
       }
       var gdt = dt * tutScale(); // im Tutorial läuft das Spiel bei Hinweisen und Kaufschritten stark verlangsamt
       update(gdt); updateEffects(gdt);

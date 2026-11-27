@@ -17,6 +17,8 @@
     ovleftZurueck();
     if (bl.live && state !== 'playing') blStop(gaveUp ? 'aufgegeben' : state === 'over' ? 'fertig' : 'verlassen');
     if (pvp.on) return;
+    if (duo.on) duoAus(); // nach dem Tester-Duokampf
+    duoS.phase = ''; duoKnoepfe();
     overlay.classList.add('menu');
     overlay.hidden = false;
     pauseBtn.hidden = false;
@@ -165,6 +167,7 @@
   // ----- Freundesliste -----
   var FARBEN = ['#c23a2e', '#9a6f00', '#3e7c3b', '#2a64b8', '#7b4fa8', '#b35a1f'];
   function freundeOpen(on) {
+    if (!on) sozial.duoEinladen = false; // Liste wieder mit «Herausfordern»
     $('freunde').hidden = !on;
     if (on) $('freunde').scrollTop = 0; // immer oben öffnen (✕ sichtbar)
     if (on) { $('freundMsg').textContent = ''; freundeMalen(); freundeHolen(); }
@@ -193,7 +196,9 @@
         : f.status === 'pvp' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + ' · ' + zeitSeit(f.seit) + '</span>'
         : f.status === 'spiel' ? '<span style="color:#9a5200">Im Spiel · ' + esc(f.info) + '</span>'
         : '<span style="color:var(--muted)">' + gesehen(f.gesehen) + '</span>';
-      var knopf = f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
+      var knopf = f.status === 'menu' && frei && sozial.duoEinladen ? '<button class="primary" type="button" data-duo="' + esc(f.id) + '">Zum Duokampf einladen</button>'
+        : sozial.duoEinladen ? ''
+        : f.status === 'menu' && frei ? '<button class="primary" type="button" data-fordern="' + esc(f.id) + '">' + SVG(ICON.schwert, '#ffffff', 15) + ' Herausfordern</button>'
         : f.status === 'pvp' && frei ? '<button class="ghost" type="button" data-schau="' + esc(f.id) + '">' + SVG(ICON.auge, 'currentColor', 15) + ' Zuschauen</button>' : '';
       return '<div class="frzeile"><span class="frava frkoenig"><b class="fkrund"><canvas width="36" height="36" data-fk="' + esc(f.koenig || 'standard') + '"' + (f.status === 'offline' ? ' data-grau="1"' : '') + ' aria-hidden="true"></canvas></b>' + (punkt ? '<i style="background:' + punkt + '"></i>' : '') + '</span>' +
         '<span class="frinfo"><b>' + esc(f.name) + '</b>' + txt + '<span class="frwerte">' + (typeof f.elo === 'number' ? kranzSvg(15) + ' ' + f.elo + (f.partien ? ' (' + f.partien + ' Partien)' : '') + ' · ' : '') + 'Story ' + (f.story | 0) + '/' + (f.storyMax | 0) + '</span></span>' + knopf + '</div>';
@@ -205,15 +210,16 @@
   $('freundeZu').addEventListener('click', function () { freundeOpen(false); });
   $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
   $('freundListe').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau]') : null; if (!b) return;
-    if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
+    var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau],[data-duo]') : null; if (!b) return;
+    if (b.hasAttribute('data-duo')) { var dm = duoDatenNachricht('duo_fordern'); dm.an = b.getAttribute('data-duo'); pvpSend(dm); freundMsg('Einladung wird geschickt …'); }
+    else if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
     else pvpSend({ k: 'zuschauen', id: b.getAttribute('data-schau') });
   });
 
   // ----- Herausforderungen -----
   function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
   function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
-  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
   $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
   function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
 
@@ -294,6 +300,7 @@
       var f = sozial.liste.filter(function (x) { return x.id === m.an; })[0];
       sozial.forderungRaus = { id: m.id };
       freundeOpen(false);
+      if (m.duo) { duoS.phase = 'einladen'; showOverlay('Duokampf', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false); duoKnoepfe(); return; }
       showOverlay('Herausforderung', 'Warte auf ' + (f ? f.name : 'deinen Freund') + ' … (bis zu 30 s)', 'Abbrechen', false);
       return;
     }
@@ -303,9 +310,9 @@
       return;
     }
     if (m.k === 'forderung') {
-      if (state === 'playing' || pvp.on || pvp.searching) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
-      sozial.forderungRein = { id: m.id, von: m.von };
-      toast(m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
+      if (state === 'playing' || pvp.on || pvp.searching || duoS.phase) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      sozial.forderungRein = { id: m.id, von: m.von, duo: !!m.duo };
+      toast(m.duo ? m.von.name + ' lädt dich zum Duokampf ein (ihr zwei gegen zwei andere)' : m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
       return;
     }
     if (m.k === 'forderung_weg') { if (sozial.forderungRein && sozial.forderungRein.id === m.id) toastWeg(); return; }

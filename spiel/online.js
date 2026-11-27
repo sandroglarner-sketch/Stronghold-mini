@@ -59,13 +59,14 @@
     pvpClose(); // nach einer Partie neu verbinden (der Server löst die Paarung nur beim Trennen)
     setTimeout(presenceOpen, 300);
     zuschauenEnde(); augen(0);
-    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; MP = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    duoAus();
     document.documentElement.classList.remove('guest');
     ui.gm = ui.gf = ui.cdown = -1;
     showMenu();
   }
   function pvpLost() {
-    if (pvp.searching) { pvp.searching = false; pvp.ended = true; showOverlay('Keine Verbindung', 'Der Server ist gerade nicht erreichbar. Versuche es gleich noch einmal.', 'Zum Menü', false); }
+    if (pvp.searching) { pvp.searching = false; pvp.ended = true; duoS.phase = ''; duoKnoepfe(); showOverlay('Keine Verbindung', 'Der Server ist gerade nicht erreichbar. Versuche es gleich noch einmal.', 'Zum Menü', false); }
     else if (pvp.on && state === 'playing') { state = 'over'; pvp.ended = true; showOverlay('Verbindung verloren', 'Die Verbindung zum Server wurde getrennt.', 'Zum Menü', false); }
   }
   function pvpMsg(m) {
@@ -73,17 +74,19 @@
     if ((m.k === 'info' || m.k === 'alt') && m.v && m.v !== VERSION) veraltet(m.v);
     if (m.k === 'alt') return;
     if (m.k === 'info') {
-      if (pvp.searching) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (pvp.searching && !duoS.phase) ovText.textContent = 'Warteschlange: ' + m.queued + ' · Spieler online: ' + m.online;
+      if (typeof m.duo === 'number') $('duoOnline').textContent = m.duo ? m.duo + (m.duo === 1 ? ' Spieler sucht' : ' Spieler suchen') : ''; // Duokampf: wer gerade Partner oder Gegner sucht
       if (typeof m.online === 'number') $('pvpOnline').textContent = m.online + (m.online === 1 ? ' Spieler online' : ' Spieler online'); // alle Besucher der Seite
     }
     else if (m.k === 'match') { pvp.bot = false; pvp.botEnde = null; pvp.namen = Array.isArray(m.namen) ? m.namen : ['', '']; pvp.elos = Array.isArray(m.elos) ? m.elos : [null, null]; pvp.koenige = m.koenige; sozial.forderungRaus = null; toastWeg(); freundeOpen(false); pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false]; pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []]; startPvp(m.me === 1 ? 1 : 0, m.seed | 0); }
     else if (m.k === 't') pvpRecv(m);
-    else if (m.k === 'left') { if (pvp.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else if (m.k === 'left') { if (pvp.on && !duo.on && state === 'playing') finish(pvp.me, 'Dein Gegner hat die Partie verlassen.'); }
+    else if (m.k.indexOf('duo_') === 0) duoMsg(m);
     else sozialMsg(m);
   }
-  function startPvp(me, seed) {
+  function startPvp(me, seed, ich) { // me = dein Team; ich = dein Spieler (Duokampf, sonst = me)
     blStop('verlassen');
-    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; pvp.zuschauer = false; augen(0);
+    pvp.searching = false; pvp.on = true; pvp.ended = false; pvp.me = me; ME = me; MP = ich === undefined ? me : ich; pvp.zuschauer = false; augen(0);
     document.documentElement.classList.toggle('guest', me === 1);
     simRand = mulberry32(seed);
     tut.on = false; sandbox = false;
@@ -96,46 +99,52 @@
     applyDeck();
     pauseBtn.hidden = true;
     ui.gm = ui.gf = ui.sec = ui.inc = -1; ui.cdown = -1;
-    koenigTeam = Array.isArray(pvp.koenige) ? [String(pvp.koenige[0]), String(pvp.koenige[1])] : ['standard', 'standard'];
-    intro.t = 0; spielArt = 'pvp';
-    startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot', pvp.bot ? null : pvp.elos);
+    koenigTeam = Array.isArray(pvp.koenige) ? [0, 1, 2, 3].map(function (i) { return String(pvp.koenige[i] || 'standard'); }) : ['standard', 'standard', 'standard', 'standard'];
+    intro.t = 0; spielArt = duo.on ? 'duo' : 'pvp';
+    if (duo.on) duoIntro(); else startIntro(pvp.namen && pvp.namen[0] || 'Blau', pvp.namen && pvp.namen[1] || 'Rot', pvp.bot ? null : pvp.elos);
     pvp.zh = {}; pvp.tick = 0; pvp.acc = 0; pvp.alpha = 0; pvp.inbox = {}; pvp.sent = {}; pvp.pending = []; pvp.hashes = {}; pvp.remoteHash = {}; pvp.stall = 0;
-    for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [] };
+    for (var t = 0; t < PVP_DELAY; t++) pvp.inbox[t] = { 0: [], 1: [], 2: [], 3: [] };
   }
   function pvpHash() {
     var h = 2166136261;
     function mix(n) { h ^= n | 0; h = Math.imul(h, 16777619); }
     mix(units.length);
     for (var i = 0; i < units.length; i++) { var u = units[i]; mix(u.id); mix(Math.round(u.x * 1000)); mix(Math.round(u.y * 1000)); mix(Math.round(u.hp * 1000)); }
-    mix(gold[0]); mix(gold[1]); mix(Math.round(bases[0].hp * 100)); mix(Math.round(bases[1].hp * 100));
+    mix(gold[0]); mix(gold[1]); if (duo.on) { mix(gold[2]); mix(gold[3]); } mix(Math.round(bases[0].hp * 100)); mix(Math.round(bases[1].hp * 100));
     return h >>> 0;
   }
   function pvpDesync() {
     if (state !== 'playing') return;
     state = 'over'; pvp.ended = true;
     if (pvp.bot) { showOverlay('Synchronisationsfehler', 'Deine Ansicht ist von der Partie abgewichen. Schau einfach noch einmal zu.', 'Zum Menü', false); return; }
-    showOverlay('Synchronisationsfehler', 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
+    showOverlay('Synchronisationsfehler', duo.on ? 'Die Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.' : 'Die beiden Spiele sind auseinandergelaufen. Die Partie wurde abgebrochen.', 'Zum Menü', false);
   }
   function pvpCheck(t, h) {
+    if (duo.on) { pvp.remoteHash[t] = pvp.remoteHash[t] || []; pvp.remoteHash[t].push(h); if (pvp.hashes[t] !== undefined) duoHashPruefen(t); return; } // Duokampf: mehrere Mitspieler
     if (pvp.hashes[t] !== undefined) { if (pvp.hashes[t] !== h) pvpDesync(); delete pvp.hashes[t]; }
     else pvp.remoteHash[t] = h;
   }
+  function duoHashPruefen(t) { var l = pvp.remoteHash[t] || []; for (var i = 0; i < l.length; i++) if (l[i] !== pvp.hashes[t]) { pvpDesync(); return; } delete pvp.remoteHash[t]; }
   function pvpValid(c) { return c === 'resign' || (typeof c === 'string' && CONFIG.units[c] && !CONFIG.units[c].hidden); }
   function pvpRecv(m) {
     if (!pvp.on || typeof m.t !== 'number' || m.t < pvp.tick || m.t > pvp.tick + 60) return;
-    var box = pvp.inbox[m.t] = pvp.inbox[m.t] || {};
-    box[1 - pvp.me] = Array.isArray(m.c) ? m.c.filter(pvpValid).slice(0, 6) : [];
+    var box = pvp.inbox[m.t] = pvp.inbox[m.t] || {}, von = duo.on ? m.p : 1 - pvp.me;
+    if (duo.on && (duo.spieler.indexOf(von) < 0 || von === MP || (duo.bot && von === 1))) return;
+    box[von] = Array.isArray(m.c) ? m.c.filter(pvpValid).slice(0, 6) : [];
     if (typeof m.ht === 'number' && typeof m.h === 'number') pvpCheck(m.ht, m.h);
   }
   function pvpSendTick(T) {
     var target = T + PVP_DELAY, cmds = pvp.pending.splice(0, 6), msg = { k: 't', t: target, c: cmds };
     var box = pvp.inbox[target] = pvp.inbox[target] || {};
-    box[pvp.me] = cmds;
+    box[MP] = cmds;
     pvp.sent[target] = true;
-    if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h; if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
+    if (duo.on) msg.p = MP;
+    if (T % 20 === 0) { var h = pvpHash(); msg.ht = T; msg.h = h;
+      if (duo.on) { pvp.hashes[T] = h; duoHashPruefen(T); }
+      else if (pvp.remoteHash[T] !== undefined) { if (pvp.remoteHash[T] !== h) pvpDesync(); delete pvp.remoteHash[T]; } else pvp.hashes[T] = h; }
     pvpSend(msg);
   }
-  // Darf dieses Team diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für beide Browser gleich)
+  // Darf dieser Spieler (ohne Duokampf = Team) diese Einheit online bauen? Entscheidet nur, was der Server beim Start der Partie bestätigt hat (für alle Browser gleich)
   function pvpErlaubt(team, type) {
     if (pvp.bot) return true; // Zuschauer einer Bot-Partie: der Spieler hat schon geprüft
     var d = CONFIG.units[type];
@@ -143,11 +152,12 @@
     if (!CONFIG.FREI.regel(type)) return true; // keine Regel: für alle frei (Tutorial-Karten, Mauer); Karten in Entwicklung nur, wenn der Server sie bestätigt
     return !!(pvp.frei && pvp.frei[team] && pvp.frei[team].indexOf(type) >= 0); // der Server hat nach daten/freischalten.js geprüft
   }
-  function pvpApply(team, cmds) {
+  function pvpApply(team, cmds) { // team = Spieler (ohne Duokampf = Team)
     for (var i = 0; i < cmds.length && state === 'playing'; i++) {
-      if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
+      if (cmds[i] === 'resign' && duo.on) duoResign(team);
+      else if (cmds[i] === 'resign') finish(1 - team, team === pvp.me ? 'Du hast aufgegeben.' : 'Dein Gegner hat aufgegeben.');
       else {
-        if (team === pvp.me) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
+        if (team === MP) for (var di = 0; di < deploys.length; di++) if (deploys[di].net && deploys[di].type === cmds[i]) { deploys.splice(di, 1); break; } // eigener Kauf kommt jetzt heraus
         if (!pvpErlaubt(team, cmds[i])) continue; // Konto-Einheit ohne (vom Server bestätigtes) Konto: gilt für beide Browser gleich
         buy(team, cmds[i]);
       }
@@ -167,9 +177,11 @@
       var box = pvp.inbox[T];
       if (state !== 'playing') break;
       if (pvp.bot) { if (T > bis) { waited = true; break; } box = pvp.inbox[T] = box || {}; box[0] = box[0] || []; box[1] = []; } // Bot-Partie: Schritte bis zur letzten Meldung sind vollständig (ohne Eintrag = kein Kauf)
-      if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
+      if (duo.on) { box = pvp.inbox[T] = box || {}; if (!duoBoxFertig(T, box)) { waited = true; break; } }
+      else if (!box || !box[0] || !box[1]) { waited = true; break; } // auf den Gegner warten: das gilt für beide gleich
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
-      pvpApply(0, box[0]); pvpApply(1, box[1]);
+      if (duo.on) duo.spieler.forEach(function (p) { pvpApply(p, box[p]); }); // feste Reihenfolge: für alle Browser gleich
+      else { pvpApply(0, box[0]); pvpApply(1, box[1]); }
       if (state === 'playing') update(ST);
       if (pvp.bot && pvp.zh[T] !== undefined) { if (state === 'playing' && pvp.zh[T] !== pvpHash()) pvpDesync(); delete pvp.zh[T]; } // Prüfsumme des Spielers
       pvp.tick = T + 1; delete pvp.inbox[T]; delete pvp.sent[T];
@@ -182,7 +194,7 @@
     pvp.stall = waited ? pvp.stall + rdt : 0;
     if (nach && !waited) pvp.acc = 0;
     if (pvp.bot && waited) pvp.acc = Math.min(pvp.acc, ST); // kurz gewartet: danach nicht ruckartig nachholen
-    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) finish(pvp.me, 'Dein Gegner antwortet nicht mehr.');
+    if (pvp.stall > 20 && state === 'playing' && !pvp.zuschauer) { if (duo.on) { state = 'over'; pvp.ended = true; showOverlay('Verbindung verloren', 'Ein Mitspieler antwortet nicht mehr. Die Partie wurde abgebrochen.', 'Zum Menü', false); } else finish(pvp.me, 'Dein Gegner antwortet nicht mehr.'); }
     pvp.alpha = Math.min(1, pvp.acc / ST);
   }
   // Darstellung: die 20 Spielschritte pro Sekunde werden für den Bildschirm weich überblendet
@@ -234,14 +246,15 @@
     if (state !== 'playing' || intro.t > 0) return; // während der Namen noch nichts kaufen
     if (btns[type] && btns[type].hidden) return; // nicht im Deck
     if (unitLocked(type)) return; // braucht ein Konto
-    if (pvp.on && !pvpErlaubt(ME, type)) return; // online zählt, was der Server bestätigt hat
+    if (pvp.on && !pvpErlaubt(MP, type)) return; // online zählt, was der Server bestätigt hat
+    if (duo.on && kTot[MP] === Infinity) return; // Duokampf: aufgegeben
     var ok, pd = CONFIG.units[type];
-    ok = !!pd && !pd.hidden && gold[ME] - deployGold() >= preisOnline(type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
+    ok = !!pd && !pd.hidden && gold[MP] - deployGold() >= preisOnline(type) && !(pd.gebaeude && deploys.some(function (x) { return x.type === type; })) && !(tut.on && tut.avail.indexOf(type) < 0);
     if (ok && pd.wall) { // Mauer/Burg: nur, wenn keine eigenen Arbeiter unterwegs sind und kein Mauerkauf schon wartet
       if (units.some(function (w) { return w.team === ME && w.type === 'worker' && w.hp > 0 && !w.bank; }) || deploys.some(function (q) { return CONFIG.units[q.type].wall; })) ok = false;
     }
     if (ok) {
-      deploys.push({ type: type, cost: preisOnline(type), t: 0, net: pvp.on }); // Gold ist ab sofort reserviert
+      deploys.push({ type: type, cost: preisOnline(type), t: 0, net: pvp.on, p: MP }); // Gold ist ab sofort reserviert
       if (pvp.on) pvp.pending.push(type); // online: wird für beide im selben Spielschritt ausgeführt (PVP_DELAY Schritte später)
       if (el) { el.classList.remove('press'); void el.offsetWidth; el.classList.add('press'); } // Knopf drückt sich kurz ein
     }
@@ -266,7 +279,7 @@
     simRand = mulberry32(bl.seed);
   }
   function blLos() {
-    if (!bl.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return;
+    if (!bl.on || duo.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return; // Duokampf (Tester, ohne Server): nicht zum Zuschauen melden
     bl.live = true;
     var name = spielArt === 'story' && STORY[storyIdx] ? STORY[storyIdx].name : botEintrag(botType).name;
     pvpSend({ k: 'bstart', v: VERSION, seed: bl.seed, bot: botType, art: spielArt === 'story' ? 'story' : '', gegner: name, koenige: koenigTeam });
@@ -285,7 +298,7 @@
       var T = bl.tick, cmds = [];
       for (var dj = 0; dj < deploys.length; dj++) { // fällige Käufe in diesem Schritt
         var dpl = deploys[dj]; dpl.t += BL_STEP;
-        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(0, dpl.type); }
+        if (dpl.t >= DEPLOY) { deploys.splice(dj, 1); dj--; cmds.push(dpl.type); buy(dpl.p === undefined ? MP : dpl.p, dpl.type); }
       }
       for (var i = 0; i < units.length; i++) { units[i].px = units[i].x; units[i].py = units[i].y; }
       if (state === 'playing') update(BL_STEP);

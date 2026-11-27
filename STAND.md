@@ -7,6 +7,7 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - Online: https://stronghold-mini.onrender.com (Render Gratis, Frankfurt; schläft nach 15 min). Update = `index.html` auf GitHub, Render baut automatisch neu (laufende Partien brechen ab).
 - Konten/Datenbank: Supabase (`datenbank/schema.sql`, SQL Editor: https://supabase.com/dashboard/project/odxpdyrwtvgicntbjlrh/sql/new). Server schreibt mit `SUPABASE_SECRET_KEY` (nur Render-Umgebungsvariable).
 - Statistik: GoatCounter, nur in der Online-`index.html`.
+- Duokampf (27.11.): 2 gegen 2 oder 2 gegen zufälligen Story-Bot (Menü unter dem Tutorial). Spieler 0/2 = Team blau/violett, 1/3 = rot/orange (`team = p % 2`, Einheit `pl`). Gold pro Spieler, Gebäude/Mauer pro Team, zwei Könige mit halbem Schaden, Rückkehr nach 15 s (`CONFIG.DUO`). Gibt Edelsteine (zählt als PvP-Sieg/-Niederlage), keine Elo. Client `spiel/duo.js`, Server-Abschnitt «Duokampf». Im Artifact nur im Tester-Modus (gegen Bot, Tab wechselt den Spieler).
 
 ## Code
 - `daten/` Werte: `regeln.js` (CONFIG), `einheiten.js` (CONFIG.units, Kartentexte), `bots.js` (CONFIG.BOTS, Wellen), `botdatenbank.js` (BOT_DB, Story-Plätze), `freischalten.js` (CONFIG.FREI: Konto/Freunde/Sieg/Shop/Geschenk), `koenige.js`, `konto.js`.

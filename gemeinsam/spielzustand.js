@@ -11,6 +11,12 @@
     return { team: team, x1: x1, x2: x1 + 2, y1: 3.5, y2: 6.5, hp: CONFIG.BASE_HP, flash: 0, cd: 0, lastHit: -99, down: false };
   }
 
+  // Duokampf: Spieler einer Einheit (wem ihr Gold gehört, Farbe); ohne Duokampf = Team
+  function pOf(u) { return u.pl === undefined ? u.team : u.pl; }
+  function spielerIm(team) { if (!duo.on) return [team]; return duo.spieler.filter(function (p) { return p % 2 === team; }); } // Spieler eines Teams in dieser Partie
+  function zweierTeam(team) { return duo.on && spielerIm(team).length > 1; }
+  var kTot = {}; // Duokampf: gefallene Könige (Spieler -> Zeitpunkt; Infinity = aufgegeben/gegangen, kommt nicht zurück)
+
   function reset() {
     deploys = [];
     units = [];
@@ -20,15 +26,17 @@
     bases = [makeBase(0), makeBase(1)];
     walls = [null, null];
     nextId = 1; // vor den Königen: sonst hängen die Nummern von der vorigen Partie ab (Online/Zuschauer würden auseinanderlaufen)
-    spawnKing(0); spawnKing(1);
-    gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD];
+    kTot = {};
+    if (duo.on) duo.spieler.forEach(function (p) { spawnKing(p); }); else { spawnKing(0); spawnKing(1); }
+    gold = [sandbox ? CONFIG.SANDBOX_GOLD : CONFIG.START_GOLD, sandbox ? CONFIG.SANDBOX_FOE_GOLD : CONFIG.START_GOLD, 0, 0]; // Index = Spieler (2, 3 nur im Duokampf)
+    if (duo.on) duo.spieler.forEach(function (p) { if (!(duo.bot && p === 1)) gold[p] = CONFIG.DUO.startGold; }); // der Bot startet normal
     sandbox = false;
     payT = 0; payT1 = 0;
     clock = 0;
     produced = 0;
     winner = -1;
     aiRoll();
-    rec = [[], []];
+    rec = [[], [], [], []];
     gaveUp = false;
   }
 
@@ -139,12 +147,12 @@
     u.ty = spot ? spot.y : null;
   }
 
-  function spawn(team, type) {
-    var d = CONFIG.units[type], b = bases[team];
+  function spawn(p, type) { // p = Spieler (ohne Duokampf = Team)
+    var team = p % 2, d = CONFIG.units[type], b = bases[team];
     var x = team === 0 ? b.x2 + 0.5 : b.x1 - 0.5;
     var SPAWN_BAND = 2.8, y = (b.y1 + b.y2) / 2 - SPAWN_BAND / 2 + simRand() * SPAWN_BAND; // neue Einheiten: zufällig in einem Band von 2,8 Kacheln (Mitte = Burgmitte)
     units.push({
-      id: nextId++, team: team, type: type,
+      id: nextId++, team: team, pl: p, type: type,
       x: x + (simRand() - 0.5) * 0.2, y: y,
       hp: d.hp, max: d.hp, cd: 0.4 + simRand() * 0.4,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
@@ -157,7 +165,7 @@
       var bu = units[units.length - 1];
       bu.goWall = pickWallSpot(team, d.r); if (d.belfry) bu.bfTower = true;
       if (d.belfry) for (var bi = 0; bi < d.belfry.archers; bi++) { // Bogenschützen oben auf dem Turm
-        spawn(team, 'archer');
+        spawn(p, 'archer');
         var ba = units[units.length - 1];
         ba.gar = null; ba.bf = bu; ba.bfSlot = bi % 2 ? 1 : -1; ba.tower = true;
         ba.x = bu.x; ba.y = bu.y + ba.bfSlot * 0.22;
@@ -209,15 +217,18 @@
   function belfryManned(b) { for (var q = 0; q < units.length; q++) if (units[q].bf === b && units[q].hp > 0) return true; return false; }
 
   // Der König ist eine Einheit, die in der Burg sitzen kann (inCastle): oben Bogenschütze und unverwundbar, ohne Burg Nahkämpfer
-  function spawnKing(team) {
-    var kd = CONFIG.units.king, kb = bases[team];
+  function spawnKing(p) { // p = Spieler (ohne Duokampf = Team)
+    var team = p % 2, kd = CONFIG.units.king, kb = bases[team], halb = zweierTeam(team);
     units.push({
-      id: nextId++, team: team, type: 'king',
-      x: (kb.x1 + kb.x2) / 2, y: (kb.y1 + kb.y2) / 2,
+      id: nextId++, team: team, pl: p, type: 'king', halb: halb, // halb: Zweierteam im Duokampf, halber Schaden
+      x: (kb.x1 + kb.x2) / 2, y: (kb.y1 + kb.y2) / 2 + koenigVersatz(p),
       hp: kd.hp, max: kd.hp, cd: 0.5, inCastle: true,
       face: team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1
     });
   }
+
+  // Duokampf: zwei Könige auf einer Burg sitzen nebeneinander (der erste Spieler oben, der Partner unten)
+  function koenigVersatz(p) { return zweierTeam(p % 2) ? (p < 2 ? -1 : 1) * CONFIG.DUO.koenigAbstand : 0; }
 
   // Ziel eines Tunnelgräbers: ein zufälliger Punkt im Umkreis einer zufälligen gegnerischen Einheit auf dem Feld, die weiter als 1 Kachel schiesst
   // (Bogenschütze, Magier, Baliste, Katapult, Trebuchet …) (gibt es keinen, ein Punkt in der Spielfeldmitte), nie näher als minBase an der gegnerischen Kaserne.
@@ -392,7 +403,7 @@
     if (g.stufe >= st.length) return Infinity;
     return st[g.stufe].cost;
   }
-  function buyGebaeude(team, type) {
+  function buyGebaeude(team, type, pl) { // pl = Spieler, der baut (bekommt den Ertrag); Gebäude gehören dem Team, beide dürfen ausbauen
     var d = CONFIG.units[type], G = d.gebaeude, g = meinGebaeude(team, type), dir = team === 0 ? 1 : -1;
     if (g && G.gebet) { // Kirche: ein Priester betet (danach Gunst +1)
       if (g.bau || g.gebetT > 0 || (g.gunst || 0) >= G.gunstMax) return false;
@@ -404,7 +415,7 @@
     } else {
       var frei = gebPlaetze(team); if (!frei.length) return false;
       var p = frei[Math.floor(simRand() * frei.length)];
-      g = { id: nextId++, team: team, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
+      g = { id: nextId++, team: team, pl: pl === undefined ? team : pl, type: type, x: p.x, y: p.y, hp: 1, max: G.stufen[0].hp, cd: 0, face: dir, hit: 0, slow: 0, lastHit: -99, tx: null, ty: null, settled: false, retry: 1,
             bau: true, stufe: 0, ziel: 1, gT: 0, nx: 0, ny: p.y < H / 2 ? 1 : -1 }; // nx/ny = Vorderseite: zur Mitte (brauner Weg)
       units.push(g);
     }
@@ -412,25 +423,26 @@
     var wk = units[units.length - 1]; wk.bank = g; wk.bp = { x: g.x - dir * (G.w / 2 + 0.25), y: g.y }; // baut an der Seite zur Burg (läuft nicht über das Dach)
     return true;
   }
-  function buy(team, type) {
+  function buy(p, type) { // p = Spieler (ohne Duokampf = Team); bezahlt wird mit dem Gold des Spielers, Preise (Karawane, Bürger, Gebäude) gelten fürs Team
     if (state !== 'playing') return false;
-    var d = CONFIG.units[type];
-    if (!d || d.hidden || gold[team] < preisVon(team, type)) return false;
+    var team = p % 2, d = CONFIG.units[type];
+    if (!d || d.hidden || gold[p] < preisVon(team, type)) return false;
+    if (duo.on && kTot[p] === Infinity) return false; // aufgegeben oder gegangen
     if (tut.on && team === 0 && tut.avail.indexOf(type) < 0) return false; // im Tutorial nur, was gerade verlangt ist
     if (d.wall) {
       if (!buyWall(team)) return false;
-      gold[team] -= d.cost;
+      gold[p] -= d.cost;
       if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
-      rec[team].push(clock.toFixed(1) + LOGKEY[type]);
+      rec[p].push(clock.toFixed(1) + LOGKEY[type]);
       return true;
     }
     var preis = preisVon(team, type);
-    if (d.gebaeude && !buyGebaeude(team, type)) return false; // kein Platz frei / schon höchste Stufe
-    gold[team] -= preis;
+    if (d.gebaeude && !buyGebaeude(team, type, p)) return false; // kein Platz frei / schon höchste Stufe
+    gold[p] -= preis;
     if (tut.on && team === 0) tut.bought[type] = (tut.bought[type] || 0) + 1;
-    rec[team].push(clock.toFixed(1) + LOGKEY[type]);
-    if (!d.gebaeude) spawn(team, type);
-    if (team === ME) produced++;
+    rec[p].push(clock.toFixed(1) + LOGKEY[type]);
+    if (!d.gebaeude) spawn(p, type);
+    if (p === MP) produced++;
     return true;
   }
 

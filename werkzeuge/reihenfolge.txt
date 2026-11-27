@@ -22,6 +22,7 @@ spiel/konto.js
 spiel/tutorial.js
 spiel/online.js
 spiel/sozial.js
+spiel/duo.js
 spiel/koenigwahl.js
 spiel/wertekarte.js
 spiel/vollbild.js

@@ -2,10 +2,10 @@
   // koenigMalen(c, k, r, teamCol, o): von oben, Blick nach rechts (+x), Mittelpunkt bei 0,0, ohne Schatten.
   // o.ohneWaffe = nur der König mit leeren Händen (für Bilder); o.bogen = auf der Burg (o.zieh 0..1: Bogen hervorholen/verstauen) mit Bogen (o.str, o.vib, o.arrow wie attackPose), sonst Waffe der Optik (o.rot = Hieb-Drehung um die Hände)
   // Wird im Spiel (drawUnit, king/kingbow), auf der Story-Karte, in der Königswahl und in der Bot-Datenbank benutzt.
-  var koenigTeam = ['standard', 'bandit']; // Optik der beiden Könige in der laufenden Partie (Index = Team)
-  var kZust = [null, null]; // je Team im Spiel: { zieh: Bogen 0..1, nah: Nahkampfwaffe 0..1 }, gesetzt in zeichnen.js
+  var koenigTeam = ['standard', 'bandit', 'standard', 'standard']; // Optik der Könige in der laufenden Partie (Index = Spieler; 2, 3 nur im Duokampf)
+  var kZust = [null, null, null, null]; // je Spieler im Spiel: { zieh: Bogen 0..1, nah: Nahkampfwaffe 0..1 }, gesetzt in zeichnen.js
   var KRATZ = { alle: 15, dauer: 2.4 }; // Kopfkratzen: alle 15 s, dauert 2,4 s (halbes Tempo)
-  var kKratz = [0, 0]; // Kopfkratzen in der Burg je Team (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
+  var kKratz = [0, 0, 0, 0]; // Kopfkratzen in der Burg je Spieler (0..1 = Ablauf, 0 = nicht), gesetzt in zeichnen.js
   var KSCHRAEG = -0.5; // Nahkampfwaffe schräg nach vorn gehalten (Bogenmass)
   var KSTAHL = '#e3eaec', KHOLZ = '#7a5230';
   function koenigOptik(id) { return KOENIGE[id] || KOENIGE.standard; }
