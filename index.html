@@ -1127,7 +1127,7 @@
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
       schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 22, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, ausholen: 0.5, kegel: { winkel: 120, r: 1 } }, // ausholen: vor dem ersten Schlag 0,5 s ausholen // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
-      raeuber: { cat: 'melee', name: 'Bandit', cost: 8, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1.5 }, nurFern: true, suche: 8 }, // nurFern (23.11.): greift nur König, Fernkämpfer, Wirtschaft (Bauer, Holzfäller, Karawane) und Fernkampf-Kriegsmaschinen an; unsichtbar geht er durch Einheiten hindurch
+      raeuber: { cat: 'melee', name: 'Bandit', cost: 7, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1.5 }, nurFern: true, suche: 8 }, // nurFern (23.11.): greift nur König, Fernkämpfer, Wirtschaft (Bauer, Holzfäller, Karawane) und Fernkampf-Kriegsmaschinen an; unsichtbar geht er durch Einheiten hindurch
       knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
@@ -1391,7 +1391,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'f3f4865fe2'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '7dfc3a7101'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
