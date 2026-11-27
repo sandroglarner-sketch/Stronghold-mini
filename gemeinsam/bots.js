@@ -217,6 +217,9 @@
     // Holzfäller: so viele strebt er an (R.holzfaeller), gleiche Bedingung wie bei den Bauern
     guard = 0;
     while (guard++ < 3 && clock < 180 /* ab 180 s (3 min) Spielzeit keine neuen Holzfäller mehr (alle Bots; 22.11., vorher 120 s) */ && countType(1, 'holzfaeller') < (R.holzfaeller || 0) && wirtschaft && spendable() >= preisVon(1, 'holzfaeller') && buy(1, 'holzfaeller')) { /* weiter */ }
+    // Bürger (27.11.): so viele strebt er an (R.buerger), gleiche Bedingung wie bei den Bauern; Preis steigt mit jedem lebenden Bürger
+    guard = 0;
+    while (guard++ < 3 && countType(1, 'buerger') < (R.buerger || 0) && wirtschaft && spendable() >= preisVon(1, 'buerger') && buy(1, 'buerger')) { /* weiter */ }
     // Türme (gilt für alle Gegner): ein freier Platz wird mit der angestrebten Turmbesatzung R.turm besetzt (Gesamtzahl je Einheit auf allen Türmen); was schon oben steht, zählt mit,
     // auch Einheiten, die von selbst hinaufgestiegen sind (die bleiben). Nach einem Kauf 20 Sekunden Pause. Ohne R.turm (alte Bots): Schützenplätze Bogenschützen, Belagerungsplätze Katapult/towerSiege.
     if (aw && aw.built && aw.sl && aw.tlv && ai.towerCool <= 0 && !defHold) {

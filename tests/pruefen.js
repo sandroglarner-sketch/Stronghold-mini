@@ -89,6 +89,16 @@ const TESTS = {
     var t = X.units.map(function (u) { return u.team; });
     return t[1] === 0 && t[2] === 0 && t[3] === 1 && t[4] === 1 && z.hp === z.max ? true : 'Teams Ziel/drin/aussen/weit: ' + t.slice(1).join('/');
   },
+  'Bürger: 2 Gold, jeder weitere +2, bleibt im Mauerbereich, alle 5 s +1 Gold': function (X) {
+    X.reset(); X.units.length = 0; X.setState('playing'); X.gold[0] = 100;
+    var g0 = X.gold[0]; X.buy(0, 'buerger'); X.buy(0, 'buerger'); X.buy(0, 'buerger');
+    var bez = g0 - X.gold[0], b = X.bases[0], R = X.CONFIG.units.wall.wall.dist, maxD = 0, steht = 0;
+    var bs = X.units.filter(function (u) { return u.type === 'buerger'; }); X.gold[0] = 0; X.setState('playing'); var ga = X.CONFIG.GOLD_AMOUNT; X.CONFIG.GOLD_AMOUNT = 0;
+    for (var i = 0; i < 61 * 60; i++) { X.upd(1 / 60); bs.forEach(function (u) {
+      var dx = u.x - Math.max(b.x1, Math.min(b.x2, u.x)), dy = u.y - Math.max(b.y1, Math.min(b.y2, u.y)); maxD = Math.max(maxD, Math.sqrt(dx * dx + dy * dy)); if (u.settled.z !== 'geht') steht++; }); }
+    X.CONFIG.GOLD_AMOUNT = ga; var gold = X.gold[0], leben = bs.filter(function (u) { return u.hp > 0; }).length; // Grundeinkommen war ausgeschaltet
+    return bez === 12 && maxD <= R && steht > 0 && gold === 36 && leben === 3 ? true : 'bezahlt ' + bez + ', weitester Abstand ' + maxD.toFixed(2) + ', Steh-Schritte ' + steht + ', Gold der Bürger ' + gold + ', leben ' + leben;
+  },
   'Prinzessin: zielt nur auf bekehrbare Gegner und erst ab 3 Kacheln': function (X) {
     X.reset(); X.units.length = 0;
     X.spawn(0, 'prinzessin'); X.spawn(1, 'farmer'); X.spawn(1, 'spear');
