@@ -219,13 +219,21 @@
   // ----- Herausforderungen -----
   function toast(text, knoepfe) { $('toastText').textContent = text; $('toastKn').hidden = !knoepfe; $('toast').hidden = false; }
   function toastWeg() { $('toast').hidden = true; sozial.forderungRein = null; }
-  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
+  // Einladung angenommen: eigene Suche, Duokampf-Team oder Zuschauen zuerst verlassen (der Server räumt bei sich ebenfalls auf)
+  function fuerEinladungFrei() {
+    if (pvp.on && pvp.zuschauer) zuschauenVerlassen();
+    else if (pvp.searching || duoS.phase) { pvp.searching = false; duoS.phase = ''; duoS.partner = null; duoKnoepfe(); showMenu(); }
+    freundeOpen(false);
+  }
+  // Einladung, die noch offen ist, ablehnen (z. B. weil gerade ein Spiel beginnt)
+  function forderungAblehnen() { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); }
+  $('toastJa').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (!f) return; fuerEinladungFrei(); if (f.duo) { var am = duoDatenNachricht('antwort'); am.id = f.id; am.ja = true; pvpSend(am); } else pvpSend({ k: 'antwort', id: f.id, ja: true }); });
   $('toastNein').addEventListener('click', function () { var f = sozial.forderungRein; toastWeg(); if (f) pvpSend({ k: 'antwort', id: f.id, ja: false }); });
   function forderungAbbrechen() { if (sozial.forderungRaus) pvpSend({ k: 'fordern_ab', id: sozial.forderungRaus.id }); sozial.forderungRaus = null; zeigeMenu(); }
 
   // ----- Zuschauen (nur Online-Partien): der Server schickt Startwert und alle bisherigen Käufe, das Spiel rechnet die Partie selbst mit -----
   function startZuschauen(m) {
-    freundeOpen(false); toastWeg();
+    freundeOpen(false); // eine offene Einladung bleibt: Zuschauen ist kein Spiel
     if (m.duo) { duoZuschauen(m); return; } // Duokampf (spiel/duo.js)
     pvp.konten = Array.isArray(m.acc) ? [!!m.acc[0], !!m.acc[1]] : [false, false];
     pvp.frei = Array.isArray(m.frei) ? [[].concat(m.frei[0] || []), [].concat(m.frei[1] || [])] : [[], []];
@@ -251,6 +259,12 @@
     var box = pvp.inbox[t] = pvp.inbox[t] || {};
     box[team] = Array.isArray(c) ? c.filter(pvpValid).slice(0, 6) : [];
     if (t > pvp.letzte) pvp.letzte = t;
+  }
+  function zuschauenVerlassen() { // ohne die Verbindung zu trennen (z. B. Einladung angenommen)
+    pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); augen(0);
+    pvp.on = false; pvp.ended = false; pvp.searching = false; ME = 0; MP = 0; simRand = Math.random; pvp.bot = false; pvp.botEnde = null;
+    duoAus(); state = 'ready'; ui.gm = ui.gf = ui.cdown = -1;
+    showMenu();
   }
   function zuschauenEnde() { $('zBanner').hidden = true; document.documentElement.classList.remove('zuschauer'); pvp.zuschauer = false; }
   $('zRaus').addEventListener('click', function () { pvpSend({ k: 'nichtzuschauen' }); zuschauenEnde(); pvpLeave(); });
@@ -313,7 +327,10 @@
       return;
     }
     if (m.k === 'forderung') {
-      if (state === 'playing' || pvp.on || pvp.searching || duoS.phase) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      // Einladung erscheint immer, ausser du bist gerade in einem Spiel (Zuschauen zählt nicht) oder hast selbst eine Einladung verschickt
+      var imSpiel = !pvp.zuschauer && (pvp.on || state === 'playing' || state === 'paused');
+      if (imSpiel || sozial.forderungRaus) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
+      if (sozial.forderungRein && sozial.forderungRein.id !== m.id) pvpSend({ k: 'antwort', id: sozial.forderungRein.id, ja: false }); // ältere Einladung wird ersetzt
       sozial.forderungRein = { id: m.id, von: m.von, duo: !!m.duo };
       toast(m.duo ? m.von.name + ' lädt dich zum Duokampf ein (ihr zwei gegen zwei andere)' : m.von.name + ' fordert dich zu einem 1 vs 1 heraus', true);
       return;

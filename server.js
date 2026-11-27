@@ -612,6 +612,15 @@ function duoWeg(c) { // Verbindung weg oder Partie verlassen
   duoAus(ma);
   broadcastInfo();
 }
+// Einladungen (1 vs 1 und Duokampf): erscheinen immer, ausser der Eingeladene ist in einem Spiel oder hat selbst eine Einladung offen.
+// Suchen (1 vs 1, Duokampf-Partner/-Gegner), Duokampf-Menü und Zuschauen zählen nicht als Spiel.
+function imSpiel(v) { return !!(v.peer || v.duoMa || v.status !== 'menu'); }
+function laedtEin(v) { for (const f of forderungen.values()) if (f.von === v) return true; return false; }
+function fuerEinladungFrei(c) { // Einladung angenommen: Suche, Team und Zuschauen verlassen
+  if (c.queued) dequeue(c);
+  if (c.duoSucht || c.duo) { c.duoSucht = false; duoSolo = duoSolo.filter((x) => x !== c); if (c.duo) duoTeamAuf(c, 'ab'); duoInfoSenden(); }
+  if (c.schaut) zuschauenAus(c);
+}
 async function duoNachricht(c, m) {
   const ma = c.duoMa;
   if (m.k === 't') { // Spielschritt an alle anderen (mit Spielernummer)
@@ -651,7 +660,7 @@ async function duoNachricht(c, m) {
     if (!c.user || !KONTO_SECRET) return c.send({ k: 'sozialfehler', text: 'Dafür brauchst du ein Konto.' });
     const ziel = String(m.an || ''), v = verbindung(ziel);
     if (!(await sindFreunde(c.user.id, ziel))) return;
-    if (!v || v.peer || v.queued || v.duo || v.duoMa || v.duoSucht || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
+    if (!v || imSpiel(v) || laedtEin(v)) return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
     if (c.peer || c.duo || c.duoMa) return;
     if (SPIEL_V && (c.v !== SPIEL_V || v.v !== SPIEL_V)) return c.send({ k: 'forderung_aus', grund: 'version' });
     await duoDaten(c, m);
@@ -829,7 +838,7 @@ async function sozial(c, m) {
   if (m.k === 'fordern') { // einen Freund zu einer Online-Partie herausfordern
     const ziel = String(m.an || ''), v = verbindung(ziel);
     if (!(await sindFreunde(c.user.id, ziel))) return;
-    if (!v || v.peer || v.queued || v.duo || v.duoMa || v.duoSucht || v.status !== 'menu') return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
+    if (!v || imSpiel(v) || laedtEin(v)) return c.send({ k: 'forderung_aus', grund: 'nicht frei' });
     if (c.peer || c.duo || c.duoMa) return;
     if (SPIEL_V && (c.v !== SPIEL_V || v.v !== SPIEL_V)) return c.send({ k: 'forderung_aus', grund: 'version' });
     const id = crypto.randomBytes(6).toString('hex');
@@ -847,7 +856,8 @@ async function sozial(c, m) {
     for (const z of online.get(f.an) || []) if (z !== c) z.send({ k: 'forderung_weg', id: m.id });
     if (m.k === 'fordern_ab') return;
     if (!m.ja) return f.von.send({ k: 'forderung_aus', grund: 'abgelehnt' });
-    if (!f.von.alive || f.von.peer || c.peer || f.von.duo || f.von.duoMa || c.duo || c.duoMa) return c.send({ k: 'forderung_weg', id: m.id });
+    if (!f.von.alive || f.von.peer || c.peer || f.von.duo || f.von.duoMa || c.duoMa) return c.send({ k: 'forderung_weg', id: m.id });
+    fuerEinladungFrei(c);
     if (f.duo) { await duoDaten(c, m); if (!f.von.alive || f.von.duo || c.duo) return; return duoTeamBilden(f.von, c, 'freund'); } // Duokampf: zusammen ein Team, dann Gegner suchen
     return starteMatch(f.von, c);
   }
