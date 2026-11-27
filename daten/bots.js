@@ -7,7 +7,7 @@
     // attackGold = ab so viel Gold beginnt der Angriff; attack = Schritte (after = Sekunden nach dem Beginn, buy = [Einheit, Anzahl]);
     // lockSecs = so lange nach Beginn des Angriffs wird sonst nichts gekauft;
     // Verteidigung (alle Bots): kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens (Goldwert deiner Kampfeinheiten auf dem Feld) minus (Goldwert seiner Turmbesatzung und Kampfeinheiten auf dem Feld) kosten; defMaxGold = höchstens so viel Gold pro Verteidigung (ohne Angabe unbegrenzt),
-    // karawanen = so viele Karawanen strebt er an (wie die Bauern); holzfaeller = so viele Holzfäller strebt er an; gebaeude = Gebäudekäufe in Reihenfolge [{ type, gold }]: die n-te Zeile eines Gebäudes ist sein n-ter Kauf (Bau, Ausbaustufe, bei der Kirche ein Gebet), gekauft ab so viel freiem Gold und nur ohne gegnerische Einheit in seiner Spielfeldhälfte;
+    // karawanen = so viele Karawanen strebt er an (wie die Bauern); holzfaeller = so viele Holzfäller strebt er an; buerger = so viele Bürger strebt er an; gebaeude = Gebäudekäufe in Reihenfolge [{ type, gold }]: die n-te Zeile eines Gebäudes ist sein n-ter Kauf (Bau, Ausbaustufe, bei der Kirche ein Gebet), gekauft ab so viel freiem Gold und nur ohne gegnerische Einheit in seiner Spielfeldhälfte;
     // für die Jagd zählt auf beiden Seiten jede Karawane wie 2 Bauern (er jagt nur, wenn du mehr Wirtschaft hast); farmers und karawanen kauft er genau wie angegeben;
     // defMax = höchstens so viele je Einheit pro Verteidigung, z. B. { catapult: 1 };
     // defPool = erlaubte Einheiten, noOutput = danach so viele Sekunden keine Einheiten

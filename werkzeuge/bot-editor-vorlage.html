@@ -108,6 +108,7 @@
         <div class="felder">
           <div class="feld"><label>Grundeinkommen</label><div class="zeile"><input type="number" id="f_income" data-k="income" min="0" step="1"> Gold alle <input type="number" id="f_incomeEvery" data-k="incomeEvery" min="0.5" step="0.5"> s</div><small>Standard wie der Spieler: 10 Gold alle 5 s.</small></div>
           <div class="feld"><label for="f_holzfaeller">Holzfäller (anstreben)</label><input type="number" id="f_holzfaeller" data-k="holzfaeller" min="0" step="1"><small>So viele Holzfäller kauft er, solange keine deiner Einheiten über der Mitte steht (6 Gold, höchstens 2 pro Baum).</small></div>
+          <div class="feld"><label for="f_buerger">Bürger (anstreben)</label><input type="number" id="f_buerger" data-k="buerger" min="0" step="1"><small>So viele Bürger kauft er, solange keine deiner Einheiten über der Mitte steht (1. kostet 2 Gold, jeder weitere 2 mehr).</small></div>
           <div class="feld"><label for="f_karawanen">Karawanen (anstreben)</label><input type="number" id="f_karawanen" data-k="karawanen" min="0" step="1"><small>So viele Karawanen kauft er, solange keine deiner Einheiten über der Mitte steht. Nach jeder Karawane 4 s keine weitere (alle Bots).</small></div>
           <div class="feld"><label for="f_farmers">Bauern (höchstens)</label><input type="number" id="f_farmers" data-k="farmers" min="0" step="1"><small>Er baut Bauern bis zu dieser Zahl, solange keine deiner Einheiten über der Mitte steht.</small></div>
         </div>
@@ -291,7 +292,7 @@
     $('logikTag').innerHTML = L ? '<span class="tag ja">vorhanden' + (cur.logikKey ? ' · CONFIG.BOTS.' + cur.logikKey : '') + '</span>' : '<span class="tag nein">leer</span>';
     if (L) {
       delete L.defPlus; // seit 26.11. verteidigen die Bots nach Goldwert, nicht mehr nach Stärke
-      ['income', 'incomeEvery', 'holzfaeller', 'karawanen', 'farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'attackGold', 'lockSecs', 'defMaxGold', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
+      ['income', 'incomeEvery', 'holzfaeller', 'buerger', 'karawanen', 'farmers', 'huntLead', 'huntEvery', 'wallGold', 'wallUnits', 'attackGold', 'lockSecs', 'defMaxGold', 'noOutput'].forEach(function (k) { $('f_' + k).value = L[k] === undefined ? '' : L[k]; });
       if (L.wallStage === undefined) L.wallStage = 1; // alte Daten: ohne Angabe = Mauer ohne Türme
       $('f_wallStage').value = String(L.wallStage);
       if (!L.turm) { L.turm = {}; var pl = platz(L.wallStage); if (pl.schuetzen) L.turm.archer = pl.schuetzen; if (pl.belagerung) L.turm[L.towerSiege || 'catapult'] = pl.belagerung; delete L.towerSiege; }
@@ -541,7 +542,7 @@
   function fmt(v) { return v === undefined ? 'leer' : typeof v === 'object' ? JSON.stringify(v) : String(v); }
 
   // ----- Code für das Spiel -----
-  var REIHE = ['income', 'incomeEvery', 'farmers', 'karawanen', 'holzfaeller', 'gebaeude', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defMaxGold', 'defPool', 'defDiggerAt', 'defDiggerVsCatapult', 'defMax', 'noOutput'];
+  var REIHE = ['income', 'incomeEvery', 'farmers', 'karawanen', 'holzfaeller', 'buerger', 'gebaeude', 'huntLead', 'hunt', 'huntEvery', 'huntLater', 'wallGold', 'wallUnits', 'wallStage', 'turm', 'towerSiege', 'wallClear', 'attackGold', 'lockSecs', 'attack', 'defMaxGold', 'defPool', 'defDiggerAt', 'defDiggerVsCatapult', 'defMax', 'noOutput'];
   function js(v) { return JSON.stringify(v).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'").replace(/,/g, ', ').replace(/:/g, ': ').replace(/\{'after'/g, '{ after').replace(/'buy'/g, 'buy').replace(/\{ after/g, '{ after').replace(/\]\}/g, '] }'); }
   function logikCode(b) {
     var L = b.logik, teile = [];
