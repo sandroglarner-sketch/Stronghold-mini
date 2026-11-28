@@ -145,7 +145,7 @@
     if (g.drin === undefined) { g.drin = Math.min(WG.start || 0, WG.anzahl); g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: start Wächter drin, alle nach s kommt einer dazu
     for (i = 0; i < units.length; i++) {
       o = units[i];
-      if (!alarm && wacheFeind(g.team, o)) alarm = true;
+      if (!alarm && wacheFeind(g.team, o, WG.alarm)) alarm = true; // Alarm: Gegner in der eigenen Hälfte oder bis wache.alarm Kacheln vor der Mitte
       if (o.wache === g && o.hp > 0) {
         raus++;
         if (g.wStufe !== g.stufe) { o.hp += mhp - o.max; o.max = mhp; o.settled = { stufe: g.stufe }; } // Ausbau fertig: Wächter draussen bekommen die neuen Leben dazu
@@ -163,8 +163,8 @@
       }
     } else if (!alarm) g.rausT = 0;
   }
-  // Wächter: greift den nächsten Feind an: in der eigenen Hälfte (wacheFeind) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
-  // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst bleiben in der eigenen Hälfte.
+  // Wächter: greift den nächsten Feind an: im Alarmbereich (eigene Hälfte und wache.alarm Kacheln davor) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
+  // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst gehen höchstens wache.nah − Reichweite Kacheln über die Mitte.
   // Erst ausholen (28.11.: alle Einheiten): kommt ein Ziel in Reichweite (u.ready wird wahr), frühestens nach d.ausholen s zuschlagen.
   // Gilt für den ersten Treffer auf ein neues Ziel bzw. nach jeder Pause; danach bestimmt d.cd den Takt. u.warBereit = u.ready des letzten Schritts (oben im Einheiten-Schritt gesetzt).
   function ausholenPruefen(u, d) {
@@ -178,7 +178,7 @@
     for (j = 0; j < units.length; j++) {
       e = units[j]; if (!wacheFeind(u.team, e, nah)) continue;
       dd = hyp(e.x - u.x, e.y - u.y);
-      if (!wacheFeind(u.team, e, 0) && dd > WG.nahAbstand + 0.001) continue; // hinter der Mitte: nur wer nah bei ihm steht
+      if (!wacheFeind(u.team, e, WG.alarm) && dd > WG.nahAbstand + 0.001) continue; // ausserhalb des Alarmbereichs: nur wer nah bei ihm steht
       if (dd < bd) { bd = dd; best = e; }
     }
     if (best) {
@@ -856,7 +856,7 @@
             }
           }
         }
-        if (CONFIG.units[q.type].waechter) q.x = q.team === 0 ? Math.min(q.x, W / 2 - 0.05) : Math.max(q.x, W / 2 + 0.05); // Wächter bleiben in der eigenen Hälfte
+        if (CONFIG.units[q.type].waechter) { var wLim = Math.max(0, (CONFIG.units.wache.gebaeude.wache.nah || 0) - CONFIG.units[q.type].range) - 0.05; q.x = q.team === 0 ? Math.min(q.x, W / 2 + wLim) : Math.max(q.x, W / 2 - wLim); } // Wächter gehen höchstens (wache.nah − Reichweite) Kacheln über die Mitte (28.11.: 1), damit sie Gegner bis wache.nah treffen
         q.x = clamp(q.x, 0.25, W - 0.25);
         q.y = clamp(q.y, 0.3, H - 0.3);
         alive.push(q);

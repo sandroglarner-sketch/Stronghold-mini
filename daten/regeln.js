@@ -26,7 +26,7 @@
     },
     // think = Sekunden zwischen Entscheidungen; weakHp = Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
-    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4, wacheGold: [6, 13, 24] }, // wacheGold = Verteidigung der Bots: jeder eigene Wächter (draussen und im Wachposten) zählt je Stufe des Wachpostens so viel Gold; karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
+    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4, wacheGold: [6, 12, 19] }, // wacheGold = Verteidigung der Bots: jeder eigene Wächter (draussen und im Wachposten) zählt je Stufe des Wachpostens so viel Gold; karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
 
   // Bäume (Ressourcen für Holzfäller): spiegelbildlich zur Mitte (x -> W - x). Wald unten in der Mitte, je 2 Bäume näher an jeder Burg, je 5 links und rechts vom Teich.
