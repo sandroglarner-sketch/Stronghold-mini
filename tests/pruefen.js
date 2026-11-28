@@ -140,7 +140,7 @@ const TESTS = {
     X.spawn(0, 'schwarzritter'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear');
     var k = X.units[0], z = X.units[1], seite = X.units[2], hinten = X.units[3], weit = X.units[4];
     k.x = 11; k.y = 5; z.x = 11.85; z.y = 5; seite.x = 11.45; seite.y = 5.65; hinten.x = 10.05; hinten.y = 5; weit.x = 12.9; weit.y = 5.9;
-    X.units.forEach(function (u) { u.cd = 9; u.settled = false; }); k.cd = 0; k.warBereit = true; // schon ausgeholt
+    X.units.forEach(function (u) { u.cd = 9; u.settled = false; }); k.cd = 0; k.ready = true; // schon ausgeholt
     var hp = X.units.map(function (u) { return u.hp; });
     X.upd(0.02);
     var d = X.units.map(function (u, i) { return +(hp[i] - u.hp).toFixed(2); });
@@ -153,12 +153,24 @@ const TESTS = {
     for (var i = 0; i < 200; i++) { z.x = 11.85; z.y = 5; k.x = 11; k.y = 5; X.upd(0.02); if (z.hp < hp) { treffer.push(+((i + 1) * 0.02).toFixed(2)); hp = z.hp; } }
     return treffer.length >= 2 && Math.abs(treffer[0] - 0.5) < 0.05 && Math.abs(treffer[1] - treffer[0] - 1) < 0.05 ? true : 'Treffer bei ' + treffer.join(', ') + ' s';
   },
+  'Alle Einheiten: erster Angriff frühestens nach der Ausholzeit (ausholen), dann im Takt cd': function (X) {
+    var fehler = [];
+    ['spear', 'sword', 'knight', 'javelin', 'archer', 'baliste'].forEach(function (typ) {
+      X.reset(); X.units.length = 0; X.spawn(0, typ); X.spawn(1, 'shield');
+      var a = X.units[0], z = X.units[1], d = X.CONFIG.units[typ], abst = d.range > 1.5 ? Math.max(d.minRange || 0, 2.2) : 0.85, ang = [];
+      a.cd = 0; z.hp = 9999; z.cd = 99; var t0 = X.clock;
+      for (var i = 0; i < 150; i++) { a.x = 8; a.y = 5; z.x = 8 + abst; z.y = 5; z.cd = 99; X.upd(0.02); if (a.atkT !== undefined && ang.indexOf(a.atkT) < 0) ang.push(a.atkT); }
+      var t1 = ang.length ? ang[0] - t0 : null;
+      if (!(ang.length >= 2 && Math.abs(t1 - d.ausholen) < 0.05 && Math.abs(ang[1] - ang[0] - d.cd) < 0.03)) fehler.push(typ + ': erster Angriff ' + (t1 === null ? '–' : t1.toFixed(2)) + ' s (soll ' + d.ausholen + ')');
+    });
+    return fehler.length ? fehler.join('; ') : true;
+  },
   'Prinzessin: Gegner im 60°-Trichter bis 5 Kacheln wechseln die Seite': function (X) {
     X.reset(); X.units.length = 0;
     X.spawn(0, 'prinzessin'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear'); X.spawn(1, 'spear');
     var p = X.units[0], z = X.units[1], drin = X.units[2], aussen = X.units[3], weit = X.units[4];
     p.x = 8; p.y = 5; z.x = 10.5; z.y = 5; drin.x = 12; drin.y = 6; aussen.x = 9.8; aussen.y = 7.8; weit.x = 14.2; weit.y = 5;
-    X.units.forEach(function (u) { u.cd = 9; }); p.cd = 0;
+    X.units.forEach(function (u) { u.cd = 9; }); p.cd = 0; p.ready = true; // schon ausgeholt
     X.upd(0.02);
     var t = X.units.map(function (u) { return u.team; });
     return t[1] === 0 && t[2] === 0 && t[3] === 1 && t[4] === 1 && z.hp === z.max ? true : 'Teams Ziel/drin/aussen/weit: ' + t.slice(1).join('/');
@@ -180,7 +192,7 @@ const TESTS = {
     var setz = function (sx) { p.x = 8; p.y = 5; f.x = 9.5; f.y = 5; s.x = sx; s.y = 5; f.cd = s.cd = 9; };
     setz(12); p.cd = 0; X.upd(0.02);
     var vorher = [p.cd > 0, f.team, s.team].join('/');
-    setz(10.8); X.upd(0.02);
+    setz(10.8); p.ready = true; X.upd(0.02); // schon ausgeholt
     var nachher = [f.team, s.team].join('/');
     return vorher === 'false/1/1' && nachher === '1/0' ? true : 'bei 4 Kacheln (zaubert?/Bauer/Speer): ' + vorher + ', bei 2,8: ' + nachher;
   },
@@ -190,7 +202,7 @@ const TESTS = {
     var m = X.units[0], k = X.units[1];
     for (var i = 0; i < 40 && !(k.slow > 0); i++) { m.x = 8; m.y = 5; k.x = 11; k.y = 5; k.cd = 99; X.upd(0.05); } // Frost trifft den Ritter
     var ok1 = k.slow > 0 && k.slowF === 0.5 && k.slowA === 0.5;
-    m.hp = 0; X.spawn(0, 'spear'); var s = X.units[X.units.length - 1]; s.x = k.x + 0.6; s.y = k.y; s.cd = 99; k.cd = 0;
+    m.hp = 0; X.spawn(0, 'spear'); var s = X.units[X.units.length - 1]; s.x = k.x + 0.6; s.y = k.y; s.cd = 99; k.cd = 0; k.ready = true; // schon ausgeholt
     X.upd(0.01); // Ritter schlägt zu: nächster Schlag erst nach 2 s statt 1 s
     return ok1 && Math.abs(k.cd - 2) < 0.02 ? true : 'gebremst ' + k.slow + '/' + k.slowF + '/' + k.slowA + ', Nachladen ' + k.cd;
   },
@@ -199,7 +211,7 @@ const TESTS = {
     X.spawn(0, 'feuerbogen'); X.spawn(1, 'knight'); X.spawn(1, 'knight'); X.spawn(1, 'knight');
     var a = X.units[0], k1 = X.units[1], k2 = X.units[2], k3 = X.units[3];
     a.x = 8; a.y = 5; k1.x = 11.9; k1.y = 5; k2.x = 11.9; k2.y = 5.6; k3.x = 11.9; k3.y = 6.2;
-    a.cd = 0; [k1, k2, k3].forEach(function (k) { k.cd = 99; k.speed = 0; });
+    a.cd = 0; a.ready = true; [k1, k2, k3].forEach(function (k) { k.cd = 99; k.speed = 0; });
     for (var i = 0; i < 12; i++) { X.upd(0.05); [k1, k2, k3].forEach(function (k) { k.x = 11.9; }); a.x = 8; a.y = 5; }
     var r = [k1.hp, k2.hp, k3.hp].join('/');
     return r === '19/19/20' ? true : 'Leben der Ritter (Ziel / 0,6 daneben / 1,2 daneben): ' + r;
