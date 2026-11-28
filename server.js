@@ -21,6 +21,9 @@ const KONTO_URL = process.env.SUPABASE_URL || 'https://odxpdyrwtvgicntbjlrh.supa
 const KONTO_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn';
 // Geheimer Schlüssel (Secret Key) nur als Umgebungsvariable auf Render, NIE im Code: damit liest/schreibt der Server Einladungen und Freischaltungen
 const KONTO_SECRET = process.env.SUPABASE_SECRET_KEY || '';
+// Tester-Modus online (28.11.): nur Konten, deren Supabase-Benutzer-ID in der Render-Umgebungsvariable TESTER_IDS steht (mehrere mit Komma). Nie im Code.
+const TESTER_IDS = String(process.env.TESTER_IDS || '').split(/[\s,]+/).filter(Boolean);
+function istTester(id) { return !!id && TESTER_IDS.indexOf(id) >= 0; }
 function mitZeit(ms, p) { const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), ms); return p(ctrl.signal).finally(() => clearTimeout(t)); }
 // Prüft ein Zugangs-Token bei Supabase: liefert { id, email } oder null
 function kontoUser(token) {
@@ -310,7 +313,7 @@ async function apiKonto(req, res) {
   if (!KONTO_SECRET) return json(res, 503, { fehler: 'Einladungen noch nicht eingerichtet' });
   const code = await eigenerCode(u.id);
   const st = await kontoStand(u.id);
-  json(res, 200, Object.assign({ code, freunde: st.freunde }, edelDaten(st)));
+  json(res, 200, Object.assign({ code, freunde: st.freunde }, edelDaten(st), istTester(u.id) ? { tester: true } : {}));
 }
 // /api/besuch: ein Freund hat über einen Einladungslink eine Partie gespielt -> zählt als eingeladener Freund (Freischaltungen: daten/freischalten.js)
 async function apiBesuch(req, res) {
@@ -450,6 +453,7 @@ class Client {
     try { m = JSON.parse(text); } catch (e) { return; }
     if (!m || typeof m.k !== 'string') return;
     if (m.k === 'queue' && SPIEL_V && m.v !== SPIEL_V) { this.send({ k: 'alt', v: SPIEL_V }); return; } // veraltete Seite: nicht paaren (würde auseinanderlaufen)
+    if (m.k === 'queue' && this.tester) { this.send({ k: 'testersperre' }); return; } // Tester-Modus: keine Partien gegen echte Spieler
     if (m.k === 'queue') { // mit Konto-Token: erst prüfen, dann in die Warteschlange
       this.koenig = koenigId(m.koenig);
       if (typeof m.token === 'string' && m.token.length < 4096) {
@@ -459,6 +463,7 @@ class Client {
       return;
     }
     if (m.k === 'cancel') { dequeue(this); return; }
+    if (this.tester && (m.k === 'duo_suche' || m.k === 'duo_fordern' || m.k === 'fordern' || (m.k === 'antwort' && m.ja))) { this.send({ k: 'testersperre' }); return; }
     if (m.k.startsWith('duo_') || (this.duoMa && (m.k === 't' || m.k === 'ergebnis'))) { duoNachricht(this, m); return; } // Duokampf (27.11.)
     if (this.peer && m.k === 't') { // Spielschritt-Nachrichten 1:1 weitergeben
       const peer = this.peer;
@@ -711,7 +716,7 @@ function botLive(c, m) {
     const bot = String(m.bot || ''), seed = m.seed | 0;
     if (!/^[a-z0-9_]{1,40}$/.test(bot) || !seed) return;
     const koenige = Array.isArray(m.koenige) ? [koenigId(m.koenige[0]), koenigId(m.koenige[1])] : ['standard', 'standard'];
-    c.botma = { a: c, b: null, bot, seed, art: m.art === 'story' ? 'story' : '', namen: [c.user.name, String(m.gegner || 'Bot').slice(0, 40)], koenige, log: [], letzte: -1, zuschauer: new Set(), start: Date.now() };
+    c.botma = { a: c, b: null, bot, seed, art: m.art === 'story' ? 'story' : '', namen: [c.user.name, String(m.gegner || 'Bot').slice(0, 40)], koenige, log: [], letzte: -1, zuschauer: new Set(), start: Date.now(), tester: !!c.tester };
     if (c.botma.art === 'story') { const l = STORY_IDS.filter((id) => STORY_BOT[id].logik === bot); c.botma.storyId = l.find((id) => STORY_BOT[id].name === c.botma.namen[1]) || l[0] || ''; } // welcher Story-Gegner
     return;
   }
@@ -730,6 +735,7 @@ function botLive(c, m) {
 async function storySieg(c) {
   const ma = c.botma || c.botAlt, antwort = (ok, grund, besiegt) => c.send({ k: 'storysieg', ok, grund: grund || '', id: ma ? ma.storyId : '', besiegt });
   if (!ma || ma.art !== 'story' || !ma.storyId) return antwort(false, 'keine Verbindung');
+  if (c.tester || ma.tester) return antwort(false, 'tester'); // Tester-Modus: Siege zählen nicht
   if (ma.geprueft) return; ma.geprueft = true;
   if (ma.zuLang) return antwort(false, 'zu lang');
   const l = await besiegtLesen(c.user.id).catch(() => null), b = l ? l.besiegt : [];
@@ -785,6 +791,7 @@ async function sozial(c, m) {
     const u = await kontoUser(m.token);
     if (c.user) { const set = online.get(c.user.id); if (set) { set.delete(c); if (!set.size) online.delete(c.user.id); } }
     c.user = u ? { id: u.id, name: nameAus(u.email) } : null; c.acc = !!u; c.frei = [];
+    c.tester = !!m.tester && !!u && istTester(u.id);
     if (!c.user) return c.send({ k: 'ich', id: null });
     if (!online.has(c.user.id)) online.set(c.user.id, new Set());
     online.get(c.user.id).add(c);
@@ -804,6 +811,7 @@ async function sozial(c, m) {
     const decks = await decksLesen(c.user.id).catch(() => null); // null = noch keine auf dem Konto: der Browser schickt seine
     return c.send({ k: 'ich', id: c.user.id, name: c.user.name, besiegt, elo, partien, rid: rangId(c.user.id), decks, decksAn: SPALTE_DECKS && !!KONTO_SECRET });
   }
+  if (m.k === 'tester') { c.tester = !!m.an && !!c.user && istTester(c.user.id); return; } // Tester-Modus ein/aus (nur erlaubte Konten)
   if (m.k === 'koenig') { c.koenig = koenigId(m.id); koenigMerken(c); return; }
   if (m.k === 'status') { c.status = ['menu', 'story', 'tutorial'].includes(m.s) ? m.s : 'menu'; c.info = String(m.info || '').slice(0, 40); return; }
   if (!c.user || !KONTO_SECRET) { if (['freunde', 'freund', 'fordern', 'zuschauen'].includes(m.k)) c.send({ k: 'sozialfehler', text: c.user ? 'Freunde sind noch nicht eingerichtet.' : 'Dafür brauchst du ein Konto.' }); return; }

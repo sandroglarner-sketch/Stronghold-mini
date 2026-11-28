@@ -31,7 +31,8 @@
   var MP = 0, duo = { on: false, bot: false, spieler: [0, 1], namen: [], decks: [], weg: {} };
   var pvp = { on: false, me: 0, ws: null, searching: false, ended: false, tick: 0, acc: 0, alpha: 0, inbox: {}, sent: {}, pending: [], hashes: {}, remoteHash: {}, stall: 0 };
   var sandbox = false, sandBtn = $('sandBtn');
-  // Tester-Modus (19.11.): nur ausserhalb der Online-Seite (Claude-Artifact). Zeigt die Sandbox und schaltet alle Einheiten und Gegner frei.
+  // Tester-Modus (19.11.): zeigt die Sandbox und schaltet alle Einheiten und Gegner frei. Im Artifact für alle; online (28.11.) nur für Konten,
+  // die der Server als Tester meldet (konto.tester, Render-Variable TESTER_IDS). Online zählen dann keine Siege und es gibt keine Partien gegen Menschen.
   var tester = false;
   try { tester = !ONLINE && localStorage.getItem('stronghold-tester') === '1'; } catch (err) {}
   var tut = { on: false, i: 0, avail: [], bought: {}, script: [], si: 0, rt: 0, st: 0, boxOpen: false };

@@ -95,6 +95,7 @@
     kb.hidden = !kontoAn();
     $('inviteBtn').hidden = !kontoAn(); // auch im Artifact sichtbar (dort nur Hinweis)
     edelMalen();
+    if (ONLINE && tester && !testerErlaubt()) testerSync(); // abgemeldet: Tester-Modus aus
     kb.textContent = konto.user ? '👤 ' + (sozial && sozial.ich ? sozial.ich.name : konto.user.split('@')[0]) : '👤 Konto';
     if (kontoAn() && !konto.user) {
       var rest = DECK.filter(function (t) { return !unitLocked(t); });
@@ -118,6 +119,9 @@
       if (!j || !j.code) return false;
       var erste = !konto.code, vorher = konto.einheiten || [], neu = (j.einheiten || []).filter(function (t) { return vorher.indexOf(t) < 0 && CONFIG.units[t]; });
       konto.code = j.code; konto.freunde = j.freunde | 0; konto.einheiten = j.einheiten || [];
+      var warTester = !!konto.tester; konto.tester = !!j.tester; // nur der Server sagt, wer testen darf
+      if (konto.tester && !warTester) { try { tester = localStorage.getItem('stronghold-tester') === '1'; } catch (e) {} if (tester) pvpSend({ k: 'tester', an: true }); }
+      testerSync();
       edelUebernehmen(j);
       // neu freigeschaltete Karten: kein Fenster mehr (22.11.), das Kartenbuch zeigt sie mit «neu»
       return true;
@@ -242,17 +246,21 @@
     }).catch(function () {}); // ohne Netz: beim nächsten Mal nochmals
   }
   $('kontoBtn').addEventListener('click', function () { kontoOpen(true); });
-  // Tester-Modus ein/aus (Knopf oben, nur ausserhalb der Online-Seite)
+  // Tester-Modus ein/aus (Knopf oben): im Artifact immer, online nur für vom Server bestätigte Tester-Konten
+  function testerErlaubt() { return !ONLINE || !!(konto.user && konto.tester); }
   function testerSync() {
-    var b = $('testerBtn'); b.hidden = ONLINE; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
+    if (!testerErlaubt()) tester = false;
+    var b = $('testerBtn'); b.hidden = !testerErlaubt(); b.title = ONLINE ? 'Nur für dich: Sandbox, alle Einheiten und Gegner frei. Siege zählen nicht, keine Online-Partien.' : b.title; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
     b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
     if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester;
     if (sozial && !$('story').hidden) storyMalen();
     if (sozial) menuAktuell();
   }
   $('testerBtn').addEventListener('click', function () {
+    if (!testerErlaubt()) return;
     tester = !tester;
     try { localStorage.setItem('stronghold-tester', tester ? '1' : '0'); } catch (e) {}
+    if (ONLINE) pvpSend({ k: 'tester', an: tester }); // der Server sperrt dann Online-Partien und Story-Siege
     testerSync(); kontoChanged();
   });
   testerSync();
@@ -267,6 +275,7 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('konto').hidden) kontoOpen(false); });
   // Start: gespeicherte Sitzung übernehmen und im Hintergrund erneuern
   try { var ks = JSON.parse(localStorage.getItem('stronghold-konto') || 'null'); if (ks && ks.user && ks.refresh) konto = ks; } catch (err) {}
+  konto.tester = false; // erst wieder, wenn der Server es bestätigt (kontoServer)
   // Zurück aus der Passwort-vergessen-Mail: Anmeldedaten stehen hinter # in der Adresse
   (function () {
     var h = location.hash || '';
