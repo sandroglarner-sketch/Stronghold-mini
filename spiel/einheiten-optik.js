@@ -21,6 +21,7 @@
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, feuerbogen: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
   };
+  for (var ak in ANIM) if (CONFIG.units[ak] && CONFIG.units[ak].ausholen) ANIM[ak].wind = CONFIG.units[ak].ausholen; // Ausholen = dieselbe Zeit wie in der Simulation (daten/einheiten.js «ausholen»)
   function sm(k) { k = k < 0 ? 0 : k > 1 ? 1 : k; return k * k * (3 - 2 * k); }
   // Ausholen und Zuschlagen: back = Wert beim Ausholen, hitV = Wert beim Treffer; danach zurück zu 0
   function swing(at, W, Aft, back, hitV, split) {

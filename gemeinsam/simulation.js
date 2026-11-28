@@ -82,7 +82,7 @@
     for (j = 0; j < l.length; j++) {
       var b = l[j], bd = CONFIG.units[b.type];
       b.team = neu; b.pl = pOf(u); b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false; b.o = false;
-      b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
+      b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.ready = b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
       if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
       if (bd.belfry) { // Belagerungsturm: fährt zur anderen Mauer, die Schützen oben wechseln mit
         if (b.dock) { b.bfN = b.dock.n; b.dock = null; } // schon geschickte Schwertkämpfer kommen beim nächsten Andocken nicht nochmals
@@ -165,6 +165,11 @@
   }
   // Wächter: greift den nächsten Feind an: in der eigenen Hälfte (wacheFeind) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
   // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst bleiben in der eigenen Hälfte.
+  // Erst ausholen (28.11.: alle Einheiten): kommt ein Ziel in Reichweite (u.ready wird wahr), frühestens nach d.ausholen s zuschlagen.
+  // Gilt für den ersten Treffer auf ein neues Ziel bzw. nach jeder Pause; danach bestimmt d.cd den Takt. u.warBereit = u.ready des letzten Schritts (oben im Einheiten-Schritt gesetzt).
+  function ausholenPruefen(u, d) {
+    if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen;
+  }
   function waechterSchritt(u, d, spd, dt) {
     var g = u.wache, j, e, best = null, bd = 1e9, dd;
     u.ready = false;
@@ -181,6 +186,7 @@
       if (bd > stop) { var st = Math.min(spd * dt, bd - stop), gv = umGebaeude(u, (best.x - u.x) / bd, (best.y - u.y) / bd, best); u.x += gv.x * st; u.y += gv.y * st; if (Math.abs(gv.x) > 0.2) u.face = gv.x > 0 ? 1 : -1; }
       if (hyp(best.x - u.x, best.y - u.y) <= d.range + 0.001) {
         u.ready = true; u.aimX = best.x; u.aimY = best.y;
+        ausholenPruefen(u, d);
         if (u.cd <= 0) {
           u.cd = d.cd / (u.slow > 0 ? (u.slowA || 1) : 1); u.atkT = clock;
           if (Math.abs(best.x - u.x) > 0.05) u.face = best.x > u.x ? 1 : -1;
@@ -303,6 +309,7 @@
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
+      u.warBereit = !!u.ready; // hatte im letzten Schritt ein Ziel in Reichweite (für ausholenPruefen)
       u.hit = Math.max(0, u.hit - dt);
       u.slow = Math.max(0, u.slow - dt);
       if (u.hp < u.max && !d.worker && clock - u.lastHit >= CONFIG.UNIT_HEAL.delay) u.hp = Math.min(u.max, u.hp + CONFIG.UNIT_HEAL.rate * dt);
@@ -369,6 +376,7 @@
         if (khl > KL) { u.x = kcx + khx / khl * KL; u.y = kcy + khy / khl * KL; }
         u.ready = !!kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001;
         if (u.ready) { u.aimX = kt.x; u.aimY = kt.y; }
+        ausholenPruefen(u, d);
         if (kt && hyp(kt.x - u.x, kt.y - u.y) <= d.range + 0.001 && u.cd <= 0) {
           u.cd = d.cd; u.atkT = clock;
           if (Math.abs(kt.x - u.x) > 0.05) u.face = kt.x > u.x ? 1 : -1;
@@ -409,6 +417,7 @@
         u.atSpot = true; u.setupT = (u.setupT || 0) + dt;
         if (u.setupT >= d.setup) {
           u.ready = true; u.aimX = tsp2.tx; u.aimY = tsp2.ty;
+          ausholenPruefen(u, d);
           if (u.cd <= 0) { u.cd = d.cd * (u.cdm || 1) / (u.slow > 0 ? (u.slowA || 1) : 1); u.atkT = clock; u.face = tsp2.tx > u.x ? 1 : -1; fireMulti(u, d, tsp2.tx, tsp2.ty); }
         }
         continue;
@@ -711,8 +720,7 @@
       var built = !d.setup || u.setupT >= d.setup;
       u.ready = built && td <= reach + 0.001 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && (d.atk > 0 || !!(d.bekehren && tgt)); // nur für die Darstellung (Ausholen, Blickrichtung)
       if (u.ready) { u.aimX = tx; u.aimY = ty; }
-      if (d.ausholen && u.ready && !u.warBereit && u.cd < d.ausholen) u.cd = d.ausholen; // erst ausholen: kommt ein Ziel in Reichweite, frühestens nach d.ausholen s zuschlagen
-      u.warBereit = u.ready;
+      ausholenPruefen(u, d);
       if (built && td <= reach + 0.001 && u.cd <= 0 && (tgt || wallT || !foeDown) && !(d.minRange && td < d.minRange) && !(d.bekehren && !tgt)) {
         u.cd = d.cd * (u.cdm || 1) / (u.slow > 0 ? (u.slowA || 1) : 1);
         u.atkT = clock; var lp = launchPt(u, d, tx, ty);

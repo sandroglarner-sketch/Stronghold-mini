@@ -13,21 +13,21 @@
       // kratzt sich kratzen s am Kopf, schaut schauen s umher, geht weiter; alle 5 s +1 Gold
       buerger: { cat: 'eco', name: 'Bürger', cost: 2, steigt: 2, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.4, cd: 1, r: 0.25, passive: true, buerger: { alle: 5, gold: 1, halt: 0.5, kratzen: 1, schauen: 2 } },
       holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 6, staerke: 0, hp: 2, atk: 0, range: 0, speed: 1, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2, proBaum: 2 } },
-      spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, r: 0.30, key: '2' },
-      archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, r: 0.28, key: '3', delay: 0.5 },
-      rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, r: 0.34, key: '4' },
-      mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, atk: 0.5, secs: 3 } }, // Eismagier: bremst Getroffene auf 50 % Tempo (27.11., vorher 40 %) und 50 % Angriffsgeschwindigkeit (atk, 27.11. neu)
+      spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, ausholen: 0.3, r: 0.30, key: '2' },
+      archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, ausholen: 0.45, r: 0.28, key: '3', delay: 0.5 },
+      rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, ausholen: 0.3, r: 0.34, key: '4' },
+      mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, ausholen: 0.45, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, atk: 0.5, secs: 3 } }, // Eismagier: bremst Getroffene auf 50 % Tempo (27.11., vorher 40 %) und 50 % Angriffsgeschwindigkeit (atk, 27.11. neu)
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
       schwarzritter: { cat: 'melee', name: 'Schwarzer Ritter', cost: 22, staerke: 1, hp: 18, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, ausholen: 0.5, kegel: { winkel: 120, r: 1 } }, // ausholen: vor dem ersten Schlag 0,5 s ausholen // Morgenstern: trifft alle Gegner in einem 120°-Bogen Richtung Ziel, 1 Kachel weit
       // Bandit: unsichtbar (kann nicht anvisiert werden, Flächenschaden trifft ihn trotzdem); nach einem eigenen Angriff mindestens 1 s sichtbar
-      raeuber: { cat: 'melee', name: 'Bandit', cost: 7, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.29, unsichtbar: { sichtbar: 1.5 }, nurFern: true, suche: 8 }, // nurFern (23.11.): greift nur König, Fernkämpfer, Wirtschaft (Bauer, Holzfäller, Karawane) und Fernkampf-Kriegsmaschinen an; unsichtbar geht er durch Einheiten hindurch
-      knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, r: 0.38, key: '6' },
+      raeuber: { cat: 'melee', name: 'Bandit', cost: 7, staerke: 1, hp: 3, atk: 1, range: 1, speed: 1.2, cd: 1, ausholen: 0.22, r: 0.29, unsichtbar: { sichtbar: 1.5 }, nurFern: true, suche: 8 }, // nurFern (23.11.): greift nur König, Fernkämpfer, Wirtschaft (Bauer, Holzfäller, Karawane) und Fernkampf-Kriegsmaschinen an; unsichtbar geht er durch Einheiten hindurch
+      knight: { cat: 'melee', name: 'Ritter',        cost: 20, staerke: 1, hp: 20, atk: 1, range: 1, speed: 0.7, cd: 1, ausholen: 0.32, r: 0.38, key: '6' },
       // dig = gräbt sich unsichtbar (speed Kacheln pro Sekunde) zu einem Punkt im Umkreis radius um einen zufälligen
       // gegnerischen Bogenschützen oder Magier, nie näher als minBase Kacheln an der gegnerischen Kaserne.
       // Die Grabspur bleibt trail Sekunden sichtbar. Danach ist er eine normale Einheit mit Marschtempo speed.
-      digger: { cat: 'melee', name: 'Tunnelgräber', cost: 10, staerke: 1, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.30, key: '5', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
+      digger: { cat: 'melee', name: 'Tunnelgräber', cost: 10, staerke: 1, hp: 4,  atk: 1, range: 1, speed: 1.2, cd: 1, ausholen: 0.3, r: 0.30, key: '5', dig: { speed: 3, radius: 1.5, minBase: 6, trail: 1 } },
       // ram = greift nur Mauern und Kasernen an, keine Einheiten
-      ram: { cat: 'siege', name: 'Rammbock', cost: 35, staerke: 2, hp: 25, atk: 20, range: 1, speed: 0.6, cd: 1, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
+      ram: { cat: 'siege', name: 'Rammbock', cost: 35, staerke: 2, hp: 25, atk: 20, range: 1, speed: 0.6, cd: 1, ausholen: 0.4, r: 0.36, key: '9', ram: true, mass: 6 }, // mass = beim Gedränge schiebt er andere Einheiten so viel stärker zur Seite (alle anderen 1)
       // wall = Mauer: im Abstand dist Kacheln um die eigene Kaserne herum gebogen, workers Arbeiter, die mit rate Leben pro Sekunde bis zu add Leben bringen
       // rate Leben pro Sekunde bauen (jeder). Erst wenn sie einmal fertig ist, blockiert sie gegnerische Einheiten.
       wall: { name: 'Mauer',     cost: 20, hp: 0, atk: 0, range: 0, speed: 0, cd: 1, r: 0.3, key: '8',
@@ -53,12 +53,12 @@
       shield: { cat: 'siege', name: 'Belagerungsschild', cost: 25, staerke: 2, hp: 15, atk: 0, range: 1, speed: 0.6, cd: 1, r: 0.34, key: '0', ram: true, rangedTaken: 0.25 }, // rangedTaken = Anteil des Schadens, den es von Fernkämpfern erleidet
       // delay = Flugzeit des Geschosses: der Treffer erfolgt erst so viele Sekunden nach dem Schuss (auch wenn der Schütze inzwischen gefallen ist)
       // fire = Katapult: Feuerbälle mit Flächenschaden (splash), ignoriert Mauern (nichts blockiert Ziel oder Schuss), schießt nur alle cd Sekunden
-      catapult: { cat: 'siege', name: 'Katapult', cost: 50, staerke: 4, hp: 3, atk: 2, range: 6, speed: 0.6, cd: 3, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
+      catapult: { cat: 'siege', name: 'Katapult', cost: 50, staerke: 4, hp: 3, atk: 2, range: 6, speed: 0.6, cd: 3, ausholen: 0.7, r: 0.34, key: 'q', delay: 1, splash: 1.2, fire: true, minRange: 2 },
       // baliste = Kriegsmaschine: ein schwerer Bolzen auf ein Ziel, trifft nach delay Sekunden, wird von Mauern aufgehalten wie ein Pfeil; passt wie das Katapult auf den großen Turm
-      baliste: { cat: 'siege', name: 'Baliste', cost: 45, staerke: 2, hp: 4, atk: 12, range: 4, speed: 0.6, cd: 2, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
+      baliste: { cat: 'siege', name: 'Baliste', cost: 45, staerke: 2, hp: 4, atk: 12, range: 4, speed: 0.6, cd: 2, ausholen: 0.15, r: 0.34, key: 'e', delay: 0.5, minRange: 2 },
       // onager = kleines Belagerungskatapult: greift nur Mauern und Burgen an (ram), fährt zusammengebaut, muss setup Sekunden stillstehen (aufbauen),
       // dann wirft er alle cd Sekunden einen Stein, der gerade (ohne Bogen) fliegt und nach delay Sekunden trifft; Mauern blockieren ihn nicht (Ziel ist die Mauer selbst)
-      onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 3, atk: 20, range: 5, speed: 0.6, cd: 3, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
+      onager: { cat: 'siege', name: 'Onager', cost: 30, staerke: 2, hp: 3, atk: 20, range: 5, speed: 0.6, cd: 3, ausholen: 0.5, r: 0.34, delay: 0.5, ram: true, setup: 2, blast: { r: 1.2, atk: 1 } }, // blast = zusätzlicher Flächenschaden am Einschlagpunkt (trifft alles: Einheiten, Mauer, Burg)
       // Schwertkämpfer: Helm wie der Ritter, Holzschild mit Eisenrand
       // Schmiede (Typ Gebäude, cat 'building'; höchstens 2 Gebäude im Deck, 2 Gebäudeplätze): steht auf einem von 2 Gebäudeplätzen (auf einem Bogen wie die Mauer, oben und unten, die Mitte mit dem Weg bleibt frei); ein Arbeiter baut sie
       // (gleich schnell wie die Mauer: WALL.rate Leben pro Sekunde). Nochmals kaufen = nächste Stufe (stufen: Preis, Leben, Gold). Fertig: alle «alle» Sekunden Gold (der Schmied schmiedet 3 s vor dem
@@ -93,11 +93,11 @@
                gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, start: 1, nach: 5, raus: 0.2, nah: 1, nahAbstand: 3 },
                            stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 12 }, { cost: 90, hp: 10, gold: 0, waechterHp: 24 }] } },
       // Wächter (nur aus dem Wachposten, nicht kaufbar): Hellebarde; Helm je Stufe des Wachpostens (braun, grau, grosser Stahlhelm). Leben aus wache.stufen[].waechterHp
-      waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, r: 0.3, hidden: true, waechter: true },
-      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 9, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, r: 0.32 },
+      waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, ausholen: 0.3, r: 0.3, hidden: true, waechter: true },
+      sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 9, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, ausholen: 0.32, r: 0.32 },
       // ladder = Leiterträger: rennt zu einem zufälligen Punkt der gegnerischen Mauer zwischen den Türmen (f 0,37–0,63), stellt die Leiter an
       // (bleibt show Sekunden sichtbar, nur für ihn) und klettert in climb Sekunden hinüber (fest, unabhängig von der Mauer); danach normale Einheit mit Schwert (ohne Schild)
-      ladder: { cat: 'melee', name: 'Leiterträger', cost: 5, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, r: 0.3, massRun: 5, pushRun: 0.12, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,12 = kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
+      ladder: { cat: 'melee', name: 'Leiterträger', cost: 5, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1.2, cd: 1, ausholen: 0.32, r: 0.3, massRun: 5, pushRun: 0.12, ladder: { climb: 1.5, show: 3 } }, // massRun = drängt sich auf dem Weg zur Mauer fast so stark durch wie der Rammbock (6); pushRun 0,12 = kleiner Körper im Gedränge, nur bis er über die Mauer ist (Optik gleich), schlängelt sich vorbei
       // belfry = Belagerungsturm: fährt wie der Leiterträger an die gegnerische Mauer und dockt an (bleibt dort stehen); innerhalb von
       // troops × every Sekunden klettern troops Schwertkämpfer über die Mauer. Oben archers Bogenschützen (25 % Fernkampfschaden,
       // nur von Fernkämpfern angreifbar, werden von gegnerischen Fernkämpfern vor dem Turm anvisiert). mass wie der Rammbock; push = Druckradius im Gedränge
@@ -107,16 +107,16 @@
       // multi.spread um das Ziel verteilen (je Flächenschaden splash), fliegen über Mauern (fire). Zwei Arten: bekommt es beim Kauf einen Platz auf dem grossen Turm (Mauer 5),
       // baut es sich dort auf und schiesst auf Gegner in Reichweite. Sonst (spot): fährt es zu einem zufälligen Punkt spot.dist vom Zielpunkt entfernt (Richtung eigene Seite,
       // ± spot.ang), baut sich auf und schiesst immer auf denselben Punkt: Mitte, spot.behind Kacheln hinter der gegnerischen Mauer
-      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 10, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
+      trebuchet: { cat: 'siege', name: 'Trebuchet', cost: 70, staerke: 6, hp: 4, atk: 1, range: 7, speed: 0.5, cd: 4, ausholen: 0.3, r: 0.4, delay: 2, splash: 0.8, fire: true, minRange: 3, setup: 2, multi: { n: 10, spread: 3, speed: 3.5, stagger: 0.5 }, spot: { dist: 8, behind: 1, ang: 0.26, mid: 2 } }, // Angriff: steht dist (= Reichweite im Angriff) vom Zielpunkt; mid = höchstens so viele Kacheln über/unter der Feldmitte; range 7 gilt auf dem Turm
       // Speerwerfer: wirft Wurfspeere (kurze Reichweite); Armbrustschütze: Bolzen, stark aber langsam nachladen
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
-      fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 9, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
+      fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 9, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, ausholen: 0.35, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       // Feuerbogenschütze (27.11.): wie der Bogenschütze, aber brennende Pfeile mit Flächenschaden (Radius 0,8); Brand am Einschlag wie beim Fackelwerfer
-      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 18, staerke: 1, hp: 1, atk: 1, range: 4, speed: 0.8, cd: 1.5, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
-      javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, r: 0.3, delay: 0.35 },
-      prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 3, speed: 0.8, cd: 3, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): zielt nur auf bekehrbare Gegner, ab 3 Kacheln; Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
+      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 18, staerke: 1, hp: 1, atk: 1, range: 4, speed: 0.8, cd: 1.5, ausholen: 0.45, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
+      javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, ausholen: 0.35, r: 0.3, delay: 0.35 },
+      prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 3, speed: 0.8, cd: 3, ausholen: 0.45, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): zielt nur auf bekehrbare Gegner, ab 3 Kacheln; Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, ausholen: 0.15, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
-      king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
+      king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, ausholen: 0.35, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
   };
