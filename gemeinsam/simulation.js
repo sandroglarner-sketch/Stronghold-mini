@@ -174,14 +174,15 @@
     var g = u.wache, j, e, best = null, bd = 1e9, dd;
     u.ready = false;
     if (!g || g.hp <= 0) { u.hp = 0; return; } // Wachposten zerstört: die Wächter fallen mit
-    var WG = CONFIG.units[g.type].gebaeude.wache, nah = WG.nah || 0;
+    var WG = CONFIG.units[g.type].gebaeude.wache, nah = u.rueck ? 0 : WG.nah || 0, zone = u.rueck ? 0 : WG.alarm; // auf dem Rückzug (u.rueck) kehrt er nur für Gegner in der eigenen Hälfte um
     for (j = 0; j < units.length; j++) {
       e = units[j]; if (!wacheFeind(u.team, e, nah)) continue;
       dd = hyp(e.x - u.x, e.y - u.y);
-      if (!wacheFeind(u.team, e, WG.alarm) && dd > WG.nahAbstand + 0.001) continue; // ausserhalb des Alarmbereichs: nur wer nah bei ihm steht
+      if (!wacheFeind(u.team, e, zone) && dd > WG.nahAbstand + 0.001) continue; // ausserhalb des Alarmbereichs: nur wer nah bei ihm steht
       if (dd < bd) { bd = dd; best = e; }
     }
     if (best) {
+      u.rueck = false;
       var stop = d.range - 0.1;
       if (bd > stop) { var st = Math.min(spd * dt, bd - stop), gv = umGebaeude(u, (best.x - u.x) / bd, (best.y - u.y) / bd, best); u.x += gv.x * st; u.y += gv.y * st; if (Math.abs(gv.x) > 0.2) u.face = gv.x > 0 ? 1 : -1; }
       if (hyp(best.x - u.x, best.y - u.y) <= d.range + 0.001) {
@@ -196,6 +197,7 @@
       }
       return;
     }
+    u.rueck = true; // kein Ziel mehr: Rückzug
     var t = wacheTuer(g), tdx = t.x - u.x, tdy = t.y - u.y, tdl = hyp(tdx, tdy);
     if (tdl <= 0.45) { u.hp = 0; u.gone = true; g.drin++; return; } // zurück im Wachposten (Türbereich: mehrere gleichzeitig blockieren sich nicht)
     var ts = Math.min(spd * dt, tdl), tv = tdl < 0.6 ? { x: tdx / tdl, y: tdy / tdl } : umGebaeude(u, tdx / tdl, tdy / tdl, null); // nah an der Tür: direkt hinein (sonst lenkt das eigene Haus ab)
@@ -856,7 +858,7 @@
             }
           }
         }
-        if (CONFIG.units[q.type].waechter) { var wLim = Math.max(0, (CONFIG.units.wache.gebaeude.wache.nah || 0) - CONFIG.units[q.type].range) - 0.05; q.x = q.team === 0 ? Math.min(q.x, W / 2 + wLim) : Math.max(q.x, W / 2 - wLim); } // Wächter gehen höchstens (wache.nah − Reichweite) Kacheln über die Mitte (28.11.: 1), damit sie Gegner bis wache.nah treffen
+        if (CONFIG.units[q.type].waechter) { var wLim = Math.max(0, (CONFIG.units.wache.gebaeude.wache.nah || 0) - CONFIG.units[q.type].range) - 0.05; q.x = q.team === 0 ? Math.min(q.x, W / 2 + wLim) : Math.max(q.x, W / 2 - wLim); } // Wächter gehen höchstens (wache.nah − Reichweite) Kacheln über die Mitte (28.11.: 0 = nie)
         q.x = clamp(q.x, 0.25, W - 0.25);
         q.y = clamp(q.y, 0.3, H - 0.3);
         alive.push(q);
