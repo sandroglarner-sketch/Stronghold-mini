@@ -252,17 +252,21 @@
     if (!testerErlaubt()) tester = false;
     var b = $('testerBtn'); b.hidden = !testerErlaubt(); b.title = ONLINE ? 'Nur für dich: Sandbox, alle Einheiten und Gegner frei. Siege zählen nicht, keine Online-Partien.' : b.title; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
     b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
+    var kb2 = $('kontoTester'); kb2.textContent = b.textContent; kb2.setAttribute('aria-pressed', String(tester)); kb2.classList.toggle('on', tester); // dasselbe im Konto-Fenster (auch im Vollbild erreichbar)
+    $('kontoTesterRow').hidden = !(ONLINE && testerErlaubt());
     if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester;
     if (sozial && !$('story').hidden) storyMalen();
     if (sozial) menuAktuell();
   }
-  $('testerBtn').addEventListener('click', function () {
+  $('testerBtn').addEventListener('click', testerUmschalten);
+  $('kontoTester').addEventListener('click', testerUmschalten);
+  function testerUmschalten() {
     if (!testerErlaubt()) return;
     tester = !tester;
     try { localStorage.setItem('stronghold-tester', tester ? '1' : '0'); } catch (e) {}
     if (ONLINE) pvpSend({ k: 'tester', an: tester }); // der Server sperrt dann Online-Partien und Story-Siege
     testerSync(); kontoChanged();
-  });
+  }
   testerSync();
   $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
   $('kontoForm').addEventListener('submit', kontoLogin);

@@ -164,7 +164,7 @@
     font-size: 0.85rem;
   }
 
-  #testerBtn.on { border-color: #c27c0e; color: #c27c0e; font-weight: 600; }
+  #testerBtn.on, #kontoTester.on { border-color: #c27c0e; color: #c27c0e; font-weight: 600; }
   /* Menü (19.11.): .overlay.menu = Startmenü mit Kopfleiste und Modus-Karten; ohne .menu = Ergebnis/Pause/Suche mit Titel und Knopf */
   .overlay.menu { justify-content: flex-start; padding: 12px 14px calc(12px + 34px); gap: 12px; }
   .overlay.menu #ovTitle, .overlay.menu #ovText, .overlay.menu #ovBtn, .overlay.menu #menuBtn { display: none; }
@@ -944,6 +944,7 @@
       </form>
       <div class="kontoinv" id="kontoInv" hidden><p id="kontoInvText"></p><div class="kontorow"><input type="text" id="kontoLink" readonly aria-label="Dein Einladungslink"><button class="ghost" id="kontoCopy" type="button">Kopieren</button></div><button class="primary" id="kontoShare" type="button">👥 Freund einladen</button></div>
       <div class="kontorow" id="kontoIn" hidden><button class="ghost" id="kontoPwBtn" type="button">Passwort ändern</button><button class="ghost" id="kontoOut" type="button">Abmelden</button></div>
+      <div class="kontorow" id="kontoTesterRow" hidden><button class="ghost" id="kontoTester" type="button" aria-pressed="false">Tester Modus</button></div>
       <p class="kontomsg" id="kontoMsg"></p>
       <button class="kontox" id="kontoClose" type="button" aria-label="Schliessen">✕</button>
     </div>
@@ -1447,7 +1448,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '3f3744feba'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '76a67d37f9'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -6260,17 +6261,21 @@
     if (!testerErlaubt()) tester = false;
     var b = $('testerBtn'); b.hidden = !testerErlaubt(); b.title = ONLINE ? 'Nur für dich: Sandbox, alle Einheiten und Gegner frei. Siege zählen nicht, keine Online-Partien.' : b.title; b.setAttribute('aria-pressed', String(tester)); b.classList.toggle('on', tester);
     b.textContent = tester ? 'Tester Modus ✓' : 'Tester Modus';
+    var kb2 = $('kontoTester'); kb2.textContent = b.textContent; kb2.setAttribute('aria-pressed', String(tester)); kb2.classList.toggle('on', tester); // dasselbe im Konto-Fenster (auch im Vollbild erreichbar)
+    $('kontoTesterRow').hidden = !(ONLINE && testerErlaubt());
     if (state !== 'playing' && state !== 'paused' && !pvp.on) sandBtn.hidden = !tester;
     if (sozial && !$('story').hidden) storyMalen();
     if (sozial) menuAktuell();
   }
-  $('testerBtn').addEventListener('click', function () {
+  $('testerBtn').addEventListener('click', testerUmschalten);
+  $('kontoTester').addEventListener('click', testerUmschalten);
+  function testerUmschalten() {
     if (!testerErlaubt()) return;
     tester = !tester;
     try { localStorage.setItem('stronghold-tester', tester ? '1' : '0'); } catch (e) {}
     if (ONLINE) pvpSend({ k: 'tester', an: tester }); // der Server sperrt dann Online-Partien und Story-Siege
     testerSync(); kontoChanged();
-  });
+  }
   testerSync();
   $('kontoClose').addEventListener('click', function () { kontoOpen(false); });
   $('kontoForm').addEventListener('submit', kontoLogin);
