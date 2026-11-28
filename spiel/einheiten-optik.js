@@ -611,7 +611,7 @@
         }
       }
     } else if (type === 'wache') {
-      // Wachposten von oben: Holzhaus auf Steinsockel, Schindeldach, Wimpel in Teamfarbe, Hellebarden-Ständer an der Tür; Stufe 2 Steinecken, Stufe 3 Eisenbeschläge.
+      // Wachposten von oben: Wimpel in Teamfarbe, Hellebarden-Ständer an der Tür; Stufe 1 Holz, Stufe 2 grauer Stein mit Schieferdach, Stufe 3 Steinfestung mit Stahldach (siehe unten).
       // Auf dem Dach: 6 Plätze, je ein Helm pro Wächter darin (leer = dunkler Platz), dazu die Zahl. Bei Alarm leuchtet ein roter Rand.
       var WGd = CONFIG.units.wache.gebaeude, ww = r * WGd.w / CONFIG.units.wache.r, wh = r * WGd.h / CONFIG.units.wache.r;
       var WZ = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1, drin: WGd.wache.anzahl }, wnow = performance.now() / 1000, WL = Math.max(1, Math.min(3, WZ.stufe || 1));
@@ -623,15 +623,39 @@
         c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -ww / 2, -wh / 2, ww, wh, 3); c.stroke(); c.setLineDash([]);
         c.beginPath(); c.moveTo(-ww / 2, -wh / 2); c.lineTo(ww / 2, wh / 2); c.moveTo(-ww / 2, wh / 2); c.lineTo(ww / 2, -wh / 2); c.stroke();
       } else {
-        var wx0 = -ww / 2, wy0 = -wh / 2, wb = r * 0.1;
-        c.fillStyle = '#8f877a'; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; rr(c, wx0 - wb, wy0 - wb, ww + 2 * wb, wh + 2 * wb, 3); c.fill(); c.stroke(); // Steinsockel
-        c.fillStyle = '#7a5a3a'; c.fillRect(wx0, wy0, ww, wh); // Schindeldach
-        c.strokeStyle = 'rgba(40,25,10,0.4)'; c.lineWidth = 1;
-        for (var wsy = 1; wsy < 6; wsy++) { c.beginPath(); c.moveTo(wx0, wy0 + wh * wsy / 6); c.lineTo(wx0 + ww, wy0 + wh * wsy / 6); c.stroke(); for (var wsx = (wsy % 2) ? 0.5 : 1; wsx < 5; wsx++) { c.beginPath(); c.moveTo(wx0 + ww * wsx / 5, wy0 + wh * (wsy - 1) / 6); c.lineTo(wx0 + ww * wsx / 5, wy0 + wh * wsy / 6); c.stroke(); } }
-        c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(wx0, 0, ww, wh / 2);
-        c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(wx0, 0); c.lineTo(wx0 + ww, 0); c.stroke(); // First
-        if (WL >= 2) { c.fillStyle = '#b7afa2'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { var es = r * 0.22; c.fillRect(q[0] * (ww / 2 + wb) - es / 2 - q[0] * es * 0.25, q[1] * (wh / 2 + wb) - es / 2 - q[1] * es * 0.25, es, es); c.strokeRect(q[0] * (ww / 2 + wb) - es / 2 - q[0] * es * 0.25, q[1] * (wh / 2 + wb) - es / 2 - q[1] * es * 0.25, es, es); }); } // Steinecken
-        if (WL >= 3) { c.strokeStyle = '#4b5257'; c.lineWidth = Math.max(2, r * 0.09); [wx0 + ww * 0.08, wx0 + ww * 0.92].forEach(function (bx) { c.beginPath(); c.moveTo(bx, wy0); c.lineTo(bx, wy0 + wh); c.stroke(); }); c.fillStyle = '#9aa4aa'; [wx0 + ww * 0.08, wx0 + ww * 0.92].forEach(function (bx) { [wy0 + wh * 0.2, wy0 + wh * 0.8].forEach(function (by) { c.beginPath(); c.arc(bx, by, r * 0.05, 0, Math.PI * 2); c.fill(); }); }); } // Eisenbeschläge
+        // Stufe 1: Holzhaus (Schindeln) auf schmalem Steinsockel. Stufe 2: Steinhaus, breiter Sockel aus grauen Quadern, Schieferdach, Ecksteine.
+        // Stufe 3: Steinfestung mit Zinnen ringsum, Stahldach aus genieteten Platten, Stahlbänder und runde Ecktürme.
+        var wx0 = -ww / 2, wy0 = -wh / 2, wb = r * (WL === 1 ? 0.1 : WL === 2 ? 0.16 : 0.2);
+        var wsock = WL === 1 ? '#8f877a' : WL === 2 ? '#9a958c' : '#a9a69f', wfug = WL === 1 ? null : 'rgba(60,60,60,0.45)';
+        c.fillStyle = wsock; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; rr(c, wx0 - wb, wy0 - wb, ww + 2 * wb, wh + 2 * wb, 3); c.fill(); c.stroke(); // Sockel / Mauer
+        if (wfug) { // Quader im Sockel: Fugen quer über den Rand
+          c.strokeStyle = wfug; c.lineWidth = 1; var wq = r * (WL === 2 ? 0.26 : 0.22);
+          for (var wqx = wx0 - wb + wq; wqx < wx0 + ww + wb - 1; wqx += wq) { c.beginPath(); c.moveTo(wqx, wy0 - wb); c.lineTo(wqx, wy0); c.moveTo(wqx + wq / 2, wy0 + wh); c.lineTo(wqx + wq / 2, wy0 + wh + wb); c.stroke(); }
+          for (var wqy = wy0 - wb + wq; wqy < wy0 + wh + wb - 1; wqy += wq) { c.beginPath(); c.moveTo(wx0 - wb, wqy); c.lineTo(wx0, wqy); c.moveTo(wx0 + ww, wqy + wq / 2); c.lineTo(wx0 + ww + wb, wqy + wq / 2); c.stroke(); }
+        }
+        if (WL === 3) { // Zinnen: dunkle Lücken im Mauerrand
+          c.fillStyle = 'rgba(40,40,40,0.55)'; var wz = r * 0.2;
+          for (var wzx = wx0 + wz * 0.5; wzx < wx0 + ww - wz * 0.5; wzx += wz * 2) { c.fillRect(wzx, wy0 - wb, wz, wb * 0.45); c.fillRect(wzx, wy0 + wh + wb * 0.55, wz, wb * 0.45); }
+          for (var wzy = wy0 + wz * 0.5; wzy < wy0 + wh - wz * 0.5; wzy += wz * 2) { c.fillRect(wx0 - wb, wzy, wb * 0.45, wz); c.fillRect(wx0 + ww + wb * 0.55, wzy, wb * 0.45, wz); }
+        }
+        if (WL === 3) { // Stahldach: Platten mit Nieten
+          c.fillStyle = '#8d979c'; c.fillRect(wx0, wy0, ww, wh);
+          c.strokeStyle = '#5b6469'; c.lineWidth = 1; c.fillStyle = '#c9d2d7';
+          for (var wpx3 = 1; wpx3 < 4; wpx3++) { c.beginPath(); c.moveTo(wx0 + ww * wpx3 / 4, wy0); c.lineTo(wx0 + ww * wpx3 / 4, wy0 + wh); c.stroke(); }
+          for (var wpy3 = 1; wpy3 < 4; wpy3++) { c.beginPath(); c.moveTo(wx0, wy0 + wh * wpy3 / 4); c.lineTo(wx0 + ww, wy0 + wh * wpy3 / 4); c.stroke(); }
+          for (var wnx = 0; wnx <= 4; wnx++) for (var wny = 0; wny <= 4; wny++) { c.beginPath(); c.arc(wx0 + ww * wnx / 4, wy0 + wh * wny / 4, Math.max(0.8, r * 0.03), 0, Math.PI * 2); c.fill(); }
+          c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(wx0, wy0, ww, wh / 2); c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(wx0, 0, ww, wh / 2);
+          c.strokeStyle = '#4b5257'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(wx0, 0); c.lineTo(wx0 + ww, 0); c.stroke(); // First aus Stahl
+          c.strokeStyle = '#59636a'; c.lineWidth = Math.max(2, r * 0.08); [wx0 + ww * 0.08, wx0 + ww * 0.92].forEach(function (bx) { c.beginPath(); c.moveTo(bx, wy0); c.lineTo(bx, wy0 + wh); c.stroke(); }); // Stahlbänder
+        } else { // Schindeldach: Holz (Stufe 1) oder grauer Schiefer (Stufe 2)
+          c.fillStyle = WL === 2 ? '#646c73' : '#7a5a3a'; c.fillRect(wx0, wy0, ww, wh);
+          c.strokeStyle = WL === 2 ? 'rgba(20,25,30,0.45)' : 'rgba(40,25,10,0.4)'; c.lineWidth = 1;
+          for (var wsy = 1; wsy < 6; wsy++) { c.beginPath(); c.moveTo(wx0, wy0 + wh * wsy / 6); c.lineTo(wx0 + ww, wy0 + wh * wsy / 6); c.stroke(); for (var wsx = (wsy % 2) ? 0.5 : 1; wsx < 5; wsx++) { c.beginPath(); c.moveTo(wx0 + ww * wsx / 5, wy0 + wh * (wsy - 1) / 6); c.lineTo(wx0 + ww * wsx / 5, wy0 + wh * wsy / 6); c.stroke(); } }
+          c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(wx0, 0, ww, wh / 2);
+          c.strokeStyle = WL === 2 ? '#3f464c' : '#4e3620'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(wx0, 0); c.lineTo(wx0 + ww, 0); c.stroke(); // First
+        }
+        if (WL === 2) { c.fillStyle = '#c2bcb0'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { var es = r * 0.3, ex = q[0] * (ww / 2 + wb) - es / 2 - q[0] * es * 0.3, ey = q[1] * (wh / 2 + wb) - es / 2 - q[1] * es * 0.3; c.fillRect(ex, ey, es, es); c.strokeRect(ex, ey, es, es); }); } // grosse Ecksteine
+        if (WL === 3) { [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { var tx = q[0] * (ww / 2 + wb * 0.6), ty = q[1] * (wh / 2 + wb * 0.6), tr = r * 0.24; c.fillStyle = '#b3afa7'; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.beginPath(); c.arc(tx, ty, tr, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#8d979c'; c.beginPath(); c.arc(tx, ty, tr * 0.62, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#4b5257'; c.lineWidth = 1; c.stroke(); c.fillStyle = '#c9d2d7'; c.beginPath(); c.arc(tx, ty, tr * 0.15, 0, Math.PI * 2); c.fill(); }); } // Ecktürme mit Stahlhaube
         c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; c.strokeRect(wx0, wy0, ww, wh);
         var wvx = WZ.nx || 0, wvy = WZ.ny === undefined ? 1 : WZ.ny, wext = Math.abs(wvx) * (ww / 2 + wb) + Math.abs(wvy) * (wh / 2 + wb);
         c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(2, r * 0.08); c.beginPath(); c.moveTo(-ww * 0.42, wvy * (wext + r * 0.12)); c.lineTo(-ww * 0.2, wvy * (wext + r * 0.12)); c.stroke(); // Hellebarden-Ständer neben der Tür
@@ -640,7 +664,7 @@
         c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(1.5, r * 0.06); c.beginPath(); c.moveTo(ww / 2 - r * 0.12, -wvy * wh * 0.3); c.lineTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.55); c.stroke(); // Fahnenstange
         var wfl = Math.sin(wnow * 4) * r * 0.05; c.fillStyle = col; c.beginPath(); c.moveTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.55); c.lineTo(ww / 2 + r * 0.3, -wvy * wh * 0.3 - wvy * r * 0.45 + wfl); c.lineTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.3); c.closePath(); c.fill(); // Wimpel
         if (WZ.bau < 1) { c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -ww / 2 - 4, -wh / 2 - 4, ww + 8, wh + 8, 4); c.stroke(); c.setLineDash([]); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-ww / 2, -wh / 2 - 10, ww, 4); c.fillStyle = '#c98a12'; c.fillRect(-ww / 2, -wh / 2 - 10, ww * WZ.bau, 4); }
-        if (WZ.alarm) { c.strokeStyle = 'rgba(220,40,30,' + (0.5 + 0.4 * Math.sin(wnow * 8)) + ')'; c.lineWidth = 3; rr(c, wx0 - wb - 3, wy0 - wb - 3, ww + 2 * wb + 6, wh + 2 * wb + 6, 5); c.stroke(); }
+        if (WZ.alarm) { c.strokeStyle = 'rgba(220,40,30,' + (0.5 + 0.4 * Math.sin(wnow * 8)) + ')'; c.lineWidth = 3; rr(c, wx0 - wb - 4, wy0 - wb - 4, ww + 2 * wb + 8, wh + 2 * wb + 8, 6); c.stroke(); }
         // Wächter darin: 6 Plätze (3 × 2) auf dem Dach, Helm in der Farbe der Stufe
         var wn = WGd.wache.anzahl, wpr = Math.max(2.5, r * 0.13), wcols = Math.ceil(wn / 2), wgx = ww * 0.62 / wcols, hcol = WL >= 3 ? '#c9d2d7' : WL === 2 ? '#8d9399' : '#8a6238';
         for (var wi = 0; wi < wn; wi++) {
