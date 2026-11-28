@@ -1000,7 +1000,7 @@
     },
     // think = Sekunden zwischen Entscheidungen; weakHp = Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
-    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4, wacheGold: [6, 13, 24] }, // wacheGold = Verteidigung der Bots: jeder eigene Wächter (draussen und im Wachposten) zählt je Stufe des Wachpostens so viel Gold; karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
+    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4, wacheGold: [6, 12, 19] }, // wacheGold = Verteidigung der Bots: jeder eigene Wächter (draussen und im Wachposten) zählt je Stufe des Wachpostens so viel Gold; karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
 
   // Bäume (Ressourcen für Holzfäller): spiegelbildlich zur Mitte (x -> W - x). Wald unten in der Mitte, je 2 Bäume näher an jeder Burg, je 5 links und rechts vom Teich.
@@ -1240,14 +1240,14 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
-      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Fertig gebaut sind start Wächter drin; alle nach s kommt einer dazu, bis anzahl drin sind (Anzeige auf dem Dach).
-      // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte (über der Mitte), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
+      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Fertig gebaut sind start Wächter drin (2); alle nach s (8) kommt einer dazu, bis anzahl drin sind (Anzeige auf dem Dach).
+      // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte oder höchstens alarm Kacheln vor der Mitte (28.11.: 1), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
       // (nicht: Wirtschaft, Gebäude, Mauer, Burg, Unsichtbare, Turmbesatzung). Ist keine mehr in der eigenen Hälfte, gehen sie zurück ins Gebäude (drin = wieder volle Leben).
-      // Draussen greifen sie auch Gegner bis nah Kacheln hinter der Mitte an, wenn diese höchstens nahAbstand Kacheln von ihnen entfernt sind; solange bleiben sie draussen (sie selbst gehen nie über die Mitte).
+      // Draussen greifen sie alle Gegner im Alarmbereich an, dazu Gegner bis nah Kacheln hinter der Mitte (28.11.: 2), wenn diese höchstens nahAbstand Kacheln von ihnen entfernt sind; solange bleiben sie draussen (sie selbst gehen dafür höchstens nah − Reichweite Kacheln über die Mitte).
       // Fehlt ein Wächter (gefallen), kommt ebenfalls alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
       wache: { cat: 'building', name: 'Wachposten', cost: 30, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, start: 1, nach: 5, raus: 0.2, nah: 1, nahAbstand: 3 },
-                           stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 12 }, { cost: 90, hp: 10, gold: 0, waechterHp: 24 }] } },
+               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, start: 2, nach: 8, raus: 0.2, alarm: 1, nah: 2, nahAbstand: 3 },
+                           stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 10 }, { cost: 90, hp: 10, gold: 0, waechterHp: 18 }] } },
       // Wächter (nur aus dem Wachposten, nicht kaufbar): Hellebarde; Helm je Stufe des Wachpostens (braun, grau, grosser Stahlhelm). Leben aus wache.stufen[].waechterHp
       waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, ausholen: 0.3, r: 0.3, hidden: true, waechter: true },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 9, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, ausholen: 0.32, r: 0.32 },
@@ -1467,7 +1467,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '08af63aa38'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '72cd6860ff'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2898,7 +2898,7 @@
     if (g.drin === undefined) { g.drin = Math.min(WG.start || 0, WG.anzahl); g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: start Wächter drin, alle nach s kommt einer dazu
     for (i = 0; i < units.length; i++) {
       o = units[i];
-      if (!alarm && wacheFeind(g.team, o)) alarm = true;
+      if (!alarm && wacheFeind(g.team, o, WG.alarm)) alarm = true; // Alarm: Gegner in der eigenen Hälfte oder bis wache.alarm Kacheln vor der Mitte
       if (o.wache === g && o.hp > 0) {
         raus++;
         if (g.wStufe !== g.stufe) { o.hp += mhp - o.max; o.max = mhp; o.settled = { stufe: g.stufe }; } // Ausbau fertig: Wächter draussen bekommen die neuen Leben dazu
@@ -2916,8 +2916,8 @@
       }
     } else if (!alarm) g.rausT = 0;
   }
-  // Wächter: greift den nächsten Feind an: in der eigenen Hälfte (wacheFeind) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
-  // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst bleiben in der eigenen Hälfte.
+  // Wächter: greift den nächsten Feind an: im Alarmbereich (eigene Hälfte und wache.alarm Kacheln davor) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
+  // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst gehen höchstens wache.nah − Reichweite Kacheln über die Mitte.
   // Erst ausholen (28.11.: alle Einheiten): kommt ein Ziel in Reichweite (u.ready wird wahr), frühestens nach d.ausholen s zuschlagen.
   // Gilt für den ersten Treffer auf ein neues Ziel bzw. nach jeder Pause; danach bestimmt d.cd den Takt. u.warBereit = u.ready des letzten Schritts (oben im Einheiten-Schritt gesetzt).
   function ausholenPruefen(u, d) {
@@ -2931,7 +2931,7 @@
     for (j = 0; j < units.length; j++) {
       e = units[j]; if (!wacheFeind(u.team, e, nah)) continue;
       dd = hyp(e.x - u.x, e.y - u.y);
-      if (!wacheFeind(u.team, e, 0) && dd > WG.nahAbstand + 0.001) continue; // hinter der Mitte: nur wer nah bei ihm steht
+      if (!wacheFeind(u.team, e, WG.alarm) && dd > WG.nahAbstand + 0.001) continue; // ausserhalb des Alarmbereichs: nur wer nah bei ihm steht
       if (dd < bd) { bd = dd; best = e; }
     }
     if (best) {
@@ -3609,7 +3609,7 @@
             }
           }
         }
-        if (CONFIG.units[q.type].waechter) q.x = q.team === 0 ? Math.min(q.x, W / 2 - 0.05) : Math.max(q.x, W / 2 + 0.05); // Wächter bleiben in der eigenen Hälfte
+        if (CONFIG.units[q.type].waechter) { var wLim = Math.max(0, (CONFIG.units.wache.gebaeude.wache.nah || 0) - CONFIG.units[q.type].range) - 0.05; q.x = q.team === 0 ? Math.min(q.x, W / 2 + wLim) : Math.max(q.x, W / 2 - wLim); } // Wächter gehen höchstens (wache.nah − Reichweite) Kacheln über die Mitte (28.11.: 1), damit sie Gegner bis wache.nah treffen
         q.x = clamp(q.x, 0.25, W - 0.25);
         q.y = clamp(q.y, 0.3, H - 0.3);
         alive.push(q);
@@ -5578,7 +5578,7 @@
         : GBt.art === 'dieb' ? 'Alle ' + GBt.alle + ' s klaut ein Dieb <b>' + GBt.prozent + ' % des gegnerischen Goldes</b>.'
         : GBt.art === 'brand' ? 'Alle ' + GBt.alle + ' s legt ein Brandstifter in der gegnerischen Burg Feuer: der Gegner <b>verliert ' + GBt.prozent + ' % seines Goldes</b>.'
         : GBt.art === 'kirche' ? 'Ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter über den Gegner, das er nicht überlebt</b>.'
-        : GBt.art === 'wache' ? 'Startet mit ' + (GBt.wache.start || 0) + ' Wächter, alle ' + GBt.wache.nach + ' s kommt einer dazu, bis <b>' + GBt.wache.anzahl + ' Wächter</b> drin sind (Hellebarde, Angriff ' + CONFIG.units.waechter.atk + ', alle ' + fmtN(CONFIG.units.waechter.cd) + ' s, Tempo ' + fmtN(CONFIG.units.waechter.speed) + '). Läuft ein Gegner <b>über die Mitte</b>, kommen sie heraus und greifen <b>nur Einheiten</b> an; Gegner bis ' + fmtN(GBt.wache.nah) + ' Kachel hinter der Mitte greifen sie an, wenn sie höchstens ' + fmtN(GBt.wache.nahAbstand) + ' Kacheln entfernt sind. Ist keiner mehr da, gehen sie zurück. Gefallene werden ersetzt.<br>' + GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': Wächter mit <b>' + st.waechterHp + ' Leben</b>'; }).join('<br>')
+        : GBt.art === 'wache' ? 'Startet mit ' + (GBt.wache.start || 0) + (GBt.wache.start === 1 ? ' Wächter' : ' Wächtern') + ', alle ' + GBt.wache.nach + ' s kommt einer dazu, bis <b>' + GBt.wache.anzahl + ' Wächter</b> drin sind (Hellebarde, Angriff ' + CONFIG.units.waechter.atk + ', alle ' + fmtN(CONFIG.units.waechter.cd) + ' s, Tempo ' + fmtN(CONFIG.units.waechter.speed) + '). Kommt ein Gegner bis ' + fmtN(GBt.wache.alarm || 0) + ' Kachel <b>vor die Mitte</b>, kommen sie heraus und greifen <b>nur Einheiten</b> an; Gegner bis ' + fmtN(GBt.wache.nah) + ' Kacheln vor der Mitte greifen sie auch an, wenn sie höchstens ' + fmtN(GBt.wache.nahAbstand) + ' Kacheln entfernt sind. Ist keiner mehr da, gehen sie zurück. Gefallene werden ersetzt.<br>' + GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': Wächter mit <b>' + st.waechterHp + ' Leben</b>'; }).join('<br>')
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }

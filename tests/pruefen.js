@@ -40,7 +40,7 @@ const TESTS = {
     if (c === d) return 'verschiedene Startwerte ergeben dieselbe Partie – der Test prüft nichts';
     return falsch.length ? 'Partie läuft je nach Math.random anders (online würden die Spieler auseinanderlaufen): ' + falsch.join(', ') : true;
   },
-  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; zu Beginn 1 Wächter, alle 5 s einer mehr; Ausbau': function (X) {
+  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; zu Beginn 2 Wächter, alle 8 s einer mehr; Ausbau': function (X) {
     X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing');
     try {
       if (!X.buy(0, 'wache')) return 'Kauf ging nicht';
@@ -48,17 +48,17 @@ const TESTS = {
       X.setState('ready');
       for (i = 0; i < 20 * 10 && g.bau; i++) X.upd(0.05);
       if (g.bau) return 'Bau wird nicht fertig';
-      X.upd(0.05); if (g.drin !== 1) return 'nach dem Bau nicht 1 Wächter drin: ' + g.drin;
-      for (i = 0; i < 20 * 5 - 3; i++) X.upd(0.05);
-      if (g.drin !== 1) return 'zweiter Wächter vor 5 s';
+      X.upd(0.05); if (g.drin !== 2) return 'nach dem Bau nicht 2 Wächter drin: ' + g.drin;
+      for (i = 0; i < 20 * 8 - 3; i++) X.upd(0.05);
+      if (g.drin !== 2) return 'dritter Wächter vor 8 s';
       for (i = 0; i < 4; i++) X.upd(0.05);
-      if (g.drin !== 2) return 'nach 5 s nicht 2 Wächter drin: ' + g.drin;
-      for (i = 0; i < 20 * 20 + 5; i++) X.upd(0.05);
-      if (g.drin !== 6) return 'nach 25 s nicht 6 Wächter drin: ' + g.drin;
-      X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.x = 13; k.y = 5; // Gegner noch in seiner Hälfte
+      if (g.drin !== 3) return 'nach 8 s nicht 3 Wächter drin: ' + g.drin;
+      for (i = 0; i < 20 * 24 + 5; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'nach 32 s nicht 6 Wächter drin: ' + g.drin;
+      X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.x = 13.5; k.y = 5; // Gegner noch mehr als 1 Kachel vor der Mitte
       for (i = 0; i < 20; i++) X.upd(0.05);
-      if (w().length) return 'Wächter kommen heraus, obwohl kein Gegner über der Mitte ist';
-      k.x = 10.5; for (i = 0; i < 20 * 2; i++) X.upd(0.05);
+      if (w().length) return 'Wächter kommen heraus, obwohl kein Gegner bis 1 Kachel vor der Mitte ist';
+      k.x = 11.7; for (i = 0; i < 20 * 2; i++) X.upd(0.05);
       if (w().length !== 6 || g.drin !== 0) return 'bei Alarm nicht alle 6 draussen: ' + w().length + ' draussen, ' + g.drin + ' drin';
       if (w()[0].max !== 4) return 'Stufe 1: Wächter mit ' + w()[0].max + ' statt 4 Leben';
       for (i = 0; i < 20 * 40 && k.hp > 0; i++) X.upd(0.05);
@@ -66,34 +66,34 @@ const TESTS = {
       for (i = 0; i < 20 * 20; i++) X.upd(0.05);
       var tot = 6 - g.drin;
       if (w().length) return 'Wächter gehen nicht zurück (' + w().length + ' draussen)';
-      for (i = 0; i < 20 * 5 * tot + 20; i++) X.upd(0.05);
-      if (g.drin !== 6) return 'Ersatz: nach ' + (5 * tot) + ' s erst ' + g.drin + ' Wächter drin';
+      for (i = 0; i < 20 * 8 * tot + 20; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'Ersatz: nach ' + (8 * tot) + ' s erst ' + g.drin + ' Wächter drin';
       X.setState('playing'); X.gold[0] = 500; X.buy(0, 'wache'); X.setState('ready');
       for (i = 0; i < 20 * 8; i++) X.upd(0.05);
       if (g.stufe !== 2) return 'Ausbau auf Stufe 2 nicht fertig';
       X.spawn(1, 'spear'); k = X.units[X.units.length - 1]; k.x = 10; k.y = 5;
       for (i = 0; i < 20; i++) X.upd(0.05);
-      if (!w().length || w()[0].max !== 12) return 'Stufe 2: Wächter nicht mit 12 Leben';
+      if (!w().length || w()[0].max !== 10) return 'Stufe 2: Wächter nicht mit 10 Leben';
       X.walls[0] = null; g.hp = 0; for (i = 0; i < 3; i++) X.upd(0.05);
       return w().length ? 'Wachposten zerstört, Wächter leben noch' : true;
     } finally { X.setState('ready'); }
   },
-  'Wachposten: Wächter greifen bis 1 Kachel hinter der Mitte an (Gegner höchstens 3 Kacheln entfernt), kommen dafür aber nicht heraus': function (X) {
+  'Wachposten: Wächter greifen bis 2 Kacheln hinter der Mitte an (Gegner höchstens 3 Kacheln entfernt), kommen dafür aber nicht heraus': function (X) {
     X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing'); X.buy(0, 'wache'); X.setState('ready');
     var g = X.units.filter(function (u) { return u.type === 'wache'; })[0], i, w = function () { return X.units.filter(function (u) { return u.type === 'waechter' && u.hp > 0; }); };
-    for (i = 0; i < 20 * 40; i++) X.upd(0.05);
+    for (i = 0; i < 20 * 50; i++) X.upd(0.05);
     if (g.drin !== 6) return 'nicht 6 Wächter drin';
-    X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.dummy = true; k.hp = k.max = 999; k.x = 11.6; k.y = 5;
+    X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.dummy = true; k.hp = k.max = 999; k.x = 12.6; k.y = 5;
     for (i = 0; i < 20 * 2; i++) X.upd(0.05);
-    if (w().length) return 'Wächter kommen heraus, obwohl der Gegner nur hinter der Mitte steht';
+    if (w().length) return 'Wächter kommen heraus, obwohl der Gegner mehr als 1 Kachel vor der Mitte steht';
     k.x = 10.5; for (i = 0; i < 20 * 12; i++) X.upd(0.05);
     if (w().length !== 6 || k.hp >= 999) return 'Wächter greifen den Gegner in der eigenen Hälfte nicht an';
-    var vorn = w().sort(function (a, b) { return b.x - a.x; })[0]; k.x = 11.8; k.y = vorn.y;
+    var vorn = w().sort(function (a, b) { return b.x - a.x; })[0]; k.x = 12.8; k.y = vorn.y;
     if (k.x - vorn.x > 3) return 'vorderster Wächter zu weit hinten: ' + vorn.x;
     var hp0 = k.hp; for (i = 0; i < 20 * 3; i++) X.upd(0.05);
     if (!w().length || k.hp >= hp0) return 'Gegner knapp hinter der Mitte hinter der Mitte direkt vor den Wächtern wird nicht angegriffen';
-    if (w().some(function (u) { return u.x > 11; })) return 'Wächter gehen über die Mitte';
-    k.x = 11.8; k.y = vorn.y < 5 ? 9.6 : 0.4; hp0 = k.hp; for (i = 0; i < 20 * 20; i++) X.upd(0.05);
+    if (w().some(function (u) { return u.x > 12; })) return 'Wächter gehen mehr als 1 Kachel über die Mitte';
+    k.x = 12.8; k.y = vorn.y < 5 ? 9.6 : 0.4; hp0 = k.hp; for (i = 0; i < 20 * 20; i++) X.upd(0.05);
     if (k.hp < hp0) return 'Gegner hinter der Mitte, weiter als 3 Kacheln entfernt, wird angegriffen';
     return w().length ? 'Wächter gehen nicht zurück (' + w().length + ' draussen)' : true;
   },

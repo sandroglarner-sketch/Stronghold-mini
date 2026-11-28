@@ -84,14 +84,14 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
-      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Fertig gebaut sind start Wächter drin; alle nach s kommt einer dazu, bis anzahl drin sind (Anzeige auf dem Dach).
-      // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte (über der Mitte), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
+      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Fertig gebaut sind start Wächter drin (2); alle nach s (8) kommt einer dazu, bis anzahl drin sind (Anzeige auf dem Dach).
+      // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte oder höchstens alarm Kacheln vor der Mitte (28.11.: 1), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
       // (nicht: Wirtschaft, Gebäude, Mauer, Burg, Unsichtbare, Turmbesatzung). Ist keine mehr in der eigenen Hälfte, gehen sie zurück ins Gebäude (drin = wieder volle Leben).
-      // Draussen greifen sie auch Gegner bis nah Kacheln hinter der Mitte an, wenn diese höchstens nahAbstand Kacheln von ihnen entfernt sind; solange bleiben sie draussen (sie selbst gehen nie über die Mitte).
+      // Draussen greifen sie alle Gegner im Alarmbereich an, dazu Gegner bis nah Kacheln hinter der Mitte (28.11.: 2), wenn diese höchstens nahAbstand Kacheln von ihnen entfernt sind; solange bleiben sie draussen (sie selbst gehen dafür höchstens nah − Reichweite Kacheln über die Mitte).
       // Fehlt ein Wächter (gefallen), kommt ebenfalls alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
       wache: { cat: 'building', name: 'Wachposten', cost: 30, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, start: 1, nach: 5, raus: 0.2, nah: 1, nahAbstand: 3 },
-                           stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 12 }, { cost: 90, hp: 10, gold: 0, waechterHp: 24 }] } },
+               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, start: 2, nach: 8, raus: 0.2, alarm: 1, nah: 2, nahAbstand: 3 },
+                           stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 10 }, { cost: 90, hp: 10, gold: 0, waechterHp: 18 }] } },
       // Wächter (nur aus dem Wachposten, nicht kaufbar): Hellebarde; Helm je Stufe des Wachpostens (braun, grau, grosser Stahlhelm). Leben aus wache.stufen[].waechterHp
       waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, ausholen: 0.3, r: 0.3, hidden: true, waechter: true },
       sword: { cat: 'melee', name: 'Schwertkämpfer', cost: 9, staerke: 1, hp: 7, atk: 1, range: 1, speed: 0.8, cd: 1, ausholen: 0.32, r: 0.32 },
