@@ -131,7 +131,7 @@
   // ---------- Wachposten (28.11.) ----------
   // Feind für die Wächter (löst den Alarm aus und ist ihr Ziel): sichtbare gegnerische Einheit in der eigenen Spielfeldhälfte,
   // nicht Wirtschaft (Bauer, Holzfäller, Karawane, Bürger), Gebäude, Arbeiter, Turmbesatzung, Tunnelgräber unter der Erde, Einheiten in der Burg
-  // hinter = so viele Kacheln über die Mitte hinaus zählt noch (Alarm: 0; ein Wächter draussen greift bis nah Kacheln hinter der Mitte an, wenn der Gegner höchstens range entfernt ist)
+  // hinter = so viele Kacheln über die Mitte hinaus zählt noch (Alarm: 0; ein Wächter draussen greift bis nah Kacheln hinter der Mitte an, wenn der Gegner höchstens wache.nahAbstand entfernt ist)
   function wacheFeind(team, e, hinter) {
     var ed = CONFIG.units[e.type];
     if (e.team === team || e.hp <= 0 || e.dig || e.inCastle || e.tower || e.bf || !ed || ed.passive || ed.worker || ed.gebaeude || unsichtbar(e)) return false;
@@ -163,17 +163,17 @@
       }
     } else if (!alarm) g.rausT = 0;
   }
-  // Wächter: greift den nächsten Feind an: in der eigenen Hälfte (wacheFeind) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens range (1) entfernt ist.
+  // Wächter: greift den nächsten Feind an: in der eigenen Hälfte (wacheFeind) oder bis wache.nah Kacheln hinter der Mitte, wenn er höchstens wache.nahAbstand (3) Kacheln entfernt ist.
   // Gibt es keinen solchen, zurück zur Tür und hinein (drin = wieder volle Leben). Die Wächter selbst bleiben in der eigenen Hälfte.
   function waechterSchritt(u, d, spd, dt) {
     var g = u.wache, j, e, best = null, bd = 1e9, dd;
     u.ready = false;
     if (!g || g.hp <= 0) { u.hp = 0; return; } // Wachposten zerstört: die Wächter fallen mit
-    var nah = CONFIG.units[g.type].gebaeude.wache.nah || 0;
+    var WG = CONFIG.units[g.type].gebaeude.wache, nah = WG.nah || 0;
     for (j = 0; j < units.length; j++) {
       e = units[j]; if (!wacheFeind(u.team, e, nah)) continue;
       dd = hyp(e.x - u.x, e.y - u.y);
-      if (!wacheFeind(u.team, e, 0) && dd > d.range + 0.001) continue; // hinter der Mitte: nur wer direkt vor ihm steht
+      if (!wacheFeind(u.team, e, 0) && dd > WG.nahAbstand + 0.001) continue; // hinter der Mitte: nur wer nah bei ihm steht
       if (dd < bd) { bd = dd; best = e; }
     }
     if (best) {

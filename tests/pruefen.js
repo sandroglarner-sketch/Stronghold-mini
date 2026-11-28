@@ -78,7 +78,7 @@ const TESTS = {
       return w().length ? 'Wachposten zerstört, Wächter leben noch' : true;
     } finally { X.setState('ready'); }
   },
-  'Wachposten: Wächter greifen bis 1 Kachel hinter der Mitte an (nur direkt vor ihnen), kommen dafür aber nicht heraus': function (X) {
+  'Wachposten: Wächter greifen bis 1 Kachel hinter der Mitte an (Gegner höchstens 3 Kacheln entfernt), kommen dafür aber nicht heraus': function (X) {
     X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing'); X.buy(0, 'wache'); X.setState('ready');
     var g = X.units.filter(function (u) { return u.type === 'wache'; })[0], i, w = function () { return X.units.filter(function (u) { return u.type === 'waechter' && u.hp > 0; }); };
     for (i = 0; i < 20 * 40; i++) X.upd(0.05);
@@ -88,13 +88,13 @@ const TESTS = {
     if (w().length) return 'Wächter kommen heraus, obwohl der Gegner nur hinter der Mitte steht';
     k.x = 10.5; for (i = 0; i < 20 * 12; i++) X.upd(0.05);
     if (w().length !== 6 || k.hp >= 999) return 'Wächter greifen den Gegner in der eigenen Hälfte nicht an';
-    var vorn = w().sort(function (a, b) { return b.x - a.x; })[0]; k.x = Math.max(11.15, vorn.x + 0.85); k.y = vorn.y;
-    if (k.x > 12) return 'vorderster Wächter zu weit hinten: ' + vorn.x;
+    var vorn = w().sort(function (a, b) { return b.x - a.x; })[0]; k.x = 11.8; k.y = vorn.y;
+    if (k.x - vorn.x > 3) return 'vorderster Wächter zu weit hinten: ' + vorn.x;
     var hp0 = k.hp; for (i = 0; i < 20 * 3; i++) X.upd(0.05);
     if (!w().length || k.hp >= hp0) return 'Gegner knapp hinter der Mitte hinter der Mitte direkt vor den Wächtern wird nicht angegriffen';
     if (w().some(function (u) { return u.x > 11; })) return 'Wächter gehen über die Mitte';
-    k.x = 12.3; hp0 = k.hp; for (i = 0; i < 20 * 20; i++) X.upd(0.05);
-    if (k.hp < hp0) return 'Gegner 1,3 Kacheln hinter der Mitte wird angegriffen';
+    k.x = 11.8; k.y = vorn.y < 5 ? 9.6 : 0.4; hp0 = k.hp; for (i = 0; i < 20 * 20; i++) X.upd(0.05);
+    if (k.hp < hp0) return 'Gegner hinter der Mitte, weiter als 3 Kacheln entfernt, wird angegriffen';
     return w().length ? 'Wächter gehen nicht zurück (' + w().length + ' draussen)' : true;
   },
   'Prinzessin: bekehrt den Belagerungsturm samt Schützen, nicht die Wächter': function (X) {
