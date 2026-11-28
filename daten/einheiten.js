@@ -84,12 +84,12 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
-      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Darin wohnen anzahl Wächter (Anzeige auf dem Dach).
+      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Zu Beginn leer; alle nach s kommt ein Wächter dazu, bis anzahl drin sind (Anzeige auf dem Dach).
       // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte (über der Mitte), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
       // (nicht: Wirtschaft, Gebäude, Mauer, Burg, Unsichtbare, Turmbesatzung). Ist keine mehr in der eigenen Hälfte, gehen sie zurück ins Gebäude (drin = wieder volle Leben).
-      // Fehlt ein Wächter (gefallen), kommt alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
+      // Fehlt ein Wächter (gefallen), kommt ebenfalls alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
       wache: { cat: 'building', name: 'Wachposten', cost: 30, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, nach: 10, raus: 0.2 },
+               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, nach: 5, raus: 0.2 },
                            stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 12 }, { cost: 90, hp: 10, gold: 0, waechterHp: 24 }] } },
       // Wächter (nur aus dem Wachposten, nicht kaufbar): Hellebarde; Helm je Stufe des Wachpostens (braun, grau, grosser Stahlhelm). Leben aus wache.stufen[].waechterHp
       waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, r: 0.3, hidden: true, waechter: true },

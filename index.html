@@ -1233,12 +1233,12 @@
       // (Einheiten, Gebäude, Mauer, Burg), bis die Kirche zerstört oder ein König tot ist.
       kirche: { cat: 'building', name: 'Kirche', cost: 60, staerke: 0, hp: 15, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
                 gebaeude: { w: 1.1, h: 1.2, alle: 0, art: 'kirche', gebet: { cost: 60, dauer: 20 }, gunstMax: 5, blitz: { alle: 1, schaden: 20, radius: 1, koenig: 4, auf: 3 }, stufen: [{ cost: 60, hp: 15, gold: 0 }] } },
-      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Darin wohnen anzahl Wächter (Anzeige auf dem Dach).
+      // Wachposten (Typ Gebäude, 28.11.): Stufe 1 30 Gold, Ausbau 60 / 90 Gold, immer 10 Leben. Zu Beginn leer; alle nach s kommt ein Wächter dazu, bis anzahl drin sind (Anzeige auf dem Dach).
       // Steht eine gegnerische Einheit in der eigenen Spielfeldhälfte (über der Mitte), kommen alle Wächter heraus (einer alle raus s) und greifen nur Einheiten an
       // (nicht: Wirtschaft, Gebäude, Mauer, Burg, Unsichtbare, Turmbesatzung). Ist keine mehr in der eigenen Hälfte, gehen sie zurück ins Gebäude (drin = wieder volle Leben).
-      // Fehlt ein Wächter (gefallen), kommt alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
+      // Fehlt ein Wächter (gefallen), kommt ebenfalls alle nach s ein neuer dazu. Leben der Wächter je Stufe: waechterHp. Wird der Wachposten zerstört, fallen die Wächter draussen mit.
       wache: { cat: 'building', name: 'Wachposten', cost: 30, staerke: 0, hp: 10, atk: 0, range: 0, speed: 0, cd: 1, r: 0.5, passive: true,
-               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, nach: 10, raus: 0.2 },
+               gebaeude: { w: 1.1, h: 1.0, alle: 0, art: 'wache', wache: { anzahl: 6, nach: 5, raus: 0.2 },
                            stufen: [{ cost: 30, hp: 10, gold: 0, waechterHp: 4 }, { cost: 60, hp: 10, gold: 0, waechterHp: 12 }, { cost: 90, hp: 10, gold: 0, waechterHp: 24 }] } },
       // Wächter (nur aus dem Wachposten, nicht kaufbar): Hellebarde; Helm je Stufe des Wachpostens (braun, grau, grosser Stahlhelm). Leben aus wache.stufen[].waechterHp
       waechter: { cat: 'melee', name: 'Wächter', cost: 0, staerke: 1, hp: 4, atk: 1, range: 1, speed: 1, cd: 1, r: 0.3, hidden: true, waechter: true },
@@ -1446,7 +1446,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = '3f8cab1618'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '7d1ca50976'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -2732,12 +2732,14 @@
   }
   // Prinzessin (Geschenk): Glitzerstaub im Trichter d.bekehren.winkel (Mitte = Richtung zum Ziel), 0 bis d.bekehren.r Kacheln (bis zum Körperrand).
   // Jede getroffene gegnerische Einheit wechselt sofort die Seite. Nicht: König, Arbeiter, Gebäude, Wirtschaft (Bauern, Holzfäller, Karawane),
-  // Turmbesatzung und wer zu einem Turmplatz unterwegs ist, Belagerungsturm samt Schützen, Kletternde, Tunnelgräber unter der Erde, Einheiten in der Burg.
+  // Turmbesatzung und wer zu einem Turmplatz unterwegs ist, Kletternde, Tunnelgräber unter der Erde, Einheiten in der Burg, Wächter (gehören zum Wachposten).
+  // Der Belagerungsturm (28.11.) lässt sich bekehren: seine Schützen oben wechseln mit, er fährt zur anderen Mauer; angedockt zählen die schon geschickten Schwertkämpfer weiter.
+  // Bereits fliegende Geschosse treffen eine bekehrte Einheit nicht mehr, wenn sie inzwischen zum Team des Schützen gehört.
   // Deterministisch (feste Reihenfolge, Skalarprodukt statt Winkel).
   function bekehrbar(sv) { // kann die Prinzessin diese Einheit bekehren? (auch für ihre Zielwahl)
     var sd = CONFIG.units[sv.type];
-    if (!sd || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock || sv.wache) return false; // Wächter gehören zu ihrem Wachposten
-    return !(sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry);
+    if (!sd || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.wache) return false; // Wächter gehören zu ihrem Wachposten; Schützen auf dem Belagerungsturm (bf) wechseln mit dem Turm
+    return !(sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive);
   }
   function bekehrKegel(u, d, tx, ty) {
     var K = d.bekehren, ax = tx - u.x, ay = ty - u.y, al = hyp(ax, ay), ck = K.winkel === 60 ? 0.8660254 : dcos(K.winkel / 360 * Math.PI), neu = u.team, l = [];
@@ -2752,9 +2754,14 @@
     }
     for (j = 0; j < l.length; j++) {
       var b = l[j], bd = CONFIG.units[b.type];
-      b.team = neu; b.pl = pOf(u); b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false;
+      b.team = neu; b.pl = pOf(u); b.face = neu === 0 ? 1 : -1; b.tx = b.ty = null; b.tSpot = null; b.atSpot = false; b.aim = null; b.inFoe = false; b.o = false;
       b.setupT = 0; b.sax = b.say = undefined; b.lx = b.ly = undefined; b.warBereit = false; b.cd = Math.max(b.cd, 0.5);
       if (bd.ladder && !b.climbed) b.goWall = pickWallSpot(neu, bd.r); // Leiterträger: jetzt zur anderen Mauer
+      if (bd.belfry) { // Belagerungsturm: fährt zur anderen Mauer, die Schützen oben wechseln mit
+        if (b.dock) { b.bfN = b.dock.n; b.dock = null; } // schon geschickte Schwertkämpfer kommen beim nächsten Andocken nicht nochmals
+        b.goWall = pickWallSpot(neu, bd.r);
+        for (var bq = 0; bq < units.length; bq++) { var ba = units[bq]; if (ba.bf === b && ba.hp > 0) { ba.team = neu; ba.pl = b.pl; ba.face = b.face; ba.aim = null; ba.cd = Math.max(ba.cd, 0.5); } }
+      }
       effects.push({ kind: 'bekehrt', x: b.x, y: b.y, team: neu, t: 0, dur: 0.9 });
     }
     effects.push({ kind: 'glitzer', x: u.x, y: u.y, dx: ax / al, dy: ay / al, w: K.winkel, r: K.r, team: neu, t: 0, dur: 0.9 });
@@ -2763,7 +2770,7 @@
   function landShot(s) {
     if (s.base) { // Pfeil der Kaserne
       var bv = s.tgt;
-      if (bv.hp > 0 && !bv.dig && !bv.inCastle) { hurt(bv, CONFIG.BASE_ATK * (s.f || 1), { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
+      if (bv.hp > 0 && !bv.dig && !bv.inCastle && bv.team !== s.team) { hurt(bv, CONFIG.BASE_ATK * (s.f || 1), { range: CONFIG.BASE_RANGE }); bv.hit = 0.15; bv.lastHit = clock; }
       return;
     }
     var d = CONFIG.units[s.type], tgt = s.tgt, cx = s.tx, cy = s.ty, aimBase = !s.tgt && !s.wall;
@@ -2773,7 +2780,7 @@
       return;
     }
     if (tgt) {
-      if (tgt.hp > 0 && !tgt.dig && !tgt.inCastle) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; cx = tgt.x; cy = tgt.y; }
+      if (tgt.hp > 0 && !tgt.dig && !tgt.inCastle && tgt.team !== s.team) { hurt(tgt, d.atk, d); tgt.hit = 0.15; tgt.lastHit = clock; cx = tgt.x; cy = tgt.y; }
       else tgt = null;
     } else if (s.wall) {
       var sw = s.wall;
@@ -2803,10 +2810,10 @@
     return team === 0 ? e.x < W / 2 : e.x > W / 2;
   }
   function wacheTuer(g) { var G = CONFIG.units[g.type].gebaeude; return { x: g.x, y: g.y + (g.ny || 1) * (G.h / 2 + 0.3) }; } // Tür: Vorderseite (zum Weg)
-  // Wachposten: zählt die Wächter darin (g.drin), lässt bei Alarm einen nach dem anderen hinaus, ersetzt gefallene (alle nach s), passt die Leben beim Ausbau an
+  // Wachposten: zählt die Wächter darin (g.drin, zu Beginn 0), lässt bei Alarm einen nach dem anderen hinaus, bringt alle nach s einen neuen, bis anzahl erreicht sind, passt die Leben beim Ausbau an
   function wachposten(g, GD, dt) {
     var WG = GD.wache, i, o, raus = 0, alarm = false, mhp = GD.stufen[g.stufe - 1].waechterHp;
-    if (g.drin === undefined) { g.drin = WG.anzahl; g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: alle Wächter sind drin
+    if (g.drin === undefined) { g.drin = 0; g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: noch leer, alle nach s kommt ein Wächter dazu
     for (i = 0; i < units.length; i++) {
       o = units[i];
       if (!alarm && wacheFeind(g.team, o)) alarm = true;
@@ -3086,7 +3093,7 @@
           if (d.ladder) {
             if (hasW) { u.climb = { t: 0 }; effects.push({ kind: 'ladder', x: (gv.ox + gv.ix) / 2, y: (gv.oy + gv.iy) / 2, ang: Math.atan2(gv.iy - gv.oy, gv.ix - gv.ox), len: hyp(gv.ix - gv.ox, gv.iy - gv.oy) + 0.3, team: u.team, t: 0, dur: d.ladder.show }); } // Leiter-Effekt (nur Zeichnung)
             else { u.goWall = null; u.climbed = true; } // keine fertige Mauer: kämpft gleich normal
-          } else if (d.belfry) { u.dock = { t: 0, n: 0, wall: hasW }; }
+          } else if (d.belfry) { u.dock = { t: (u.bfN || 0) * d.belfry.every, n: u.bfN || 0, wall: hasW }; } // bfN: vor dem Bekehren schon geschickte Schwertkämpfer
           continue;
         }
         if (u.climb) { // klettert über die Leiter auf die andere Seite
@@ -3313,7 +3320,7 @@
         if ((d.ram && !CONFIG.units[e.type].gebaeude) || e.team === u.team || e.hp <= 0 || e.dig || e.inCastle || unsichtbar(e) || (e.tower && d.range <= 1.5)) continue; // Rammbock, Schild, Onager sehen nur Mauern, Burgen und Gebäude
         if (d.bekehren && !bekehrbar(e)) continue; // Prinzessin: nur Gegner, die sie bekehren kann
         if (d.nurFern && !nurFernZiel(e)) continue; // Bandit: nur Fernkämpfer, Wirtschaft, Fernkampf-Kriegsmaschinen
-        if (rngd && e.bfTower && belfryManned(e)) continue; // Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
+        if (rngd && !d.bekehren && e.bfTower && belfryManned(e)) continue; // (die Prinzessin bekehrt den Turm samt Schützen) Fernkämpfer: erst die Bogenschützen oben, dann den Belagerungsturm
         if (outside && !wallOut(ow, e.x, e.y)) continue;
         if (u.inFoe && d.range <= 1.5 && wallOut(ow, e.x, e.y)) continue; // hinter der gegnerischen Mauer: Nahkämpfer erreichen niemanden draussen
         var dd = hyp(e.x - u.x, e.y - u.y);
@@ -5449,11 +5456,11 @@
         : GBt.art === 'dieb' ? 'Alle ' + GBt.alle + ' s klaut ein Dieb <b>' + GBt.prozent + ' % des gegnerischen Goldes</b>.'
         : GBt.art === 'brand' ? 'Alle ' + GBt.alle + ' s legt ein Brandstifter in der gegnerischen Burg Feuer: der Gegner <b>verliert ' + GBt.prozent + ' % seines Goldes</b>.'
         : GBt.art === 'kirche' ? 'Ein Priester betet ' + GBt.gebet.dauer + ' s für ' + GBt.gebet.cost + ' Gold, dann <b>Gunst +1</b>. Bei Gunst ' + GBt.gunstMax + ' kommt ein <b>Unwetter über den Gegner, das er nicht überlebt</b>.'
-        : GBt.art === 'wache' ? 'Darin wohnen <b>' + GBt.wache.anzahl + ' Wächter</b> mit Hellebarde (Angriff ' + CONFIG.units.waechter.atk + ', alle ' + fmtN(CONFIG.units.waechter.cd) + ' s, Tempo ' + fmtN(CONFIG.units.waechter.speed) + '). Läuft ein Gegner <b>über die Mitte</b>, kommen sie heraus und greifen <b>nur Einheiten</b> an; ist keiner mehr in deiner Hälfte, gehen sie zurück. Fällt einer, kommt alle ' + GBt.wache.nach + ' s ein neuer dazu.<br>' + GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': Wächter mit <b>' + st.waechterHp + ' Leben</b>'; }).join('<br>')
+        : GBt.art === 'wache' ? 'Alle ' + GBt.wache.nach + ' s kommt ein Wächter dazu, bis <b>' + GBt.wache.anzahl + ' Wächter</b> drin sind (Hellebarde, Angriff ' + CONFIG.units.waechter.atk + ', alle ' + fmtN(CONFIG.units.waechter.cd) + ' s, Tempo ' + fmtN(CONFIG.units.waechter.speed) + '). Läuft ein Gegner <b>über die Mitte</b>, kommen sie heraus und greifen <b>nur Einheiten</b> an; ist keiner mehr in deiner Hälfte, gehen sie zurück. Gefallene werden ersetzt.<br>' + GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': Wächter mit <b>' + st.waechterHp + ' Leben</b>'; }).join('<br>')
         : GBt.steigt ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>, jedes Mal ' + GBt.steigt + ' Gold mehr (' + [0, 1, 2].map(function (n) { return GBt.stufen[0].gold + GBt.steigt * n; }).join(', ') + ' …).'
         : GBt.stufen.length === 1 ? 'Alle ' + GBt.alle + ' s <b>+' + GBt.stufen[0].gold + ' Gold</b>.'
         : GBt.stufen.map(function (st, i) { return 'Stufe ' + (i + 1) + ': alle ' + GBt.alle + ' s <b>+' + st.gold + ' Gold</b>'; }).join('<br>')); }
-    if (d.bekehren) a.push('<b>Verzaubert:</b> zielt nur auf Gegner, die sie bekehren kann (nicht: König, Gebäude, Wirtschaft, Turmbesatzung). Ab ' + fmtN(d.range) + ' Kacheln sprüht sie Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln: <b>Getroffene Gegner wechseln die Seite</b>.');
+    if (d.bekehren) a.push('<b>Verzaubert:</b> zielt nur auf Gegner, die sie bekehren kann (nicht: König, Gebäude, Wirtschaft, Turmbesatzung, Wächter). Ein Belagerungsturm wechselt samt Schützen die Seite. Ab ' + fmtN(d.range) + ' Kacheln sprüht sie Glitzerstaub in einem ' + d.bekehren.winkel + '°-Trichter bis ' + fmtN(d.bekehren.r) + ' Kacheln: <b>Getroffene Gegner wechseln die Seite</b>.');
     if (d.kegel) a.push('<b>Morgenstern:</b> trifft alle Gegner in einem ' + d.kegel.winkel + '°-Bogen Richtung Ziel, ' + fmtN(d.kegel.r) + (d.kegel.r === 1 ? ' Kachel' : ' Kacheln') + ' weit.');
     if (d.nurFern) a.push('<b>Greift nur</b> den König, Fernkämpfer, Bauern, Bürger, Holzfäller, Karawanen und Fernkampf-Kriegsmaschinen an (sucht bis ' + (d.suche || 4) + ' Kacheln weit), die Mauer erst, wenn davor kein Ziel mehr ist. Unsichtbar läuft er durch Einheiten hindurch.');
     if (d.unsichtbar) a.push('<b>Unsichtbar:</b> kann nicht anvisiert werden, Flächenschaden trifft ihn aber. Greift er an, ist er mindestens ' + d.unsichtbar.sichtbar + ' s sichtbar.');
