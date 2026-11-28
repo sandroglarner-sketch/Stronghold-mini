@@ -42,7 +42,7 @@
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: 14, logik: 'steinmetzbrocken', nr: 18 }, // seit 21.11. 14:07, braucht ein Konto // (Onager)
     // neue Bots (28.11.), noch ohne Logik
-    { id: 'wachtmeisterineulenauge', name: 'Wachtmeisterin Eulenauge', koenig: 'wachtmeisterineulenauge', platz: null, logik: null }, // Belohnung: Wachposten (daten/freischalten.js)
+    { id: 'wachtmeisterineulenauge', name: 'Wachtmeisterin Eulenauge', koenig: 'wachtmeisterineulenauge', platz: 21, logik: 'wachtmeisterineulenauge', nr: 25 }, // seit 28.11., braucht ein Konto (Belohnung: Wachposten)
     { id: 'kerzenfuerst', name: 'Der Kerzenfürst', koenig: 'kerzenfuerst', platz: null, logik: null },
     { id: 'bienenkoenigin', name: 'Die Bienenkönigin', koenig: 'bienenkoenigin', platz: null, logik: null },
     { id: 'narrenkoenig', name: 'Der Narrenkönig', koenig: 'narrenkoenig', platz: null, logik: null },

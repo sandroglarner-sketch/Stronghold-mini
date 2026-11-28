@@ -36,12 +36,12 @@
       belfry: { besiegt: 'baerenfuerst' }, // Belohnung für den Bärenfürsten (Story-Platz 18, braucht ein Konto)
       raeuber: { besiegt: 'herzognebelwald' }, // Belohnung für Herzog Nebelwald (Story-Platz 19, braucht ein Konto)
       buerger: { besiegt: 'haendlerfuerstgoldsand' }, // Belohnung für Händlerfürst Goldsand (Story-Platz 20, braucht ein Konto)
-      wache: { besiegt: 'wachtmeisterineulenauge' }, // Belohnung für Wachtmeisterin Eulenauge (noch ohne Story-Platz und Logik, bis dahin nur im Tester-Modus)
+      wache: { besiegt: 'wachtmeisterineulenauge' }, // Belohnung für Wachtmeisterin Eulenauge (Story-Platz 21, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true }, haendlerfuerstgoldsand: { konto: true } } },
+    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true }, haendlerfuerstgoldsand: { konto: true }, wachtmeisterineulenauge: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),

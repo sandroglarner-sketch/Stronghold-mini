@@ -24,7 +24,7 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - Online und Bot-Partien sind deterministisch (Lockstep): `simRand` (mulberry32), Mathe nur über `hyp/dsin/dcos/datan/datan2/dasin` – nie `Math.random`/`Math.hypot` in der Simulation. Online STEP 0,05 s, PVP_DELAY 7; Bot-Partien BL_STEP 1/60 s.
 - Bots verhalten sich exakt wie Spielereinheiten (gleiche Regeln).
 - Neue Bot-Parameter in `gemeinsam/bots.js` immer auch in `werkzeuge/bot-editor-vorlage.html`.
-- Bot-Editor: https://claude.ai/artifact/4jmqnPCDZTpfPn9H8wVd7A. Nächste freie Bot-nr: **25**.
+- Bot-Editor: https://claude.ai/artifact/4jmqnPCDZTpfPn9H8wVd7A. Nächste freie Bot-nr: **26**.
 
 ## Grundsätze des Besitzers
 - Muss der Besitzer selbst etwas tun (Supabase, Render, GitHub), gleich den direkten Link schicken.

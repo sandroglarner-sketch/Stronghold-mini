@@ -106,10 +106,13 @@
     var g = 0, i, u, ud;
     for (i = 0; i < units.length; i++) {
       u = units[i]; ud = CONFIG.units[u.type];
-      if (u.team === team && u.hp > 0 && !ud.passive && !ud.worker && !ud.king && !(team === 0 && u.dig) && !(noTower && u.tower)) g += ud.cost || 0;
+      if (u.team === team && u.hp > 0 && !ud.passive && !ud.worker && !ud.king && !(team === 0 && u.dig) && !(noTower && u.tower)) g += u.wache ? (team === 1 ? wacheGold(u.wache) : 0) : ud.cost || 0;
+      else if (team === 1 && u.team === 1 && u.hp > 0 && ud.gebaeude && ud.gebaeude.art === 'wache' && u.drin) g += u.drin * wacheGold(u); // Wächter im Wachposten
     }
     return g;
   }
+  // Wert eines eigenen Wächters für die Verteidigung (28.11.): je Stufe seines Wachpostens CONFIG.AI.wacheGold (6 / 13 / 24 Gold)
+  function wacheGold(g) { var W = CONFIG.AI.wacheGold || []; return g.stufe >= 1 ? W[Math.min(g.stufe, W.length) - 1] || 0 : 0; }
   function aiRoll() {
     ai.think = 1.2;
     ai.leadT = 0;
@@ -154,7 +157,7 @@
     var free = ai.defCool <= 0;
 
     // Verteidigung (26.11., alle Bots): wird etwas angegriffen, vergleicht er den Goldwert (CONFIG.units[..].cost) deiner Kampfeinheiten auf dem Feld (ohne Türme)
-    // mit dem seiner Turmbesatzung plus seiner Kampfeinheiten auf dem Feld und kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens die Differenz kosten
+    // mit dem seiner Turmbesatzung plus seiner Kampfeinheiten auf dem Feld (dazu seine Wächter draussen und im Wachposten, CONFIG.AI.wacheGold) und kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens die Differenz kosten
     // (höchstens defMaxGold Gold pro Verteidigung, ohne Angabe unbegrenzt); danach noOutput Sekunden keine Einheiten
     // (gilt für alle Gegner) auch ohne Angriff: stehen mindestens 2 gegnerische Einheiten in seiner Hälfte und hat der Gegner insgesamt mehr Einheiten (ohne Turmbesatzung) als er (mit Turmbesatzung)
     var invaded = countEnemiesInMyHalf() >= 2 && countFighters(0, true) > countFighters(1, false);
