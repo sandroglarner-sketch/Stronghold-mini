@@ -1000,7 +1000,7 @@
     },
     // think = Sekunden zwischen Entscheidungen; weakHp = Der Turm (die Kaserne) schafft es allein, wenn der Gegner nur noch Einheiten mit
     // zusammen höchstens so vielen Leben hat; attackMemory = so lange gilt ein Bauer oder die Kaserne als angegriffen
-    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4 }, // karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
+    AI: { think: [0.8, 1.6], weakHp: 6, attackMemory: 4, towerCool: 20, castleWait: 15, wallRepairLoss: 50, karawaneCool: 4, wacheGold: [6, 13, 24] }, // wacheGold = Verteidigung der Bots: jeder eigene Wächter (draussen und im Wachposten) zählt je Stufe des Wachpostens so viel Gold; karawaneCool = nach jeder gekauften Karawane so viele Sekunden keine weitere (alle Bots); towerCool = Pause in Sekunden nach dem Auffüllen der Turmplätze; castleWait = so lange baut ein Gegner eine zerstörte Burg frühestens nicht wieder auf
   };
 
   // Bäume (Ressourcen für Holzfäller): spiegelbildlich zur Mitte (x -> W - x). Wald unten in der Mitte, je 2 Bäume näher an jeder Burg, je 5 links und rechts vom Teich.
@@ -1146,7 +1146,13 @@
       // jagt mit 2 Reitern (5 s Vorsprung, alle 30 s), greift bei 150 Gold an (Welle 238: Trebuchet, 8 Speer, 6 Fackelwerfer, 4 Speer, 15 Leitern); verteidigt mit höchstens 60 Gold pro Welle, danach 5 s Sperre
       haendlerfuerstgoldsand: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 2, buerger: 10, huntLead: 5, hunt: [['rider', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, trebuchet: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
                     attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 3, buy: [['spear', 8]] }, { after: 4, buy: [['fackel', 6]] }, { after: 6, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
-                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 }
+                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 },
+      // «Wachtmeisterin Eulenauge» (Story-Platz 21, braucht ein Konto, 28.11.): 12 Bauern und 4 Karawanen, Wachposten ab 30 Gold (Belohnung: Wachposten, baut bis Stufe 3 aus), Mauer bis Stufe 3 mit 4 Bogenschützen,
+      // jagt mit 2 Speerkämpfern (5 s Vorsprung, alle 40 s), 1 s später 2 Speerwerfer, greift bei 240 Gold an (Welle 360: Belagerungsschild, Belagerungsturm, Baliste, 2 Schwarze Ritter, 6 Speer, 6 Speerwerfer, 20 Leitern);
+      // verteidigt mit höchstens 85 Gold pro Welle, danach 5 s Sperre
+      wachtmeisterineulenauge: { income: 10, incomeEvery: 5, farmers: 12, karawanen: 4, gebaeude: [{ type: 'wache', gold: 30 }], huntLead: 5, hunt: [['spear', 2]], huntEvery: 40, huntLater: [{ after: 1, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 240, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['belfry', 1]] }, { after: 4, buy: [['baliste', 1]] }, { after: 5, buy: [['schwarzritter', 2]] }, { after: 8, buy: [['spear', 6]] }, { after: 9, buy: [['javelin', 6]] }, { after: 13, buy: [['ladder', 20]] }],
+                    defMaxGold: 85, defPool: ['schwarzritter', 'spear', 'javelin', 'baliste'], noOutput: 5 }
   };
     // splash = Radius des Flächenschadens in Kacheln, slow = Tempo-Faktor und Dauer für getroffene Einheiten
     // passive = sucht sich einen Platz nahe der eigenen Kaserne und bleibt dort stehen,
@@ -1274,9 +1280,9 @@
   // Leer = Kontofunktion aus (dann ist auch nichts gesperrt).
   var KONTO = { url: 'https://odxpdyrwtvgicntbjlrh.supabase.co', key: 'sb_publishable_Ac8mgh1vdjKVNDMn2Zy1lQ_jz8cGmgn' };
   // Königs-Optiken (Datenbank, Teil 1): id -> Aussehen. Gezeichnet von koenigMalen() in spiel/koenig-optik.js (von oben, Blick nach rechts).
-  // krone: reif zacken diadem hoch helm kapuze turban lorbeer hoerner pelz wolf spitzhut mitra eis federn pilz dreispitz strohhut topf; kf = Kronenfarbe
-  // umhang: Farbe oder 'team' (= Teamfarbe abgedunkelt, wie der Standard-König); muster: hermelin streifen kreuz punkte sterne blaetter flicken muenzen zacken schuppen
-  // ruestung, haut, haar (leer = keine Haare): Farben; bart: kurz voll lang spitz schnauz stoppel zopf; waffe: zweihaender schwert saebel axt kolben speer zepter forke holzschwert; wf = Waffenfarbe
+  // krone: reif zacken diadem hoch helm kapuze turban lorbeer hoerner pelz wolf spitzhut mitra eis federn pilz dreispitz strohhut topf eule kerzen bienenkorb narrenkappe pfau; kf = Kronenfarbe
+  // umhang: Farbe oder 'team' (= Teamfarbe abgedunkelt, wie der Standard-König); muster: hermelin streifen kreuz punkte sterne blaetter flicken muenzen zacken schuppen waben rauten
+  // ruestung, haut, haar (leer = keine Haare): Farben; bart: kurz voll lang spitz schnauz stoppel zopf; waffe: zweihaender schwert saebel axt kolben speer zepter forke holzschwert hellebarde; wf = Waffenfarbe
   // bogen: eigener Bogen (holz = Farbe, enden = Farbe der Bogenenden/Beschläge, leer = keine; sehne; form 0 = einfach, 1 = Enden nach vorn gebogen (Reflexbogen), 2 = etwas länger;
   //   deko = Verzierung passend zum König: gold baender ranken stroh flicken sterne feder zacken fell runen zaehne mond kreuz kristall muenzen pilz tau horn flamme; dc = Farbe der Verzierung (sonst enden)).
   // Der Saum des Umhangs ist immer in der Teamfarbe (blau/rot), damit die Seiten erkennbar bleiben. Die Waffe ist nur Aussehen.
@@ -1318,6 +1324,12 @@
     abtglockenklang: {krone: 'reif', kf: '#c9c2b0', umhang: '#3a3a52', muster: 'kreuz', ruestung: '#8a7a6a', haut: '#ecc09a', haar: '#d9d4c8', bart: 'lang', waffe: 'zepter', wf: '#e2b13c', bogen: {holz: '#efe7d4', enden: '#e2b13c', sehne: '#e8e0cc', form: 2, deko: 'kreuz'}},  // Schlichter Silberreif, Kutte, weisser Bart
     meisterglutfaust: {krone: 'zacken', kf: '#6e767f', umhang: '#7a3a22', muster: 'zacken', ruestung: '#5a4636', haut: '#d29a68', haar: '#2b1b10', bart: 'schnauz', waffe: 'kolben', wf: '#5e6670', bogen: {holz: '#4a3b2a', enden: '#6e767f', sehne: '#d8cfb8', form: 0, dc: '#e8641e', deko: 'baender'}},  // Eiserne Zackenkrone, Lederschürze, Schmiedehammer, glühende Bänder am Bogen
     steinmetzbrocken: {krone: 'pelz', kf: '#8a8a82', umhang: '#5a5a52', muster: 'flicken', ruestung: '#7a7268', haut: '#cf9a70', haar: '#3a2e24', bart: 'voll', waffe: 'kolben', wf: '#9aa0a4', bogen: {holz: '#7a6a5a', enden: '#8a8a82', sehne: '#d8cfb8', form: 0, deko: 'horn'}},  // Steinstaub-Mütze, Hammer, breiter Bart
+    // neue Bots (28.11.), noch ohne Logik
+    wachtmeisterineulenauge: {krone: 'eule', kf: '#7a6248', umhang: '#4a3f36', muster: 'schuppen', ruestung: '#7d8790', haut: '#e0b08a', haar: '', bart: '', waffe: 'hellebarde', wf: '#d8dfe2', bogen: {holz: '#6b4a2b', enden: '#7a6248', sehne: '#e8e0cc', form: 0, dc: '#b89a72', deko: 'feder'}},  // Eulenhelm mit gelben Augen, Federmantel, Hellebarde wie die Wächter
+    kerzenfuerst: {krone: 'kerzen', kf: '#c9a54a', umhang: '#3a2a40', muster: 'sterne', ruestung: '#5a4a5a', haut: '#efe0d0', haar: '#e8e4da', bart: 'lang', waffe: 'zepter', wf: '#ffb52e', bogen: {holz: '#3a2e28', enden: '#c9a54a', sehne: '#e8e0cc', form: 2, deko: 'flamme'}},  // Krone aus brennenden Kerzen, bleich, weisser Bart, Leuchter-Zepter
+    bienenkoenigin: {krone: 'bienenkorb', kf: '#d9a441', umhang: '#e0a826', muster: 'waben', ruestung: '#3a3020', haut: '#e9bb90', haar: '#2b1b10', bart: '', waffe: 'speer', wf: '#1b1b1b', bogen: {holz: '#5a4020', enden: '#e0a826', sehne: '#e8e0cc', form: 1, dc: '#1b1b1b', deko: 'baender'}},  // Bienenkorb als Krone mit Bienen, Wabenmantel, schwarzer Stachel-Speer
+    narrenkoenig: {krone: 'narrenkappe', kf: '#b8302a', umhang: '#2a64b8', muster: 'rauten', ruestung: '#e8b830', haut: '#f2c8a2', haar: '', bart: '', waffe: 'zepter', wf: '#b8302a', bogen: {holz: '#b8302a', enden: '#e8b830', sehne: '#e8e0cc', form: 1, deko: 'sterne'}},  // Narrenkappe mit Schellen, Rautenmantel, Narrenzepter
+    fuerstpfauenpracht: {krone: 'pfau', kf: '#d4a017', umhang: '#1f5a6a', muster: 'punkte', ruestung: '#3a6a8a', haut: '#d8a070', haar: '#1e1a16', bart: 'spitz', waffe: 'saebel', wf: '#e3eaec', bogen: {holz: '#2a4a5a', enden: '#d4a017', sehne: '#e8e0cc', form: 2, dc: '#2a8ad0', deko: 'feder'}},  // Pfauenrad hinter dem Kopf, Türkis und Gold
   };
   // Zu Beginn hat der Spieler nur den Standard-König; alle anderen schaltet ein Sieg gegen den Bot frei, dem der König gehört
   var KOENIG_SPIELER = [{ id: 'standard', name: 'Standard' }];
@@ -1364,6 +1376,12 @@
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: 20, logik: 'haendlerfuerstgoldsand', nr: 24 }, // seit 27.11., braucht ein Konto (Belohnung: Bürger)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: 14, logik: 'steinmetzbrocken', nr: 18 }, // seit 21.11. 14:07, braucht ein Konto // (Onager)
+    // neue Bots (28.11.), noch ohne Logik
+    { id: 'wachtmeisterineulenauge', name: 'Wachtmeisterin Eulenauge', koenig: 'wachtmeisterineulenauge', platz: 21, logik: 'wachtmeisterineulenauge', nr: 25 }, // seit 28.11., braucht ein Konto (Belohnung: Wachposten)
+    { id: 'kerzenfuerst', name: 'Der Kerzenfürst', koenig: 'kerzenfuerst', platz: null, logik: null },
+    { id: 'bienenkoenigin', name: 'Die Bienenkönigin', koenig: 'bienenkoenigin', platz: null, logik: null },
+    { id: 'narrenkoenig', name: 'Der Narrenkönig', koenig: 'narrenkoenig', platz: null, logik: null },
+    { id: 'fuerstpfauenpracht', name: 'Fürst Pfauenpracht', koenig: 'fuerstpfauenpracht', platz: null, logik: null },
     { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: 4, logik: 'meisterglutfaust', nr: 7 } // Belohnung: Schmiede (daten/freischalten.js)
   ];
   // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer; nur für die alte Speicherung in spieler.story, seit 20.11. steht die Liste in spieler.besiegt ohne Grenze).
@@ -1414,11 +1432,12 @@
       belfry: { besiegt: 'baerenfuerst' }, // Belohnung für den Bärenfürsten (Story-Platz 18, braucht ein Konto)
       raeuber: { besiegt: 'herzognebelwald' }, // Belohnung für Herzog Nebelwald (Story-Platz 19, braucht ein Konto)
       buerger: { besiegt: 'haendlerfuerstgoldsand' }, // Belohnung für Händlerfürst Goldsand (Story-Platz 20, braucht ein Konto)
+      wache: { besiegt: 'wachtmeisterineulenauge' }, // Belohnung für Wachtmeisterin Eulenauge (Story-Platz 21, braucht ein Konto)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
     // gegner = Regeln für einzelne Gegner, z. B. { feldherr: { konto: true } } (zusätzlich zur Reihenfolge: zuerst den Gegner davor besiegen)
-    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true }, haendlerfuerstgoldsand: { konto: true } } },
+    story: { kontoAb: '', gegner: { kaiseringoldfeder: { konto: true }, drachenkoenig: { konto: true }, loewenherz: { konto: true }, waldkoenig: { konto: true }, strohkoenig: { konto: true }, wolfsjarl: { konto: true }, fuerstbischofgerold: { konto: true }, koenigrotbart: { konto: true }, jungkoenig: { konto: true }, zarinfrostmantel: { konto: true }, steinmetzbrocken: { konto: true }, graefineisenhand: { konto: true }, baerenfuerst: { konto: true }, herzognebelwald: { konto: true }, haendlerfuerstgoldsand: { konto: true }, wachtmeisterineulenauge: { konto: true } } },
     // für alle frei (seit 20.11. 13:04): Mauer und die Karten aus dem Tutorial; alle anderen Karten brauchen einen Eintrag oben (Bot-Belohnung, Freunde ...)
     frei: ['wall', 'farmer', 'spear', 'archer', 'rider', 'knight', 'ram'],
     // Edelsteine (22.11., Währung für den Shop, nur mit Konto; der Server rechnet): Online-Partie Sieg / Niederlage (auch Unentschieden),
@@ -1448,7 +1467,7 @@
   canvas.height = H * T;
 
   var simRand = Math.random; // im Online-Modus: gemeinsamer Zufallsgenerator mit festem Startwert
-  var VERSION = 'a2dcc95855'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
+  var VERSION = '08af63aa38'; // wird beim Bauen durch eine Kennung des Spielcodes ersetzt (Online: alter Stand -> Seite neu laden)
   var ONLINE = /*ONLINE*/false; // der Server schaltet das auf true (nur die gehostete Seite hat Online-Spiel)
   // Kauf-Verzögerung (18.11.): eigene Käufe reagieren sofort (Ton, Gold weg, Knopf drückt sich ein), die Einheit (auch die Arbeiter der Mauer) kommt nach DEPLOY s heraus.
   // Offline: Kauf wird nach DEPLOY s (Echtzeit, nur während das Spiel läuft) ausgeführt; online: bis der Befehl im Lockstep ausgeführt wird (PVP_DELAY Schritte).
@@ -1769,6 +1788,8 @@
     if (m === 'flicken') { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(-r * 0.95, -r * 0.55, r * 0.35, r * 0.3); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(-r * 0.7, r * 0.2, r * 0.3, r * 0.35); }
     if (m === 'muenzen') { c.fillStyle = '#e5c04a'; for (i = 0; i < 6; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 2) * 0.5), r * (-0.6 + Math.floor(i / 2) * 0.6), r * 0.1, 0, 7); c.fill(); } }
     if (m === 'zacken') { c.beginPath(); for (i = 0; i <= 8; i++) c.lineTo(-r * 0.55 - (i % 2) * r * 0.25, -r + i * r * 0.25); c.stroke(); }
+    if (m === 'waben') { c.strokeStyle = 'rgba(255,230,140,0.5)'; c.lineWidth = Math.max(1, r * 0.05); var hs = r * 0.17; for (i = 0; i < 6; i++) for (j = -4; j <= 4; j++) { var hx = -r * 0.3 - i * hs * 1.5, hy = j * hs * 1.73 + (i % 2) * hs * 0.87; c.beginPath(); for (var q = 0; q < 6; q++) c.lineTo(hx + Math.cos(q * Math.PI / 3) * hs, hy + Math.sin(q * Math.PI / 3) * hs); c.closePath(); c.stroke(); } }
+    if (m === 'rauten') { c.fillStyle = 'rgba(255,255,255,0.32)'; var d = r * 0.26; for (i = 0; i < 6; i++) for (j = -3; j <= 3; j++) { var rx = -r * 0.25 - i * d, ry = j * d * 2 + (i % 2) * d; c.beginPath(); c.moveTo(rx, ry - d); c.lineTo(rx + d * 0.5, ry); c.lineTo(rx, ry + d); c.lineTo(rx - d * 0.5, ry); c.closePath(); c.fill(); } }
     if (m === 'schuppen') { c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; for (i = 0; i < 4; i++) for (j = -3; j <= 3; j++) { c.beginPath(); c.arc(-r * (0.3 + i * 0.28), r * j * 0.28 + (i % 2) * r * 0.14, r * 0.14, Math.PI * 0.5, Math.PI * 1.5); c.stroke(); } }
   }
   function kStern(c, x, y, s) { c.beginPath(); for (var i = 0; i < 10; i++) { var a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? s * 0.45 : s; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
@@ -1807,6 +1828,13 @@
     } else if (w === 'speer') {
       c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.2, r * 0.3); c.stroke();
       c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.moveTo(r * 3.8, r * 0.3); c.lineTo(r * 3.15, r * 0.05); c.lineTo(r * 3.15, r * 0.55); c.closePath(); c.fill(); c.stroke();
+      kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
+    } else if (w === 'hellebarde') { // Stange mit Spitze, Beil nach links und Haken nach rechts (wie die Wächter)
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.3, r * 0.3); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(r * 3.9, r * 0.3); c.lineTo(r * 3.25, r * 0.17); c.lineTo(r * 3.25, r * 0.43); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(r * 2.75, r * 0.24); c.quadraticCurveTo(r * 2.7, -r * 0.45, r * 3.05, -r * 0.55); c.quadraticCurveTo(r * 3.35, -r * 0.2, r * 3.25, r * 0.24); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(r * 2.9, r * 0.36); c.lineTo(r * 2.72, r * 0.75); c.lineTo(r * 3.1, r * 0.36); c.closePath(); c.fill(); c.stroke();
       kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
     } else if (w === 'zepter') {
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.18); c.beginPath(); c.moveTo(r * 0.3, r * 0.15); c.lineTo(r * 1.9, r * 0.15); c.stroke();
@@ -1849,6 +1877,52 @@
     else if (t === 'pilz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; [[0, 0, 0.14], [0.35, -0.3, 0.1], [-0.3, 0.32, 0.12], [0.3, 0.35, 0.09], [-0.35, -0.3, 0.1]].forEach(function (p) { c.beginPath(); c.arc(cx + p[0] * r, p[1] * r, p[2] * r, 0, 7); c.fill(); }); }
     else if (t === 'strohhut') { c.fillStyle = f; c.strokeStyle = 'rgba(120,80,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.75, 0, 7); c.fill(); c.stroke(); c.strokeStyle = 'rgba(150,100,30,0.45)'; c.lineWidth = 1; for (i = 0; i < 12; i++) { a = i / 12 * 7; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42); c.lineTo(cx + Math.cos(a) * r * 0.74, Math.sin(a) * r * 0.74); c.stroke(); } c.fillStyle = '#d9b14a'; c.beginPath(); c.arc(cx, 0, r * 0.4, 0, 7); c.fill(); c.strokeStyle = '#a0402a'; c.lineWidth = r * 0.09; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); }
     else if (t === 'topf') { kugel(f, 0.46); c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(cx - r * 0.12, -r * 0.12, r * 0.15, 0, 7); c.fill(); c.strokeStyle = '#4a4f54'; c.lineWidth = r * 0.12; c.beginPath(); c.moveTo(cx - r * 0.05, -r * 0.45); c.lineTo(cx - r * 0.05, -r * 0.8); c.stroke(); c.fillStyle = '#4a4f54'; c.beginPath(); c.arc(cx, 0, r * 0.08, 0, 7); c.fill(); }
+    else if (t === 'eule') { // Eulenhelm: Federohren hinten, grosse gelbe Augen und Schnabel vorn
+      c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5;
+      [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx - r * 0.05, s * r * 0.3); c.lineTo(cx - r * 0.4, s * r * 0.66); c.lineTo(cx - r * 0.32, s * r * 0.18); c.closePath(); c.fill(); c.stroke(); });
+      kugel(f, 0.45); c.fillStyle = 'rgba(255,255,255,0.16)'; c.beginPath(); c.arc(cx - r * 0.12, 0, r * 0.24, 0, 7); c.fill();
+      [-1, 1].forEach(function (s) { c.fillStyle = '#f2c230'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; c.beginPath(); c.arc(cx + r * 0.24, s * r * 0.16, r * 0.12, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#1b1b1b'; c.beginPath(); c.arc(cx + r * 0.28, s * r * 0.16, r * 0.055, 0, 7); c.fill(); });
+      c.fillStyle = '#d9822b'; c.beginPath(); c.moveTo(cx + r * 0.52, 0); c.lineTo(cx + r * 0.37, -r * 0.06); c.lineTo(cx + r * 0.37, r * 0.06); c.closePath(); c.fill();
+    }
+    else if (t === 'kerzen') { // Goldreif mit brennenden Kerzen
+      ring(f, 0.12);
+      for (i = 0; i < 6; i++) { a = i / 6 * Math.PI * 2 + 0.5; var kx = cx + Math.cos(a) * r * 0.36, ky = Math.sin(a) * r * 0.36;
+        c.fillStyle = 'rgba(255,170,40,0.3)'; c.beginPath(); c.arc(kx, ky, r * 0.18, 0, 7); c.fill();
+        c.fillStyle = '#f4efe0'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1; c.beginPath(); c.arc(kx, ky, r * 0.1, 0, 7); c.fill(); c.stroke();
+        c.fillStyle = '#ffb52e'; c.beginPath(); c.arc(kx, ky, r * 0.055, 0, 7); c.fill(); c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(kx, ky, r * 0.025, 0, 7); c.fill(); }
+    }
+    else if (t === 'bienenkorb') { // Strohkorb (Ringe von oben) mit drei Bienen
+      kugel(f, 0.52); c.strokeStyle = 'rgba(120,80,20,0.5)'; c.lineWidth = Math.max(1, r * 0.05);
+      for (i = 1; i <= 4; i++) { c.beginPath(); c.arc(cx - r * 0.02, 0, r * 0.12 * i, 0, 7); c.stroke(); }
+      c.fillStyle = '#3a2a14'; c.beginPath(); c.arc(cx - r * 0.02, 0, r * 0.06, 0, 7); c.fill();
+      [[0.55, -0.58, 0.5], [-0.45, 0.66, -0.8], [0.62, 0.52, 2.2]].forEach(function (p) {
+        c.save(); c.translate(cx + p[0] * r, p[1] * r); c.rotate(p[2]);
+        c.fillStyle = 'rgba(255,255,255,0.75)'; [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(-r * 0.02, s * r * 0.08, r * 0.06, r * 0.04, s * 0.5, 0, 7); c.fill(); });
+        c.fillStyle = '#f2c230'; c.beginPath(); c.ellipse(0, 0, r * 0.11, r * 0.065, 0, 0, 7); c.fill();
+        c.strokeStyle = '#1b1b1b'; c.lineWidth = Math.max(1, r * 0.035); [-0.03, 0.04].forEach(function (x) { c.beginPath(); c.moveTo(x * r, -r * 0.06); c.lineTo(x * r, r * 0.06); c.stroke(); });
+        c.restore();
+      });
+    }
+    else if (t === 'narrenkappe') { // Narrenkappe: drei Zipfel nach hinten (Farbe und Umhangfarbe) mit goldenen Schellen
+      var nf = [f, k.umhang === 'team' ? '#f1ece0' : k.umhang, f];
+      [Math.PI * 0.62, Math.PI, Math.PI * 1.38].forEach(function (a2, j) {
+        var ex = cx + Math.cos(a2) * r * 0.95, ey = Math.sin(a2) * r * 0.95;
+        c.fillStyle = nf[j]; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath();
+        c.moveTo(cx + Math.cos(a2 - 0.7) * r * 0.38, Math.sin(a2 - 0.7) * r * 0.38);
+        c.quadraticCurveTo(cx + Math.cos(a2 - 0.25) * r * 0.8, Math.sin(a2 - 0.25) * r * 0.8, ex, ey);
+        c.quadraticCurveTo(cx + Math.cos(a2 + 0.25) * r * 0.8, Math.sin(a2 + 0.25) * r * 0.8, cx + Math.cos(a2 + 0.7) * r * 0.38, Math.sin(a2 + 0.7) * r * 0.38);
+        c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#e8b830'; c.beginPath(); c.arc(ex, ey, r * 0.1, 0, 7); c.fill(); c.stroke();
+      });
+      kugel(f, 0.44); c.strokeStyle = '#e8b830'; c.lineWidth = r * 0.08; c.beginPath(); c.arc(cx, 0, r * 0.4, -1.3, 1.3); c.stroke();
+    }
+    else if (t === 'pfau') { // Pfauenfedern als Fächer hinter dem Kopf, schmaler Goldreif
+      for (i = 0; i < 7; i++) { a = Math.PI + (i - 3) * 0.32;
+        c.fillStyle = '#1f7a6a'; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85, r * 0.4, r * 0.12, a, 0, 7); c.fill();
+        var ox = cx + Math.cos(a) * r * 1.1, oy = Math.sin(a) * r * 1.1;
+        c.fillStyle = '#2a8ad0'; c.beginPath(); c.arc(ox, oy, r * 0.13, 0, 7); c.fill(); c.fillStyle = '#e8b830'; c.beginPath(); c.arc(ox, oy, r * 0.08, 0, 7); c.fill(); c.fillStyle = '#1a2a6a'; c.beginPath(); c.arc(ox, oy, r * 0.045, 0, 7); c.fill(); }
+      ring(f, 0.1); c.fillStyle = '#2a8ad0'; c.beginPath(); c.arc(cx + r * 0.38, 0, r * 0.08, 0, 7); c.fill();
+    }
     else if (t === 'dreispitz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx + r * 0.55, 0); c.lineTo(cx - r * 0.45, -r * 0.6); c.lineTo(cx - r * 0.45, r * 0.6); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.06; c.stroke(); }
   }
 
@@ -2525,10 +2599,13 @@
     var g = 0, i, u, ud;
     for (i = 0; i < units.length; i++) {
       u = units[i]; ud = CONFIG.units[u.type];
-      if (u.team === team && u.hp > 0 && !ud.passive && !ud.worker && !ud.king && !(team === 0 && u.dig) && !(noTower && u.tower)) g += ud.cost || 0;
+      if (u.team === team && u.hp > 0 && !ud.passive && !ud.worker && !ud.king && !(team === 0 && u.dig) && !(noTower && u.tower)) g += u.wache ? (team === 1 ? wacheGold(u.wache) : 0) : ud.cost || 0;
+      else if (team === 1 && u.team === 1 && u.hp > 0 && ud.gebaeude && ud.gebaeude.art === 'wache' && u.drin) g += u.drin * wacheGold(u); // Wächter im Wachposten
     }
     return g;
   }
+  // Wert eines eigenen Wächters für die Verteidigung (28.11.): je Stufe seines Wachpostens CONFIG.AI.wacheGold (6 / 13 / 24 Gold)
+  function wacheGold(g) { var W = CONFIG.AI.wacheGold || []; return g.stufe >= 1 ? W[Math.min(g.stufe, W.length) - 1] || 0 : 0; }
   function aiRoll() {
     ai.think = 1.2;
     ai.leadT = 0;
@@ -2573,7 +2650,7 @@
     var free = ai.defCool <= 0;
 
     // Verteidigung (26.11., alle Bots): wird etwas angegriffen, vergleicht er den Goldwert (CONFIG.units[..].cost) deiner Kampfeinheiten auf dem Feld (ohne Türme)
-    // mit dem seiner Turmbesatzung plus seiner Kampfeinheiten auf dem Feld und kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens die Differenz kosten
+    // mit dem seiner Turmbesatzung plus seiner Kampfeinheiten auf dem Feld (dazu seine Wächter draussen und im Wachposten, CONFIG.AI.wacheGold) und kauft zufällige Einheiten aus defPool, bis sie zusammen mindestens die Differenz kosten
     // (höchstens defMaxGold Gold pro Verteidigung, ohne Angabe unbegrenzt); danach noOutput Sekunden keine Einheiten
     // (gilt für alle Gegner) auch ohne Angriff: stehen mindestens 2 gegnerische Einheiten in seiner Hälfte und hat der Gegner insgesamt mehr Einheiten (ohne Turmbesatzung) als er (mit Turmbesatzung)
     var invaded = countEnemiesInMyHalf() >= 2 && countFighters(0, true) > countFighters(1, false);

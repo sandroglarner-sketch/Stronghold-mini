@@ -41,6 +41,12 @@
     { id: 'haendlerfuerstgoldsand', name: 'Händlerfürst Goldsand', koenig: 'haendlerfuerstgoldsand', platz: 20, logik: 'haendlerfuerstgoldsand', nr: 24 }, // seit 27.11., braucht ein Konto (Belohnung: Bürger)
     { id: 'abtglockenklang', name: 'Abt Glockenklang', koenig: 'abtglockenklang', platz: null, logik: null }, // (Kirche)
     { id: 'steinmetzbrocken', name: 'Steinmetz Brocken', koenig: 'steinmetzbrocken', platz: 14, logik: 'steinmetzbrocken', nr: 18 }, // seit 21.11. 14:07, braucht ein Konto // (Onager)
+    // neue Bots (28.11.), noch ohne Logik
+    { id: 'wachtmeisterineulenauge', name: 'Wachtmeisterin Eulenauge', koenig: 'wachtmeisterineulenauge', platz: 21, logik: 'wachtmeisterineulenauge', nr: 25 }, // seit 28.11., braucht ein Konto (Belohnung: Wachposten)
+    { id: 'kerzenfuerst', name: 'Der Kerzenfürst', koenig: 'kerzenfuerst', platz: null, logik: null },
+    { id: 'bienenkoenigin', name: 'Die Bienenkönigin', koenig: 'bienenkoenigin', platz: null, logik: null },
+    { id: 'narrenkoenig', name: 'Der Narrenkönig', koenig: 'narrenkoenig', platz: null, logik: null },
+    { id: 'fuerstpfauenpracht', name: 'Fürst Pfauenpracht', koenig: 'fuerstpfauenpracht', platz: null, logik: null },
     { id: 'meisterglutfaust', name: 'Meister Glutfaust', koenig: 'meisterglutfaust', platz: 4, logik: 'meisterglutfaust', nr: 7 } // Belohnung: Schmiede (daten/freischalten.js)
   ];
   // Story-Fortschritt = WELCHE Gegner besiegt sind (nicht wie viele). nr = feste Nummer zum Speichern (nie ändern, neue Story-Bots bekommen die nächste freie Nummer; nur für die alte Speicherung in spieler.story, seit 20.11. steht die Liste in spieler.besiegt ohne Grenze).

@@ -183,6 +183,8 @@
     if (m === 'flicken') { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(-r * 0.95, -r * 0.55, r * 0.35, r * 0.3); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(-r * 0.7, r * 0.2, r * 0.3, r * 0.35); }
     if (m === 'muenzen') { c.fillStyle = '#e5c04a'; for (i = 0; i < 6; i++) { c.beginPath(); c.arc(-r * (0.4 + (i % 2) * 0.5), r * (-0.6 + Math.floor(i / 2) * 0.6), r * 0.1, 0, 7); c.fill(); } }
     if (m === 'zacken') { c.beginPath(); for (i = 0; i <= 8; i++) c.lineTo(-r * 0.55 - (i % 2) * r * 0.25, -r + i * r * 0.25); c.stroke(); }
+    if (m === 'waben') { c.strokeStyle = 'rgba(255,230,140,0.5)'; c.lineWidth = Math.max(1, r * 0.05); var hs = r * 0.17; for (i = 0; i < 6; i++) for (j = -4; j <= 4; j++) { var hx = -r * 0.3 - i * hs * 1.5, hy = j * hs * 1.73 + (i % 2) * hs * 0.87; c.beginPath(); for (var q = 0; q < 6; q++) c.lineTo(hx + Math.cos(q * Math.PI / 3) * hs, hy + Math.sin(q * Math.PI / 3) * hs); c.closePath(); c.stroke(); } }
+    if (m === 'rauten') { c.fillStyle = 'rgba(255,255,255,0.32)'; var d = r * 0.26; for (i = 0; i < 6; i++) for (j = -3; j <= 3; j++) { var rx = -r * 0.25 - i * d, ry = j * d * 2 + (i % 2) * d; c.beginPath(); c.moveTo(rx, ry - d); c.lineTo(rx + d * 0.5, ry); c.lineTo(rx, ry + d); c.lineTo(rx - d * 0.5, ry); c.closePath(); c.fill(); } }
     if (m === 'schuppen') { c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; for (i = 0; i < 4; i++) for (j = -3; j <= 3; j++) { c.beginPath(); c.arc(-r * (0.3 + i * 0.28), r * j * 0.28 + (i % 2) * r * 0.14, r * 0.14, Math.PI * 0.5, Math.PI * 1.5); c.stroke(); } }
   }
   function kStern(c, x, y, s) { c.beginPath(); for (var i = 0; i < 10; i++) { var a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? s * 0.45 : s; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
@@ -221,6 +223,13 @@
     } else if (w === 'speer') {
       c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.2, r * 0.3); c.stroke();
       c.fillStyle = k.wf; c.strokeStyle = s; c.beginPath(); c.moveTo(r * 3.8, r * 0.3); c.lineTo(r * 3.15, r * 0.05); c.lineTo(r * 3.15, r * 0.55); c.closePath(); c.fill(); c.stroke();
+      kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
+    } else if (w === 'hellebarde') { // Stange mit Spitze, Beil nach links und Haken nach rechts (wie die Wächter)
+      c.strokeStyle = '#6b4520'; c.lineWidth = Math.max(2.5, r * 0.16); c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 3.3, r * 0.3); c.stroke();
+      c.fillStyle = k.wf; c.strokeStyle = s; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(r * 3.9, r * 0.3); c.lineTo(r * 3.25, r * 0.17); c.lineTo(r * 3.25, r * 0.43); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(r * 2.75, r * 0.24); c.quadraticCurveTo(r * 2.7, -r * 0.45, r * 3.05, -r * 0.55); c.quadraticCurveTo(r * 3.35, -r * 0.2, r * 3.25, r * 0.24); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(r * 2.9, r * 0.36); c.lineTo(r * 2.72, r * 0.75); c.lineTo(r * 3.1, r * 0.36); c.closePath(); c.fill(); c.stroke();
       kHand(c, r * 0.5, r * 0.3, r, k.haut); kHand(c, r * 1.0, r * 0.3, r, k.haut);
     } else if (w === 'zepter') {
       c.strokeStyle = '#d4a017'; c.lineWidth = Math.max(3, r * 0.18); c.beginPath(); c.moveTo(r * 0.3, r * 0.15); c.lineTo(r * 1.9, r * 0.15); c.stroke();
@@ -263,6 +272,52 @@
     else if (t === 'pilz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; [[0, 0, 0.14], [0.35, -0.3, 0.1], [-0.3, 0.32, 0.12], [0.3, 0.35, 0.09], [-0.35, -0.3, 0.1]].forEach(function (p) { c.beginPath(); c.arc(cx + p[0] * r, p[1] * r, p[2] * r, 0, 7); c.fill(); }); }
     else if (t === 'strohhut') { c.fillStyle = f; c.strokeStyle = 'rgba(120,80,20,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, 0, r * 0.75, 0, 7); c.fill(); c.stroke(); c.strokeStyle = 'rgba(150,100,30,0.45)'; c.lineWidth = 1; for (i = 0; i < 12; i++) { a = i / 12 * 7; c.beginPath(); c.moveTo(cx + Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42); c.lineTo(cx + Math.cos(a) * r * 0.74, Math.sin(a) * r * 0.74); c.stroke(); } c.fillStyle = '#d9b14a'; c.beginPath(); c.arc(cx, 0, r * 0.4, 0, 7); c.fill(); c.strokeStyle = '#a0402a'; c.lineWidth = r * 0.09; c.beginPath(); c.arc(cx, 0, r * 0.42, 0, 7); c.stroke(); }
     else if (t === 'topf') { kugel(f, 0.46); c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(cx - r * 0.12, -r * 0.12, r * 0.15, 0, 7); c.fill(); c.strokeStyle = '#4a4f54'; c.lineWidth = r * 0.12; c.beginPath(); c.moveTo(cx - r * 0.05, -r * 0.45); c.lineTo(cx - r * 0.05, -r * 0.8); c.stroke(); c.fillStyle = '#4a4f54'; c.beginPath(); c.arc(cx, 0, r * 0.08, 0, 7); c.fill(); }
+    else if (t === 'eule') { // Eulenhelm: Federohren hinten, grosse gelbe Augen und Schnabel vorn
+      c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5;
+      [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(cx - r * 0.05, s * r * 0.3); c.lineTo(cx - r * 0.4, s * r * 0.66); c.lineTo(cx - r * 0.32, s * r * 0.18); c.closePath(); c.fill(); c.stroke(); });
+      kugel(f, 0.45); c.fillStyle = 'rgba(255,255,255,0.16)'; c.beginPath(); c.arc(cx - r * 0.12, 0, r * 0.24, 0, 7); c.fill();
+      [-1, 1].forEach(function (s) { c.fillStyle = '#f2c230'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; c.beginPath(); c.arc(cx + r * 0.24, s * r * 0.16, r * 0.12, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#1b1b1b'; c.beginPath(); c.arc(cx + r * 0.28, s * r * 0.16, r * 0.055, 0, 7); c.fill(); });
+      c.fillStyle = '#d9822b'; c.beginPath(); c.moveTo(cx + r * 0.52, 0); c.lineTo(cx + r * 0.37, -r * 0.06); c.lineTo(cx + r * 0.37, r * 0.06); c.closePath(); c.fill();
+    }
+    else if (t === 'kerzen') { // Goldreif mit brennenden Kerzen
+      ring(f, 0.12);
+      for (i = 0; i < 6; i++) { a = i / 6 * Math.PI * 2 + 0.5; var kx = cx + Math.cos(a) * r * 0.36, ky = Math.sin(a) * r * 0.36;
+        c.fillStyle = 'rgba(255,170,40,0.3)'; c.beginPath(); c.arc(kx, ky, r * 0.18, 0, 7); c.fill();
+        c.fillStyle = '#f4efe0'; c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1; c.beginPath(); c.arc(kx, ky, r * 0.1, 0, 7); c.fill(); c.stroke();
+        c.fillStyle = '#ffb52e'; c.beginPath(); c.arc(kx, ky, r * 0.055, 0, 7); c.fill(); c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(kx, ky, r * 0.025, 0, 7); c.fill(); }
+    }
+    else if (t === 'bienenkorb') { // Strohkorb (Ringe von oben) mit drei Bienen
+      kugel(f, 0.52); c.strokeStyle = 'rgba(120,80,20,0.5)'; c.lineWidth = Math.max(1, r * 0.05);
+      for (i = 1; i <= 4; i++) { c.beginPath(); c.arc(cx - r * 0.02, 0, r * 0.12 * i, 0, 7); c.stroke(); }
+      c.fillStyle = '#3a2a14'; c.beginPath(); c.arc(cx - r * 0.02, 0, r * 0.06, 0, 7); c.fill();
+      [[0.55, -0.58, 0.5], [-0.45, 0.66, -0.8], [0.62, 0.52, 2.2]].forEach(function (p) {
+        c.save(); c.translate(cx + p[0] * r, p[1] * r); c.rotate(p[2]);
+        c.fillStyle = 'rgba(255,255,255,0.75)'; [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(-r * 0.02, s * r * 0.08, r * 0.06, r * 0.04, s * 0.5, 0, 7); c.fill(); });
+        c.fillStyle = '#f2c230'; c.beginPath(); c.ellipse(0, 0, r * 0.11, r * 0.065, 0, 0, 7); c.fill();
+        c.strokeStyle = '#1b1b1b'; c.lineWidth = Math.max(1, r * 0.035); [-0.03, 0.04].forEach(function (x) { c.beginPath(); c.moveTo(x * r, -r * 0.06); c.lineTo(x * r, r * 0.06); c.stroke(); });
+        c.restore();
+      });
+    }
+    else if (t === 'narrenkappe') { // Narrenkappe: drei Zipfel nach hinten (Farbe und Umhangfarbe) mit goldenen Schellen
+      var nf = [f, k.umhang === 'team' ? '#f1ece0' : k.umhang, f];
+      [Math.PI * 0.62, Math.PI, Math.PI * 1.38].forEach(function (a2, j) {
+        var ex = cx + Math.cos(a2) * r * 0.95, ey = Math.sin(a2) * r * 0.95;
+        c.fillStyle = nf[j]; c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.5; c.beginPath();
+        c.moveTo(cx + Math.cos(a2 - 0.7) * r * 0.38, Math.sin(a2 - 0.7) * r * 0.38);
+        c.quadraticCurveTo(cx + Math.cos(a2 - 0.25) * r * 0.8, Math.sin(a2 - 0.25) * r * 0.8, ex, ey);
+        c.quadraticCurveTo(cx + Math.cos(a2 + 0.25) * r * 0.8, Math.sin(a2 + 0.25) * r * 0.8, cx + Math.cos(a2 + 0.7) * r * 0.38, Math.sin(a2 + 0.7) * r * 0.38);
+        c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#e8b830'; c.beginPath(); c.arc(ex, ey, r * 0.1, 0, 7); c.fill(); c.stroke();
+      });
+      kugel(f, 0.44); c.strokeStyle = '#e8b830'; c.lineWidth = r * 0.08; c.beginPath(); c.arc(cx, 0, r * 0.4, -1.3, 1.3); c.stroke();
+    }
+    else if (t === 'pfau') { // Pfauenfedern als Fächer hinter dem Kopf, schmaler Goldreif
+      for (i = 0; i < 7; i++) { a = Math.PI + (i - 3) * 0.32;
+        c.fillStyle = '#1f7a6a'; c.beginPath(); c.ellipse(cx + Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85, r * 0.4, r * 0.12, a, 0, 7); c.fill();
+        var ox = cx + Math.cos(a) * r * 1.1, oy = Math.sin(a) * r * 1.1;
+        c.fillStyle = '#2a8ad0'; c.beginPath(); c.arc(ox, oy, r * 0.13, 0, 7); c.fill(); c.fillStyle = '#e8b830'; c.beginPath(); c.arc(ox, oy, r * 0.08, 0, 7); c.fill(); c.fillStyle = '#1a2a6a'; c.beginPath(); c.arc(ox, oy, r * 0.045, 0, 7); c.fill(); }
+      ring(f, 0.1); c.fillStyle = '#2a8ad0'; c.beginPath(); c.arc(cx + r * 0.38, 0, r * 0.08, 0, 7); c.fill();
+    }
     else if (t === 'dreispitz') { c.fillStyle = f; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx + r * 0.55, 0); c.lineTo(cx - r * 0.45, -r * 0.6); c.lineTo(cx - r * 0.45, r * 0.6); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = '#d4a017'; c.lineWidth = r * 0.06; c.stroke(); }
   }
 

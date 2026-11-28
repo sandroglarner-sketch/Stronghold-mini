@@ -133,5 +133,11 @@
       // jagt mit 2 Reitern (5 s Vorsprung, alle 30 s), greift bei 150 Gold an (Welle 238: Trebuchet, 8 Speer, 6 Fackelwerfer, 4 Speer, 15 Leitern); verteidigt mit höchstens 60 Gold pro Welle, danach 5 s Sperre
       haendlerfuerstgoldsand: { income: 10, incomeEvery: 5, farmers: 10, karawanen: 2, buerger: 10, huntLead: 5, hunt: [['rider', 2]], huntEvery: 30, wallGold: 60, wallUnits: 0, wallStage: 5, turm: { archer: 6, trebuchet: 2 }, wallClear: true, attackGold: 150, lockSecs: 15,
                     attack: [{ after: 0, buy: [['trebuchet', 1]] }, { after: 3, buy: [['spear', 8]] }, { after: 4, buy: [['fackel', 6]] }, { after: 6, buy: [['spear', 4]] }, { after: 14, buy: [['ladder', 15]] }],
-                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 }
+                    defMaxGold: 60, defPool: ['archer', 'rider', 'fackel', 'raeuber'], noOutput: 5 },
+      // «Wachtmeisterin Eulenauge» (Story-Platz 21, braucht ein Konto, 28.11.): 12 Bauern und 4 Karawanen, Wachposten ab 30 Gold (Belohnung: Wachposten, baut bis Stufe 3 aus), Mauer bis Stufe 3 mit 4 Bogenschützen,
+      // jagt mit 2 Speerkämpfern (5 s Vorsprung, alle 40 s), 1 s später 2 Speerwerfer, greift bei 240 Gold an (Welle 360: Belagerungsschild, Belagerungsturm, Baliste, 2 Schwarze Ritter, 6 Speer, 6 Speerwerfer, 20 Leitern);
+      // verteidigt mit höchstens 85 Gold pro Welle, danach 5 s Sperre
+      wachtmeisterineulenauge: { income: 10, incomeEvery: 5, farmers: 12, karawanen: 4, gebaeude: [{ type: 'wache', gold: 30 }], huntLead: 5, hunt: [['spear', 2]], huntEvery: 40, huntLater: [{ after: 1, buy: [['javelin', 2]] }], wallGold: 60, wallUnits: 0, wallStage: 3, turm: { archer: 4 }, wallClear: true, attackGold: 240, lockSecs: 15,
+                    attack: [{ after: 0, buy: [['shield', 1]] }, { after: 3, buy: [['belfry', 1]] }, { after: 4, buy: [['baliste', 1]] }, { after: 5, buy: [['schwarzritter', 2]] }, { after: 8, buy: [['spear', 6]] }, { after: 9, buy: [['javelin', 6]] }, { after: 13, buy: [['ladder', 20]] }],
+                    defMaxGold: 85, defPool: ['schwarzritter', 'spear', 'javelin', 'baliste'], noOutput: 5 }
   };
