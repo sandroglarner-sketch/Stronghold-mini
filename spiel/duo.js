@@ -22,8 +22,8 @@
     duoKnoepfe();
   }
   function duoWahl() { // erstes Fenster: Partner wählen
+    if (tester) { duoLokal(); return; } // Tester (auch online): Duokampf gegen den Bot ohne Server
     if (!ONLINE) {
-      if (tester) { duoLokal(); return; }
       hinweis('Den Duokampf gibt es nur auf der Online-Seite (Render). Hier im Artifact fehlt der Server.');
       return;
     }

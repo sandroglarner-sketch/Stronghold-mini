@@ -6,6 +6,7 @@ Verlauf: `git log` (Commit-Nachrichten) bzw. Archiv `NOTIZEN.md` (bis 23.11.2026
 - Top-Down-Echtzeitstrategie im Browser, Canvas 1100×500, 22×10 Kacheln (T = 50). Sieg = gegnerischer König tot.
 - Online: https://stronghold-mini.onrender.com (Render Gratis, Frankfurt; schläft nach 15 min). Update = `index.html` auf GitHub, Render baut automatisch neu (laufende Partien brechen ab).
 - Konten/Datenbank: Supabase (`datenbank/schema.sql`, SQL Editor: https://supabase.com/dashboard/project/odxpdyrwtvgicntbjlrh/sql/new). Server schreibt mit `SUPABASE_SECRET_KEY` (nur Render-Umgebungsvariable).
+- Tester-Modus online (28.11.): nur für Konten, deren Supabase-Benutzer-ID in der Render-Variable `TESTER_IDS` steht (Server meldet `tester` in `/api/konto`). Dann: Sandbox, alles frei, Tester-Duokampf; Story-Siege zählen nicht, keine Partien gegen Menschen (Server sperrt). Im Artifact weiterhin für alle.
 - Statistik: GoatCounter, nur in der Online-`index.html`.
 - Duokampf (27.11.): 2 gegen 2 oder 2 gegen zufälligen Story-Bot (Menü unter dem Tutorial). Spieler 0/2 = Team blau/violett, 1/3 = rot/orange (`team = p % 2`, Einheit `pl`). Gold pro Spieler, Gebäude/Mauer pro Team, zwei Könige mit halbem Schaden, Rückkehr nach 15 s (`CONFIG.DUO`). Keine Belohnung (keine Edelsteine, keine Elo). Freunde können zuschauen. Client `spiel/duo.js`, Server-Abschnitt «Duokampf». Im Artifact nur im Tester-Modus (gegen Bot, Tab wechselt den Spieler).
 

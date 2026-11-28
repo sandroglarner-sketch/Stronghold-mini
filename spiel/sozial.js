@@ -134,6 +134,7 @@
     if (spielArt !== 'story' || w !== 0) return '';
     var g = STORY[storyIdx];
     if (!g || istBesiegt(g.id)) return '';
+    if (tester && ONLINE) return ' Tester-Modus: der Sieg zählt nicht.';
     if (!storySpeichern(g.id)) return ' Ohne Verbindung zum Server zählt der Sieg nicht. Bitte mit Verbindung nochmals spielen.';
     var karten = Object.keys(CONFIG.FREI.einheiten).filter(function (t) { return CONFIG.FREI.einheiten[t].besiegt === g.id && CONFIG.units[t] && !unitLocked(t); }); // Belohnung: Karte(n) für diesen Sieg
     ovKarten = karten; // showOverlay zeigt sie mit Bild
@@ -158,7 +159,7 @@
     var tk = konto.token || null;
     if (!force && tk === sozial.lastToken) return;
     sozial.lastToken = tk;
-    pvpSend({ k: 'hallo', token: tk, v: VERSION, koenig: meinKoenig() });
+    pvpSend({ k: 'hallo', token: tk, v: VERSION, koenig: meinKoenig(), tester: tester });
   }
   function sozialStatus(s, info) { if (ONLINE) pvpSend({ k: 'status', s: s, info: info || '' }); }
   function freundeHolen() { if (ONLINE && konto.user) pvpSend({ k: 'freunde' }); }
@@ -211,6 +212,7 @@
   $('freundForm').addEventListener('submit', function (e) { e.preventDefault(); var c = $('freundCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{6}$/.test(c)) { freundMsg('Der Code hat 6 Zeichen (Buchstaben und Zahlen).', true); return; } pvpSend({ k: 'freund', code: c }); $('freundCode').value = ''; });
   $('freundListe').addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-fordern],[data-schau],[data-duo]') : null; if (!b) return;
+    if (tester && !b.hasAttribute('data-schau')) { freundMsg(TESTER_SPERRE, true); return; }
     if (b.hasAttribute('data-duo')) { var dm = duoDatenNachricht('duo_fordern'); dm.an = b.getAttribute('data-duo'); pvpSend(dm); freundMsg('Einladung wird geschickt …'); }
     else if (b.hasAttribute('data-fordern')) { pvpSend({ k: 'fordern', an: b.getAttribute('data-fordern') }); freundMsg('Herausforderung wird geschickt …'); }
     else pvpSend({ k: 'zuschauen', id: b.getAttribute('data-schau') });
@@ -289,6 +291,7 @@
       if (m.plus > 0 && state === 'over' && !overlay.hidden && !overlay.classList.contains('menu')) { var ed = document.createElement('div'); ed.className = 'ovedelplus'; ed.innerHTML = '+' + m.plus + ' ' + EDEL_SVG + (m.plus === 1 ? ' Edelstein' : ' Edelsteine'); ovText.appendChild(ed); }
       return;
     }
+    if (m.k === 'testersperre') { pvp.searching = false; zeigeMenu(); hinweis(TESTER_SPERRE); return; }
     if (m.k === 'storysieg') { // Antwort auf die Prüfung eines Story-Siegs
       var oi = storyOffen.indexOf(m.id); if (oi >= 0) storyOffen.splice(oi, 1);
       if (m.ok && sozial.ich && Array.isArray(m.besiegt)) sozial.ich.besiegt = m.besiegt;
@@ -329,6 +332,7 @@
     if (m.k === 'forderung') {
       // Einladung erscheint immer, ausser du bist gerade in einem Spiel (Zuschauen zählt nicht) oder hast selbst eine Einladung verschickt
       var imSpiel = !pvp.zuschauer && (pvp.on || state === 'playing' || state === 'paused');
+      if (tester) { pvpSend({ k: 'antwort', id: m.id, ja: false }); hinweis(m.von.name + ' wollte gegen dich spielen. ' + TESTER_SPERRE); return; }
       if (imSpiel || sozial.forderungRaus) { pvpSend({ k: 'antwort', id: m.id, ja: false }); return; }
       if (sozial.forderungRein && sozial.forderungRein.id !== m.id) pvpSend({ k: 'antwort', id: sozial.forderungRein.id, ja: false }); // ältere Einladung wird ersetzt
       sozial.forderungRein = { id: m.id, von: m.von, duo: !!m.duo };
@@ -344,6 +348,7 @@
 
   var ovZumMenu = false; // Knopf im Ergebnisfenster führt ins Menü (nach dem Tutorial)
   var hinweisT = 0;
+  var TESTER_SPERRE = 'Im Tester-Modus gibt es keine Partien gegen echte Spieler. Schalte ihn oben aus.';
   function hinweis(t) { toast(t, false); clearTimeout(hinweisT); hinweisT = setTimeout(function () { if ($('toastKn').hidden) $('toast').hidden = true; }, 4500); }
   // Augensymbol über die Einheiten-Leiste schieben, damit es keine Karte verdeckt (die Leiste ragt unten halb ins Spielfeld)
   function augenPlatz() {

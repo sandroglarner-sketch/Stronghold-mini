@@ -49,6 +49,7 @@
   function pvpSearch() {
     if (neueVersion && neueVersion !== VERSION) { veraltet(neueVersion); }
     if (!ONLINE || pvp.on || pvp.searching) return;
+    if (tester) { hinweis(TESTER_SPERRE); return; }
     pvp.searching = true; pvp.ended = false; pvp.tries = 0;
     showOverlay('Suche Gegner …', 'Verbinde mit dem Server …', 'Abbrechen', false);
     if (pvp.ws && pvp.ws.readyState === 1) pvpQueue(); // schon verbunden (Anwesenheit): direkt in die Warteschlange
@@ -279,7 +280,7 @@
     simRand = mulberry32(bl.seed);
   }
   function blLos() {
-    if (!bl.on || duo.on || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return; // Duokampf (Tester, ohne Server): nicht zum Zuschauen melden
+    if (!bl.on || duo.on || tester || !ONLINE || !konto.user || !pvp.ws || pvp.ws.readyState !== 1) return; // Duokampf (Tester, ohne Server): nicht zum Zuschauen melden
     bl.live = true;
     var name = spielArt === 'story' && STORY[storyIdx] ? STORY[storyIdx].name : botEintrag(botType).name;
     pvpSend({ k: 'bstart', v: VERSION, seed: bl.seed, bot: botType, art: spielArt === 'story' ? 'story' : '', gegner: name, koenige: koenigTeam });
