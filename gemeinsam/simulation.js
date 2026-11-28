@@ -139,10 +139,10 @@
     return team === 0 ? e.x < W / 2 + hinter : e.x > W / 2 - hinter;
   }
   function wacheTuer(g) { var G = CONFIG.units[g.type].gebaeude; return { x: g.x, y: g.y + (g.ny || 1) * (G.h / 2 + 0.3) }; } // Tür: Vorderseite (zum Weg)
-  // Wachposten: zählt die Wächter darin (g.drin, zu Beginn 0), lässt bei Alarm einen nach dem anderen hinaus, bringt alle nach s einen neuen, bis anzahl erreicht sind, passt die Leben beim Ausbau an
+  // Wachposten: zählt die Wächter darin (g.drin, zu Beginn start), lässt bei Alarm einen nach dem anderen hinaus, bringt alle nach s einen neuen, bis anzahl erreicht sind, passt die Leben beim Ausbau an
   function wachposten(g, GD, dt) {
     var WG = GD.wache, i, o, raus = 0, alarm = false, mhp = GD.stufen[g.stufe - 1].waechterHp;
-    if (g.drin === undefined) { g.drin = 0; g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: noch leer, alle nach s kommt ein Wächter dazu
+    if (g.drin === undefined) { g.drin = Math.min(WG.start || 0, WG.anzahl); g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: start Wächter drin, alle nach s kommt einer dazu
     for (i = 0; i < units.length; i++) {
       o = units[i];
       if (!alarm && wacheFeind(g.team, o)) alarm = true;

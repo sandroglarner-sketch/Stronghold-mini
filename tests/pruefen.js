@@ -40,7 +40,7 @@ const TESTS = {
     if (c === d) return 'verschiedene Startwerte ergeben dieselbe Partie – der Test prüft nichts';
     return falsch.length ? 'Partie läuft je nach Math.random anders (online würden die Spieler auseinanderlaufen): ' + falsch.join(', ') : true;
   },
-  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; zu Beginn leer, alle 5 s ein Wächter; Ausbau': function (X) {
+  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; zu Beginn 1 Wächter, alle 5 s einer mehr; Ausbau': function (X) {
     X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing');
     try {
       if (!X.buy(0, 'wache')) return 'Kauf ging nicht';
@@ -48,13 +48,13 @@ const TESTS = {
       X.setState('ready');
       for (i = 0; i < 20 * 10 && g.bau; i++) X.upd(0.05);
       if (g.bau) return 'Bau wird nicht fertig';
-      X.upd(0.05); if (g.drin !== 0) return 'nach dem Bau nicht leer: ' + g.drin;
+      X.upd(0.05); if (g.drin !== 1) return 'nach dem Bau nicht 1 Wächter drin: ' + g.drin;
       for (i = 0; i < 20 * 5 - 3; i++) X.upd(0.05);
-      if (g.drin !== 0) return 'erster Wächter vor 5 s';
+      if (g.drin !== 1) return 'zweiter Wächter vor 5 s';
       for (i = 0; i < 4; i++) X.upd(0.05);
-      if (g.drin !== 1) return 'nach 5 s nicht 1 Wächter drin: ' + g.drin;
-      for (i = 0; i < 20 * 25 + 5; i++) X.upd(0.05);
-      if (g.drin !== 6) return 'nach 30 s nicht 6 Wächter drin: ' + g.drin;
+      if (g.drin !== 2) return 'nach 5 s nicht 2 Wächter drin: ' + g.drin;
+      for (i = 0; i < 20 * 20 + 5; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'nach 25 s nicht 6 Wächter drin: ' + g.drin;
       X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.x = 13; k.y = 5; // Gegner noch in seiner Hälfte
       for (i = 0; i < 20; i++) X.upd(0.05);
       if (w().length) return 'Wächter kommen heraus, obwohl kein Gegner über der Mitte ist';
