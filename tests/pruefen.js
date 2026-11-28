@@ -40,6 +40,80 @@ const TESTS = {
     if (c === d) return 'verschiedene Startwerte ergeben dieselbe Partie – der Test prüft nichts';
     return falsch.length ? 'Partie läuft je nach Math.random anders (online würden die Spieler auseinanderlaufen): ' + falsch.join(', ') : true;
   },
+  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; zu Beginn leer, alle 5 s ein Wächter; Ausbau': function (X) {
+    X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing');
+    try {
+      if (!X.buy(0, 'wache')) return 'Kauf ging nicht';
+      var g = X.units.filter(function (u) { return u.type === 'wache'; })[0], i, w = function () { return X.units.filter(function (u) { return u.type === 'waechter' && u.hp > 0; }); };
+      X.setState('ready');
+      for (i = 0; i < 20 * 10 && g.bau; i++) X.upd(0.05);
+      if (g.bau) return 'Bau wird nicht fertig';
+      X.upd(0.05); if (g.drin !== 0) return 'nach dem Bau nicht leer: ' + g.drin;
+      for (i = 0; i < 20 * 5 - 3; i++) X.upd(0.05);
+      if (g.drin !== 0) return 'erster Wächter vor 5 s';
+      for (i = 0; i < 4; i++) X.upd(0.05);
+      if (g.drin !== 1) return 'nach 5 s nicht 1 Wächter drin: ' + g.drin;
+      for (i = 0; i < 20 * 25 + 5; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'nach 30 s nicht 6 Wächter drin: ' + g.drin;
+      X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.x = 13; k.y = 5; // Gegner noch in seiner Hälfte
+      for (i = 0; i < 20; i++) X.upd(0.05);
+      if (w().length) return 'Wächter kommen heraus, obwohl kein Gegner über der Mitte ist';
+      k.x = 10.5; for (i = 0; i < 20 * 2; i++) X.upd(0.05);
+      if (w().length !== 6 || g.drin !== 0) return 'bei Alarm nicht alle 6 draussen: ' + w().length + ' draussen, ' + g.drin + ' drin';
+      if (w()[0].max !== 4) return 'Stufe 1: Wächter mit ' + w()[0].max + ' statt 4 Leben';
+      for (i = 0; i < 20 * 40 && k.hp > 0; i++) X.upd(0.05);
+      if (k.hp > 0) return 'Wächter besiegen den Ritter nicht';
+      for (i = 0; i < 20 * 20; i++) X.upd(0.05);
+      var tot = 6 - g.drin;
+      if (w().length) return 'Wächter gehen nicht zurück (' + w().length + ' draussen)';
+      for (i = 0; i < 20 * 5 * tot + 20; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'Ersatz: nach ' + (5 * tot) + ' s erst ' + g.drin + ' Wächter drin';
+      X.setState('playing'); X.gold[0] = 500; X.buy(0, 'wache'); X.setState('ready');
+      for (i = 0; i < 20 * 8; i++) X.upd(0.05);
+      if (g.stufe !== 2) return 'Ausbau auf Stufe 2 nicht fertig';
+      X.spawn(1, 'spear'); k = X.units[X.units.length - 1]; k.x = 10; k.y = 5;
+      for (i = 0; i < 20; i++) X.upd(0.05);
+      if (!w().length || w()[0].max !== 12) return 'Stufe 2: Wächter nicht mit 12 Leben';
+      X.walls[0] = null; g.hp = 0; for (i = 0; i < 3; i++) X.upd(0.05);
+      return w().length ? 'Wachposten zerstört, Wächter leben noch' : true;
+    } finally { X.setState('ready'); }
+  },
+  'Wachposten: Wächter greifen bis 1 Kachel hinter der Mitte an (Gegner höchstens 3 Kacheln entfernt), kommen dafür aber nicht heraus': function (X) {
+    X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing'); X.buy(0, 'wache'); X.setState('ready');
+    var g = X.units.filter(function (u) { return u.type === 'wache'; })[0], i, w = function () { return X.units.filter(function (u) { return u.type === 'waechter' && u.hp > 0; }); };
+    for (i = 0; i < 20 * 40; i++) X.upd(0.05);
+    if (g.drin !== 6) return 'nicht 6 Wächter drin';
+    X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.dummy = true; k.hp = k.max = 999; k.x = 11.6; k.y = 5;
+    for (i = 0; i < 20 * 2; i++) X.upd(0.05);
+    if (w().length) return 'Wächter kommen heraus, obwohl der Gegner nur hinter der Mitte steht';
+    k.x = 10.5; for (i = 0; i < 20 * 12; i++) X.upd(0.05);
+    if (w().length !== 6 || k.hp >= 999) return 'Wächter greifen den Gegner in der eigenen Hälfte nicht an';
+    var vorn = w().sort(function (a, b) { return b.x - a.x; })[0]; k.x = 11.8; k.y = vorn.y;
+    if (k.x - vorn.x > 3) return 'vorderster Wächter zu weit hinten: ' + vorn.x;
+    var hp0 = k.hp; for (i = 0; i < 20 * 3; i++) X.upd(0.05);
+    if (!w().length || k.hp >= hp0) return 'Gegner knapp hinter der Mitte hinter der Mitte direkt vor den Wächtern wird nicht angegriffen';
+    if (w().some(function (u) { return u.x > 11; })) return 'Wächter gehen über die Mitte';
+    k.x = 11.8; k.y = vorn.y < 5 ? 9.6 : 0.4; hp0 = k.hp; for (i = 0; i < 20 * 20; i++) X.upd(0.05);
+    if (k.hp < hp0) return 'Gegner hinter der Mitte, weiter als 3 Kacheln entfernt, wird angegriffen';
+    return w().length ? 'Wächter gehen nicht zurück (' + w().length + ' draussen)' : true;
+  },
+  'Prinzessin: bekehrt den Belagerungsturm samt Schützen, nicht die Wächter': function (X) {
+    X.reset(); X.units.length = 0;
+    X.spawn(1, 'belfry'); var bt = X.units.filter(function (u) { return u.type === 'belfry'; })[0]; bt.x = 9; bt.y = 5;
+    X.units.forEach(function (u) { if (u.bf === bt) { u.x = 9; u.y = 5; } });
+    X.spawn(0, 'prinzessin'); var p = X.units[X.units.length - 1]; p.x = 6.5; p.y = 5; p.gar = null; p.tSpot = null;
+    for (var i = 0; i < 20 * 6 && bt.team === 1; i++) X.upd(0.05);
+    if (bt.team !== 0) return 'Belagerungsturm wurde nicht bekehrt';
+    var sch = X.units.filter(function (u) { return u.bf === bt && u.hp > 0; });
+    if (!sch.length || sch.some(function (u) { return u.team !== 0; })) return 'Schützen oben wechseln nicht mit';
+    if (!bt.goWall || bt.goWall.ox < 11) return 'Belagerungsturm fährt nicht zur anderen Mauer';
+    X.reset(); X.units.length = 0;
+    X.spawn(1, 'waechter'); var w = X.units[X.units.length - 1]; w.wache = { hp: 1, type: 'wache', x: 20, y: 2, ny: 1 }; w.x = 8; w.y = 5;
+    X.spawn(1, 'spear'); var sp = X.units[X.units.length - 1]; sp.x = 8; sp.y = 5.4;
+    X.spawn(0, 'prinzessin'); p = X.units[X.units.length - 1]; p.x = 6; p.y = 5.2; p.gar = null; p.tSpot = null;
+    for (i = 0; i < 20 * 6; i++) X.upd(0.05);
+    return w.team === 1 ? true : 'Wächter wurde bekehrt';
+  },
   'Onager: 20 Direktschaden + 1 Flächenschaden an der Mauer': function (X) {
     X.reset(); X.units.length = 0;
     X.walls[1] = { team: 1, hp: 120, built: true, hit: 0, lastHit: -99, stage: 3, peak: 120 };
