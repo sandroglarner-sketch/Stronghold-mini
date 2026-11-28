@@ -36,6 +36,7 @@
       belfry: { besiegt: 'baerenfuerst' }, // Belohnung für den Bärenfürsten (Story-Platz 18, braucht ein Konto)
       raeuber: { besiegt: 'herzognebelwald' }, // Belohnung für Herzog Nebelwald (Story-Platz 19, braucht ein Konto)
       buerger: { besiegt: 'haendlerfuerstgoldsand' }, // Belohnung für Händlerfürst Goldsand (Story-Platz 20, braucht ein Konto)
+      wache: { besiegt: 'wachtmeisterineulenauge' }, // Belohnung für Wachtmeisterin Eulenauge (noch ohne Story-Platz und Logik, bis dahin nur im Tester-Modus)
       brand: { besiegt: 'strohkoenig' } // Belohnung für den Strohkönig (Story-Platz 7, braucht ein Konto)
     },
     // Story-Modus: kontoAb = ab diesem Gegner (bot-id, inklusive) braucht jeder weitere Gegner ein Konto ('' = nie);
