@@ -40,6 +40,37 @@ const TESTS = {
     if (c === d) return 'verschiedene Startwerte ergeben dieselbe Partie – der Test prüft nichts';
     return falsch.length ? 'Partie läuft je nach Math.random anders (online würden die Spieler auseinanderlaufen): ' + falsch.join(', ') : true;
   },
+  'Wachposten: 6 Wächter kommen bei Gegnern über der Mitte heraus, greifen an, kehren zurück; Ersatz nach 10 s; Ausbau': function (X) {
+    X.reset(); X.units.length = 0; X.gold[0] = 500; X.setState('playing');
+    try {
+      if (!X.buy(0, 'wache')) return 'Kauf ging nicht';
+      var g = X.units.filter(function (u) { return u.type === 'wache'; })[0], i, w = function () { return X.units.filter(function (u) { return u.type === 'waechter' && u.hp > 0; }); };
+      X.setState('ready');
+      for (i = 0; i < 20 * 8; i++) X.upd(0.05);
+      if (g.bau || g.drin !== 6) return 'nach dem Bau nicht 6 Wächter drin: ' + g.drin;
+      X.spawn(1, 'knight'); var k = X.units[X.units.length - 1]; k.x = 13; k.y = 5; // Gegner noch in seiner Hälfte
+      for (i = 0; i < 20; i++) X.upd(0.05);
+      if (w().length) return 'Wächter kommen heraus, obwohl kein Gegner über der Mitte ist';
+      k.x = 10.5; for (i = 0; i < 20 * 2; i++) X.upd(0.05);
+      if (w().length !== 6 || g.drin !== 0) return 'bei Alarm nicht alle 6 draussen: ' + w().length + ' draussen, ' + g.drin + ' drin';
+      if (w()[0].max !== 4) return 'Stufe 1: Wächter mit ' + w()[0].max + ' statt 4 Leben';
+      for (i = 0; i < 20 * 40 && k.hp > 0; i++) X.upd(0.05);
+      if (k.hp > 0) return 'Wächter besiegen den Ritter nicht';
+      for (i = 0; i < 20 * 20; i++) X.upd(0.05);
+      var tot = 6 - g.drin;
+      if (w().length) return 'Wächter gehen nicht zurück (' + w().length + ' draussen)';
+      for (i = 0; i < 20 * 10 * tot + 20; i++) X.upd(0.05);
+      if (g.drin !== 6) return 'Ersatz: nach ' + (10 * tot) + ' s erst ' + g.drin + ' Wächter drin';
+      X.setState('playing'); X.gold[0] = 500; X.buy(0, 'wache'); X.setState('ready');
+      for (i = 0; i < 20 * 8; i++) X.upd(0.05);
+      if (g.stufe !== 2) return 'Ausbau auf Stufe 2 nicht fertig';
+      X.spawn(1, 'spear'); k = X.units[X.units.length - 1]; k.x = 10; k.y = 5;
+      for (i = 0; i < 20; i++) X.upd(0.05);
+      if (!w().length || w()[0].max !== 12) return 'Stufe 2: Wächter nicht mit 12 Leben';
+      X.walls[0] = null; g.hp = 0; for (i = 0; i < 3; i++) X.upd(0.05);
+      return w().length ? 'Wachposten zerstört, Wächter leben noch' : true;
+    } finally { X.setState('ready'); }
+  },
   'Onager: 20 Direktschaden + 1 Flächenschaden an der Mauer': function (X) {
     X.reset(); X.units.length = 0;
     X.walls[1] = { team: 1, hp: 120, built: true, hit: 0, lastHit: -99, stage: 3, peak: 120 };

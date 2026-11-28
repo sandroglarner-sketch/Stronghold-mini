@@ -17,7 +17,7 @@
   var GRAB = 0.8; // Sekunden: Bauer gräbt mit der Heugabel (zweimal zustechen)
   var ANIM = {
     spear: { wind: 0.3, after: 0.25 }, rider: { wind: 0.3, after: 0.25 }, knight: { wind: 0.32, after: 0.25 }, schwarzritter: { wind: 0.5, after: 0.45 }, prinzessin: { wind: 0.45, after: 0.6 }, raeuber: { wind: 0.22, after: 0.2 }, digger: { wind: 0.3, after: 0.25 },
-    javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
+    javelin: { wind: 0.35, after: 0.55 }, fackel: { wind: 0.35, after: 0.7 }, crossbow: { wind: 0.15, after: 1.2 }, trebuchet: { wind: 0.3, after: 2.3 }, sword: { wind: 0.32, after: 0.25 }, waechter: { wind: 0.3, after: 0.25 }, ladder: { wind: 0.32, after: 0.25 },
     king: { wind: 0.35, after: 0.3 }, kingbow: { wind: 0.45, after: 0.45 }, archer: { wind: 0.45, after: 0.45 }, feuerbogen: { wind: 0.45, after: 0.45 }, mage: { wind: 0.45, after: 0.45 },
     ram: { wind: 0.4, after: 0.3 }, catapult: { wind: 0.7, after: 1.25 }, onager: { wind: 0.5, after: 1.3 }, baliste: { wind: 0.15, after: 1.6 }
   };
@@ -69,6 +69,7 @@
     if (!a || at === undefined || at < -a.wind || at > a.after) return P0;
     var W = a.wind, F = a.after;
     if (type === 'spear') P0.off = swing(at, W, F, -0.5 * r, 0.75 * r);
+    else if (type === 'waechter') P0.off = swing(at, W, F, -0.45 * r, 0.7 * r); // Hellebarde: zurückziehen und zustossen
     else if (type === 'rider') { P0.off = swing(at, W, F, -0.45 * r, 0.8 * r); P0.lunge = swing(at, W, F, -0.1 * r, 0.2 * r); }
     else if (type === 'ram') P0.off = swing(at, W, F, -0.7 * r, 0.45 * r);
     else if (type === 'raeuber') { P0.off = swing(at, W, F, -0.3 * r, 0.45 * r); }
@@ -219,6 +220,32 @@
       c.beginPath(); c.moveTo(r * 2.35, r * 0.5); c.lineTo(r * 1.85, r * 0.22); c.lineTo(r * 1.85, r * 0.78); c.closePath(); c.fill();
       c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.35, r * 0.5, r * 0.15, 0, Math.PI * 2); c.fill(); // Hand
       c.restore();
+    } else if (type === 'waechter') {
+      // Wächter (Wachposten): Helm je Stufe des Wachpostens (settled.stufe): 1 brauner Lederhelm, 2 grauer Eisenhelm, 3 grosser Stahlhelm mit Krempe und Grat; Hellebarde
+      var wst = settled && typeof settled === 'object' && settled.stufe ? settled.stufe : 1;
+      c.save(); c.translate(A.off, 0); // Stoss mit der Hellebarde
+      c.strokeStyle = '#6b4a2a'; c.lineWidth = Math.max(2, r * 0.18);
+      c.beginPath(); c.moveTo(-r * 0.5, r * 0.55); c.lineTo(r * 2.25, r * 0.55); c.stroke(); // Schaft
+      c.fillStyle = '#c3cbd0'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(r * 2.65, r * 0.55); c.lineTo(r * 2.2, r * 0.42); c.lineTo(r * 2.2, r * 0.68); c.closePath(); c.fill(); c.stroke(); // Spitze
+      c.beginPath(); c.moveTo(r * 1.75, r * 0.6); c.quadraticCurveTo(r * 1.7, r * 1.15, r * 1.95, r * 1.3); c.quadraticCurveTo(r * 2.1, r * 0.95, r * 2.2, r * 0.6); c.closePath(); c.fill(); c.stroke(); // Beil
+      c.beginPath(); c.moveTo(r * 1.9, r * 0.5); c.lineTo(r * 1.78, r * 0.12); c.lineTo(r * 2.08, r * 0.5); c.closePath(); c.fill(); c.stroke(); // Haken
+      c.fillStyle = '#d9a066'; c.beginPath(); c.arc(r * 0.35, r * 0.55, r * 0.15, 0, Math.PI * 2); c.fill(); // Hand
+      c.restore();
+      if (wst >= 3) { // grosser Stahlhelm: breite Krempe, Grat, Glanz
+        c.fillStyle = '#9aa4aa'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.82, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#4f575c'; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
+        c.fillStyle = '#c9d2d7'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.58, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#6f787d'; c.lineWidth = 1; c.stroke();
+        c.strokeStyle = '#7f898e'; c.lineWidth = Math.max(1.5, r * 0.12); c.beginPath(); c.moveTo(-r * 0.6, 0); c.lineTo(r * 0.5, 0); c.stroke(); // Grat
+        c.fillStyle = 'rgba(255,255,255,0.4)'; c.beginPath(); c.arc(-r * 0.22, -r * 0.2, r * 0.16, 0, Math.PI * 2); c.fill();
+      } else if (wst === 2) { // grauer Eisenhelm
+        c.fillStyle = '#8d9399'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.6, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = '#5f666c'; c.lineWidth = Math.max(1.5, r * 0.1); c.stroke();
+        c.fillStyle = 'rgba(255,255,255,0.25)'; c.beginPath(); c.arc(-r * 0.2, -r * 0.15, r * 0.18, 0, Math.PI * 2); c.fill();
+      } else { // brauner Lederhelm
+        c.fillStyle = '#7a5530'; c.beginPath(); c.arc(-r * 0.05, 0, r * 0.55, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 1.5; c.stroke();
+        c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-r * 0.55, 0); c.lineTo(r * 0.45, 0); c.stroke(); // Naht
+      }
     } else if (type === 'ram') {
       // Rammbock von oben: Karren mit Rädern, Dach in Teamfarbe, Balken mit Eisenkopf
       c.fillStyle = '#5e3b18'; c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 2;
@@ -582,6 +609,46 @@
             if (hk < 0.15 && ph >= 0.75 && ph < 4.25) { c.fillStyle = '#ffd24a'; for (var fk = 0; fk < 4; fk++) { var fa = fk * 1.7 + now * 9; c.beginPath(); c.arc(ax + Math.cos(fa) * r * 0.3, ay + Math.sin(fa) * r * 0.3, r * 0.05, 0, Math.PI * 2); c.fill(); } } // Funken
           }
         }
+      }
+    } else if (type === 'wache') {
+      // Wachposten von oben: Holzhaus auf Steinsockel, Schindeldach, Wimpel in Teamfarbe, Hellebarden-Ständer an der Tür; Stufe 2 Steinecken, Stufe 3 Eisenbeschläge.
+      // Auf dem Dach: 6 Plätze, je ein Helm pro Wächter darin (leer = dunkler Platz), dazu die Zahl. Bei Alarm leuchtet ein roter Rand.
+      var WGd = CONFIG.units.wache.gebaeude, ww = r * WGd.w / CONFIG.units.wache.r, wh = r * WGd.h / CONFIG.units.wache.r;
+      var WZ = typeof settled === 'object' && settled ? settled : { bau: 1, stufe: 1, phase: -1, nx: 0, ny: 1, drin: WGd.wache.anzahl }, wnow = performance.now() / 1000, WL = Math.max(1, Math.min(3, WZ.stufe || 1));
+      var wdrin = WZ.drin === undefined ? WGd.wache.anzahl : WZ.drin; // Knopf/Buch: alle drin
+      c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, -ww / 2 + 3, -wh / 2 + 4, ww, wh, 3); c.fill();
+      if (WZ.neu && WZ.bau < 1) {
+        c.fillStyle = '#a89c86'; rr(c, -ww / 2, -wh / 2, ww, wh, 3); c.fill();
+        c.save(); c.beginPath(); c.rect(-ww / 2, -wh / 2, ww * WZ.bau, wh); c.clip(); c.fillStyle = '#7a5a3a'; rr(c, -ww / 2, -wh / 2, ww, wh, 3); c.fill(); c.restore();
+        c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -ww / 2, -wh / 2, ww, wh, 3); c.stroke(); c.setLineDash([]);
+        c.beginPath(); c.moveTo(-ww / 2, -wh / 2); c.lineTo(ww / 2, wh / 2); c.moveTo(-ww / 2, wh / 2); c.lineTo(ww / 2, -wh / 2); c.stroke();
+      } else {
+        var wx0 = -ww / 2, wy0 = -wh / 2, wb = r * 0.1;
+        c.fillStyle = '#8f877a'; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; rr(c, wx0 - wb, wy0 - wb, ww + 2 * wb, wh + 2 * wb, 3); c.fill(); c.stroke(); // Steinsockel
+        c.fillStyle = '#7a5a3a'; c.fillRect(wx0, wy0, ww, wh); // Schindeldach
+        c.strokeStyle = 'rgba(40,25,10,0.4)'; c.lineWidth = 1;
+        for (var wsy = 1; wsy < 6; wsy++) { c.beginPath(); c.moveTo(wx0, wy0 + wh * wsy / 6); c.lineTo(wx0 + ww, wy0 + wh * wsy / 6); c.stroke(); for (var wsx = (wsy % 2) ? 0.5 : 1; wsx < 5; wsx++) { c.beginPath(); c.moveTo(wx0 + ww * wsx / 5, wy0 + wh * (wsy - 1) / 6); c.lineTo(wx0 + ww * wsx / 5, wy0 + wh * wsy / 6); c.stroke(); } }
+        c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(wx0, 0, ww, wh / 2);
+        c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(2, r * 0.1); c.beginPath(); c.moveTo(wx0, 0); c.lineTo(wx0 + ww, 0); c.stroke(); // First
+        if (WL >= 2) { c.fillStyle = '#b7afa2'; c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { var es = r * 0.22; c.fillRect(q[0] * (ww / 2 + wb) - es / 2 - q[0] * es * 0.25, q[1] * (wh / 2 + wb) - es / 2 - q[1] * es * 0.25, es, es); c.strokeRect(q[0] * (ww / 2 + wb) - es / 2 - q[0] * es * 0.25, q[1] * (wh / 2 + wb) - es / 2 - q[1] * es * 0.25, es, es); }); } // Steinecken
+        if (WL >= 3) { c.strokeStyle = '#4b5257'; c.lineWidth = Math.max(2, r * 0.09); [wx0 + ww * 0.08, wx0 + ww * 0.92].forEach(function (bx) { c.beginPath(); c.moveTo(bx, wy0); c.lineTo(bx, wy0 + wh); c.stroke(); }); c.fillStyle = '#9aa4aa'; [wx0 + ww * 0.08, wx0 + ww * 0.92].forEach(function (bx) { [wy0 + wh * 0.2, wy0 + wh * 0.8].forEach(function (by) { c.beginPath(); c.arc(bx, by, r * 0.05, 0, Math.PI * 2); c.fill(); }); }); } // Eisenbeschläge
+        c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 2; c.strokeRect(wx0, wy0, ww, wh);
+        var wvx = WZ.nx || 0, wvy = WZ.ny === undefined ? 1 : WZ.ny, wext = Math.abs(wvx) * (ww / 2 + wb) + Math.abs(wvy) * (wh / 2 + wb);
+        c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(2, r * 0.08); c.beginPath(); c.moveTo(-ww * 0.42, wvy * (wext + r * 0.12)); c.lineTo(-ww * 0.2, wvy * (wext + r * 0.12)); c.stroke(); // Hellebarden-Ständer neben der Tür
+        c.strokeStyle = '#c3cbd0'; c.lineWidth = Math.max(1.5, r * 0.05); [-0.38, -0.31, -0.24].forEach(function (o) { c.beginPath(); c.moveTo(ww * o, wvy * (wext + r * 0.12)); c.lineTo(ww * o, wvy * (wext + r * 0.4)); c.stroke(); });
+        c.fillStyle = '#3a2a1a'; c.fillRect(-r * 0.16, wvy > 0 ? wh / 2 + wb - r * 0.06 : -wh / 2 - wb - r * 0.06, r * 0.32, r * 0.12); // Tür
+        c.strokeStyle = '#4e3620'; c.lineWidth = Math.max(1.5, r * 0.06); c.beginPath(); c.moveTo(ww / 2 - r * 0.12, -wvy * wh * 0.3); c.lineTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.55); c.stroke(); // Fahnenstange
+        var wfl = Math.sin(wnow * 4) * r * 0.05; c.fillStyle = col; c.beginPath(); c.moveTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.55); c.lineTo(ww / 2 + r * 0.3, -wvy * wh * 0.3 - wvy * r * 0.45 + wfl); c.lineTo(ww / 2 - r * 0.12, -wvy * wh * 0.3 - wvy * r * 0.3); c.closePath(); c.fill(); // Wimpel
+        if (WZ.bau < 1) { c.strokeStyle = '#7a5a34'; c.lineWidth = Math.max(1.5, r * 0.08); c.setLineDash([r * 0.25, r * 0.18]); rr(c, -ww / 2 - 4, -wh / 2 - 4, ww + 8, wh + 8, 4); c.stroke(); c.setLineDash([]); c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillRect(-ww / 2, -wh / 2 - 10, ww, 4); c.fillStyle = '#c98a12'; c.fillRect(-ww / 2, -wh / 2 - 10, ww * WZ.bau, 4); }
+        if (WZ.alarm) { c.strokeStyle = 'rgba(220,40,30,' + (0.5 + 0.4 * Math.sin(wnow * 8)) + ')'; c.lineWidth = 3; rr(c, wx0 - wb - 3, wy0 - wb - 3, ww + 2 * wb + 6, wh + 2 * wb + 6, 5); c.stroke(); }
+        // Wächter darin: 6 Plätze (3 × 2) auf dem Dach, Helm in der Farbe der Stufe
+        var wn = WGd.wache.anzahl, wpr = Math.max(2.5, r * 0.13), wcols = Math.ceil(wn / 2), wgx = ww * 0.62 / wcols, hcol = WL >= 3 ? '#c9d2d7' : WL === 2 ? '#8d9399' : '#8a6238';
+        for (var wi = 0; wi < wn; wi++) {
+          var wpx = -ww * 0.31 + wgx * (wi % wcols + 0.5) - r * 0.08, wpy = (wi < wcols ? -1 : 1) * wh * 0.2;
+          c.fillStyle = 'rgba(0,0,0,0.45)'; c.beginPath(); c.arc(wpx, wpy, wpr * 1.15, 0, Math.PI * 2); c.fill();
+          if (wi < wdrin) { c.fillStyle = col; c.beginPath(); c.arc(wpx, wpy, wpr, 0, Math.PI * 2); c.fill(); c.fillStyle = hcol; c.beginPath(); c.arc(wpx, wpy, wpr * (WL >= 3 ? 0.85 : 0.65), 0, Math.PI * 2); c.fill(); }
+        }
+        if (WZ.drin !== undefined) { c.font = 'bold ' + Math.max(9, Math.round(r * 0.42)) + 'px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.75)'; c.fillStyle = '#fff'; c.strokeText(String(wdrin), ww * 0.36, 0); c.fillText(String(wdrin), ww * 0.36, 0); } // Zahl
       }
     } else if (type === 'adel') {
       // Adelshaus von oben: Ziegeldach (Terrakotta) mit Rundturm (Kegeldach in Teamfarbe), Hecke und Banner vorne. Ein Adliger (violetter Mantel, Goldreif)

@@ -63,7 +63,7 @@
   // Deterministisch (feste Reihenfolge, Skalarprodukt statt Winkel).
   function bekehrbar(sv) { // kann die Prinzessin diese Einheit bekehren? (auch für ihre Zielwahl)
     var sd = CONFIG.units[sv.type];
-    if (!sd || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock) return false;
+    if (!sd || sv.hp <= 0 || sv.dig || sv.inCastle || sv.tower || sv.bf || sv.gar || sv.climb || sv.dock || sv.wache) return false; // Wächter gehören zu ihrem Wachposten
     return !(sv.type === 'king' || sv.type === 'worker' || sd.gebaeude || sd.cat === 'eco' || sd.cat === 'building' || sd.passive || sd.belfry);
   }
   function bekehrKegel(u, d, tx, ty) {
@@ -119,6 +119,65 @@
     if (s.type === 'baliste') effects.push({ kind: 'bolthit', x: cx, y: cy, ang: Math.atan2(cy - s.sy, cx - s.sx), t: 0, dur: 0.35 }); // Einschlag des Bolzens (nur Zeichnung)
     if (d.splash) applySplash(s.team, s.sx, s.sy, cx, cy, d, tgt, !!s.wall, aimBase);
     if (d.blast) applySplash(s.team, s.sx, s.sy, s.tx, s.ty, { atk: d.blast.atk, splash: d.blast.r, range: d.range }, null, false, false); // Onager: zusätzlich Flächenschaden um den Einschlagpunkt, trifft alles (auch die getroffene Mauer/Burg nochmals)
+  }
+
+  // ---------- Wachposten (28.11.) ----------
+  // Feind für die Wächter (löst den Alarm aus und ist ihr Ziel): sichtbare gegnerische Einheit in der eigenen Spielfeldhälfte,
+  // nicht Wirtschaft (Bauer, Holzfäller, Karawane, Bürger), Gebäude, Arbeiter, Turmbesatzung, Tunnelgräber unter der Erde, Einheiten in der Burg
+  function wacheFeind(team, e) {
+    var ed = CONFIG.units[e.type];
+    if (e.team === team || e.hp <= 0 || e.dig || e.inCastle || e.tower || e.bf || !ed || ed.passive || ed.worker || ed.gebaeude || unsichtbar(e)) return false;
+    return team === 0 ? e.x < W / 2 : e.x > W / 2;
+  }
+  function wacheTuer(g) { var G = CONFIG.units[g.type].gebaeude; return { x: g.x, y: g.y + (g.ny || 1) * (G.h / 2 + 0.3) }; } // Tür: Vorderseite (zum Weg)
+  // Wachposten: zählt die Wächter darin (g.drin), lässt bei Alarm einen nach dem anderen hinaus, ersetzt gefallene (alle nach s), passt die Leben beim Ausbau an
+  function wachposten(g, GD, dt) {
+    var WG = GD.wache, i, o, raus = 0, alarm = false, mhp = GD.stufen[g.stufe - 1].waechterHp;
+    if (g.drin === undefined) { g.drin = WG.anzahl; g.wStufe = g.stufe; g.nachT = 0; g.rausT = 0; } // fertig gebaut: alle Wächter sind drin
+    for (i = 0; i < units.length; i++) {
+      o = units[i];
+      if (!alarm && wacheFeind(g.team, o)) alarm = true;
+      if (o.wache === g && o.hp > 0) {
+        raus++;
+        if (g.wStufe !== g.stufe) { o.hp += mhp - o.max; o.max = mhp; o.settled = { stufe: g.stufe }; } // Ausbau fertig: Wächter draussen bekommen die neuen Leben dazu
+      }
+    }
+    g.wStufe = g.stufe; g.alarm = alarm;
+    if (g.drin + raus < WG.anzahl) { g.nachT += dt; if (g.nachT >= WG.nach) { g.nachT -= WG.nach; g.drin++; } } else g.nachT = 0; // Ersatz für Gefallene
+    if (alarm && g.drin > 0) {
+      g.rausT -= dt;
+      if (g.rausT <= 0) {
+        g.rausT = WG.raus; g.drin--;
+        var t = wacheTuer(g);
+        units.push({ id: nextId++, team: g.team, pl: g.pl, type: 'waechter', x: t.x, y: t.y, hp: mhp, max: mhp, cd: 0.3, face: g.team === 0 ? 1 : -1, hit: 0, slow: 0, lastHit: -99,
+                     tx: null, ty: null, settled: { stufe: g.stufe }, retry: 1, wache: g });
+      }
+    } else if (!alarm) g.rausT = 0;
+  }
+  // Wächter: greift den nächsten Feind (wacheFeind) an; ist keiner mehr in der eigenen Hälfte, zurück zur Tür und hinein (drin = wieder volle Leben)
+  function waechterSchritt(u, d, spd, dt) {
+    var g = u.wache, j, e, best = null, bd = 1e9, dd;
+    u.ready = false;
+    if (!g || g.hp <= 0) { u.hp = 0; return; } // Wachposten zerstört: die Wächter fallen mit
+    for (j = 0; j < units.length; j++) { e = units[j]; if (!wacheFeind(u.team, e)) continue; dd = hyp(e.x - u.x, e.y - u.y); if (dd < bd) { bd = dd; best = e; } }
+    if (best) {
+      var stop = d.range - 0.1;
+      if (bd > stop) { var st = Math.min(spd * dt, bd - stop), gv = umGebaeude(u, (best.x - u.x) / bd, (best.y - u.y) / bd, best); u.x += gv.x * st; u.y += gv.y * st; if (Math.abs(gv.x) > 0.2) u.face = gv.x > 0 ? 1 : -1; }
+      if (hyp(best.x - u.x, best.y - u.y) <= d.range + 0.001) {
+        u.ready = true; u.aimX = best.x; u.aimY = best.y;
+        if (u.cd <= 0) {
+          u.cd = d.cd / (u.slow > 0 ? (u.slowA || 1) : 1); u.atkT = clock;
+          if (Math.abs(best.x - u.x) > 0.05) u.face = best.x > u.x ? 1 : -1;
+          hurt(best, d.atk, d); best.hit = 0.15; best.lastHit = clock;
+          effects.push({ kind: 'stab', x1: u.x, y1: u.y, x2: best.x, y2: best.y, t: 0, dur: 0.16 });
+        }
+      }
+      return;
+    }
+    var t = wacheTuer(g), tdx = t.x - u.x, tdy = t.y - u.y, tdl = hyp(tdx, tdy);
+    if (tdl <= 0.45) { u.hp = 0; u.gone = true; g.drin++; return; } // zurück im Wachposten (Türbereich: mehrere gleichzeitig blockieren sich nicht)
+    var ts = Math.min(spd * dt, tdl), tv = tdl < 0.6 ? { x: tdx / tdl, y: tdy / tdl } : umGebaeude(u, tdx / tdl, tdy / tdl, null); // nah an der Tür: direkt hinein (sonst lenkt das eigene Haus ab)
+    u.x += tv.x * ts; u.y += tv.y * ts; if (Math.abs(tv.x) > 0.2) u.face = tv.x > 0 ? 1 : -1;
   }
 
   // Grundeinkommen des Bots (CONFIG.BOTS[..].income Gold alle incomeEvery s); null = kein Bot (Online-Partie)
@@ -207,6 +266,7 @@
               }
             }
           }
+          else if (GD.art === 'wache') u.gT = 0; // Wachposten: kein Gold (Wächter siehe wachposten())
           else if (u.gT >= GD.alle) {
             u.gT -= GD.alle;
             var gg = GD.art === 'zins' ? Math.ceil(Math.max(0, gold[pOf(u)]) * GD.prozent / 100) : GD.art === 'dieb' || GD.art === 'brand' ? 0 : GD.stufen[u.stufe - 1].gold + (GD.steigt || 0) * (u.zahl || 0); // Bank: Prozent des Goldes, aufgerundet; Adelshaus: jedes Mal steigt mehr
@@ -214,6 +274,7 @@
             if (gg > 0 && !(tut.on && u.team === 1)) { gold[pOf(u)] = Math.min(CONFIG.GOLD_MAX, gold[pOf(u)] + gg); effects.push({ kind: 'text', text: '+' + gg, x: u.x, y: u.y - 0.7, farmer: true, t: 0, dur: 1.1 }); }
           }
         }
+        if (d.gebaeude.art === 'wache' && u.stufe >= 1) wachposten(u, d.gebaeude, dt); // arbeitet auch während des Ausbaus (mit der bisherigen Stufe)
         var kbp = bases[u.team], kpx = clamp(u.x, kbp.x1 + 0.3, kbp.x2 - 0.3), kpy = clamp(u.y, kbp.y1 + 0.3, kbp.y2 - 0.3);
         if ((d.gebaeude.art === 'dieb' || d.gebaeude.art === 'brand') && !u.weg) { // Weg: seitlich zum Spielfeldrand, am Rand entlang in die gegnerische Burg (relativ zum Gebäude)
           var ey = u.y < H / 2 ? 0.55 : H - 1.15, efb = bases[1 - u.team], eob = bases[u.team], ecx = (efb.x1 + efb.x2) / 2, ocx = (eob.x1 + eob.x2) / 2;
@@ -222,7 +283,7 @@
           u.weg = { hin: [tuer, { x: u.x, y: ey }, { x: ecx, y: ey }, { x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }].map(rel),
                     zur: [{ x: ecx, y: clamp(ey, efb.y1 + 0.4, efb.y2 - 0.4) }, { x: ecx, y: ey }, { x: u.x, y: ey }, tuer].map(rel) }; // direkt zurück ins Haus
         }
-        u.settled = { gunst: u.gunst || 0, gebet: u.gebetT || 0, weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.stufe > 0 ? (u.werk || 0) / u.max : u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny }; // nur für die Zeichnung
+        u.settled = { gunst: u.gunst || 0, gebet: u.gebetT || 0, weg: u.weg, beute: u.beute || 0, kx: kpx - u.x, ky: kpy - u.y, neu: u.stufe === 0, bau: u.bau ? Math.min(1, u.stufe > 0 ? (u.werk || 0) / u.max : u.hp / u.max) : 1, stufe: u.bau ? Math.max(u.stufe, 1) : u.stufe, phase: u.bau ? -1 : u.gT, nx: u.nx, ny: u.ny, drin: u.drin || 0, alarm: !!u.alarm }; // nur für die Zeichnung
         continue;
       }
       u.cd = Math.max(0, u.cd - dt);
@@ -300,6 +361,7 @@
         }
         continue;
       }
+      if (d.waechter) { waechterSchritt(u, d, spd, dt); continue; } // Wächter: nur in der eigenen Hälfte, nur gegen Einheiten
       if (!u.gar && !u.dig && !u.bf && !u.tSpot && d.range > 1.5 && !d.king && wallD(u.team, u.x, u.y) <= WALL.tower.takeDist) seekSlot(u); // sobald ein Platz frei ist, solange die Einheit höchstens 4 Kacheln von der Kaserne entfernt ist
       var ow = walls[1 - u.team];
       u.o = !!(ow && ow.built && wallOut(ow, u.x, u.y)); // steht vor der fertigen gegnerischen Mauer
@@ -770,6 +832,7 @@
             }
           }
         }
+        if (CONFIG.units[q.type].waechter) q.x = q.team === 0 ? Math.min(q.x, W / 2 - 0.05) : Math.max(q.x, W / 2 + 0.05); // Wächter bleiben in der eigenen Hälfte
         q.x = clamp(q.x, 0.25, W - 0.25);
         q.y = clamp(q.y, 0.3, H - 0.3);
         alive.push(q);
