@@ -14,7 +14,7 @@
       buerger: { cat: 'eco', name: 'Bürger', cost: 2, steigt: 2, staerke: 0, hp: 2, atk: 0, range: 0, speed: 0.4, cd: 1, r: 0.25, passive: true, buerger: { alle: 5, gold: 1, halt: 0.5, kratzen: 1, schauen: 2 } },
       holzfaeller: { cat: 'eco', name: 'Holzfäller', cost: 6, staerke: 0, hp: 2, atk: 0, range: 0, speed: 1, cd: 1, r: 0.27, passive: true, holz: { alle: 5, gold: 2, proBaum: 2 } },
       spear: { cat: 'melee', name: 'Speersoldat',   cost: 5, staerke: 1,  hp: 3,  atk: 1, range: 1, speed: 1.0, cd: 1, ausholen: 0.3, r: 0.30, key: '2' },
-      archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4, speed: 0.8, cd: 1, ausholen: 0.45, r: 0.28, key: '3', delay: 0.5 },
+      archer: { cat: 'ranged', name: 'Bogenschütze',  cost: 12, staerke: 1, hp: 1,  atk: 1, range: 4.5, speed: 0.8, cd: 1, ausholen: 0.45, r: 0.28, key: '3', delay: 0.5 },
       rider:  { cat: 'melee', name: 'Reiter',        cost: 15, staerke: 1, hp: 8,  atk: 1, range: 1, speed: 1.8, cd: 1, ausholen: 0.3, r: 0.34, key: '4' },
       mage:   { cat: 'ranged', name: 'Eismagier',     cost: 25, staerke: 1, hp: 1,  atk: 1, range: 3.5, speed: 0.8, cd: 1.5, ausholen: 0.45, r: 0.30, key: '7', delay: 0.5, splash: 1, slow: { factor: 0.5, atk: 0.5, secs: 3 } }, // Eismagier: bremst Getroffene auf 50 % Tempo (27.11., vorher 40 %) und 50 % Angriffsgeschwindigkeit (atk, 27.11. neu)
       // Schwarzer Ritter: 18 Leben, Angriff 2 (Optik: schwarzer Helm, stachelige Schulterpanzer, längeres Schwert, Ritterschild mit schwarzem Kreuz)
@@ -112,10 +112,10 @@
       // Fackelwerfer: wirft brennende Fackeln (kurze Reichweite) mit Flächenschaden; darf wie der Speerwerfer auf die Schützenplätze der Türme
       fackel: { cat: 'ranged', name: 'Fackelwerfer', cost: 9, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1.5, ausholen: 0.35, r: 0.3, delay: 0.45, splash: 0.8, fackel: true },
       // Feuerbogenschütze (27.11.): wie der Bogenschütze, aber brennende Pfeile mit Flächenschaden (Radius 0,8); Brand am Einschlag wie beim Fackelwerfer
-      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 18, staerke: 1, hp: 1, atk: 1, range: 4, speed: 0.8, cd: 1.5, ausholen: 0.45, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
+      feuerbogen: { cat: 'ranged', name: 'Feuerbogenschütze', cost: 18, staerke: 1, hp: 1, atk: 1, range: 4.5, speed: 0.8, cd: 1.5, ausholen: 0.45, r: 0.28, delay: 0.5, splash: 0.8, feuerpfeil: true },
       javelin: { cat: 'ranged', name: 'Speerwerfer', cost: 6, staerke: 1, hp: 2, atk: 1, range: 2.5, speed: 1, cd: 1, ausholen: 0.35, r: 0.3, delay: 0.35 },
       prinzessin: { cat: 'ranged', name: 'Prinzessin', cost: 50, staerke: 1, hp: 15, atk: 0, range: 3, speed: 0.8, cd: 3, ausholen: 0.45, r: 0.32, bekehren: { winkel: 60, r: 5 } }, // Geschenk vom Entwickler (22.11.): zielt nur auf bekehrbare Gegner, ab 3 Kacheln; Glitzerstaub im 60°-Trichter bis 5 Kacheln, Getroffene wechseln die Seite
-      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4, speed: 0.8, cd: 1.5, ausholen: 0.15, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
+      crossbow: { cat: 'ranged', name: 'Armbrustschütze', cost: 20, staerke: 1, hp: 3, atk: 2, range: 4.5, speed: 0.8, cd: 1.5, ausholen: 0.15, r: 0.3, delay: 0.3, setup: 1, setupFrei: 1 }, // setup: muss nach jedem Stillstand erst 1 s einrichten; setupFrei: aufgebaut darf er sich bis 1 Kachel vom Aufbaupunkt bewegen, weiter weg baut er ab (auch im Turm)
       worker: { name: 'Arbeiter', cost: 0,  hp: 2,  atk: 0, range: 0, speed: 1.6, cd: 1, r: 0.26, worker: true, hidden: true },
       // king = König: sitzt auf der Burg (dann nur Bogen, unverwundbar); ist sie zerstört, kämpft er mit dem Zweihänder, höchstens leash Kacheln von der Burg entfernt
       king: { name: 'König', cost: 0, hp: 20, atk: 3, range: 1, speed: 1, cd: 1, ausholen: 0.35, r: 0.4, hidden: true, rangedTaken: 0.25, king: { leash: 5 } }
